@@ -37,7 +37,8 @@ def audit():
             promptfile=ROOT/a['prompt_file']
             assert promptfile.read_bytes()==a['prompt'].encode('utf-8'),str(promptfile)
             assert file_sha256(promptfile)==a['prompt_sha256'],str(promptfile)
-            assert a['inputs'] and a['prepared_at_utc'] and a['machine_id'],str(path)
+            assert a['inputs'] and a['machine_id'],str(path)
+            assert a['prepared_at_utc'] or (a.get('recovered_at_utc') and a.get('recording_boundary')),str(path)
             for source in a['inputs']:
                 if source.get('path'):assert file_sha256(ROOT/source['path'])==source['sha256'],str(path)
             requests+=1

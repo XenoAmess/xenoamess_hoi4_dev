@@ -8,6 +8,24 @@ from tools.common import ROOT,read_json,write_json,utc_now,machine_id,file_sha25
 from PIL import Image
 MOD=ROOT/'mod_nailong';QUEUE=MOD/'data/image-retry-queue.json'
 
+def require_editable_service_state(key,record,latest,edit_existing):
+    """Only a returned exact retry can release a held source for an art edit."""
+    path=MOD/'data/generation-failures.json';failures=read_json(path)
+    held=[f for f in failures.get('attempts',[]) if f['source_sha256']==key and f.get('status')=='blocked' and not f.get('resolved_by_retry')]
+    if not held:return
+    queue=read_json(QUEUE);entry=queue.get('sources',{}).get(key,{})
+    proof=(edit_existing and record and latest and entry.get('retries_used')==1
+           and entry.get('state')=='generated_pending_visual_review'
+           and latest.get('retry_of_attempt')
+           and latest.get('status') in ('generated_pending_visual_review','generated_rejected_visual_review')
+           and entry.get('output_sha256')==record.get('image_sha256')==latest.get('output_sha256')
+           and file_sha256(ROOT/record['image'])==record['image_sha256'])
+    if not proof:raise SystemExit('Service-held source: only the exact single cooldown retry is allowed; no new prompt or input')
+    for failure in held:
+        failure['resolved_by_retry']={'status':'service_returned_image_art_correction_pending','output_sha256':record['image_sha256'],'observed_at_utc':utc_now(),'original_refusal_preserved':True}
+    entry.update(state='service_retry_succeeded_art_correction_pending',accepted_retry_output_sha256=record['image_sha256'],art_correction_started_at_utc=utc_now())
+    write_json(path,failures);write_json(QUEUE,queue)
+
 def sync():
     queue=read_json(QUEUE) if QUEUE.exists() else {'schema':'naiwa-image-retry-queue-v1','sources':{}}
     for failure in read_json(MOD/'data/generation-failures.json').get('attempts',[]):

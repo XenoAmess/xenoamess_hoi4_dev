@@ -106,6 +106,11 @@ def approve(keys):
         if file_sha256(ROOT/row["image"])!=row["image_sha256"]:raise SystemExit("Image changed since import")
         row.update(review="approved",reviewed_at_utc=utc_now(),review_method="Visual comparison of input and output contact sheets by Codex")
         row['collar_fit']={'policy':'collar-fit-v1','status':'approved','image_sha256':row['image_sha256'],'reviewed_at_utc':utc_now(),'review_method':'Visual inspection of neck width, collar opening, front/back occlusion, fastening and absence of cream neck bib'}
+        if retry.get('state')=='service_retry_succeeded_art_correction_pending':
+            accepted=retry.get('accepted_retry_output_sha256')
+            if not any(h.get('previous_image_sha256')==accepted for h in row.get('revision_history',[])):
+                raise SystemExit('Art revision does not descend from accepted exact retry')
+            retry.update(state='approved_after_single_cooldown_retry_and_art_correction',approved_at_utc=utc_now(),approved_image_sha256=row['image_sha256'])
         if row.get("request_journal"):
             path=ROOT/row["request_journal"];journal=read_json(path)
             attempt=journal["attempts"][-1]

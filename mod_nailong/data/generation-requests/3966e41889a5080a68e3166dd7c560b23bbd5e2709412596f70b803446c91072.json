@@ -27,6 +27,69 @@
       "prepared_at_utc": "2026-10-16T07:09:34.467208+00:00",
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID a09d7ba4-9edc-4608-b21f-25c66006dcd1.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-16T07:50:42.543476+00:00"
+    },
+    {
+      "number": 2,
+      "status": "generated_rejected_visual_review",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: compositing.\nAsset type: one original-size-compatible Hearts of Iron IV character portrait replacement.\nImage 1 is the original HOI4 portrait and composition target. Image 2 is the user's exact 奶龙 identity reference: a smooth golden-yellow round creature with green rings around black eyes, a small horizontal mouth and creamy belly.\nReplace the human head, body and exposed human skin with this recognizable yellow mascot. RETAIN the original person's visible hairstyle, hairline, hair color, eyebrows, moustache, beard and sideburns as distinguishing features attached to the mascot, adapting them to its round head. Match the original's parting, thickness, curls and facial-hair shape. Preserve a bald scalp or clean-shaven face only where the original actually has one. Do not invent hair hidden under a hat.\nPreserve the original clothing, uniform, headgear, glasses, decorations, accessories, expression, gaze, pose, action, framing, scale, lighting, background and painterly color treatment. No new hats, uniforms, medals or symbols. Use only visually present features; do not infer appearance from filenames or historical biographies.\nKeep the yellow creature's anatomy, large green-ringed black eyes and small horizontal mouth; do not restore human skin, human nose or human ears. Express the original mood through its creature eyes and mouth plus retained eyebrows.\nPreserve the source aspect ratio, crop and number of figures. Preserve real alpha transparency, photographic frames, note cards and existing decorative markings where present. Do not add such framing where absent. Polished painterly HOI4 finish, legible at the original in-game size. One source image to one asset. No comparison board, new text, label, watermark or extra figure.\n\nVisible source-specific features: Flying helmet and goggles with round spectacles worn across the eyes. Preserve the round spectacles. Only visible dark side hair and eyebrows, clean-shaven. Beige uniform. Transparent bust.",
+      "prompt_file": "mod_nailong/assets/prompts/3966e41889a5080a68e3166dd7c560b23bbd5e2709412596f70b803446c91072-002.txt",
+      "prompt_sha256": "2849796934a7569f293b8d8fd44730f8c92ac2ed613fd167b61cf9de668a69db",
+      "inputs": [
+        {
+          "role": "original source portrait",
+          "raw_sha256": "3966e41889a5080a68e3166dd7c560b23bbd5e2709412596f70b803446c91072",
+          "converted_png_sha256": "0eef49fe160016f3cb6aebd8fe0352a83925e901bf8c0baa8e95dd62961e0d62"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": false,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-16T19:02:08.459080+00:00",
+      "retry_of_attempt": 1,
+      "cooldown_not_before_utc": "2026-10-16T15:50:42.646607+00:00",
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "generated_at_utc": "2026-10-16T19:02:55.509733+00:00",
+      "fullsize_sha256": "9a205c5eca0807482f95450f12def08b60882bc39de9b423c95b014c25b8e5c0",
+      "output": "mod_nailong/assets/portraits/3966e41889a5080a68e3166dd7c560b23bbd5e2709412596f70b803446c91072.png",
+      "output_sha256": "93f717afbfb73bb2b905daa830cb6ce1eaa321b5469edcc69be4f91a4c6a6fdf",
+      "review": "rejected",
+      "rejection_reason": "accepted_exact_retry_requires_current_hair_and_collar_art_revision",
+      "reviewed_at_utc": "2026-10-16T19:22:02.070079+00:00"
+    },
+    {
+      "number": 3,
+      "status": "prepared",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit.\nAsset type: one HOI4 mascot portrait correction for coherent neck and clothing fit.\nImage 1 is the current generated yellow mascot portrait to edit. Image 2 is the original game portrait, specifying the original garment style, hair, facial hair, hat, accessories, pose, expression and fastening state. Image 3 is the user's exact mascot anatomy reference: a compact rounded golden-yellow creature with green-ringed black eyes and a small horizontal mouth.\nCorrect only the head-neck-collar-shoulder fit. Replace the overlong yellow cylinder or tapered neck stalk with a compact round head sitting LOW and close to broad shoulders, with almost no exposed neck. Do not squeeze a thick creature into a narrow human collar ring. Widen and retailor the original collar opening around the creature's actual neck base, so the whole base sits INSIDE it. The front collar cloth occludes the lower neck, and the rear collar sits behind it; show coherent fabric tension, contact shadow, seams and perspective. Preserve original fabric, collar style, tabs, piping, badges and existing decorations, adjusting their size/placement to the wider fitted collar. Do not add symbols, awards, accessories or a different outfit.\nCRITICAL fastening rule: if Image 2 has a closed, buttoned standing military collar, it must remain fully CLOSED and buttoned. Both front ends meet at the same level at the center seam; no deep V-shaped opening, unbuttoned tunic or exposed yellow chest wedge. Widen the whole collar circumference instead of opening its front. For an originally open shirt or lapel collar, preserve that open style and tie/scarf with correctly fitted overlapping layers. A white shirt collar or scarf stays textured fabric; it is not a cream belly patch.\nThe mascot keeps its yellow anatomy, green-ringed black eyes and small horizontal mouth. Preserve the original visible hairstyle, hairline, color, eyebrows, moustache and beard where actually present in Image 2; preserve a clean-shaven chin where appropriate. Do not invent facial hair, human skin, nose or ears. Preserve headgear, glasses, pipe, facial mood, head turn, shoulders/body orientation, painted background or genuine transparency, and source portrait aspect ratio. Preserve photo frames and note cards exactly where present. The cream belly stays under the clothes: no white/cream neck bib, skin-colored collar gap, detached ring, pinched fabric, clipped neck, floating collar or long giraffe/sausage neck. One final portrait, no comparison layout or new text.\n\nSOURCE-SPECIFIC CORRECTION: Shorten the long exposed yellow neck and widen/reseat the beige shirt collar around the compact head base. Keep BOTH the original goggles on top of the leather flying helmet AND the separate round spectacles over the eyes. Retain visible dark hair, clean-shaven face and original beige uniform.\nOutput alpha: keep a genuine fully transparent RGBA background outside the portrait silhouette. No painted gray backdrop, halo, studio gradient or rectangular plate. Retain the source's clothing, hair, headgear and portrait crop.",
+      "prompt_file": "mod_nailong/assets/prompts/3966e41889a5080a68e3166dd7c560b23bbd5e2709412596f70b803446c91072-003.txt",
+      "prompt_sha256": "e5a184e3af67a70efb30439ff075a4ae9d2da6abe9c0a05f4ffcac1e071764ef",
+      "inputs": [
+        {
+          "role": "previous generated edit target",
+          "path": "mod_nailong/assets/legacy-before-hair/3966e41889a5080a68e3166dd7c560b23bbd5e2709412596f70b803446c91072-93f717afbfb73bb2.png",
+          "sha256": "93f717afbfb73bb2b905daa830cb6ce1eaa321b5469edcc69be4f91a4c6a6fdf"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "3966e41889a5080a68e3166dd7c560b23bbd5e2709412596f70b803446c91072",
+          "converted_png_sha256": "0eef49fe160016f3cb6aebd8fe0352a83925e901bf8c0baa8e95dd62961e0d62"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-16T19:22:02.153887+00:00"
     }
   ]
 }

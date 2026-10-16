@@ -78,6 +78,25 @@ class ImageRetryGuards(unittest.TestCase):
         self.assertEqual(read_json(retries.QUEUE)['sources'][self.key]['retries_used'], 0)
         self.assertEqual(len(read_json(self.journal)['attempts']), 1)
 
+    def test_refused_source_cannot_start_a_reworded_request(self):
+        retries.sync()
+        with self.assertRaisesRegex(SystemExit,'Service-held source'):
+            retries.require_editable_service_state(self.key,None,None,False)
+        self.assertFalse(read_json(self.mod/'data/generation-failures.json')['attempts'][0].get('resolved_by_retry'))
+
+    def test_returned_exact_retry_can_receive_separate_art_correction(self):
+        retries.claim(self.key)
+        digest=file_sha256(self.original)
+        queue=read_json(retries.QUEUE);queue['sources'][self.key].update(state='generated_pending_visual_review',output_sha256=digest);write_json(retries.QUEUE,queue)
+        row={'image':self.original.relative_to(self.root).as_posix(),'image_sha256':digest,'review':'rejected'}
+        latest={'retry_of_attempt':1,'status':'generated_rejected_visual_review','output_sha256':digest}
+        retries.require_editable_service_state(self.key,row,latest,True)
+        self.assertEqual(read_json(retries.QUEUE)['sources'][self.key]['retries_used'],1)
+        self.assertEqual(read_json(retries.QUEUE)['sources'][self.key]['state'],'service_retry_succeeded_art_correction_pending')
+        result=read_json(self.mod/'data/generation-failures.json')['attempts'][0]['resolved_by_retry']
+        self.assertEqual(result['status'],'service_returned_image_art_correction_pending')
+        self.assertTrue(result['original_refusal_preserved'])
+
 
 if __name__ == '__main__':
     unittest.main()

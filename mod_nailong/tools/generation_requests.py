@@ -40,6 +40,8 @@ def prepare(key, prompt, edit_existing=False):
     journal=read_json(file) if file.exists() else {"schema":"naiwa-generation-requests-v1","source_sha256":key,"attempts":[]}
     if journal["attempts"] and journal["attempts"][-1]["status"]=="prepared":
         raise SystemExit("Unresolved prepared request; inspect before resubmitting")
+    from mod_nailong.tools.image_retries import require_editable_service_state
+    require_editable_service_state(key,record,journal['attempts'][-1] if journal['attempts'] else None,edit_existing)
     paths=[];inputs=[]
     if edit_existing:
         if not record:raise SystemExit("No existing image to edit")
@@ -82,8 +84,9 @@ def legacy():
 def finish(key,image):
     file=REQUESTS/(key+".json");journal=read_json(file);a=journal["attempts"][-1]
     assert a["status"]=="prepared"
-    ingest(key,image,ROOT/a["prompt_file"],"user_adopted_hair_features_v1" if a["edit_existing"] else None)
+    ingest(key,image,ROOT/a["prompt_file"],a.get('revision_goal','visual_feature_correction') if a["edit_existing"] else None)
     generated=read_json(MOD/"data/generated.json")
+    generated["portraits"][key]["art_direction"]=a['art_direction']
     generated["portraits"][key]["generation_inputs"]=a["inputs"]
     generated["portraits"][key]["request_journal"]=file.relative_to(ROOT).as_posix()
     write_json(MOD/"data/generated.json",generated)
