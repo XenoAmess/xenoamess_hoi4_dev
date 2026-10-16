@@ -182,18 +182,23 @@ def prepare(catalog, limit=16, offset=0, match=None):
         if key not in generated and key not in seen:
             pending.append(asset)
             seen.add(key)
-    priority_names = ["pierre_laval", "stanley_baldwin", "churchill", "chiang_kai", "franklin_roosevelt", "joseph_stalin", "adolf_hitler", "benito_mussolini", "charles_de_gaulle", "mao_zedong", "hirohito"]
+    from mod_nailong.tools.production_priority import REPORT, build, gate_lower_priority
+    priorities=read_json(REPORT) if REPORT.exists() else None
+    if not priorities or priorities["catalog_sha256"]!=file_sha256(MOD/"data/catalog.json"):
+        priorities=build(catalog)
     def priority(asset):
-        name = asset["path"].lower()
-        rank = next((i for i, word in enumerate(priority_names) if word in name), 100)
-        return (0 if rank<100 and "/leaders/" in name else 1 if rank<100 else 2),rank,name,asset["package"]
+        return tuple(priorities["sources"][asset["source_sha256"]]["sort_key"])+ (asset["package"],)
     pending.sort(key=priority)
     failures_path=MOD/"data/generation-failures.json"
     failures=read_json(failures_path) if failures_path.exists() else {}
-    blocked_keys={row["source_sha256"] for row in failures.get("attempts",[]) if row.get("status")=="blocked"}
+    blocked_keys={row["source_sha256"] for row in failures.get("attempts",[]) if row.get("status")=="blocked" and not row.get("resolved_by_retry")}
     held_paths={path.lower() for path in failures.get("held_source_paths",[])}
+    resolved_paths={a["path"].lower() for a in catalog["assets"] for failure in failures.get("attempts",[]) if a["source_sha256"]==failure["source_sha256"] and failure.get("resolved_by_retry")}
+    active_paths={a["path"].lower() for a in catalog["assets"] if a["source_sha256"] in blocked_keys}
+    held_paths=(held_paths-resolved_paths)|active_paths
     eligible=[asset for asset in pending if asset["source_sha256"] not in blocked_keys and asset["path"].lower() not in held_paths]
     held_count=len(pending)-len(eligible)
+    eligible,incomplete_high=gate_lower_priority(eligible,priorities["sources"],generated)
     if match:eligible=[asset for asset in eligible if match.lower() in asset["path"].lower()]
     selected = eligible[offset:offset+limit]
     jobs = []
@@ -227,7 +232,7 @@ def prepare(catalog, limit=16, offset=0, match=None):
                 draw.text((x,y+212), f"{index+1} {job['key'][:8]}", fill="black")
                 draw.text((x,y+228), Path(job["source"]).stem[-22:], fill="black")
         sheet.save(ROOT / "runtime/input-contact-sheet.png")
-    print({"pending_unique_images": len(pending),"held_after_service_refusal":held_count,"matching_eligible_images":len(eligible), "prepared": len(jobs), "contact_sheet": "runtime/input-contact-sheet.png"})
+    print({"pending_unique_images": len(pending),"held_after_service_refusal":held_count,"incomplete_high_priority":len(incomplete_high),"lower_priority_locked":bool(incomplete_high),"matching_eligible_images":len(eligible), "prepared": len(jobs), "contact_sheet": "runtime/input-contact-sheet.png"})
     return jobs
 
 def main():

@@ -1,0 +1,104 @@
+{
+  "schema": "naiwa-builtin-concurrency-summary-v1",
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-16T11:08:42.063983+00:00",
+  "evidence": "Per-call client timestamps in referenced receipts; no server-side scheduling visibility",
+  "measurements": [
+    {
+      "receipt": "mod_nailong/data/concurrency-tests/2026-10-16-c01.json",
+      "requested_concurrency": 1,
+      "started_at_utc": "2026-10-16T10:52:05.987Z",
+      "finished_at_utc": "2026-10-16T10:56:20.699Z",
+      "attempts": 5,
+      "generated": 5,
+      "moderation_rejections": 0,
+      "explicit_rate_limit_errors": 0,
+      "wall_seconds": 254.712,
+      "completion_offsets_seconds": [
+        51.829,
+        96.201,
+        148.688,
+        211.743,
+        254.711
+      ],
+      "completion_gaps_seconds": [
+        51.829,
+        44.372,
+        52.487,
+        63.055,
+        42.968
+      ],
+      "attempts_per_hour": 70.67,
+      "generated_per_hour": 70.67,
+      "call_start_spread_ms": 211745
+    },
+    {
+      "receipt": "mod_nailong/data/concurrency-tests/2026-10-16-c04.json",
+      "requested_concurrency": 4,
+      "started_at_utc": "2026-10-16T10:09:11.864Z",
+      "finished_at_utc": "2026-10-16T10:12:44.949Z",
+      "attempts": 4,
+      "generated": 4,
+      "moderation_rejections": 0,
+      "explicit_rate_limit_errors": 0,
+      "wall_seconds": 213.085,
+      "completion_offsets_seconds": [
+        45.636,
+        97.324,
+        150.835,
+        213.084
+      ],
+      "completion_gaps_seconds": [
+        45.636,
+        51.688,
+        53.511,
+        62.249
+      ],
+      "attempts_per_hour": 67.58,
+      "generated_per_hour": 67.58,
+      "call_start_spread_ms": 0
+    },
+    {
+      "receipt": "mod_nailong/data/concurrency-tests/2026-10-16-c08.json",
+      "requested_concurrency": 8,
+      "started_at_utc": "2026-10-16T10:40:16.271Z",
+      "finished_at_utc": "2026-10-16T10:46:43.191Z",
+      "attempts": 8,
+      "generated": 7,
+      "moderation_rejections": 1,
+      "explicit_rate_limit_errors": 0,
+      "wall_seconds": 386.92,
+      "completion_offsets_seconds": [
+        50.237,
+        95.728,
+        150.354,
+        198.482,
+        237.902,
+        287.778,
+        337.669,
+        386.918
+      ],
+      "completion_gaps_seconds": [
+        50.237,
+        45.491,
+        54.626,
+        48.128,
+        39.42,
+        49.876,
+        49.891,
+        49.249
+      ],
+      "attempts_per_hour": 74.43,
+      "generated_per_hour": 65.13,
+      "call_start_spread_ms": 1
+    }
+  ],
+  "largest_tested_outstanding_requests": 8,
+  "hard_outstanding_request_limit": null,
+  "server_parallel_execution_limit": null,
+  "observed_effective_generation_lanes": "Approximately one: concurrent request completions remain spaced by one image duration",
+  "production_choice": "One continuous built-in call at a time; prepare/review/docs overlap during waits. Do not pile up requests without measured throughput gains.",
+  "stop_escalation_reason": "4 and 8 show no material throughput gain over single-call control; a larger queue would add latency without an established benefit",
+  "risk_control_guarantee": false,
+  "api_cli_used": false
+}

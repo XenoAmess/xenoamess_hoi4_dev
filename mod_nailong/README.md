@@ -14,6 +14,8 @@
 
 ## 生产流程
 
+历史、具名和架空的重要人物统一为高优先级，当前共 4,426 张；高组全部完成才开始其余 703 张。内部顺序、角色分类及去重口径见[生产优先级](docs/production-priority.md)。队列已锁定此顺序，图片采用内置工具单路连续生成。
+
 1. `python mod_nailong/tools/catalog.py scan`：从实际安装读取原版/DLC 文件、角色定义和 sprite 引用，记录源 SHA 与机器/版本。不会复制完整游戏资产到仓库。
 2. `python mod_nailong/tools/catalog.py prepare --limit 16`：准备尚未完成的原图与输入 contact sheet；完全相同的原始字节共用生成，其他变体独立生成。
 3. 用 imagegen skill 检查原图，逐张引用原图与 `assets/reference/naiwa.png`，保留原人物毛发特征。请求前保存完整实际 prompt；基础提示词在 [portrait-prompt.txt](assets/portrait-prompt.txt)，实际调用词另行逐次落盘。不可用程序贴头、统一通用头像或滤镜冒充。
@@ -32,9 +34,11 @@
 - 当前数量以[进度快照](data/progress.json)为准；`textures_reviewed` 仅计符合当前毛发规则且已审图的资源。旧 23 张/26 资源统计是 A 版历史基线，不能抵扣新版迁移；全量目标仍为 5,129 张不同原图。棺木状态标记与扑克牌占位图经原图审查确认不含人物，已在 catalog 中显式注明排除。
 - 原版角色定义中存在本机未找到 sprite 定义的引用，见 `data/catalog.json` 的 `unresolved_references`；仍需分辨上游缺口、条件加载和扫描范围。不得隐藏它们以形成 100% 完成结论。
 - [原版引用分析](data/baseline-reference-analysis.json)已将 899 次缺失分为 852 个不同值：694 个名字在已扫描 sprite/纹理集合中未定义，158 个 sprite 的目标纹理在已扫描安装集合中未找到。原定义 SHA 已固定；此结果不证明引擎的运行时 fallback，也没有擅改原版人物定义。
-- 图像生成服务已拒绝一张德国历史领袖原图及一张通用飞行员的毛发返修，保留 [真实失败记录](data/generation-failures.json)。没有把拒绝项写成成功或使用替代通道绕过拒绝；未通过的生成图不进入 staging。
+- 图像服务的真实拒绝及原请求 ID、prompt、输入保存在[失败记录](data/generation-failures.json)；冷却截止与单次重试消耗见[重试队列](data/image-retry-queue.json)。未把拒绝项写成成功，也不使用替代通道绕过拒绝；工具允许的原请求至少冷却 8 小时后最多原样重试一次。美术审图不合格另记，不与服务拒绝混合。
 - `prepare` 自动跳过该被拒主题的变体，继续其他素材；跳过项仍计入未完成分母。
 - UI 奶蛙化为低优先级奖励，尚未交付。
 - 提示词与生成审图记录见 [generated.json](data/generated.json)；构建通过不等于游戏实机通过。
 
 机器与首批来源见 [开发记录](docs/development-2026-10-16.md)。
+
+内置图片工具已做 1/4/8 路真实头像测试，结果及可证明的边界见[并发实测](docs/builtin-image-concurrency.md)。同时挂起请求不等于并行生成，实际吞吐与审图合格率分别记录。

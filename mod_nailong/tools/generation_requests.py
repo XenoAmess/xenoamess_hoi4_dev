@@ -32,6 +32,9 @@ def original(asset):
 def prepare(key, prompt, edit_existing=False):
     asset=next(a for a in read_json(MOD/"data/catalog.json")["assets"] if a["source_sha256"]==key)
     source=original(asset)
+    transparent=Image.open(source).getchannel("A").getextrema()[0]<255
+    if transparent:
+        prompt += "\nOutput alpha: keep a genuine fully transparent RGBA background outside the portrait silhouette. No painted gray backdrop, halo, studio gradient or rectangular plate. Retain the source's clothing, hair, headgear and portrait crop."
     record=read_json(MOD/"data/generated.json")["portraits"].get(key)
     file=REQUESTS/(key+".json")
     journal=read_json(file) if file.exists() else {"schema":"naiwa-generation-requests-v1","source_sha256":key,"attempts":[]}
@@ -56,7 +59,7 @@ def prepare(key, prompt, edit_existing=False):
         "inputs":inputs,"edit_existing":edit_existing,"machine_id":machine_id(),"prepared_at_utc":utc_now()}
     journal["attempts"].append(attempt);write_json(file,journal)
     return {"key":key,"source":asset["path"],"references":paths,"original":str(source),
-        "size":asset["size"],"transparent":Image.open(source).getchannel("A").getextrema()[0]<255,"prompt":prompt,
+        "size":asset["size"],"transparent":transparent,"prompt":prompt,
         "journal":file.relative_to(ROOT).as_posix()}
 
 def legacy():
@@ -87,6 +90,10 @@ def finish(key,image):
     a.update(status="generated_pending_visual_review",generated_at_utc=utc_now(),fullsize_sha256=file_sha256(Path(image)),
         output=generated["portraits"][key]["image"],output_sha256=generated["portraits"][key]["image_sha256"])
     write_json(file,journal)
+    if a.get("retry_of_attempt"):
+        queuefile=MOD/"data/image-retry-queue.json";queue=read_json(queuefile)
+        queue["sources"][key].update(state="generated_pending_visual_review",output_sha256=a["output_sha256"],generated_at_utc=utc_now())
+        write_json(queuefile,queue)
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument("command",choices=["legacy","batch","prepare","finish","fail","cancel","reject"])
@@ -118,11 +125,17 @@ def main():
                 failures.setdefault("attempts",[]).append({"source_sha256":args.key,"source_path":asset["path"],"status":"blocked",
                     "machine_id":machine_id(),"observed_at_utc":utc_now(),"tool":"built-in imagegen","code":"moderation_blocked",
                     "request_id":request_ids[0] if request_ids else None,"actual_error":error,"prompt":a["prompt"],"inputs":a["inputs"],
-                    "retry":"No retry or alternate route after rejection; continue unrelated source images"})
+                    "retry":"Continue unrelated sources. Only an allowed request/tool-permitted retry may run once after the recorded eight-hour cooldown, with exact original prompt and inputs; no alternate route."})
                 held=failures.setdefault("held_source_paths",[])
                 if asset["path"] not in held:held.append(asset["path"])
                 write_json(failures_path,failures)
         write_json(file,data)
+        if args.command=="fail":
+            from mod_nailong.tools.image_retries import sync
+            queue=sync()
+            if data["attempts"][-1].get("retry_of_attempt"):
+                queue["sources"][args.key].update(state="retry_failed_no_more_automatic_retries",failed_at_utc=utc_now())
+                write_json(MOD/"data/image-retry-queue.json",queue)
 
 if __name__=="__main__":
     sys.stdout.reconfigure(encoding="utf-8");main()

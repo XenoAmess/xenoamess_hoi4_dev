@@ -22,7 +22,7 @@ xenoamess_hoi4_dev/
 
 首个产品是 [奶蛙世界](mod_nailong/README.md)：逐原头像融合用户提供的奶蛙角色，保留衣物、神态和动作。全量生产尚在进行，**不是已完成的全人物替换包**；精确进度由 `portraits.py coverage` 读回。
 
-当前已生成并审查 23 张不同原图，对应 26 个资源实例；最新静态预览包覆盖 25 个虚拟纹理路径。经审图排除两张非人物状态图标后，全量目标为 5,129 张不同原图，精确快照见[生产进度](mod_nailong/data/progress.json)。首个开发包曾在实际游戏选国界面显示奶蛙头像，来源与范围见[首轮会话回执](mod_nailong/docs/session-2026-10-16.json)；新图不据此追认实机通过。
+全量目标为 5,129 张不同原图，当前数量与快照时间见[生产进度](mod_nailong/data/progress.json)。用户已采用保留原人物发型、胡子等特征的版本，原 23 张不同原图/26 个资源的 A/B 对照已完成，后续按同一规则持续生产。首个开发包曾在实际游戏选国界面显示奶蛙头像，来源与范围见[首轮会话回执](mod_nailong/docs/session-2026-10-16.json)；新图不据此追认实机通过。内置图片工具的 1/4/8 路实测与吞吐边界见[并发记录](mod_nailong/docs/builtin-image-concurrency.md)。
 
 ![首批已生成头像预览](mod_nailong/docs/media/portraits-preview.png)
 

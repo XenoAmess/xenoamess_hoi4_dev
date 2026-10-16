@@ -18,4 +18,6 @@
 
 第二组迁移已完成 11 张并通过审图，1 张 `ace_m_1.dds` 的返修被内置服务在 output 阶段以 `moderation_blocked/other` 拒绝，request ID 为 `475294af-913a-409b-b723-b3694620547a`；未改变路线再次提交，该张之前误加浓胡子的结果保持 rejected。其余旧规则图都已迁移，后续新图直接采用保留毛发规则。每张完整新 prompt、取消但尚未调用的旧 prompt、真实调用失败及审图状态保存在 `data/generation-requests/`，不能把未调用的准备稿算作生成次数。
 
+用户随后指定：允许重试的图片服务拒绝，至少冷却 8 小时后按原 prompt、原输入和同一内置工具重试一次；不是冷却后无限重试。政策在 `data/image-retry-policy.json`，每个来源的 UTC 截止、消耗次数和结果在 `data/image-retry-queue.json`。`tools/image_retries.py due` 查看到期项；执行者先核原请求及工具允许重试，再用 `claim --key <SHA> --confirm-eligible` 固定原请求、校验输入并在调用前消耗唯一额度。它只准备内置调用，不运行 API/CLI 图片生成，也不创建后台系统任务。时间不可靠或原始调用词/图片缺失时保留补证状态；不能假定已经冷却或改写原请求绕过拒绝。新重试及其原失败记录分别保留，只有新结果通过审图才能抵扣完成数量。
+
 `machine_id: bf-202609141645-5434332d4d`，2026-10-16 06:45 UTC 的进度快照确认：34 张不同原图已按新版审查，覆盖 38 个资源实例；`dist/naiwa-preview-004` 静态包覆盖 37 个纹理路径。确定性双构建、DDS 解码和四项工具测试通过；该包已按实际文件读回登记到用户外层 `.mod`，尚无新游戏加载回执。当前仍是 incomplete preview，没有发布 Workshop。继续生成余下 5,094 张未生产原图，另有现存 rejected 图不能算作完成。

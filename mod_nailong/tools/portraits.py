@@ -87,10 +87,13 @@ def approve(keys):
     record=read_json(RECORD)
     if keys==["pending-sheet"]:keys=read_json(ROOT/"runtime/review-keys.json")
     failures=read_json(MOD/"data/generation-failures.json")
-    held={a["source_sha256"] for a in failures.get("attempts",[]) if a.get("status")=="blocked"}
+    held={a["source_sha256"] for a in failures.get("attempts",[]) if a.get("status")=="blocked" and not a.get("resolved_by_retry")}
+    queue_path=MOD/"data/image-retry-queue.json"
+    queue=read_json(queue_path) if queue_path.exists() else {"sources":{}}
     for key in keys:
         row=record["portraits"][key]
-        if key in held:raise SystemExit("Cannot approve a held image-generation source")
+        retry=queue["sources"].get(key,{})
+        if key in held and not (retry.get("state")=="generated_pending_visual_review" and retry.get("output_sha256")==row["image_sha256"]):raise SystemExit("Cannot approve a held image-generation source")
         if row.get("art_direction")!="hair-features-v1":raise SystemExit("Migrate legacy art before approval")
         if file_sha256(ROOT/row["image"])!=row["image_sha256"]:raise SystemExit("Image changed since import")
         row.update(review="approved",reviewed_at_utc=utc_now(),review_method="Visual comparison of input and output contact sheets by Codex")
@@ -100,13 +103,27 @@ def approve(keys):
             if attempt.get("output_sha256")!=row["image_sha256"]:raise SystemExit("Latest request does not bind reviewed image")
             attempt.update(status="approved",reviewed_at_utc=utc_now(),review="approved")
             write_json(path,journal)
+            if attempt.get("retry_of_attempt"):
+                retry.update(state="approved_after_single_cooldown_retry",approved_at_utc=utc_now())
+                for failure in failures.get("attempts",[]):
+                    if failure["source_sha256"]==key:
+                        failure["resolved_by_retry"]={"output_sha256":row["image_sha256"],"approved_at_utc":utc_now(),"original_refusal_preserved":True}
     write_json(RECORD,record)
+    write_json(MOD/"data/generation-failures.json",failures)
+    if queue_path.exists():write_json(queue_path,queue)
     print(f"Reviewed {len(keys)} image(s)")
 
 def reject(keys,reason):
     record=read_json(RECORD)
     for key in keys:
         record["portraits"][key].update(review="rejected",review_reason=reason,reviewed_at_utc=utc_now())
+        journal_path=MOD/"data/generation-requests"/(key+".json")
+        if journal_path.exists():
+            journal=read_json(journal_path)
+            attempt=journal["attempts"][-1]
+            if attempt.get("output_sha256")==record["portraits"][key]["image_sha256"]:
+                attempt.update(status="generated_rejected_visual_review",review="rejected",rejection_reason=reason,reviewed_at_utc=utc_now())
+                write_json(journal_path,journal)
     write_json(RECORD,record)
     print(f"Rejected {len(keys)} image(s)")
 
