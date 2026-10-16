@@ -21,7 +21,7 @@ def coverage(publish=False):
     catalog=read_json(CATALOG)
     generated=read_json(RECORD)["portraits"]
     covered=[a for a in catalog["assets"] if a["source_sha256"] in generated]
-    reviewed=[a for a in covered if generated[a["source_sha256"]]["review"]=="approved"]
+    reviewed=[a for a in covered if generated[a["source_sha256"]]["review"]=="approved" and generated[a["source_sha256"]].get("art_direction")=="hair-features-v1"]
     result={"machine_id":machine_id(),"observed_at_utc":utc_now(),"catalog_sha256":file_sha256(CATALOG),"textures_total":len(catalog["assets"]),"textures_generated":len(covered),"textures_reviewed":len(reviewed),"unique_total":catalog["counts"]["distinct_source_images"],"unique_generated":len(generated),"unresolved_baseline_references":len(catalog["unresolved_references"]),"status":"art-complete" if len(reviewed)==len(catalog["assets"]) else "incomplete"}
     write_json(ROOT/"runtime/coverage.json",result)
     if publish:write_json(MOD/"data/progress.json",result)
@@ -54,6 +54,8 @@ def ingest(key, image_path, prompt_file, replace_reason=None):
     # Machine-local full-size origin stays out of the public manifest and Git.
     fullsize=ROOT/"runtime/generated-origins"/(key+".json")
     write_json(fullsize,{"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":str(image_path.resolve()),"sha256":file_sha256(image_path),"review_at_utc":__import__('datetime').datetime.fromtimestamp(__import__('time').time()+7*86400,__import__('datetime').timezone.utc).isoformat(),"reason":"Fullsize source available during art review; canonical resized deliverable is in Git"})
+    record["portraits"][key]["art_direction"]="hair-features-v1"
+    write_json(RECORD,record)
     print(f"Imported {key[:12]} -> {out.relative_to(ROOT)}")
 
 def contact_sheet(include_approved=False):

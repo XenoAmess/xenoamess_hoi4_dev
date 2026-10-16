@@ -220,9 +220,10 @@ def prepare(catalog, limit=16, offset=0, match=None):
         draw = ImageDraw.Draw(sheet)
         for index, job in enumerate(jobs):
             with Image.open(job["path"]) as image:
-                image.thumbnail((156, 210))
+                ratio=min(156/image.width,210/image.height)
+                image=image.convert("RGBA").resize((round(image.width*ratio),round(image.height*ratio)),Image.Resampling.NEAREST if ratio>1 else Image.Resampling.LANCZOS)
                 x, y = (index%columns)*172+8, (index//columns)*252+4
-                sheet.paste(image.convert("RGB"), (x,y))
+                sheet.paste(image, (x,y),image.getchannel("A"))
                 draw.text((x,y+212), f"{index+1} {job['key'][:8]}", fill="black")
                 draw.text((x,y+228), Path(job["source"]).stem[-22:], fill="black")
         sheet.save(ROOT / "runtime/input-contact-sheet.png")

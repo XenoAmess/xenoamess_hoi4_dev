@@ -16,10 +16,13 @@ from PIL import Image
 
 MOD=ROOT/"mod_nailong"
 
+def ready(row):
+    return row.get("review")=="approved" and row.get("art_direction")=="hair-features-v1"
+
 def payload(preview=False, packages=None):
     catalog=read_json(MOD/"data/catalog.json")
     generated=read_json(MOD/"data/generated.json")["portraits"]
-    missing=[a for a in catalog["assets"] if a["source_sha256"] not in generated or generated[a["source_sha256"]]["review"]!="approved"]
+    missing=[a for a in catalog["assets"] if a["source_sha256"] not in generated or not ready(generated[a["source_sha256"]])]
     if not preview and missing:
         raise SystemExit(f"RELEASE BLOCKED: {len(missing)} of {len(catalog['assets'])} source textures not generated/reviewed; use --preview for an explicitly incomplete development package")
     if not preview and catalog["unresolved_references"]:
@@ -42,7 +45,7 @@ def payload(preview=False, packages=None):
     profile_missing=[]
     for asset in selected.values():
         key=asset["source_sha256"]
-        if key not in generated or generated[key]["review"]!="approved":
+        if key not in generated or not ready(generated[key]):
             profile_missing.append(asset["id"])
             continue
         row=generated[key]
