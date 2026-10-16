@@ -182,7 +182,12 @@ def prepare(catalog, limit=16, offset=0):
         rank = next((i for i, word in enumerate(priority_names) if word in name), 100)
         return (0 if rank<100 and "/leaders/" in name else 1 if rank<100 else 2),rank,name,asset["package"]
     pending.sort(key=priority)
-    selected = pending[offset:offset+limit]
+    failures_path=MOD/"data/generation-failures.json"
+    failures=read_json(failures_path) if failures_path.exists() else {}
+    blocked_keys={row["source_sha256"] for row in failures.get("attempts",[]) if row.get("status")=="blocked"}
+    held_paths={path.lower() for path in failures.get("held_source_paths",[])}
+    eligible=[asset for asset in pending if asset["source_sha256"] not in blocked_keys and asset["path"].lower() not in held_paths]
+    selected = eligible[offset:offset+limit]
     jobs = []
     for asset in selected:
         source = source_index[asset["id"]]
@@ -213,7 +218,7 @@ def prepare(catalog, limit=16, offset=0):
                 draw.text((x,y+212), f"{index+1} {job['key'][:8]}", fill="black")
                 draw.text((x,y+228), Path(job["source"]).stem[-22:], fill="black")
         sheet.save(ROOT / "runtime/input-contact-sheet.png")
-    print({"pending_unique_images": len(pending), "prepared": len(jobs), "contact_sheet": "runtime/input-contact-sheet.png"})
+    print({"pending_unique_images": len(pending),"held_after_service_refusal":len(pending)-len(eligible), "prepared": len(jobs), "contact_sheet": "runtime/input-contact-sheet.png"})
     return jobs
 
 def main():

@@ -22,6 +22,10 @@ xenoamess_hoi4_dev/
 
 首个产品是 [奶蛙世界](mod_nailong/README.md)：逐原头像融合用户提供的奶蛙角色，保留衣物、神态和动作。全量生产尚在进行，**不是已完成的全人物替换包**；精确进度由 `portraits.py coverage` 读回。
 
+已生成并审查 11 张，完整清单需 5,131 张不同原图。首个开发包已在实际游戏选国界面显示奶蛙头像，当前静态构建与这次实机使用的包分别记载于[会话回执](mod_nailong/docs/session-2026-10-16.json)。
+
+![首批已生成头像预览](mod_nailong/docs/media/portraits-preview.png)
+
 ```text
 python -m pip install -r requirements.txt
 set HOI4_GAME_ROOT=<实际 HOI4 安装目录>

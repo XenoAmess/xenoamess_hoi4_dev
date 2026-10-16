@@ -50,10 +50,10 @@ def ingest(key, image_path, prompt_file):
     write_json(fullsize,{"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":str(image_path.resolve()),"sha256":file_sha256(image_path),"review_at_utc":__import__('datetime').datetime.fromtimestamp(__import__('time').time()+7*86400,__import__('datetime').timezone.utc).isoformat(),"reason":"Fullsize source available during art review; canonical resized deliverable is in Git"})
     print(f"Imported {key[:12]} -> {out.relative_to(ROOT)}")
 
-def contact_sheet():
+def contact_sheet(include_approved=False):
     catalog=read_json(CATALOG)
     record=read_json(RECORD)["portraits"]
-    pending=[(key,row) for key,row in record.items() if row["review"]=="pending"]
+    pending=[(key,row) for key,row in record.items() if include_approved or row["review"]=="pending"]
     if not pending:
         print("No pending art reviews")
         return
@@ -89,7 +89,8 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     sub=parser.add_subparsers(dest="command",required=True)
     sub.add_parser("coverage")
-    sub.add_parser("sheet")
+    sheet=sub.add_parser("sheet")
+    sheet.add_argument("--all",action="store_true",help="Include approved images for the project preview")
     add=sub.add_parser("import")
     add.add_argument("--key",required=True)
     add.add_argument("--image",required=True)
@@ -99,7 +100,7 @@ def main():
     args=parser.parse_args()
     if args.command=="import":ingest(args.key,args.image,args.prompt_file)
     elif args.command=="coverage":coverage()
-    elif args.command=="sheet":contact_sheet()
+    elif args.command=="sheet":contact_sheet(args.all)
     else:approve(args.keys)
 
 if __name__=="__main__":
