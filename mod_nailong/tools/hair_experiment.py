@@ -45,7 +45,7 @@ def freeze():
         assert sha256(old_bytes) == row["image_sha256"]
         old = EXP / "a" / (key + ".png")
         old.write_bytes(old_bytes)
-        (EXP / "prompts" / (key + "-a.txt")).write_text(row["prompt"], encoding="utf-8")
+        (EXP / "prompts" / (key + "-a.txt")).write_text(row["prompt"], encoding="utf-8", newline="\n")
         asset = next(a for a in assets if a["source_sha256"] == key)
         source = source_index[asset["id"]]
         if source["member"]:
@@ -83,7 +83,7 @@ def prompt(key, text):
     job = next(j for j in manifest["jobs"] if j["key"] == key)
     number = len(job.get("attempts", [])) + 1
     target = EXP / "prompts" / f"{key}-b-{number:02}.txt"
-    target.write_text(text, encoding="utf-8")
+    target.write_text(text, encoding="utf-8", newline="\n")
     attempt = {"number": number, "prompt": text, "prompt_file": target.relative_to(ROOT).as_posix(),
         "prompt_sha256": file_sha256(target), "method": "built-in imagegen edit", "status": "prepared",
         "prepared_at_utc": utc_now(), "machine_id": machine_id(),

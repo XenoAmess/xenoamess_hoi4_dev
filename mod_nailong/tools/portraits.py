@@ -86,12 +86,29 @@ def contact_sheet(include_approved=False):
 def approve(keys):
     record=read_json(RECORD)
     if keys==["pending-sheet"]:keys=read_json(ROOT/"runtime/review-keys.json")
+    failures=read_json(MOD/"data/generation-failures.json")
+    held={a["source_sha256"] for a in failures.get("attempts",[]) if a.get("status")=="blocked"}
     for key in keys:
         row=record["portraits"][key]
+        if key in held:raise SystemExit("Cannot approve a held image-generation source")
+        if row.get("art_direction")!="hair-features-v1":raise SystemExit("Migrate legacy art before approval")
         if file_sha256(ROOT/row["image"])!=row["image_sha256"]:raise SystemExit("Image changed since import")
         row.update(review="approved",reviewed_at_utc=utc_now(),review_method="Visual comparison of input and output contact sheets by Codex")
+        if row.get("request_journal"):
+            path=ROOT/row["request_journal"];journal=read_json(path)
+            attempt=journal["attempts"][-1]
+            if attempt.get("output_sha256")!=row["image_sha256"]:raise SystemExit("Latest request does not bind reviewed image")
+            attempt.update(status="approved",reviewed_at_utc=utc_now(),review="approved")
+            write_json(path,journal)
     write_json(RECORD,record)
     print(f"Reviewed {len(keys)} image(s)")
+
+def reject(keys,reason):
+    record=read_json(RECORD)
+    for key in keys:
+        record["portraits"][key].update(review="rejected",review_reason=reason,reviewed_at_utc=utc_now())
+    write_json(RECORD,record)
+    print(f"Rejected {len(keys)} image(s)")
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
@@ -107,11 +124,15 @@ def main():
     add.add_argument("--replace-reason",help="Explicit correction of an already imported image; preserves previous provenance")
     review=sub.add_parser("approve")
     review.add_argument("keys",nargs="+")
+    rejection=sub.add_parser("reject")
+    rejection.add_argument("keys",nargs="+")
+    rejection.add_argument("--reason",required=True)
     args=parser.parse_args()
     if args.command=="import":ingest(args.key,args.image,args.prompt_file,args.replace_reason)
     elif args.command=="coverage":coverage(args.public)
     elif args.command=="sheet":contact_sheet(args.all)
-    else:approve(args.keys)
+    elif args.command=="approve":approve(args.keys)
+    else:reject(args.keys,args.reason)
 
 if __name__=="__main__":
     sys.stdout.reconfigure(encoding="utf-8")

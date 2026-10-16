@@ -1,7 +1,9 @@
 {
   "schema": "naiwa-generation-failures-v1",
   "held_source_paths": [
-    "gfx/leaders/GER/portrait_GER_adolf_hitler.dds"
+    "gfx/leaders/GER/portrait_GER_adolf_hitler.dds",
+    "gfx/aces/ace_m_1.dds",
+    "gfx/aces/CHI_Huang_Xinrui_ace.dds"
   ],
   "hold_note": "Pause automatic attempts for variants of the refused subject. Only the one explicit attempt below was sent and refused; the other variant has not been submitted. Held assets remain in the coverage denominator.",
   "attempts": [
@@ -18,6 +20,65 @@
       "machine_id": "bf-202609141645-5434332d4d",
       "source": "imagegen tool HTTP 400 response",
       "timestamp_precision": "approximate local record; service response did not include an exact timestamp"
+    },
+    {
+      "source_sha256": "8be8eea77d2e0465d562f049072297f6225bb3a3a99927e244f05e0bb3f34263",
+      "source_path": "gfx/aces/ace_m_1.dds",
+      "status": "blocked",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "observed_at_utc": "2026-10-16T06:13:21.969793+00:00",
+      "tool": "built-in imagegen",
+      "code": "moderation_blocked",
+      "stage": "output",
+      "categories": [
+        "other"
+      ],
+      "request_id": "475294af-913a-409b-b723-b3694620547a",
+      "prompt": "Use case: precise-object-edit.\nAsset type: one Hearts of Iron IV yellow mascot portrait, B variant in a hair/facial-hair A/B experiment.\nInput images: Image 1 is the PREVIOUS GENERATED A image and the edit target. Image 2 is the ORIGINAL HUMAN portrait, used ONLY to identify visible hair, eyebrows, moustache, beard, sideburns and hair accessories. Image 3 is the user's exact yellow 奶龙 mascot identity reference.\nPrimary request: edit Image 1 by restoring the original person's visible hairstyle and facial hair from Image 2 onto the yellow mascot. This B variant intentionally RETAINS original human hair and facial hair; the earlier bald/no-moustache rule is superseded for this experiment.\nChange only those visible hair-related features. Match their color, shape, parting, receding hairline, thickness and position, adapted to the mascot's round head. Where the original is bald, clean-shaven, or covered by headgear, preserve that absence or coverage instead of inventing hair.\nKeep the yellow mascot's smooth golden-yellow exposed skin, round creature head and body, large green-ringed black eyes and small horizontal mouth. Keep it unmistakably the provided mascot, with hair attached; do not restore a human face, human skin, human nose or human ears.\nKeep Image 1's clothing, glasses, hats, decorations, pose, gaze, expression, crop, scale, framing, lighting, painterly finish, background and aspect ratio as close to unchanged as possible. Preserve paper/photo frame decorations where present; do not create them on portraits that lack them.\nReturn ONE edited portrait, not a comparison board. No extra figure, new accessory, new text, label or watermark. Preserve real alpha transparency if Image 1 is transparent.\nVisible features for this source: The original has tousled wavy dark brown hair with a side part and dark eyebrows. Keep the face CLEAN-SHAVEN, with NO moustache or beard. Remove the thick invented moustache in the previous result. Keep this as a transparent pilot bust; no photograph frame or note card.",
+      "inputs": [
+        {
+          "role": "previous generated edit target",
+          "path": "mod_nailong/assets/legacy-before-hair/8be8eea77d2e0465d562f049072297f6225bb3a3a99927e244f05e0bb3f34263-b74eef27d0501d2e.png",
+          "sha256": "b74eef27d0501d2ebbf0fdf3234741389deabf2c5d577fb1b5621f07e57f5092"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "8be8eea77d2e0465d562f049072297f6225bb3a3a99927e244f05e0bb3f34263",
+          "converted_png_sha256": "ffc63a38c3fd5e615af8ed0b4b4ba676e121dcec301e73093ca4c17709d99834"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "source": "Actual built-in tool HTTP 400 error",
+      "retry": "No retry or alternate route after rejection; continue unrelated source images"
+    },
+    {
+      "source_sha256": "7e7af4f7d0c249f9596d73f2a1cf22289743b0773fd0470e7c409e714be9a333",
+      "source_path": "gfx/aces/CHI_Huang_Xinrui_ace.dds",
+      "status": "blocked",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "observed_at_utc": "2026-10-16T07:32:37.335204+00:00",
+      "tool": "built-in imagegen",
+      "code": "moderation_blocked",
+      "request_id": "8b667750-12bf-4d3e-8e8d-d4bd6a9fb7ce",
+      "actual_error": "image generation failed: http 400 Bad Request. Your request was rejected by the safety system. Request ID 8b667750-12bf-4d3e-8e8d-d4bd6a9fb7ce. type=image_generation_user_error; code=moderation_blocked; moderation_stage=output; categories=[other]. Source: actual built-in imagegen error on this request.\n",
+      "prompt": "Use case: compositing.\nAsset type: one original-size-compatible Hearts of Iron IV character portrait replacement.\nImage 1 is the original HOI4 portrait and composition target. Image 2 is the user's exact 奶龙 identity reference: a smooth golden-yellow round creature with green rings around black eyes, a small horizontal mouth and creamy belly.\nReplace the human head, body and exposed human skin with this recognizable yellow mascot. RETAIN the original person's visible hairstyle, hairline, hair color, eyebrows, moustache, beard and sideburns as distinguishing features attached to the mascot, adapting them to its round head. Match the original's parting, thickness, curls and facial-hair shape. Preserve a bald scalp or clean-shaven face only where the original actually has one. Do not invent hair hidden under a hat.\nPreserve the original clothing, uniform, headgear, glasses, decorations, accessories, expression, gaze, pose, action, framing, scale, lighting, background and painterly color treatment. No new hats, uniforms, medals or symbols. Use only visually present features; do not infer appearance from filenames or historical biographies.\nKeep the yellow creature's anatomy, large green-ringed black eyes and small horizontal mouth; do not restore human skin, human nose or human ears. Express the original mood through its creature eyes and mouth plus retained eyebrows.\nPreserve the source aspect ratio, crop and number of figures. Preserve real alpha transparency, photographic frames, note cards and existing decorative markings where present. Do not add such framing where absent. Polished painterly HOI4 finish, legible at the original in-game size. One source image to one asset. No comparison board, new text, label, watermark or extra figure.\n\nVisible source-specific features: Short thick black hair with a rounded side part and dark eyebrows; clean-shaven. Beige shirt. Transparent pilot bust, no frame or note.",
+      "inputs": [
+        {
+          "role": "original source portrait",
+          "raw_sha256": "7e7af4f7d0c249f9596d73f2a1cf22289743b0773fd0470e7c409e714be9a333",
+          "converted_png_sha256": "fc69cdb2d71c5114adc2daf10a802056c5ff114d7d0cac8e308a0fd4e826004b"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "retry": "No retry or alternate route after rejection; continue unrelated source images"
     }
   ]
 }

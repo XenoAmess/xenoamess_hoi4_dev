@@ -5,6 +5,7 @@ No API client: Codex calls the built-in tool separately for every distinct image
 from __future__ import annotations
 import argparse
 import io
+import re
 from pathlib import Path
 import shutil
 import sys
@@ -49,7 +50,7 @@ def prepare(key, prompt, edit_existing=False):
         {"role":"user mascot reference","path":"mod_nailong/assets/reference/naiwa.png","sha256":file_sha256(MOD/"assets/reference/naiwa.png")}])
     n=len(journal["attempts"])+1
     promptfile=MOD/"assets/prompts"/f"{key}-{n:03}.txt"
-    promptfile.parent.mkdir(parents=True,exist_ok=True);promptfile.write_text(prompt,encoding="utf-8")
+    promptfile.parent.mkdir(parents=True,exist_ok=True);promptfile.write_text(prompt,encoding="utf-8",newline="\n")
     attempt={"number":n,"status":"prepared","method":"built-in imagegen", "art_direction":"hair-features-v1",
         "prompt":prompt,"prompt_file":promptfile.relative_to(ROOT).as_posix(),"prompt_sha256":file_sha256(promptfile),
         "inputs":inputs,"edit_existing":edit_existing,"machine_id":machine_id(),"prepared_at_utc":utc_now()}
@@ -88,17 +89,39 @@ def finish(key,image):
     write_json(file,journal)
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument("command",choices=["legacy","prepare","finish","fail","cancel","reject"])
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument("command",choices=["legacy","batch","prepare","finish","fail","cancel","reject"])
     p.add_argument("--key");p.add_argument("--prompt-file",type=Path);p.add_argument("--edit-existing",action="store_true");p.add_argument("--image");p.add_argument("--message")
+    p.add_argument("--message-file",type=Path)
+    p.add_argument("--jobs-file",type=Path);p.add_argument("--directions-file",type=Path)
     args=p.parse_args()
     if args.command=="legacy":legacy()
+    elif args.command=="batch":
+        jobs=read_json(args.jobs_file);directions=read_json(args.directions_file)
+        if len(jobs)!=len(directions):raise SystemExit("Directions must bind every prepared source in order")
+        common=(MOD/"assets/portrait-prompt.txt").read_text(encoding="utf-8")
+        prepared=[prepare(j["key"],common+"\nVisible source-specific features: "+d,False) for j,d in zip(jobs,directions)]
+        write_json(ROOT/"runtime/current-hair-jobs.json",prepared)
+        print(f"Saved {len(prepared)} full prompts before any generation calls")
     elif args.command=="prepare":write_json(ROOT/"runtime/prepared-image-job.json",prepare(args.key,args.prompt_file.read_text(encoding="utf-8"),args.edit_existing))
     elif args.command=="finish":finish(args.key,args.image)
     else:
         file=REQUESTS/(args.key+".json");data=read_json(file)
         if args.command=="cancel":data["attempts"][-1].update(status="cancelled_before_generation",reason=args.message,observed_at_utc=utc_now())
         elif args.command=="reject":data["attempts"][-1].update(review="rejected",rejection_reason=args.message,reviewed_at_utc=utc_now())
-        else:data["attempts"][-1].update(status="failed",error=args.message,observed_at_utc=utc_now())
+        else:
+            error=args.message_file.read_text(encoding="utf-8") if args.message_file else args.message
+            a=data["attempts"][-1];a.update(status="failed",error=error,observed_at_utc=utc_now())
+            if "moderation_blocked" in error:
+                failures_path=MOD/"data/generation-failures.json";failures=read_json(failures_path)
+                asset=next(a for a in read_json(MOD/"data/catalog.json")["assets"] if a["source_sha256"]==args.key)
+                request_ids=re.findall(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",error)
+                failures.setdefault("attempts",[]).append({"source_sha256":args.key,"source_path":asset["path"],"status":"blocked",
+                    "machine_id":machine_id(),"observed_at_utc":utc_now(),"tool":"built-in imagegen","code":"moderation_blocked",
+                    "request_id":request_ids[0] if request_ids else None,"actual_error":error,"prompt":a["prompt"],"inputs":a["inputs"],
+                    "retry":"No retry or alternate route after rejection; continue unrelated source images"})
+                held=failures.setdefault("held_source_paths",[])
+                if asset["path"] not in held:held.append(asset["path"])
+                write_json(failures_path,failures)
         write_json(file,data)
 
 if __name__=="__main__":
