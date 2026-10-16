@@ -22,9 +22,11 @@ xenoamess_hoi4_dev/
 
 首个产品是 [奶蛙世界](mod_nailong/README.md)：逐原头像融合用户提供的奶蛙角色，保留衣物、神态和动作。全量生产尚在进行，**不是已完成的全人物替换包**；精确进度由 `portraits.py coverage` 读回。
 
-全量目标为 5,129 张不同原图，当前数量与快照时间见[生产进度](mod_nailong/data/progress.json)。用户已采用保留原人物发型、胡子等特征的版本，原 23 张不同原图/26 个资源的 A/B 对照已完成，后续按同一规则持续生产。首个开发包曾在实际游戏选国界面显示奶蛙头像，来源与范围见[首轮会话回执](mod_nailong/docs/session-2026-10-16.json)；新图不据此追认实机通过。内置图片工具的 1/4/8 路实测与吞吐边界见[并发记录](mod_nailong/docs/builtin-image-concurrency.md)。
+全量目标为 5,224 张不同原图，其中 4,521 张高优先级先制作；扫描器路径更正找回的 95 张小头像及前后口径见[库存更正](mod_nailong/docs/catalog-path-normalization.md)。当前数量与快照时间见[生产进度](mod_nailong/data/progress.json)。用户已采用保留原人物发型、胡子等特征的版本，并追加粗脖子与衣领的协调检查。原 23 张不同原图/26 个资源的 A/B 对照已完成，后续按同一规则持续生产。
 
-![首批已生成头像预览](mod_nailong/docs/media/portraits-preview.png)
+领口修正版已在实际选国页面和罗斯福信息卡显示，构建、机器和验收范围见[preview-007 实机回执](mod_nailong/docs/collar-preview-007-runtime.json)；其他新图仍需各自审查，不据局部画面追认全量通过。内置图片工具的 1/4/8 路实测与吞吐边界见[并发记录](mod_nailong/docs/builtin-image-concurrency.md)，目前按用户决定单路连续制作。
+
+![领口修正版的局部实机画面](mod_nailong/docs/media/2026-10-17-collar-preview-007.png)
 
 ```text
 python -m pip install -r requirements.txt

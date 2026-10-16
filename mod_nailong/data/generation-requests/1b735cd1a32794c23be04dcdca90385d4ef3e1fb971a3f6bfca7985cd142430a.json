@@ -27,6 +27,71 @@
       "prepared_at_utc": "2026-10-16T12:06:52.534616+00:00",
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 9603d047-06da-4834-9909-45949dec6849.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-16T12:15:47.958541+00:00"
+    },
+    {
+      "number": 2,
+      "status": "generated_rejected_visual_review",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: compositing.\nAsset type: one original-size-compatible Hearts of Iron IV character portrait replacement.\nImage 1 is the original HOI4 portrait and composition target. Image 2 is the user's exact 奶龙 identity reference: a smooth golden-yellow round creature with green rings around black eyes, a small horizontal mouth and creamy belly.\nReplace the human head, body and exposed human skin with this recognizable yellow mascot. RETAIN the original person's visible hairstyle, hairline, hair color, eyebrows, moustache, beard and sideburns as distinguishing features attached to the mascot, adapting them to its round head. Match the original's parting, thickness, curls and facial-hair shape. Preserve a bald scalp or clean-shaven face only where the original actually has one. Do not invent hair hidden under a hat.\nPreserve the original clothing, uniform, headgear, glasses, decorations, accessories, expression, gaze, pose, action, framing, scale, lighting, background and painterly color treatment. No new hats, uniforms, medals or symbols. Use only visually present features; do not infer appearance from filenames or historical biographies.\nKeep the yellow creature's anatomy, large green-ringed black eyes and small horizontal mouth; do not restore human skin, human nose or human ears. Express the original mood through its creature eyes and mouth plus retained eyebrows.\nPreserve the source aspect ratio, crop and number of figures. Preserve real alpha transparency, photographic frames, note cards and existing decorative markings where present. Do not add such framing where absent. Polished painterly HOI4 finish, legible at the original in-game size. One source image to one asset. No comparison board, new text, label, watermark or extra figure.\n\nVisible source-specific features: Bareheaded with thick short dark brown hair side-parted and swept over forehead. Clean-shaven, no moustache or beard. Dark military high-collar tunic, original shoulder boards and badge; stern slightly turned gaze. Preserve original transparency outside silhouette.\nOutput alpha: keep a genuine fully transparent RGBA background outside the portrait silhouette. No painted gray backdrop, halo, studio gradient or rectangular plate. Retain the source's clothing, hair, headgear and portrait crop.",
+      "prompt_file": "mod_nailong/assets/prompts/1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a-002.txt",
+      "prompt_sha256": "24713207cfd3f6ae1df2a9faa157eddbc1ddacc0db45b86c0bfec25d0ef9a238",
+      "inputs": [
+        {
+          "role": "original source portrait",
+          "raw_sha256": "1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a",
+          "converted_png_sha256": "3943f41c136ba3f504ae8055c28d353dea23ecbf8b074dd4c5c44717de8b6e32"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": false,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-16T20:36:05.728276+00:00",
+      "retry_of_attempt": 1,
+      "cooldown_not_before_utc": "2026-10-16T20:15:48.112770+00:00",
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "generated_at_utc": "2026-10-16T20:36:42.827937+00:00",
+      "fullsize_sha256": "bdc980473db9f092560350d88bf7d5c88929354f9ccc60d5e64e83cf5316df2b",
+      "output": "mod_nailong/assets/portraits/1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a.png",
+      "output_sha256": "72107025479f8ca84e1fe93ba8f4845ea3c1916b3120cb499a9dee26dc0ee78c",
+      "review": "rejected",
+      "rejection_reason": "long_yellow_neck_and_cream_bib_on_accepted_exact_retry",
+      "reviewed_at_utc": "2026-10-16T20:44:04.787409+00:00"
+    },
+    {
+      "number": 3,
+      "status": "failed",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit.\nAsset type: one HOI4 mascot portrait correction for coherent neck and clothing fit.\nImage 1 is the current generated yellow mascot portrait to edit. Image 2 is the original game portrait, specifying the original garment style, hair, facial hair, hat, accessories, pose, expression and fastening state. Image 3 is the user's exact mascot anatomy reference: a compact rounded golden-yellow creature with green-ringed black eyes and a small horizontal mouth.\nCorrect only the head-neck-collar-shoulder fit. Replace the overlong yellow cylinder or tapered neck stalk with a compact round head sitting LOW and close to broad shoulders, with almost no exposed neck. Do not squeeze a thick creature into a narrow human collar ring. Widen and retailor the original collar opening around the creature's actual neck base, so the whole base sits INSIDE it. The front collar cloth occludes the lower neck, and the rear collar sits behind it; show coherent fabric tension, contact shadow, seams and perspective. Preserve original fabric, collar style, tabs, piping, badges and existing decorations, adjusting their size/placement to the wider fitted collar. Do not add symbols, awards, accessories or a different outfit.\nCRITICAL fastening rule: if Image 2 has a closed, buttoned standing military collar, it must remain fully CLOSED and buttoned. Both front ends meet at the same level at the center seam; no deep V-shaped opening, unbuttoned tunic or exposed yellow chest wedge. Widen the whole collar circumference instead of opening its front. For an originally open shirt or lapel collar, preserve that open style and tie/scarf with correctly fitted overlapping layers. A white shirt collar or scarf stays textured fabric; it is not a cream belly patch.\nThe mascot keeps its yellow anatomy, green-ringed black eyes and small horizontal mouth. Preserve the original visible hairstyle, hairline, color, eyebrows, moustache and beard where actually present in Image 2; preserve a clean-shaven chin where appropriate. Do not invent facial hair, human skin, nose or ears. Preserve headgear, glasses, pipe, facial mood, head turn, shoulders/body orientation, painted background or genuine transparency, and source portrait aspect ratio. Preserve photo frames and note cards exactly where present. The cream belly stays under the clothes: no white/cream neck bib, skin-colored collar gap, detached ring, pinched fabric, clipped neck, floating collar or long giraffe/sausage neck. One final portrait, no comparison layout or new text.\n\nPRIMARY CORRECTION: Remove the enormous cream bib from the lower face/neck and remove the long yellow neck cylinder. Keep the original swept brown hair and stern brows, totally CLEAN-SHAVEN upper lip and chin. A SHORT ROUND head sits LOW directly on broad shoulders, chin immediately above the CLOSED olive standing collar. Widen and retailor the collar so the entire short neck base is inside the garment. Preserve original shoulder badges, brass buttons and uniform seams. The cream belly is entirely under opaque clothing. Keep true transparent RGBA outside the bust.\nOutput alpha: keep a genuine fully transparent RGBA background outside the portrait silhouette. No painted gray backdrop, halo, studio gradient or rectangular plate. Retain the source's clothing, hair, headgear and portrait crop.",
+      "prompt_file": "mod_nailong/assets/prompts/1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a-003.txt",
+      "prompt_sha256": "157f3e6120c5087e15ed5c331b89e207fc4e0d852c027456f1138875d16c80e8",
+      "inputs": [
+        {
+          "role": "previous generated edit target",
+          "path": "mod_nailong/assets/legacy-before-hair/1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a-72107025479f8ca8.png",
+          "sha256": "72107025479f8ca84e1fe93ba8f4845ea3c1916b3120cb499a9dee26dc0ee78c"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a",
+          "converted_png_sha256": "3943f41c136ba3f504ae8055c28d353dea23ecbf8b074dd4c5c44717de8b6e32"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-16T20:44:05.116733+00:00",
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 6673f2da-67fd-43b0-8265-5e75f3a27ad6.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
+      "observed_at_utc": "2026-10-16T20:46:47.542493+00:00"
     }
   ]
 }
