@@ -1,0 +1,107 @@
+"""Import imagegen output, review contact sheets, and report actual coverage.
+
+No image generation API or MCP dependency. Images are created with the built-in
+imagegen skill; this tool performs deterministic resize/format conversion only.
+"""
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now, write_json
+from PIL import Image, ImageDraw
+
+MOD = ROOT / "mod_nailong"
+RECORD = MOD / "data/generated.json"
+CATALOG = MOD / "data/catalog.json"
+
+def coverage():
+    catalog=read_json(CATALOG)
+    generated=read_json(RECORD)["portraits"]
+    covered=[a for a in catalog["assets"] if a["source_sha256"] in generated]
+    reviewed=[a for a in covered if generated[a["source_sha256"]]["review"]=="approved"]
+    result={"machine_id":machine_id(),"observed_at_utc":utc_now(),"catalog_sha256":file_sha256(CATALOG),"textures_total":len(catalog["assets"]),"textures_generated":len(covered),"textures_reviewed":len(reviewed),"unique_total":catalog["counts"]["distinct_source_images"],"unique_generated":len(generated),"unresolved_baseline_references":len(catalog["unresolved_references"]),"status":"art-complete" if len(reviewed)==len(catalog["assets"]) else "incomplete"}
+    write_json(ROOT/"runtime/coverage.json",result)
+    print(__import__('json').dumps(result,ensure_ascii=False,indent=2))
+    return result
+
+def ingest(key, image_path, prompt_file):
+    catalog=read_json(CATALOG)
+    assets=[a for a in catalog["assets"] if a["source_sha256"]==key]
+    if not assets:raise SystemExit("Unknown source SHA; inventory must precede generation")
+    record=read_json(RECORD)
+    if key in record["portraits"]:raise SystemExit("Already imported; use a new explicit revision to replace")
+    sizes={tuple(a["size"]) for a in assets}
+    if len(sizes)!=1:raise SystemExit("Identical bytes decoded to inconsistent dimensions")
+    image_path=Path(image_path)
+    out=MOD/"assets/portraits"/(key+".png")
+    out.parent.mkdir(parents=True,exist_ok=True)
+    with Image.open(image_path) as image:
+        original_size=list(image.size)
+        # Technical normalization only: no collage, retouching, face substitution or drawing.
+        image.convert("RGBA").resize(next(iter(sizes)),Image.Resampling.LANCZOS).save(out,optimize=True)
+    prompt=Path(prompt_file).read_text(encoding="utf-8")
+    record["portraits"][key]={"source_sha256":key,"reference_sha256":file_sha256(MOD/"assets/reference/naiwa.png"),"method":"built-in imagegen; original portrait + user reference","prompt":prompt,"generated_fullsize_sha256":file_sha256(image_path),"generated_fullsize_size":original_size,"image":out.relative_to(ROOT).as_posix(),"image_sha256":file_sha256(out),"size":list(next(iter(sizes))),"review":"pending","machine_id":machine_id(),"imported_at_utc":utc_now()}
+    write_json(RECORD,record)
+    # Machine-local full-size origin stays out of the public manifest and Git.
+    fullsize=ROOT/"runtime/generated-origins"/(key+".json")
+    write_json(fullsize,{"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":str(image_path.resolve()),"sha256":file_sha256(image_path),"review_at_utc":__import__('datetime').datetime.fromtimestamp(__import__('time').time()+7*86400,__import__('datetime').timezone.utc).isoformat(),"reason":"Fullsize source available during art review; canonical resized deliverable is in Git"})
+    print(f"Imported {key[:12]} -> {out.relative_to(ROOT)}")
+
+def contact_sheet():
+    catalog=read_json(CATALOG)
+    record=read_json(RECORD)["portraits"]
+    pending=[(key,row) for key,row in record.items() if row["review"]=="pending"]
+    if not pending:
+        print("No pending art reviews")
+        return
+    columns=min(8,len(pending))
+    sheet=Image.new("RGB",(columns*180,((len(pending)+columns-1)//columns)*252),"#dcd9d2")
+    draw=ImageDraw.Draw(sheet)
+    for i,(key,row) in enumerate(pending):
+        with Image.open(ROOT/row["image"]) as image:
+            # Nearest display enlargement keeps the actual tiny in-game pixels apparent.
+            image.thumbnail((156,210))
+            if image.height<120:image=image.resize((min(156,image.width*2),min(210,image.height*2)))
+            x,y=(i%columns)*180+8,(i//columns)*252+4
+            sheet.paste(image,(x,y),image.getchannel("A"))
+            draw.text((x,y+214),f"{i+1} {key[:10]}",fill="black")
+            source=next(a["path"] for a in catalog["assets"] if a["source_sha256"]==key)
+            draw.text((x,y+230),Path(source).stem[-23:],fill="black")
+    path=ROOT/"runtime/output-contact-sheet.png"
+    sheet.save(path)
+    write_json(ROOT/"runtime/review-keys.json",[key for key,_ in pending])
+    print(path)
+
+def approve(keys):
+    record=read_json(RECORD)
+    if keys==["pending-sheet"]:keys=read_json(ROOT/"runtime/review-keys.json")
+    for key in keys:
+        row=record["portraits"][key]
+        if file_sha256(ROOT/row["image"])!=row["image_sha256"]:raise SystemExit("Image changed since import")
+        row.update(review="approved",reviewed_at_utc=utc_now(),review_method="Visual comparison of input and output contact sheets by Codex")
+    write_json(RECORD,record)
+    print(f"Reviewed {len(keys)} image(s)")
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    sub=parser.add_subparsers(dest="command",required=True)
+    sub.add_parser("coverage")
+    sub.add_parser("sheet")
+    add=sub.add_parser("import")
+    add.add_argument("--key",required=True)
+    add.add_argument("--image",required=True)
+    add.add_argument("--prompt-file",default=str(MOD/"assets/portrait-prompt.txt"))
+    review=sub.add_parser("approve")
+    review.add_argument("keys",nargs="+")
+    args=parser.parse_args()
+    if args.command=="import":ingest(args.key,args.image,args.prompt_file)
+    elif args.command=="coverage":coverage()
+    elif args.command=="sheet":contact_sheet()
+    else:approve(args.keys)
+
+if __name__=="__main__":
+    sys.stdout.reconfigure(encoding="utf-8")
+    main()
