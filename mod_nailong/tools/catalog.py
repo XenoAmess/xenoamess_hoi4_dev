@@ -24,6 +24,11 @@ NON_PORTRAIT_TEXTURES = {
 }
 TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|#[^\n]*|[{}=]|[^\s{}=#"]+')
 
+def virtual_texture_path(value):
+    # Quoted game strings often contain escaped/doubled separators.
+    # Canonicalize separators before matching real virtual texture paths.
+    return re.sub(r'/+', '/', value.replace('\\','/'))
+
 def tokens(text):
     for match in TOKEN.finditer(text):
         token = match.group(0)
@@ -71,7 +76,7 @@ def sprite_definitions(text):
                 values[token.lower()] = ts[j+2]
             j += 1
         if "name" in values and "texturefile" in values:
-            result.append((values["name"], values["texturefile"].replace("\\", "/")))
+            result.append((values["name"], virtual_texture_path(values["texturefile"])))
     return result
 
 def sources(install: Path):
@@ -128,7 +133,7 @@ def inventory(install):
     unresolved = []
     reference_map = defaultdict(list)
     for ref in refs:
-        value = ref["value"].lower().replace("\\", "/")
+        value = virtual_texture_path(ref["value"]).lower()
         targets = [value] if value in textures else [t for t, _ in sprites.get(value, [])]
         if not targets:
             unresolved.append(ref)

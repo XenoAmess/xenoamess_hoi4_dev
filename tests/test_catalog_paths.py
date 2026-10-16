@@ -1,0 +1,27 @@
+"""Actual sprite/character resolution across doubled Windows game separators."""
+import tempfile
+from pathlib import Path
+import unittest
+from unittest.mock import patch
+from PIL import Image
+from tools.common import write_json
+from mod_nailong.tools import catalog
+
+class CatalogPathTests(unittest.TestCase):
+    def test_sprite_and_direct_path_resolve_to_existing_texture(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);game=root/'game';mod=root/'mod_nailong'
+            image=game/'gfx/leaders/AST/portrait.png';image.parent.mkdir(parents=True)
+            Image.new('RGBA',(2,2),'white').save(image)
+            interface=game/'interface';interface.mkdir()
+            (interface/'portraits.gfx').write_text('spriteTypes = { spriteType = { name = "GFX_AST_test" texturefile = "gfx\\\\leaders\\\\AST\\\\portrait.png" } }',encoding='utf-8')
+            chars=game/'common/characters';chars.mkdir(parents=True)
+            (chars/'AST.txt').write_text('characters = { AST_test = { portraits = { civilian = { large = "GFX_AST_test" small = "gfx//leaders//AST//portrait.png" } } } }',encoding='utf-8')
+            write_json(game/'launcher-settings.json',{'rawVersion':'test-version'})
+            (game/'hoi4.exe').write_bytes(b'test-only-executable-identity')
+            with patch.object(catalog,'ROOT',root),patch.object(catalog,'MOD',mod),patch.object(catalog,'machine_id',return_value='test-machine'):
+                result=catalog.inventory(game)
+            self.assertEqual(result['counts']['distinct_source_images'],1)
+            self.assertEqual(result['unresolved_references'],[])
+            self.assertEqual(len(result['assets'][0]['references']),2)
+            self.assertEqual({r['character'] for r in result['assets'][0]['references']},{'AST_test'})

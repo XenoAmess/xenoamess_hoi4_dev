@@ -14,7 +14,7 @@ def main():
     if not output.is_relative_to((ROOT/'runtime').resolve()):raise SystemExit('Review sheets must remain under ignored runtime')
     output.mkdir(parents=True,exist_ok=True)
     rows=read_json(ROOT/'mod_nailong/data/generated.json')['portraits']
-    jobs=[j for j in read_json(args.jobs_file) if j['key'] in rows]
+    jobs=[j for j in read_json(args.jobs_file) if j['key'] in rows and ('prompt' not in j or rows[j['key']]['prompt']==j['prompt'])]
     pages=[]
     for start in range(0,len(jobs),9):
         page=Image.new('RGB',(3*340,3*250),'#dedbd3');draw=ImageDraw.Draw(page)

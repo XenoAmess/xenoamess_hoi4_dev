@@ -139,6 +139,9 @@ def main():
             if data["attempts"][-1].get("retry_of_attempt"):
                 queue["sources"][args.key].update(state="retry_failed_no_more_automatic_retries",failed_at_utc=utc_now())
                 write_json(MOD/"data/image-retry-queue.json",queue)
+            elif queue.get('sources',{}).get(args.key,{}).get('retries_used',0)>=1:
+                queue['sources'][args.key].update(state='new_art_request_refused_retry_quota_exhausted',latest_refusal_at_utc=utc_now(),latest_refused_prompt_sha256=data['attempts'][-1]['prompt_sha256'])
+                write_json(MOD/'data/image-retry-queue.json',queue)
 
 if __name__=="__main__":
     sys.stdout.reconfigure(encoding="utf-8");main()
