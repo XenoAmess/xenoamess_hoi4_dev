@@ -117,7 +117,11 @@ def inventory(install):
         lower = path.lower()
         if Path(path).suffix.lower() in TEXTURE_EXTENSIONS:
             textures[lower].append(i)
-            if lower.startswith("gfx/leaders/") or "/portraits/" in lower or lower.startswith("gfx/aces/"):
+            # Explicit portrait filenames also exist as unbound advisor cards,
+            # sometimes with GFX_idea_* sprites rather than GFX_portrait_*.
+            # Keep those original assets even without a live character binding.
+            if (lower.startswith("gfx/leaders/") or "/portraits/" in lower
+                    or lower.startswith(("gfx/aces/", "gfx/interface/ideas/portrait_"))):
                 candidates.add(lower)
         elif lower.endswith(".gfx"):
             for name, texture in sprite_definitions(read_source(row).decode("utf-8-sig", errors="replace")):

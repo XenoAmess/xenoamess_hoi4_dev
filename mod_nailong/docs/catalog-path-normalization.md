@@ -21,3 +21,6 @@
 旧 catalog 与引用报告由公开提交 `f38a0ca` 保全；旧日报、实验、实机及进度快照按当时口径保留。当前数量使用生成器重建的 catalog、production-priority 与 progress。机器、前后 SHA、95 个新增来源及审查页哈希见 [机器可读更正](../data/catalog-path-normalization-correction.json)。原图对照页仅留本机，不公开复制游戏图片。
 
 剩余 748 次仍是当前扫描器未解析的引用，不能断言全部属于原版缺陷，也未据此证明引擎会显示何种 fallback。后续继续分析，正式完整覆盖门禁仍保留这些未决项。
+# 后续库存更新
+
+本页记录路径归一化这一次更正的历史数量。之后又找回未绑定角色的 15 个小头像资源实例，净增 14 张不同原图；当前总量见[独立卡片补漏](catalog-unbound-portrait-cards.md)与[进度快照](../data/progress.json)，本页原始前后计数和 SHA 保留。

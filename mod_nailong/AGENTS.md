@@ -5,6 +5,7 @@
 - `assets/reference/naiwa.png` 是用户 ZIP 提供的唯一角色身份基准。
 - `assets/portraits/<source_sha256>.png` 是逐原图生成并技术缩放后的可重建输入；`data/generated.json` 保存每张来源、提示词、结果与审图。
 - `data/catalog.json` 包含原版与本机已安装 DLC 的大/小人物头像库存；生成批次可续跑。原图完全相同才允许去重，不能按相近衣服或同一人物姓名合并不同变体。
+- 明确的 `gfx/interface/ideas/portrait_*` 人物文件即使未绑定角色、没有标准 `GFX_portrait_*` 名字也须纳入；新增范围先实际审图，不能把技术蒙版或背景面板整批当人物。补漏保留旧库存 SHA、前后数量和来源证据。
 - `mod/` 是游戏 payload 源；`mod/gfx/` 由工具生成并忽略；`dist/` 是构建输出，均不手工修改。仅 `tools/build_release.py` 可形成发布 staging。
 - 正式构建要求库存无未解析引用、覆盖 100%、每张通过审图；`--preview` 是明确不完整开发包，不得声称正式发布或全人物通过。
 - 先完成头像，再考虑 UI 主题。不要为补齐数量而把顾问头像、间谍、通用人物或 DLC 隐藏到分母外。
