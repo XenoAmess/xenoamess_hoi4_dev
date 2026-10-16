@@ -21,6 +21,8 @@ def audit():
         assert file_sha256(path)==row['image_sha256'],str(path)
         with Image.open(path) as im:assert list(im.size)==source_sizes[key],key
         if row['review']=='approved':
+            from mod_nailong.tools.art_contract import portrait_ready
+            assert portrait_ready(row),'Missing/current-image-mismatched collar review: '+key
             assert row.get('art_direction')=='hair-features-v1',key
             assert key not in blocked,key
             approved+=1

@@ -18,11 +18,19 @@ RECORD = MOD / "data/generated.json"
 CATALOG = MOD / "data/catalog.json"
 
 def coverage(publish=False):
+    from mod_nailong.tools.art_contract import portrait_ready
     catalog=read_json(CATALOG)
     generated=read_json(RECORD)["portraits"]
     covered=[a for a in catalog["assets"] if a["source_sha256"] in generated]
-    reviewed=[a for a in covered if generated[a["source_sha256"]]["review"]=="approved" and generated[a["source_sha256"]].get("art_direction")=="hair-features-v1"]
+    reviewed=[a for a in covered if portrait_ready(generated[a["source_sha256"]])]
     result={"machine_id":machine_id(),"observed_at_utc":utc_now(),"catalog_sha256":file_sha256(CATALOG),"textures_total":len(catalog["assets"]),"textures_generated":len(covered),"textures_reviewed":len(reviewed),"unique_total":catalog["counts"]["distinct_source_images"],"unique_generated":len(generated),"unresolved_baseline_references":len(catalog["unresolved_references"]),"status":"art-complete" if len(reviewed)==len(catalog["assets"]) else "incomplete"}
+    result['unique_reviewed']=len({a['source_sha256'] for a in reviewed})
+    priority_path=MOD/'data/production-priority.json'
+    if priority_path.exists():
+        entries=read_json(priority_path)['sources']
+        high={k for k,e in entries.items() if e['high_priority']}
+        high_done={k for k in high if k in generated and portrait_ready(generated[k])}
+        result.update(high_priority_total=len(high),high_priority_reviewed=len(high_done),high_priority_remaining=len(high-high_done),lower_priority_locked=bool(high-high_done))
     write_json(ROOT/"runtime/coverage.json",result)
     if publish:write_json(MOD/"data/progress.json",result)
     print(__import__('json').dumps(result,ensure_ascii=False,indent=2))
@@ -97,6 +105,7 @@ def approve(keys):
         if row.get("art_direction")!="hair-features-v1":raise SystemExit("Migrate legacy art before approval")
         if file_sha256(ROOT/row["image"])!=row["image_sha256"]:raise SystemExit("Image changed since import")
         row.update(review="approved",reviewed_at_utc=utc_now(),review_method="Visual comparison of input and output contact sheets by Codex")
+        row['collar_fit']={'policy':'collar-fit-v1','status':'approved','image_sha256':row['image_sha256'],'reviewed_at_utc':utc_now(),'review_method':'Visual inspection of neck width, collar opening, front/back occlusion, fastening and absence of cream neck bib'}
         if row.get("request_journal"):
             path=ROOT/row["request_journal"];journal=read_json(path)
             attempt=journal["attempts"][-1]

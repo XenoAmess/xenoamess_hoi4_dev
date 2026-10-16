@@ -17,7 +17,8 @@ from PIL import Image
 MOD=ROOT/"mod_nailong"
 
 def ready(row):
-    return row.get("review")=="approved" and row.get("art_direction")=="hair-features-v1"
+    from mod_nailong.tools.art_contract import portrait_ready
+    return portrait_ready(row)
 
 def payload(preview=False, packages=None):
     catalog=read_json(MOD/"data/catalog.json")

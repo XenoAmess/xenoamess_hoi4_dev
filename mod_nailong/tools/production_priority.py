@@ -10,6 +10,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.common import ROOT, file_sha256, game_root, machine_id, read_json, sha256, utc_now, write_json
 from mod_nailong.tools.catalog import sources, read_source, tokens
+from mod_nailong.tools.art_contract import portrait_ready
 
 MOD = ROOT / 'mod_nailong'
 REPORT = MOD / 'data/production-priority.json'
@@ -109,7 +110,7 @@ def classify(catalog, roles):
     return entries
 
 def gate_lower_priority(eligible, entries, generated):
-    approved={k for k,r in generated.items() if r.get('review')=='approved' and r.get('art_direction')=='hair-features-v1'}
+    approved={k for k,r in generated.items() if portrait_ready(r)}
     incomplete={k for k,e in entries.items() if e['high_priority'] and k not in approved}
     return ([a for a in eligible if entries[a['source_sha256']]['high_priority']] if incomplete else eligible), incomplete
 
@@ -125,7 +126,7 @@ def build(catalog=None, install=None):
         for character, role in character_blocks(raw.decode('utf-8-sig',errors='replace')):
             roles[character].add(role)
     entries = classify(catalog, roles)
-    approved = {k for k,r in read_json(MOD/'data/generated.json')['portraits'].items() if r.get('review')=='approved' and r.get('art_direction')=='hair-features-v1'}
+    approved = {k for k,r in read_json(MOD/'data/generated.json')['portraits'].items() if portrait_ready(r)}
     categories = {}
     for name, group in ROLE_GROUPS.items():
         keys = {k for k,e in entries.items() if name in e['categories']}

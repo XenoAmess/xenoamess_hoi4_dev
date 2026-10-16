@@ -35,7 +35,7 @@
     },
     {
       "number": 2,
-      "status": "approved",
+      "status": "generated_rejected_visual_review",
       "method": "built-in imagegen",
       "art_direction": "hair-features-v1",
       "prompt": "Use case: precise-object-edit. Asset type: one HOI4 portrait correction. Image 1 is the generated yellow mascot portrait to edit. Image 2 is the original game portrait for visible source features only. Image 3 is the user mascot reference for yellow anatomy, large green-ringed black eyes and small horizontal mouth. Retain original visible hair, eyebrows, moustache/beard only where actually present in Image 2. No human skin, human nose or human ears. One portrait, original crop and aspect ratio, no new symbols, text, extra objects or comparison layout. Requested correction: Remove the incorrectly added painted gray background and halo: everything outside the existing bust silhouette must be fully transparent RGBA. Keep the already generated yellow mascot portrait, its hairstyle, eyebrows, facial hair, outfit, pose, head angle and expression unchanged. Do not replace the backdrop with a solid color, gradient or checkerboard.\nOutput alpha: keep a genuine fully transparent RGBA background outside the portrait silhouette. No painted gray backdrop, halo, studio gradient or rectangular plate. Retain the source's clothing, hair, headgear and portrait crop.",
@@ -65,7 +65,44 @@
       "fullsize_sha256": "c0f0d5e38dd8f4a6932c63bed1c1d351e376f6cae20a8a94857bb9bf008ede5e",
       "output": "mod_nailong/assets/portraits/41f3a8e84dff7541248292239a656a9b92596e183695857e2107a279fb6d6e34.png",
       "output_sha256": "00cfd273dbd32e3f25748d4005a6b7561157f849563583e6be0ef9b3721e3f47",
-      "reviewed_at_utc": "2026-10-16T11:25:11.499059+00:00",
+      "reviewed_at_utc": "2026-10-16T16:15:28.171754+00:00",
+      "review": "rejected",
+      "rejection_reason": "collar_fit_audit_requires_regeneration"
+    },
+    {
+      "number": 3,
+      "status": "approved",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit.\nAsset type: one HOI4 mascot portrait correction for coherent neck and clothing fit.\nImage 1 is the current generated yellow mascot portrait to edit. Image 2 is the original game portrait, specifying the original garment style, hair, facial hair, hat, accessories, pose, expression and fastening state. Image 3 is the user's exact mascot anatomy reference: a compact rounded golden-yellow creature with green-ringed black eyes and a small horizontal mouth.\nCorrect only the head-neck-collar-shoulder fit. Replace the overlong yellow cylinder or tapered neck stalk with a compact round head sitting LOW and close to broad shoulders, with almost no exposed neck. Do not squeeze a thick creature into a narrow human collar ring. Widen and retailor the original collar opening around the creature's actual neck base, so the whole base sits INSIDE it. The front collar cloth occludes the lower neck, and the rear collar sits behind it; show coherent fabric tension, contact shadow, seams and perspective. Preserve original fabric, collar style, tabs, piping, badges and existing decorations, adjusting their size/placement to the wider fitted collar. Do not add symbols, awards, accessories or a different outfit.\nCRITICAL fastening rule: if Image 2 has a closed, buttoned standing military collar, it must remain fully CLOSED and buttoned. Both front ends meet at the same level at the center seam; no deep V-shaped opening, unbuttoned tunic or exposed yellow chest wedge. Widen the whole collar circumference instead of opening its front. For an originally open shirt or lapel collar, preserve that open style and tie/scarf with correctly fitted overlapping layers. A white shirt collar or scarf stays textured fabric; it is not a cream belly patch.\nThe mascot keeps its yellow anatomy, green-ringed black eyes and small horizontal mouth. Preserve the original visible hairstyle, hairline, color, eyebrows, moustache and beard where actually present in Image 2; preserve a clean-shaven chin where appropriate. Do not invent facial hair, human skin, nose or ears. Preserve headgear, glasses, pipe, facial mood, head turn, shoulders/body orientation, painted background or genuine transparency, and source portrait aspect ratio. Preserve photo frames and note cards exactly where present. The cream belly stays under the clothes: no white/cream neck bib, skin-colored collar gap, detached ring, pinched fabric, clipped neck, floating collar or long giraffe/sausage neck. One final portrait, no comparison layout or new text.\n\nOutput alpha: keep a genuine fully transparent RGBA background outside the portrait silhouette. No painted gray backdrop, halo, studio gradient or rectangular plate. Retain the source's clothing, hair, headgear and portrait crop.",
+      "prompt_file": "mod_nailong/assets/prompts/41f3a8e84dff7541248292239a656a9b92596e183695857e2107a279fb6d6e34-003.txt",
+      "prompt_sha256": "5a9d3f5dce7438054e36e91796b5183063747986a71e2dfc8ac145af8da37b25",
+      "inputs": [
+        {
+          "role": "previous generated edit target",
+          "path": "mod_nailong/assets/legacy-before-hair/41f3a8e84dff7541248292239a656a9b92596e183695857e2107a279fb6d6e34-00cfd273dbd32e3f.png",
+          "sha256": "00cfd273dbd32e3f25748d4005a6b7561157f849563583e6be0ef9b3721e3f47"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "41f3a8e84dff7541248292239a656a9b92596e183695857e2107a279fb6d6e34",
+          "converted_png_sha256": "53afcee6aef8caf3cf37172c47b33b254921f838ea9feb6cb3481a0a9952002a"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-16T16:17:11.380390+00:00",
+      "revision_goal": "collar-fit-v1",
+      "generated_at_utc": "2026-10-16T17:23:16.029991+00:00",
+      "fullsize_sha256": "a9bb2e1236639f2ade03768a96cbe551051cac6103e4a3d6299c22eb6b941b0e",
+      "output": "mod_nailong/assets/portraits/41f3a8e84dff7541248292239a656a9b92596e183695857e2107a279fb6d6e34.png",
+      "output_sha256": "d087499495b8b45bf001b1257d5a108558dbe958b4b91f762715f69f53ac77ac",
+      "reviewed_at_utc": "2026-10-16T17:58:26.480215+00:00",
       "review": "approved"
     }
   ]

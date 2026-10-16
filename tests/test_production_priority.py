@@ -18,10 +18,15 @@ class ProductionPriorityTests(unittest.TestCase):
         entries={'high':{'high_priority':True},'low':{'high_priority':False}}
         available=[{'source_sha256':'low'}]
         for records in [{},{'high':{'review':'rejected','art_direction':'hair-features-v1'}},
-                        {'high':{'review':'approved','art_direction':'legacy'}}]:
+                        {'high':{'review':'approved','art_direction':'legacy'}},
+                        {'high':{'review':'approved','art_direction':'hair-features-v1'}}]:
             selected,incomplete=gate_lower_priority(available,entries,records)
             self.assertEqual(selected,[])
             self.assertEqual(incomplete,{'high'})
-        selected,incomplete=gate_lower_priority(available,entries,{'high':{'review':'approved','art_direction':'hair-features-v1'}})
+        ready={'review':'approved','art_direction':'hair-features-v1','image_sha256':'reviewed-image',
+               'collar_fit':{'policy':'collar-fit-v1','status':'approved','image_sha256':'reviewed-image'}}
+        selected,incomplete=gate_lower_priority(available,entries,{'high':ready})
         self.assertEqual(selected,available)
         self.assertFalse(incomplete)
+        ready['collar_fit']['image_sha256']='different-image'
+        self.assertFalse(gate_lower_priority(available,entries,{'high':ready})[0])
