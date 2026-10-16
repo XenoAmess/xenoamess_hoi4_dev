@@ -18,6 +18,10 @@ from PIL import Image, ImageDraw
 
 MOD = ROOT / "mod_nailong"
 TEXTURE_EXTENSIONS = {".dds", ".tga", ".png"}
+NON_PORTRAIT_TEXTURES = {
+    "gfx/aces/ace_kia.dds": "Coffin/cross status icon; no person to transform (visually reviewed 2026-10-16)",
+    "gfx/aces/ace_none.dds": "Playing-card placeholder icon; no person to transform (visually reviewed 2026-10-16)",
+}
 TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|#[^\n]*|[{}=]|[^\s{}=#"]+')
 
 def tokens(text):
@@ -142,6 +146,8 @@ def inventory(install):
                     candidates.add(texture)
     assets = []
     for texture in sorted(candidates):
+        if texture in NON_PORTRAIT_TEXTURES:
+            continue
         for source_index in textures.get(texture, []):
             row = rows[source_index]
             raw = read_source(row)
@@ -157,7 +163,7 @@ def inventory(install):
                 asset["archive_member"] = row[3]
             assets.append(asset)
     launcher = __import__("json").loads((install / "launcher-settings.json").read_text(encoding="utf-8"))
-    catalog = {"schema": "naiwa-portrait-catalog-v1", "generated_notice": "GENERATED FILE: run catalog.py", "observed_at_utc": utc_now(), "machine_id": machine_id(), "game_version": launcher["rawVersion"], "exe_sha256": file_sha256(install/"hoi4.exe"), "scope": "Vanilla plus all locally installed DLC assets; other Workshop mods are outside this catalog", "assets": assets, "unresolved_references": unresolved, "counts": {"textures": len(assets), "distinct_source_images": len({a["source_sha256"] for a in assets}), "character_references": len(refs), "unresolved_references": len(unresolved)}}
+    catalog = {"schema": "naiwa-portrait-catalog-v1", "generated_notice": "GENERATED FILE: run catalog.py", "observed_at_utc": utc_now(), "machine_id": machine_id(), "game_version": launcher["rawVersion"], "exe_sha256": file_sha256(install/"hoi4.exe"), "scope": "Vanilla plus all locally installed DLC assets; other Workshop mods are outside this catalog", "excluded_non_portrait_assets": NON_PORTRAIT_TEXTURES, "assets": assets, "unresolved_references": unresolved, "counts": {"textures": len(assets), "distinct_source_images": len({a["source_sha256"] for a in assets}), "character_references": len(refs), "unresolved_references": len(unresolved)}}
     write_json(MOD / "data/catalog.json", catalog)
     print(catalog["counts"])
     print("PACKAGES", dict(__import__("collections").Counter(a["package"] for a in assets)))
@@ -166,7 +172,7 @@ def inventory(install):
     write_json(ROOT / "runtime/source-index.json", {a["id"]: {"path": str(rows[i][2]), "member": rows[i][3]} for a in assets for i in textures[a["path"].lower()] if rows[i][0]==a["package"]})
     return catalog
 
-def prepare(catalog, limit=16, offset=0):
+def prepare(catalog, limit=16, offset=0, match=None):
     from tools.common import read_json
     generated = read_json(MOD / "data/generated.json")["portraits"]
     source_index = read_json(ROOT / "runtime/source-index.json")
@@ -176,7 +182,7 @@ def prepare(catalog, limit=16, offset=0):
         if key not in generated and key not in seen:
             pending.append(asset)
             seen.add(key)
-    priority_names = ["churchill", "chiang_kai", "franklin_roosevelt", "joseph_stalin", "adolf_hitler", "benito_mussolini", "charles_de_gaulle", "mao_zedong", "hirohito"]
+    priority_names = ["pierre_laval", "stanley_baldwin", "churchill", "chiang_kai", "franklin_roosevelt", "joseph_stalin", "adolf_hitler", "benito_mussolini", "charles_de_gaulle", "mao_zedong", "hirohito"]
     def priority(asset):
         name = asset["path"].lower()
         rank = next((i for i, word in enumerate(priority_names) if word in name), 100)
@@ -187,6 +193,8 @@ def prepare(catalog, limit=16, offset=0):
     blocked_keys={row["source_sha256"] for row in failures.get("attempts",[]) if row.get("status")=="blocked"}
     held_paths={path.lower() for path in failures.get("held_source_paths",[])}
     eligible=[asset for asset in pending if asset["source_sha256"] not in blocked_keys and asset["path"].lower() not in held_paths]
+    held_count=len(pending)-len(eligible)
+    if match:eligible=[asset for asset in eligible if match.lower() in asset["path"].lower()]
     selected = eligible[offset:offset+limit]
     jobs = []
     for asset in selected:
@@ -218,7 +226,7 @@ def prepare(catalog, limit=16, offset=0):
                 draw.text((x,y+212), f"{index+1} {job['key'][:8]}", fill="black")
                 draw.text((x,y+228), Path(job["source"]).stem[-22:], fill="black")
         sheet.save(ROOT / "runtime/input-contact-sheet.png")
-    print({"pending_unique_images": len(pending),"held_after_service_refusal":len(pending)-len(eligible), "prepared": len(jobs), "contact_sheet": "runtime/input-contact-sheet.png"})
+    print({"pending_unique_images": len(pending),"held_after_service_refusal":held_count,"matching_eligible_images":len(eligible), "prepared": len(jobs), "contact_sheet": "runtime/input-contact-sheet.png"})
     return jobs
 
 def main():
@@ -227,12 +235,13 @@ def main():
     parser.add_argument("--game-root")
     parser.add_argument("--limit", type=int, default=16)
     parser.add_argument("--offset", type=int, default=0)
+    parser.add_argument("--match",help="Filter pending source paths by case-insensitive substring, e.g. /FRA/ or pierre_laval")
     args=parser.parse_args()
     if args.command=="scan":
         inventory(game_root(args.game_root))
     else:
         from tools.common import read_json
-        prepare(read_json(MOD/"data/catalog.json"),args.limit,args.offset)
+        prepare(read_json(MOD/"data/catalog.json"),args.limit,args.offset,args.match)
 
 if __name__=="__main__":
     sys.stdout.reconfigure(encoding="utf-8")

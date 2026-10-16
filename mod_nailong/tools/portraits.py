@@ -17,22 +17,24 @@ MOD = ROOT / "mod_nailong"
 RECORD = MOD / "data/generated.json"
 CATALOG = MOD / "data/catalog.json"
 
-def coverage():
+def coverage(publish=False):
     catalog=read_json(CATALOG)
     generated=read_json(RECORD)["portraits"]
     covered=[a for a in catalog["assets"] if a["source_sha256"] in generated]
     reviewed=[a for a in covered if generated[a["source_sha256"]]["review"]=="approved"]
     result={"machine_id":machine_id(),"observed_at_utc":utc_now(),"catalog_sha256":file_sha256(CATALOG),"textures_total":len(catalog["assets"]),"textures_generated":len(covered),"textures_reviewed":len(reviewed),"unique_total":catalog["counts"]["distinct_source_images"],"unique_generated":len(generated),"unresolved_baseline_references":len(catalog["unresolved_references"]),"status":"art-complete" if len(reviewed)==len(catalog["assets"]) else "incomplete"}
     write_json(ROOT/"runtime/coverage.json",result)
+    if publish:write_json(MOD/"data/progress.json",result)
     print(__import__('json').dumps(result,ensure_ascii=False,indent=2))
     return result
 
-def ingest(key, image_path, prompt_file):
+def ingest(key, image_path, prompt_file, replace_reason=None):
     catalog=read_json(CATALOG)
     assets=[a for a in catalog["assets"] if a["source_sha256"]==key]
     if not assets:raise SystemExit("Unknown source SHA; inventory must precede generation")
     record=read_json(RECORD)
-    if key in record["portraits"]:raise SystemExit("Already imported; use a new explicit revision to replace")
+    previous=record["portraits"].get(key)
+    if previous and not replace_reason:raise SystemExit("Already imported; use --replace-reason for an explicit art correction")
     sizes={tuple(a["size"]) for a in assets}
     if len(sizes)!=1:raise SystemExit("Identical bytes decoded to inconsistent dimensions")
     image_path=Path(image_path)
@@ -44,6 +46,10 @@ def ingest(key, image_path, prompt_file):
         image.convert("RGBA").resize(next(iter(sizes)),Image.Resampling.LANCZOS).save(out,optimize=True)
     prompt=Path(prompt_file).read_text(encoding="utf-8")
     record["portraits"][key]={"source_sha256":key,"reference_sha256":file_sha256(MOD/"assets/reference/naiwa.png"),"method":"built-in imagegen; original portrait + user reference","prompt":prompt,"generated_fullsize_sha256":file_sha256(image_path),"generated_fullsize_size":original_size,"image":out.relative_to(ROOT).as_posix(),"image_sha256":file_sha256(out),"size":list(next(iter(sizes))),"review":"pending","machine_id":machine_id(),"imported_at_utc":utc_now()}
+    if previous:
+        history=list(previous.get("revision_history",[]))
+        history.append({"result":"replaced after visual review","reason":replace_reason,"previous_image_sha256":previous["image_sha256"],"previous_fullsize_sha256":previous["generated_fullsize_sha256"],"previous_prompt":previous["prompt"],"replaced_at_utc":utc_now()})
+        record["portraits"][key]["revision_history"]=history
     write_json(RECORD,record)
     # Machine-local full-size origin stays out of the public manifest and Git.
     fullsize=ROOT/"runtime/generated-origins"/(key+".json")
@@ -88,18 +94,20 @@ def approve(keys):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     sub=parser.add_subparsers(dest="command",required=True)
-    sub.add_parser("coverage")
+    progress=sub.add_parser("coverage")
+    progress.add_argument("--public",action="store_true",help="Also write the compact tracked progress snapshot")
     sheet=sub.add_parser("sheet")
     sheet.add_argument("--all",action="store_true",help="Include approved images for the project preview")
     add=sub.add_parser("import")
     add.add_argument("--key",required=True)
     add.add_argument("--image",required=True)
     add.add_argument("--prompt-file",default=str(MOD/"assets/portrait-prompt.txt"))
+    add.add_argument("--replace-reason",help="Explicit correction of an already imported image; preserves previous provenance")
     review=sub.add_parser("approve")
     review.add_argument("keys",nargs="+")
     args=parser.parse_args()
-    if args.command=="import":ingest(args.key,args.image,args.prompt_file)
-    elif args.command=="coverage":coverage()
+    if args.command=="import":ingest(args.key,args.image,args.prompt_file,args.replace_reason)
+    elif args.command=="coverage":coverage(args.public)
     elif args.command=="sheet":contact_sheet(args.all)
     else:approve(args.keys)
 
