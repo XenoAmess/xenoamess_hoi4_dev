@@ -57,10 +57,11 @@ def audit():
             assert file_sha256(promptfile)==a['prompt_sha256'],str(promptfile)
             if a.get('output'):assert file_sha256(ROOT/a['output'])==a['output_sha256'],str(path)
     print(f'PASS: {len(records)} canonical files, {approved} approved current-style images, {requests} complete prompt records and 26 frozen A/B resources')
-    archive=MOD/'data/fullsize-archives.json'
-    saved=read_json(archive)['outputs'] if archive.exists() else {}
-    count=sum(row['generated_fullsize_sha256'] in saved for row in records.values())
-    print(f'HD remote archive: {count}/{len(records)} current masters registered after complete readbacks; {len(records)-count} pending. Art qualification is separate.')
+    from mod_nailong.tools.master_files import audit_files, master_path
+    masters=audit_files()
+    for row in records.values():
+        assert row['generated_fullsize_image']==master_path(row['generated_fullsize_sha256'])
+    print(f'HD files: {masters["count"]} original PNGs present with matching SHA/size, including history and experiments; {len(records)} current masters. Remote Git verification and art qualification are separate.')
     recovered=sum(bool(a.get('prompt_transport_correction')) for path in (MOD/'data/generation-requests').glob('*.json') for a in read_json(path)['attempts'])
     if recovered:print(f'Prompt recording boundary: {recovered} actual prompts recovered after a transport mismatch; intended pre-call files and correction evidence retained.')
 

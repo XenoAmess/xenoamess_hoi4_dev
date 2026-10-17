@@ -18,6 +18,7 @@ MAJORS = ['CHI', 'PRC', 'GER', 'SOV', 'USA', 'ENG', 'JAP', 'ITA', 'FRA']
 FEATURED = [
     'chiang_kai', 'mao_zedong', 'joseph_stalin', 'franklin_roosevelt', 'churchill',
     'adolf_hitler', 'benito_mussolini', 'hirohito', 'charles_de_gaulle',
+    'philippe_petain', 'leon_blum', 'paul_reynaud',
     'georgy_zhukov', 'zhukov', 'erwin_rommel', 'guderian', 'manstein',
     'eisenhower', 'patton', 'macarthur', 'montgomery', 'rokossovsky', 'konev',
     'vasilevsky', 'zhu_de', 'chu_teh', 'peng_dehuai', 'lin_biao', 'liu_bocheng',

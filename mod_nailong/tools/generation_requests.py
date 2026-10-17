@@ -112,13 +112,15 @@ def finish(key,image):
     else:
         ingest(key,image,ROOT/a["prompt_file"],a.get('revision_goal','visual_feature_correction') if a["edit_existing"] else None)
     generated=read_json(MOD/"data/generated.json")
+    from mod_nailong.tools.master_files import master_path
+    generated["portraits"][key]["generated_fullsize_image"]=master_path(fullsize_sha)
     generated["portraits"][key]["art_direction"]=a['art_direction']
     generated["portraits"][key]["generation_inputs"]=a["inputs"]
     generated["portraits"][key]["request_journal"]=file.relative_to(ROOT).as_posix()
     if recovered:
         generated['portraits'][key]['import_recovery']={'observed_at_utc':utc_now(),'machine_id':machine_id(),'reason':'Completed interrupted import of the exact already returned image; no new generation or art revision','fullsize_sha256':fullsize_sha}
     write_json(MOD/"data/generated.json",generated)
-    a.update(status="generated_pending_visual_review",generated_at_utc=utc_now(),fullsize_sha256=file_sha256(Path(image)),
+    a.update(status="generated_pending_visual_review",generated_at_utc=utc_now(),fullsize_sha256=file_sha256(Path(image)),fullsize_image=generated["portraits"][key]["generated_fullsize_image"],
         output=generated["portraits"][key]["image"],output_sha256=generated["portraits"][key]["image_sha256"])
     write_json(file,journal)
     if a.get("retry_of_attempt"):

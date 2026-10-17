@@ -1,7 +1,7 @@
-"""Preserve byte-identical imagegen PNGs as verified GitHub art attachments.
+"""Locate recorded imagegen originals and preserve them as ordinary Git files.
 
-The ZIP is streamed from existing files, without a second local PNG/ZIP copy.
-This is file archiving, never image generation or image editing.
+Legacy ZIP support remains for historical archive verification.
+Release uploads are disabled by the user's direct-Git instruction.
 """
 from __future__ import annotations
 
@@ -26,9 +26,8 @@ INDEX = MOD / "data/fullsize-archives.json"
 BLOCK = 1024 * 1024
 
 
-def inventory():
-    """Adopt only PNGs matching an already recorded project fullsize SHA."""
-    deadline = time.monotonic() + 120
+def recorded_outputs(mod=MOD):
+    """Return current, superseded, request and experimental output digests."""
     expected = set()
     current = {}
     provenance = {}
@@ -37,17 +36,17 @@ def inventory():
         expected.add(digest)
         provenance.setdefault(digest, []).append(ref)
 
-    for key, row in read_json(MOD / "data/generated.json")["portraits"].items():
+    for key, row in read_json(mod / "data/generated.json")["portraits"].items():
         digest = row["generated_fullsize_sha256"]
         current[key] = digest
         remember(digest, {"source_sha256": key, "record": "data/generated.json", "revision": "current"})
         for revision in row.get("revision_history", []):
             if revision.get("previous_fullsize_sha256"):
                 remember(revision["previous_fullsize_sha256"], {"source_sha256": key, "record": "data/generated.json", "revision": "superseded"})
-    for path in (MOD / "data/generation-requests").glob("*.json"):
+    for path in (mod / "data/generation-requests").glob("*.json"):
         for attempt in read_json(path)["attempts"]:
             if attempt.get("fullsize_sha256"):
-                remember(attempt["fullsize_sha256"], {"source_sha256": path.stem, "journal": path.relative_to(MOD).as_posix(), "attempt": attempt.get("number"), "prompt_sha256": attempt.get("prompt_sha256")})
+                remember(attempt["fullsize_sha256"], {"source_sha256": path.stem, "journal": path.relative_to(mod).as_posix(), "attempt": attempt.get("number"), "prompt_sha256": attempt.get("prompt_sha256")})
 
     def experiment_hashes(value, ref):
         if isinstance(value, dict):
@@ -60,8 +59,15 @@ def inventory():
             for item in value:
                 experiment_hashes(item, ref)
 
-    for path in (MOD / "experiments").rglob("*.json"):
-        experiment_hashes(read_json(path), path.relative_to(MOD).as_posix())
+    for path in (mod / "experiments").rglob("*.json"):
+        experiment_hashes(read_json(path), path.relative_to(mod).as_posix())
+    return expected, current, provenance
+
+
+def inventory():
+    """Adopt only PNGs matching an already recorded project fullsize SHA."""
+    deadline = time.monotonic() + 120
+    expected, current, provenance = recorded_outputs()
     paths = set()
 
     def origin_paths(value):
@@ -182,8 +188,7 @@ class StoredZip:
 
 
 def archive(tag):
-    from mod_nailong.tools.master_archive_upload import publish
-    publish(tag)
+    raise SystemExit('Release uploads disabled: use sync-git, then ordinary Git commit/push and remote PNG byte verification')
 
 
 def link_current():
@@ -205,11 +210,24 @@ def main():
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("inventory")
     commands.add_parser("link-current")
+    commands.add_parser("sync-git")
+    commands.add_parser("audit-git")
+    verify = commands.add_parser("verify-tree")
+    verify.add_argument("--commit", default="HEAD")
     upload = commands.add_parser("archive")
     upload.add_argument("--tag", required=True)
     args = parser.parse_args()
     if args.command == 'inventory': inventory()
     elif args.command == 'link-current': link_current()
+    elif args.command == 'sync-git':
+        from mod_nailong.tools.master_files import sync_git
+        sync_git()
+    elif args.command == 'audit-git':
+        from mod_nailong.tools.master_files import audit_files
+        print({'verified_workspace_masters': audit_files()['count']})
+    elif args.command == 'verify-tree':
+        from mod_nailong.tools.master_files import verify_tree
+        verify_tree(args.commit)
     else: archive(args.tag)
 
 

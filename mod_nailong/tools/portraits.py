@@ -48,7 +48,7 @@ def record_fullsize_origin(key, image_path, root=None):
         __import__('os').link(image_path, local)
     if file_sha256(local) != digest:
         raise ValueError('Project fullsize master does not match returned PNG')
-    receipt = {"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":str(image_path.resolve()),"sha256":digest,"review_at_utc":__import__('datetime').datetime.fromtimestamp(__import__('time').time()+7*86400,__import__('datetime').timezone.utc).isoformat(),"reason":"Original PNG required for fullsize archive and art revision; GitHub backup is confirmed only by data/fullsize-archives.json"}
+    receipt = {"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":str(image_path.resolve()),"sha256":digest,"review_at_utc":__import__('datetime').datetime.fromtimestamp(__import__('time').time()+7*86400,__import__('datetime').timezone.utc).isoformat(),"reason":"Original PNG retained as an ordinary Git file for art revision; remote byte verification is recorded separately"}
     receipt['workspace_master'] = local.relative_to(root).as_posix()
     # Keep an immutable per-output locator as well as the latest source locator.
     # Revising a portrait must not erase the path to its previous HD original.
@@ -59,6 +59,7 @@ def record_fullsize_origin(key, image_path, root=None):
         # Scanning, linking or resuming an import does not renew protection.
         receipt['review_at_utc'] = read_json(immutable)['review_at_utc']
     write_json(root/"runtime/generated-origins"/(key+".json"), receipt)
+    return local.relative_to(root).as_posix()
 
 def ingest(key, image_path, prompt_file, replace_reason=None):
     catalog=read_json(CATALOG)
@@ -83,7 +84,7 @@ def ingest(key, image_path, prompt_file, replace_reason=None):
         history.append({"result":"replaced after visual review","reason":replace_reason,"previous_image_sha256":previous["image_sha256"],"previous_fullsize_sha256":previous["generated_fullsize_sha256"],"previous_prompt":previous["prompt"],"replaced_at_utc":utc_now()})
         record["portraits"][key]["revision_history"]=history
     # Complete the machine-local receipt before publishing the canonical row.
-    record_fullsize_origin(key,image_path)
+    record["portraits"][key]["generated_fullsize_image"]=record_fullsize_origin(key,image_path)
     write_json(RECORD,record)
     print(f"Imported {key[:12]} -> {out.relative_to(ROOT)}")
 
