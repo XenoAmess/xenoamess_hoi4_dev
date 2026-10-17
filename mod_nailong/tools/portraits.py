@@ -36,6 +36,11 @@ def coverage(publish=False):
     print(__import__('json').dumps(result,ensure_ascii=False,indent=2))
     return result
 
+def record_fullsize_origin(key, image_path, root=None):
+    root = root or ROOT
+    image_path = Path(image_path)
+    write_json(root/"runtime/generated-origins"/(key+".json"),{"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":str(image_path.resolve()),"sha256":file_sha256(image_path),"review_at_utc":__import__('datetime').datetime.fromtimestamp(__import__('time').time()+7*86400,__import__('datetime').timezone.utc).isoformat(),"reason":"Fullsize source available during art review; canonical resized deliverable is in Git"})
+
 def ingest(key, image_path, prompt_file, replace_reason=None):
     catalog=read_json(CATALOG)
     assets=[a for a in catalog["assets"] if a["source_sha256"]==key]
@@ -53,16 +58,13 @@ def ingest(key, image_path, prompt_file, replace_reason=None):
         # Technical normalization only: no collage, retouching, face substitution or drawing.
         image.convert("RGBA").resize(next(iter(sizes)),Image.Resampling.LANCZOS).save(out,optimize=True)
     prompt=Path(prompt_file).read_text(encoding="utf-8")
-    record["portraits"][key]={"source_sha256":key,"reference_sha256":file_sha256(MOD/"assets/reference/naiwa.png"),"method":"built-in imagegen; original portrait + user reference","prompt":prompt,"generated_fullsize_sha256":file_sha256(image_path),"generated_fullsize_size":original_size,"image":out.relative_to(ROOT).as_posix(),"image_sha256":file_sha256(out),"size":list(next(iter(sizes))),"review":"pending","machine_id":machine_id(),"imported_at_utc":utc_now()}
+    record["portraits"][key]={"source_sha256":key,"reference_sha256":file_sha256(MOD/"assets/reference/naiwa.png"),"method":"built-in imagegen; original portrait + user reference","prompt":prompt,"generated_fullsize_sha256":file_sha256(image_path),"generated_fullsize_size":original_size,"image":out.relative_to(ROOT).as_posix(),"image_sha256":file_sha256(out),"size":list(next(iter(sizes))),"review":"pending","art_direction":"hair-features-v1","machine_id":machine_id(),"imported_at_utc":utc_now()}
     if previous:
         history=list(previous.get("revision_history",[]))
         history.append({"result":"replaced after visual review","reason":replace_reason,"previous_image_sha256":previous["image_sha256"],"previous_fullsize_sha256":previous["generated_fullsize_sha256"],"previous_prompt":previous["prompt"],"replaced_at_utc":utc_now()})
         record["portraits"][key]["revision_history"]=history
-    write_json(RECORD,record)
-    # Machine-local full-size origin stays out of the public manifest and Git.
-    fullsize=ROOT/"runtime/generated-origins"/(key+".json")
-    write_json(fullsize,{"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":str(image_path.resolve()),"sha256":file_sha256(image_path),"review_at_utc":__import__('datetime').datetime.fromtimestamp(__import__('time').time()+7*86400,__import__('datetime').timezone.utc).isoformat(),"reason":"Fullsize source available during art review; canonical resized deliverable is in Git"})
-    record["portraits"][key]["art_direction"]="hair-features-v1"
+    # Complete the machine-local receipt before publishing the canonical row.
+    record_fullsize_origin(key,image_path)
     write_json(RECORD,record)
     print(f"Imported {key[:12]} -> {out.relative_to(ROOT)}")
 

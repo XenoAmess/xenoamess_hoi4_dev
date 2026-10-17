@@ -13,7 +13,7 @@ import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.common import ROOT, file_sha256, machine_id, read_json, sha256, utc_now, write_json
 from PIL import Image, ImageDraw
-from mod_nailong.tools.portraits import ingest
+from mod_nailong.tools.portraits import ingest, record_fullsize_origin
 
 MOD = ROOT / "mod_nailong"
 REQUESTS = MOD / "data/generation-requests"
@@ -84,11 +84,39 @@ def legacy():
 def finish(key,image):
     file=REQUESTS/(key+".json");journal=read_json(file);a=journal["attempts"][-1]
     assert a["status"]=="prepared"
-    ingest(key,image,ROOT/a["prompt_file"],a.get('revision_goal','visual_feature_correction') if a["edit_existing"] else None)
+    record_path=MOD/"data/generated.json"
+    existing=read_json(record_path)["portraits"].get(key) if record_path.exists() else None
+    fullsize_sha=file_sha256(Path(image))
+    recovered=False
+    if (existing and existing.get('prompt')==a.get('prompt')
+            and existing.get('generated_fullsize_sha256')==fullsize_sha):
+        # A prior filesystem interruption can leave the image imported while
+        # the request is still prepared. Reconcile that exact result; do not
+        # call imagegen again or manufacture a second art revision.
+        assert existing.get('review')=='pending', 'Existing result already reviewed; inspect journal state'
+        assert existing.get('source_sha256')==key
+        assets=[r for r in read_json(MOD/'data/catalog.json')['assets'] if r['source_sha256']==key]
+        sizes={tuple(r['size']) for r in assets}
+        assert len(sizes)==1 and tuple(existing['size'])==next(iter(sizes))
+        canonical=ROOT/existing['image']
+        assert canonical.resolve()==(MOD/'assets/portraits'/(key+'.png')).resolve()
+        assert file_sha256(canonical)==existing['image_sha256'], 'Partial import image changed'
+        assert file_sha256(ROOT/a['prompt_file'])==a['prompt_sha256'], 'Prepared prompt changed'
+        assert (ROOT/a['prompt_file']).read_text(encoding='utf-8')==a['prompt']
+        with Image.open(image) as raw:
+            normalized=io.BytesIO()
+            raw.convert('RGBA').resize(existing['size'],Image.Resampling.LANCZOS).save(normalized,format='PNG',optimize=True)
+        assert sha256(normalized.getvalue())==existing['image_sha256'], 'Partial import does not match actual returned output'
+        record_fullsize_origin(key,image,root=ROOT)
+        recovered=True
+    else:
+        ingest(key,image,ROOT/a["prompt_file"],a.get('revision_goal','visual_feature_correction') if a["edit_existing"] else None)
     generated=read_json(MOD/"data/generated.json")
     generated["portraits"][key]["art_direction"]=a['art_direction']
     generated["portraits"][key]["generation_inputs"]=a["inputs"]
     generated["portraits"][key]["request_journal"]=file.relative_to(ROOT).as_posix()
+    if recovered:
+        generated['portraits'][key]['import_recovery']={'observed_at_utc':utc_now(),'machine_id':machine_id(),'reason':'Completed interrupted import of the exact already returned image; no new generation or art revision','fullsize_sha256':fullsize_sha}
     write_json(MOD/"data/generated.json",generated)
     a.update(status="generated_pending_visual_review",generated_at_utc=utc_now(),fullsize_sha256=file_sha256(Path(image)),
         output=generated["portraits"][key]["image"],output_sha256=generated["portraits"][key]["image_sha256"])
@@ -113,7 +141,14 @@ def main():
         write_json(ROOT/"runtime/current-hair-jobs.json",prepared)
         print(f"Saved {len(prepared)} full prompts before any generation calls")
     elif args.command=="prepare":write_json(ROOT/"runtime/prepared-image-job.json",prepare(args.key,args.prompt_file.read_text(encoding="utf-8"),args.edit_existing))
-    elif args.command=="finish":finish(args.key,args.image)
+    elif args.command=="finish":
+        try:
+            finish(args.key,args.image)
+        except (Exception,SystemExit):
+            error_file=ROOT/'runtime/import-errors'/(args.key+'.txt')
+            error_file.parent.mkdir(parents=True,exist_ok=True)
+            error_file.write_text(__import__('traceback').format_exc(),encoding='utf-8',newline='\n')
+            raise
     else:
         file=REQUESTS/(args.key+".json");data=read_json(file)
         if args.command=="cancel":data["attempts"][-1].update(status="cancelled_before_generation",reason=args.message,observed_at_utc=utc_now())

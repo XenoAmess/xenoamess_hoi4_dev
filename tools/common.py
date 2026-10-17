@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import platform
 import re
+import time
 from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,7 +44,17 @@ def write_json(path: Path, value) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
     temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
-    temporary.replace(path)
+    # Windows readers/virus scanners can briefly deny replacement of an open
+    # destination. Keep the old complete JSON visible and retry only this local
+    # atomic replacement, never any image-generation request.
+    for delay in (0.02, 0.05, 0.1, 0.25, 0.5, None):
+        try:
+            temporary.replace(path)
+            break
+        except PermissionError:
+            if delay is None:
+                raise
+            time.sleep(delay)
 
 def read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
