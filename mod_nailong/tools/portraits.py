@@ -39,7 +39,14 @@ def coverage(publish=False):
 def record_fullsize_origin(key, image_path, root=None):
     root = root or ROOT
     image_path = Path(image_path)
-    write_json(root/"runtime/generated-origins"/(key+".json"),{"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":str(image_path.resolve()),"sha256":file_sha256(image_path),"review_at_utc":__import__('datetime').datetime.fromtimestamp(__import__('time').time()+7*86400,__import__('datetime').timezone.utc).isoformat(),"reason":"Fullsize source available during art review; canonical resized deliverable is in Git"})
+    digest = file_sha256(image_path)
+    receipt = {"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":str(image_path.resolve()),"sha256":digest,"review_at_utc":__import__('datetime').datetime.fromtimestamp(__import__('time').time()+7*86400,__import__('datetime').timezone.utc).isoformat(),"reason":"Original PNG required for fullsize archive and art revision; GitHub backup is confirmed only by data/fullsize-archives.json"}
+    # Keep an immutable per-output locator as well as the latest source locator.
+    # Revising a portrait must not erase the path to its previous HD original.
+    immutable = root/"runtime/generated-origins/by-sha"/(digest+".json")
+    if not immutable.exists():
+        write_json(immutable, receipt)
+    write_json(root/"runtime/generated-origins"/(key+".json"), receipt)
 
 def ingest(key, image_path, prompt_file, replace_reason=None):
     catalog=read_json(CATALOG)

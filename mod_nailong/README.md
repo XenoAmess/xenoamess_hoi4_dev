@@ -27,7 +27,7 @@
 1. `python mod_nailong/tools/catalog.py scan`：从实际安装读取原版/DLC 文件、角色定义和 sprite 引用，记录源 SHA 与机器/版本。不会复制完整游戏资产到仓库。
 2. `python mod_nailong/tools/catalog.py prepare --limit 16`：准备尚未完成的原图与输入 contact sheet；完全相同的原始字节共用生成，其他变体独立生成。
 3. 用 imagegen skill 检查原图，逐张引用原图与 `assets/reference/naiwa.png`，保留原人物毛发特征。请求前保存完整实际 prompt；基础提示词在 [portrait-prompt.txt](assets/portrait-prompt.txt)，实际调用词另行逐次落盘。不可用程序贴头、统一通用头像或滤镜冒充。
-4. 调用前用 `generation_requests.py prepare --key <原图SHA256> --prompt-file <实际提示词.txt>` 固定完整 prompt 与输入；调用后用 `generation_requests.py finish --key <原图SHA256> --image <生成文件.png>` 导入。修改旧图加 `--edit-existing`。工具只做规范尺寸转换，保存修订、输入和输出 SHA；原始大图仍保留在本机外置生成目录。已返回图片的本地导入中断按[严格恢复机制](docs/interrupted-import-recovery.md)续接，不能因此重复生成。对照实验使用其专用 recorder，同样在调用前落盘。
+4. 调用前用 `generation_requests.py prepare --key <原图SHA256> --prompt-file <实际提示词.txt>` 固定完整 prompt 与输入；调用后用 `generation_requests.py finish --key <原图SHA256> --image <生成文件.png>` 导入。修改旧图加 `--edit-existing`。工具只做规范尺寸转换，保存修订、输入和输出 SHA；原始高清 PNG 按原字节另行归档到 GitHub 素材附件，下载方式、SHA 索引及待归档边界见[高清母版说明](docs/fullsize-masters.md)。已返回图片的本地导入中断按[严格恢复机制](docs/interrupted-import-recovery.md)续接，不能因此重复生成。对照实验使用其专用 recorder，同样在调用前落盘。
 5. `python mod_nailong/tools/portraits.py sheet`：审查输出，对照原图确认服装、神态和动作。审图后运行 `approve pending-sheet`；未看图不得批准。
 6. `python mod_nailong/tools/portraits.py coverage`：读回生成/审图数量。
 7. `python mod_nailong/tools/build_release.py --preview --check`：双构建，逐文件核对 ZIP、DDS 解码与原尺寸。`--preview --output <全新目录>` 生成显式不完整预览包；正式构建不带 `--preview`，会在覆盖不足或缺失引用未解决时拒绝。
