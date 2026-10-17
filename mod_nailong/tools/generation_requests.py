@@ -45,11 +45,23 @@ def prepare(key, prompt, edit_existing=False):
     paths=[];inputs=[]
     if edit_existing:
         if not record:raise SystemExit("No existing image to edit")
-        old=MOD/"assets/legacy-before-hair"/(key+"-"+record["image_sha256"][:16]+".png")
-        old.parent.mkdir(parents=True,exist_ok=True)
-        if not old.exists():shutil.copyfile(ROOT/record["image"],old)
-        assert file_sha256(old)==record["image_sha256"]
-        paths.append(str(old));inputs.append({"role":"previous generated edit target","path":old.relative_to(ROOT).as_posix(),"sha256":file_sha256(old)})
+        if record.get('generated_fullsize_image'):
+            old=ROOT/record['generated_fullsize_image']
+            expected=record.get('generated_fullsize_sha256')
+            if not old.is_file() or not expected or file_sha256(old)!=expected:
+                raise ValueError('Declared fullsize edit target is missing or changed; recover the exact master before preparing')
+            target={'role':'previous generated fullsize edit target','path':old.relative_to(ROOT).as_posix(),
+                    'sha256':expected,'derived_game_image_sha256':record['image_sha256']}
+        else:
+            # Pre-master legacy records can still be migrated. A declared but
+            # unavailable master above must never silently degrade to this.
+            old=MOD/"assets/legacy-before-hair"/(key+"-"+record["image_sha256"][:16]+".png")
+            old.parent.mkdir(parents=True,exist_ok=True)
+            if not old.exists():shutil.copyfile(ROOT/record["image"],old)
+            assert file_sha256(old)==record["image_sha256"]
+            target={'role':'legacy game-size generated edit target; no declared master',
+                    'path':old.relative_to(ROOT).as_posix(),'sha256':file_sha256(old)}
+        paths.append(str(old));inputs.append(target)
     paths.extend([str(source),str(MOD/"assets/reference/naiwa.png")])
     inputs.extend([{"role":"original source portrait","raw_sha256":key,"converted_png_sha256":file_sha256(source)},
         {"role":"user mascot reference","path":"mod_nailong/assets/reference/naiwa.png","sha256":file_sha256(MOD/"assets/reference/naiwa.png")}])
