@@ -96,9 +96,9 @@ def audit_files(root=ROOT):
     return index
 
 
-def verify_tree(commit='HEAD', root=ROOT):
+def verify_tree(commit='HEAD', root=ROOT, index=None):
     """Stream real Git blobs, checking SHA256/size and rejecting pointer files."""
-    index = audit_files(root)
+    index = audit_files(root) if index is None else index
     full_commit = subprocess.check_output(['git', 'rev-parse', commit + '^{commit}'], cwd=root, text=True).strip()
     process = subprocess.Popen(['git', 'cat-file', '--batch'], cwd=root,
                                stdin=subprocess.PIPE, stdout=subprocess.PIPE)

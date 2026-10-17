@@ -40,6 +40,13 @@ class MasterFilesTests(unittest.TestCase):
                 subprocess.run(['git',*args],cwd=root,check=True,capture_output=True)
             commit, blobs=verify_tree(root=root)
             self.assertEqual(len(blobs),1)
+            # An immutable-commit readback must survive a new or absent worktree
+            # asset, so production imports can overlap the remote verification.
+            target=root/master_path(digest)
+            target.unlink()
+            _,pinned_blobs=verify_tree(commit,root=root,index=index)
+            self.assertEqual(pinned_blobs,blobs)
+            target.write_bytes(original.read_bytes())
             subprocess.run(['git','rm',master_path(digest)],cwd=root,check=True,capture_output=True)
             (root/master_path(digest)).parent.mkdir(parents=True,exist_ok=True)
             (root/master_path(digest)).write_bytes(original.read_bytes())

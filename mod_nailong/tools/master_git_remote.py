@@ -19,9 +19,14 @@ CHECKPOINT=ROOT/'mod_nailong/data/fullsize-git-checkpoint.json'
 
 
 def verify_remote(commit='HEAD'):
-    commit, blobs=verify_tree(commit)
-    index=read_json(ROOT/'mod_nailong/data/fullsize-files.json')
-    current=read_json(ROOT/'mod_nailong/data/generated.json')['portraits']
+    # Bind the proof entirely to immutable committed metadata. New generation
+    # imports may continue while these older committed PNGs are downloaded.
+    commit=subprocess.check_output(['git','rev-parse',commit+'^{commit}'],cwd=ROOT,text=True).strip()
+    def committed_json(path):
+        return __import__('json').loads(subprocess.check_output(['git','show',commit+':'+path],cwd=ROOT,text=True,encoding='utf-8'))
+    index=committed_json('mod_nailong/data/fullsize-files.json')
+    commit,blobs=verify_tree(commit,index=index)
+    current=committed_json('mod_nailong/data/generated.json')['portraits']
     if any(row['generated_fullsize_sha256'] not in index['outputs'] for row in current.values()):
         raise ValueError('A current master is absent from the pinned index')
     current_count=len(current)
