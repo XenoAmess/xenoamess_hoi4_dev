@@ -45,7 +45,9 @@ def prepare(key, prompt, edit_existing=False):
     paths=[];inputs=[]
     if edit_existing:
         if not record:raise SystemExit("No existing image to edit")
-        if record.get('generated_fullsize_image'):
+        if record.get('generated_fullsize_image') or record.get('generated_fullsize_sha256'):
+            if not record.get('generated_fullsize_image'):
+                raise ValueError('Declared fullsize edit target is missing or changed; recover the exact master path before preparing')
             old=ROOT/record['generated_fullsize_image']
             expected=record.get('generated_fullsize_sha256')
             if not old.is_file() or not expected or file_sha256(old)!=expected:
