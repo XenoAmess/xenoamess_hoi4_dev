@@ -37,6 +37,10 @@ def audit():
             promptfile=ROOT/a['prompt_file']
             assert promptfile.read_bytes()==a['prompt'].encode('utf-8'),str(promptfile)
             assert file_sha256(promptfile)==a['prompt_sha256'],str(promptfile)
+            if a.get('intended_prompt_file'):
+                intended=ROOT/a['intended_prompt_file']
+                assert intended.read_bytes()==a['intended_prompt'].encode('utf-8'),str(intended)
+                assert file_sha256(intended)==a['intended_prompt_sha256'],str(intended)
             assert a['inputs'] and a['machine_id'],str(path)
             assert a['prepared_at_utc'] or (a.get('recovered_at_utc') and a.get('recording_boundary')),str(path)
             for source in a['inputs']:
@@ -57,5 +61,7 @@ def audit():
     saved=read_json(archive)['outputs'] if archive.exists() else {}
     count=sum(row['generated_fullsize_sha256'] in saved for row in records.values())
     print(f'HD remote archive: {count}/{len(records)} current masters registered after complete readbacks; {len(records)-count} pending. Art qualification is separate.')
+    recovered=sum(bool(a.get('prompt_transport_correction')) for path in (MOD/'data/generation-requests').glob('*.json') for a in read_json(path)['attempts'])
+    if recovered:print(f'Prompt recording boundary: {recovered} actual prompts recovered after a transport mismatch; intended pre-call files and correction evidence retained.')
 
 if __name__=='__main__':audit()

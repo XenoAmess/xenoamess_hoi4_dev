@@ -34,7 +34,13 @@ def short_guard(name):
     try: yield
     finally: lock.unlink()
 
-def begin(job):
+def export_job(jobs_file,key):
+    # ASCII JSON survives Windows CP936 stdout followed by UTF-8 transport.
+    # JSON.parse restores the exact Unicode prompt, never replacement characters.
+    job=next(j for j in read_json(Path(jobs_file)) if j['key']==key)
+    return json.dumps(job,ensure_ascii=True)
+
+def begin(job,actual_job_file=None):
     key=job['key'];a=journal(key)
     if a['status']!='prepared': raise ValueError('Request is not prepared; do not call imagegen again')
     if job['prompt']!=a['prompt'] or file_sha256(ROOT/a['prompt_file'])!=a['prompt_sha256']:
@@ -50,6 +56,10 @@ def begin(job):
         if any(read_json(p)['status']=='calling' for p in directory.glob('*.json')):
             raise ValueError('Another built-in call is still active or has an unknown outcome')
         record={'source_sha256':key,'attempt_number':a['number'],'machine_id':machine_id(),'status':'calling','call_started_at_utc':utc_now(),'prompt_sha256':a['prompt_sha256'],'input_sha256':[file_sha256(Path(p)) for p in job['references']]}
+        if actual_job_file:
+            actual_job_file=Path(actual_job_file)
+            if read_json(actual_job_file)!=job:raise ValueError('Actual request snapshot changed')
+            record.update(actual_request_snapshot_file=str(actual_job_file.resolve()),actual_request_snapshot_sha256=file_sha256(actual_job_file),actual_prompt_verified_before_call=True)
         with path.open('x',encoding='utf-8',newline='\n') as stream:
             json.dump(record,stream,ensure_ascii=False,indent=2);stream.write('\n')
     return path
@@ -108,10 +118,14 @@ def apply_reviews():
     return {'applied':applied,'stale_not_applied':stale}
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('command',choices=['begin','returned','review','apply-reviews']);p.add_argument('--key');p.add_argument('--jobs-file',type=Path);p.add_argument('--image',type=Path);p.add_argument('--error-file',type=Path);p.add_argument('--image-sha');p.add_argument('--decision',choices=['approved','rejected']);p.add_argument('--evidence-file',type=Path);p.add_argument('--reason',default='')
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('command',choices=['export-job','begin','returned','review','apply-reviews']);p.add_argument('--key');p.add_argument('--jobs-file',type=Path);p.add_argument('--actual-job-file',type=Path);p.add_argument('--image',type=Path);p.add_argument('--error-file',type=Path);p.add_argument('--image-sha');p.add_argument('--decision',choices=['approved','rejected']);p.add_argument('--evidence-file',type=Path);p.add_argument('--reason',default='')
     args=p.parse_args()
-    if args.command=='begin':
-        j=next(j for j in read_json(args.jobs_file) if j['key']==args.key);begin(j);print('CALL_STARTED',args.key)
+    if args.command=='export-job':print(export_job(args.jobs_file,args.key))
+    elif args.command=='begin':
+        if not args.actual_job_file:raise SystemExit('Freeze the exact JS worker request to --actual-job-file before dispatch; a source job file alone cannot verify transported text')
+        j=read_json(args.actual_job_file)
+        if args.key and args.key!=j['key']:raise SystemExit('Actual request source key differs')
+        begin(j,args.actual_job_file);print('CALL_STARTED',j['key'])
     elif args.command=='returned':returned(args.key,args.image,args.error_file)
     elif args.command=='review':stage_review(args.key,args.image_sha,args.decision,args.evidence_file,args.reason);print('Queued SHA-bound review',args.key)
     else:

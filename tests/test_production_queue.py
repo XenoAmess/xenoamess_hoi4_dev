@@ -1,5 +1,6 @@
 """Prevent duplicate calls, stale approvals and import/review lost updates."""
 from contextlib import ExitStack
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -10,6 +11,26 @@ from mod_nailong.tools import portraits, production_queue as queue
 
 
 class ProductionQueueTests(unittest.TestCase):
+    def test_unicode_transport_is_lossless_and_corrupted_prompt_is_blocked(self):
+        with tempfile.TemporaryDirectory() as temp, ExitStack() as stack:
+            root=Path(temp)
+            mod,image,digest,evidence,job=self.fixture(root,stack)
+            prompt='Use the exact 奶龙 identity reference.\n'
+            (root/'prompt.txt').write_text(prompt,encoding='utf-8')
+            journal=mod/f'data/generation-requests/{job["key"]}.json'
+            data=read_json(journal);data['attempts'][0].update(prompt=prompt,prompt_sha256=file_sha256(root/'prompt.txt'));write_json(journal,data)
+            job['prompt']=prompt
+            jobs=root/'jobs.json';write_json(jobs,[job])
+            broken=json.loads(json.dumps(job,ensure_ascii=False).encode('cp936').decode('utf-8',errors='replace'))
+            with self.assertRaisesRegex(ValueError,'Frozen prompt changed'):queue.begin(broken)
+            self.assertFalse(list((queue.control()/'dispatch').glob('*.json')))
+            exported=queue.export_job(jobs,job['key'])
+            transported=json.loads(exported.encode('cp936').decode('utf-8'))
+            self.assertEqual(transported['prompt'],prompt)
+            actual=root/'actual-request.json';write_json(actual,transported)
+            dispatch=queue.begin(transported,actual)
+            self.assertTrue(read_json(dispatch)['actual_prompt_verified_before_call'])
+
     def fixture(self, root, stack):
         mod = root / 'mod_nailong'
         for module, name, value in [(queue, 'ROOT', root), (portraits, 'ROOT', root), (portraits, 'MOD', mod), (portraits, 'RECORD', mod/'data/generated.json')]:

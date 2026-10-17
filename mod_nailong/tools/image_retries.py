@@ -69,7 +69,7 @@ def claim(key):
     attempt={**original,'number':number,'status':'prepared','prompt_file':promptfile.relative_to(ROOT).as_posix(),
         'prompt_sha256':file_sha256(promptfile),'prepared_at_utc':utc_now(),'retry_of_attempt':original['number'],
         'cooldown_not_before_utc':entry['not_before_utc'],'eligibility_confirmed_by':'Codex reviewed allowed request and tool conditions before --confirm-eligible'}
-    for field in ['error','observed_at_utc','output','output_sha256','generated_at_utc','review','rejection_reason']:attempt.pop(field,None)
+    for field in ['error','observed_at_utc','output','output_sha256','generated_at_utc','review','rejection_reason','prompt_transport_correction','intended_prompt','intended_prompt_file','intended_prompt_sha256']:attempt.pop(field,None)
     entry.update(retries_used=1,state='claimed_before_call',claimed_at_utc=utc_now())
     write_json(QUEUE,queue)
     journal['attempts'].append(attempt);write_json(journal_path,journal)
