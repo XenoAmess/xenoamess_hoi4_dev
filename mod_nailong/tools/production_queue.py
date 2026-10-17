@@ -62,6 +62,12 @@ def begin(job,actual_job_file=None):
             record.update(actual_request_snapshot_file=str(actual_job_file.resolve()),actual_request_snapshot_sha256=file_sha256(actual_job_file),actual_prompt_verified_before_call=True)
         with path.open('x',encoding='utf-8',newline='\n') as stream:
             json.dump(record,stream,ensure_ascii=False,indent=2);stream.write('\n')
+        if actual_job_file:
+            journal_path=mod()/f'data/generation-requests/{key}.json'
+            history=read_json(journal_path)
+            if history['attempts'][-1]['number']!=a['number']:raise ValueError('Request changed during dispatch verification')
+            history['attempts'][-1]['actual_request_verification']={'machine_id':record['machine_id'],'verified_at_utc':record['call_started_at_utc'],'actual_recorded_before_call':True,'actual_request_snapshot_sha256':record['actual_request_snapshot_sha256'],'prompt_sha256':a['prompt_sha256'],'input_sha256':record['input_sha256'],'transparent_background':job.get('transparent',False)}
+            write_json(journal_path,history)
     return path
 
 def returned(key,image=None,error_file=None):

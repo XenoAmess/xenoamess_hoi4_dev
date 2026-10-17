@@ -43,6 +43,8 @@ def frozen_plan(tag, previous):
         for attempt in read_json(file)['attempts']:
             if attempt.get('fullsize_sha256'):
                 prompts[attempt['fullsize_sha256']] = {'prompt': attempt['prompt'], 'prompt_sha256': attempt.get('prompt_sha256'), 'inputs': attempt['inputs'], 'attempt_number': attempt['number']}
+                for field in ('prompt_transport_correction','actual_request_verification'):
+                    if field in attempt:prompts[attempt['fullsize_sha256']][field]=attempt[field]
     rows = read_json(MOD/'data/generated.json')['portraits']
     for row in rows.values():
         prompts.setdefault(row['generated_fullsize_sha256'], {'prompt': row['prompt']})

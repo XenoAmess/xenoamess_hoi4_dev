@@ -81,7 +81,7 @@ class ImageRetryGuards(unittest.TestCase):
     def test_retry_reuses_recovered_actual_text_with_a_new_recording_boundary(self):
         data=read_json(self.journal)
         actual='Exact recovered label: \ufffd\ufffd\ufffd\ufffd\n'
-        data['attempts'][0].update(prompt=actual,intended_prompt='Original intended label',intended_prompt_file='old.txt',intended_prompt_sha256='old-sha',prompt_transport_correction={'actual_recorded_before_call':False})
+        data['attempts'][0].update(prompt=actual,intended_prompt='Original intended label',intended_prompt_file='old.txt',intended_prompt_sha256='old-sha',prompt_transport_correction={'actual_recorded_before_call':False},actual_request_verification={'verified_at_utc':'old-attempt-time'})
         write_json(self.journal,data)
         retries.claim(self.key)
         result=read_json(self.journal)
@@ -89,6 +89,7 @@ class ImageRetryGuards(unittest.TestCase):
         self.assertEqual((self.root/result['attempts'][-1]['prompt_file']).read_bytes(),actual.encode('utf-8'))
         self.assertNotIn('prompt_transport_correction',result['attempts'][-1])
         self.assertNotIn('intended_prompt',result['attempts'][-1])
+        self.assertNotIn('actual_request_verification',result['attempts'][-1])
         self.assertFalse(result['attempts'][0]['prompt_transport_correction']['actual_recorded_before_call'])
 
     def test_refused_source_cannot_start_a_reworded_request(self):
