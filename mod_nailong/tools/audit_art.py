@@ -53,5 +53,9 @@ def audit():
             assert file_sha256(promptfile)==a['prompt_sha256'],str(promptfile)
             if a.get('output'):assert file_sha256(ROOT/a['output'])==a['output_sha256'],str(path)
     print(f'PASS: {len(records)} canonical files, {approved} approved current-style images, {requests} complete prompt records and 26 frozen A/B resources')
+    archive=MOD/'data/fullsize-archives.json'
+    saved=read_json(archive)['outputs'] if archive.exists() else {}
+    count=sum(row['generated_fullsize_sha256'] in saved for row in records.values())
+    print(f'HD remote archive: {count}/{len(records)} current masters registered after complete readbacks; {len(records)-count} pending. Art qualification is separate.')
 
 if __name__=='__main__':audit()

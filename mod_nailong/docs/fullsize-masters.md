@@ -8,11 +8,17 @@
 
 执行 `python mod_nailong/tools/master_archive.py inventory` 时，读取当前及历史生成记录、A/B 实验中的高清 SHA，再从本项目回执已证明的生成目录寻找完全匹配的 PNG。其他输出不因出现在同一目录而被收录。不复制、上传原版游戏图片。
 
-执行 `python mod_nailong/tools/master_archive.py archive --tag art-masters-001` 时，冻结待归档清单，排除已有归档的完全相同输出，以流式 ZIP 上传。整个 ZIP 不落本地磁盘；读写缓冲为 1 MiB，中央目录及小型索引留在内存。生成前、流式发送中分别核对输入 SHA，来源改变即停止。先上传 draft，完整认证下载核对字节数和 SHA 后才公开素材附件，再完整匿名下载核对；两次读回都成功才写入 `data/fullsize-archives.json`。上传成功回调不能代替这些读回。
+执行 `python mod_nailong/tools/master_archive.py archive --tag art-masters-001` 时，冻结待归档清单，排除已有归档的完全相同输出，以流式 ZIP 上传。一次整包传输被本机代理中断后，改为按原 PNG 合计约 32 MiB 分组的独立 ZIP，文件传输最多四路；图片生成仍为一路。每卷都可以单独解压，断线保留已验证卷。计划和各卷索引先冻结，续传复用原计划，不混入随后生成的新图；新图进入下一次归档。
 
-ZIP 内 `index.json` 保存尺寸、PNG 字节数、SHA 和生成 journal / 实验关联，`png/<高清SHA256>.png` 保存原图。仓库的 `data/fullsize-archives.json` 提供附件下载地址、ZIP SHA 和逐图位置。`data/generated.json` 的 `generated_fullsize_sha256` 可直接用于查找当前版本；`revision_history` 与请求 journal 用于查找旧输出、prompt 及实际尝试。
+ZIP 不落本地磁盘，读写缓冲为每路 1 MiB，中央目录及小型索引留在内存。生成前、流式发送中分别核对输入 SHA，来源改变即停止。先上传 draft，完整认证下载核对字节数和 SHA 后才公开素材附件，随后刷新公开下载 URL，再完整匿名下载核对。所有卷两次读回都成功才写入 `data/fullsize-archives.json`。上传成功回调不能代替读回。恢复已有卷时，只有先前完整认证下载记录、相同 asset ID / 大小及 GitHub 返回的 SHA 同时吻合，才复用认证读回；匿名下载仍须完成。初次公开后的 draft 占位 URL 已改为从实际发布回执刷新，不能把旧 `untagged-*` 地址当成正式下载地址。
 
-以后每张导入同时保存按输出 SHA 命名的本机定位回执，返修不会覆盖旧母版的位置。新图在下一次增量归档完成前明确属于待归档；正常开发交付包括归档、完整远端读回及索引 commit/push。归档资格与美术资格独立，未审图或失败返修不计入合格进度。
+每卷 ZIP 内 `index.json` 保存尺寸、PNG 字节数、SHA、生成 journal / 实验关联及可用的完整 prompt 快照，`png/<高清SHA256>.png` 保存原图。仓库的 `data/fullsize-archives.json` 提供附件下载地址、ZIP SHA 和逐图所属卷。`data/generated.json` 的 `generated_fullsize_sha256` 可直接用于查找当前版本；`revision_history` 与请求 journal 用于查找旧输出、prompt 及实际尝试。归档的 repository base commit 与后续工作树审图分开标注，不声称正在生成的工作树已经存在于旧 commit。
+
+以后每张导入同时保存按输出 SHA 命名的本机定位回执，返修不会覆盖旧母版的位置。本机同卷原 PNG 通过硬链接放入 `assets/generated_fullsize/<高清SHA>.png`，保留实际分辨率与原始字节，禁止原地修改此内容对象。`link-current` 可为已有当前版本补齐。跨卷不能直接使用硬链接时，应先安排复制预算并处理真实失败，不冒充本机方法已在其他机器生效。这个目录在 Git 中忽略，由素材附件提供远端副本。
+
+新图在下一次增量归档完成前明确属于待归档；正常开发交付包括归档、完整远端读回及索引 commit/push。归档资格与美术资格独立，未审图或失败返修不计入合格进度。
+
+直接预览的[罗斯福高清样例](media/fullsize-portrait-example.png)是工具返回的原始 1081×1455 PNG，与 156×210 的游戏用图分别保存；[来源及 SHA](fullsize-portrait-example.json)可核对。普通 Git 只额外保留这一张展示样例，完整母版使用分卷附件。
 
 本机初始清点：`machine_id: bf-202609141645-5434332d4d`，2026-10-17 15:05:30 UTC，证据为项目生成 journal、实验 manifest、本机生成定位回执与逐文件 SHA。509 个已记录不同高清输出全部找回，共 950,919,533 bytes；当前 401 张头像的母版均存在。该数字只描述该次快照，不代表后续输出已经自动归档。实际备份成功时间与附件身份以归档索引为准。
 

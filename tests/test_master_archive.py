@@ -7,9 +7,25 @@ import zipfile
 from pathlib import Path
 
 from mod_nailong.tools.master_archive import StoredZip
+from mod_nailong.tools.portraits import record_fullsize_origin
 
 
 class MasterArchiveTests(unittest.TestCase):
+    def test_new_revision_keeps_both_original_masters_in_workspace(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            first, second = root/'first.png', root/'second.png'
+            first.write_bytes(b'first original PNG bytes')
+            second.write_bytes(b'changed original PNG bytes')
+            record_fullsize_origin('source', first, root=root)
+            record_fullsize_origin('source', second, root=root)
+            for original in (first, second):
+                digest = hashlib.sha256(original.read_bytes()).hexdigest()
+                local = root/'mod_nailong/assets/generated_fullsize'/(digest+'.png')
+                self.assertTrue(local.samefile(original))
+                self.assertEqual(local.read_bytes(), original.read_bytes())
+                self.assertTrue((root/'runtime/generated-origins/by-sha'/(digest+'.json')).is_file())
+
     def test_original_bytes_roundtrip_and_repeated_stream_identity(self):
         original = bytes(range(256)) * 8193
         with tempfile.TemporaryDirectory() as folder:

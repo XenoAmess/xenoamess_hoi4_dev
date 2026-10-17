@@ -4,6 +4,8 @@
 
 当前为 **0.1.0-dev 开发预览**，尚未发布到 Steam Workshop。目标包括原版与已安装 DLC 的领袖、将领、顾问大小头像、通用人物、间谍、科学家与王牌飞行员；其他 Workshop 模组与未来游戏更新需重新清点。
 
+生成的高清母版与游戏用图分别保存：[1081×1455 原始 PNG 样例](docs/media/fullsize-portrait-example.png)对应游戏用 156×210 图。完整高清素材采用同仓库 GitHub 分卷附件，保留原 PNG 字节；下载索引及逐图 SHA 见[高清母版说明](docs/fullsize-masters.md)。它们是美术源素材，包含旧版和未合格输出，不是可玩的 mod 发布。
+
 最新本地包为 preview-009：271 个已审图纹理覆盖，来自当时 268 张合格不同原图；`machine_id: bf-202609141645-5434332d4d` 于 2026-10-17 00:28 UTC 前后构建、00:34 UTC 完成用户目录注册与读回。该包尚未做实机加载检查，具体构建、文件 SHA 和边界见[部署回执](docs/preview-009-deployment.json)。下方 preview-007 截图只证明旧包当次的局部显示。
 
 ![毛发特征对照：每组左为旧版，右为已采用新版](docs/media/hair-features-comparison.png)
@@ -28,7 +30,7 @@
 2. `python mod_nailong/tools/catalog.py prepare --limit 16`：准备尚未完成的原图与输入 contact sheet；完全相同的原始字节共用生成，其他变体独立生成。
 3. 用 imagegen skill 检查原图，逐张引用原图与 `assets/reference/naiwa.png`，保留原人物毛发特征。请求前保存完整实际 prompt；基础提示词在 [portrait-prompt.txt](assets/portrait-prompt.txt)，实际调用词另行逐次落盘。不可用程序贴头、统一通用头像或滤镜冒充。
 4. 调用前用 `generation_requests.py prepare --key <原图SHA256> --prompt-file <实际提示词.txt>` 固定完整 prompt 与输入；调用后用 `generation_requests.py finish --key <原图SHA256> --image <生成文件.png>` 导入。修改旧图加 `--edit-existing`。工具只做规范尺寸转换，保存修订、输入和输出 SHA；原始高清 PNG 按原字节另行归档到 GitHub 素材附件，下载方式、SHA 索引及待归档边界见[高清母版说明](docs/fullsize-masters.md)。已返回图片的本地导入中断按[严格恢复机制](docs/interrupted-import-recovery.md)续接，不能因此重复生成。对照实验使用其专用 recorder，同样在调用前落盘。
-5. `python mod_nailong/tools/portraits.py sheet`：审查输出，对照原图确认服装、神态和动作。审图后运行 `approve pending-sheet`；未看图不得批准。
+5. 审图与下一张生成重叠，使用 `review_pairs.py` 对照原图与当前图，核对毛发、服装、神态和领口；`production_queue.py review` 只排队 SHA / attempt 绑定的人工决定，由同一生成执行者在导入之间 `apply-reviews`。不并发改写共享 manifest，未看图不得批准；见[滚动队列及实测](docs/rolling-production-queue.md)。
 6. `python mod_nailong/tools/portraits.py coverage`：读回生成/审图数量。
 7. `python mod_nailong/tools/build_release.py --preview --check`：双构建，逐文件核对 ZIP、DDS 解码与原尺寸。`--preview --output <全新目录>` 生成显式不完整预览包；正式构建不带 `--preview`，会在覆盖不足或缺失引用未解决时拒绝。
 

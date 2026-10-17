@@ -10,11 +10,11 @@ import hashlib
 import json
 import re
 import struct
-import subprocess
 import sys
+import time
 import zlib
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now, write_json
@@ -28,6 +28,7 @@ BLOCK = 1024 * 1024
 
 def inventory():
     """Adopt only PNGs matching an already recorded project fullsize SHA."""
+    deadline = time.monotonic() + 120
     expected = set()
     current = {}
     provenance = {}
@@ -84,6 +85,7 @@ def inventory():
     for path in receipts:
         if path.stat().st_size <= BLOCK:
             origin_paths(read_json(path))
+    paths.update((MOD / 'assets/generated_fullsize').glob('*.png'))
     # Older source-key receipts were overwritten on revision. Search only folders
     # already proved by project receipts, and accept exact recorded digests only.
     for folder in {path.parent for path in paths}:
@@ -93,6 +95,8 @@ def inventory():
     from PIL import Image
     found = {}
     for path in sorted(paths):
+        if time.monotonic() > deadline:
+            raise SystemExit('Inventory time budget exceeded; no missing-file conclusion published')
         if not path.is_file():
             continue
         digest = file_sha256(path)
@@ -178,87 +182,35 @@ class StoredZip:
 
 
 def archive(tag):
-    import requests
-    if not re.fullmatch(r"art-masters-[0-9]{3}", tag):
-        raise SystemExit("Use an art-masters-NNN tag, distinct from mod releases")
+    from mod_nailong.tools.master_archive_upload import publish
+    publish(tag)
+
+
+def link_current():
+    from mod_nailong.tools.portraits import record_fullsize_origin
     snap = inventory()
-    if snap["current_masters_missing"] or snap["historical_fullsize_sha_missing"]:
-        raise SystemExit("Recorded fullsize output missing; archive stopped before publishing")
-    previous = read_json(INDEX) if INDEX.exists() else {"schema": "naiwa-fullsize-archives-v1", "archives": [], "outputs": {}}
-    if any(item["tag"] == tag for item in previous["archives"]):
-        raise SystemExit("Archive already registered; use a new tag for new masters")
-    selected = [item for item in snap["masters"] if item["sha256"] not in previous["outputs"]]
-    if not selected:
-        raise SystemExit("No unarchived masters")
-    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-    manifest = {"schema": "naiwa-fullsize-pack-v1", "machine_id": snap["machine_id"], "observed_at_utc": snap["observed_at_utc"], "tag": tag, "source_commit": commit, "generated_record_sha256": file_sha256(MOD / "data/generated.json"), "count": len(selected), "png_bytes": sum(item["bytes"] for item in selected), "outputs": [{k: v for k, v in item.items() if k != "path"} for item in selected]}
-    body = (json.dumps(manifest, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
-    entries = [("index.json", body, hashlib.sha256(body).hexdigest())]
-    entries += [("png/" + item["sha256"] + ".png", Path(item["path"]), item["sha256"]) for item in sorted(selected, key=lambda item: item["sha256"])]
-    stream = StoredZip(entries)
-    # No ZIP/PNG copy is written locally. The stream is read twice: once for an
-    # expected archive digest, then for upload. Memory is bounded by BLOCK.
-    for _ in stream:
-        pass
-    expected = stream.sha256
-    name = tag + ".zip"
-    print(f"Prepared {len(selected)} original PNGs; {len(stream)} archive bytes; SHA256 {expected}", flush=True)
-    token = subprocess.check_output(["gh", "auth", "token"], text=True).strip()
-    session = requests.Session()
-    session.headers.update(Authorization="Bearer " + token, Accept="application/vnd.github+json", **{"X-GitHub-Api-Version": "2022-11-28"})
-    api = "https://api.github.com/repos/" + REPO
-    response = session.get(api + "/releases/tags/" + tag, timeout=(30, 60))
-    if response.status_code == 404:
-        response = session.post(api + "/releases", json={"tag_name": tag, "target_commitish": commit, "name": "Generated portrait masters " + tag[-3:], "body": "Development art archive: original full-size imagegen PNG bytes, including superseded experiments and images pending visual review. This is not a playable mod release. ZIP index links each PNG SHA to project generation records.\n\nZIP SHA-256: `" + expected + "`", "draft": True, "prerelease": True}, timeout=(30, 60))
-    response.raise_for_status()
-    release = response.json()
-    matching = [item for item in release["assets"] if item["name"] == name]
-    if matching:
-        asset = matching[0]
-        if asset["size"] != len(stream):
-            raise SystemExit("Existing asset differs in size; refusing replacement")
-    else:
-        url = release["upload_url"].split("{")[0] + "?name=" + quote(name)
-        response = session.post(url, data=stream, headers={"Content-Type": "application/zip", "Content-Length": str(len(stream))}, timeout=(30, 180))
-        response.raise_for_status()
-        asset = response.json()
-    print("Upload present; verifying authenticated download", flush=True)
-
-    def verify(client, url, headers=None):
-        digest, count = hashlib.sha256(), 0
-        with client.get(url, headers=headers, stream=True, timeout=(30, 180)) as download:
-            download.raise_for_status()
-            for chunk in download.iter_content(BLOCK):
-                digest.update(chunk)
-                count += len(chunk)
-        if count != len(stream) or digest.hexdigest() != expected:
-            raise SystemExit("Remote archive bytes/SHA mismatch; not registering backup")
-
-    verify(session, asset["url"], {"Accept": "application/octet-stream"})
-    if release["draft"]:
-        response = session.patch(api + "/releases/" + str(release["id"]), json={"draft": False, "prerelease": True, "make_latest": "false"}, timeout=(30, 60))
-        response.raise_for_status()
-        release = response.json()
-    print("Published art attachment; verifying anonymous download", flush=True)
-    with requests.Session() as anonymous:
-        verify(anonymous, asset["browser_download_url"])
-    receipt = {"tag": tag, "release_url": release["html_url"], "download_url": asset["browser_download_url"], "asset_id": asset["id"], "png_count": len(selected), "png_bytes": manifest["png_bytes"], "archive_bytes": len(stream), "archive_sha256": expected, "manifest_sha256": hashlib.sha256(body).hexdigest(), "source_commit": commit, "machine_id": machine_id(), "verified_at_utc": utc_now(), "verification": "Authenticated and anonymous complete streamed downloads, exact bytes and SHA256", "local_archive_copy_created": False}
-    previous["archives"].append(receipt)
-    for item in selected:
-        previous["outputs"][item["sha256"]] = {"archive_tag": tag, "entry": "png/" + item["sha256"] + ".png", "bytes": item["bytes"], "size": item["size"]}
-    write_json(INDEX, previous)
-    write_json(ROOT / "runtime" / (tag + "-verification.json"), receipt)
-    print(json.dumps(receipt, ensure_ascii=False), flush=True)
+    if snap['current_masters_missing']:
+        raise SystemExit('Current master missing; no lower-resolution substitution allowed')
+    found = {item['sha256']: item for item in snap['masters']}
+    count = 0
+    for key, row in read_json(MOD/'data/generated.json')['portraits'].items():
+        record_fullsize_origin(key, Path(found[row['generated_fullsize_sha256']]['path']))
+        count += 1
+    write_json(ROOT/'runtime/fullsize-workspace-links.json', {'machine_id': machine_id(), 'observed_at_utc': utc_now(), 'linked_current_masters': count, 'physical_png_copies_created': 0, 'method': 'Same-volume content-addressed hardlinks; byte SHA checked; no in-place edits', 'review_at_utc': (datetime.now(timezone.utc)+timedelta(days=7)).isoformat()})
+    print(f'{count} current fullsize masters now present in project assets/generated_fullsize; no extra physical PNG copy')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("inventory")
+    commands.add_parser("link-current")
     upload = commands.add_parser("archive")
     upload.add_argument("--tag", required=True)
     args = parser.parse_args()
-    inventory() if args.command == "inventory" else archive(args.tag)
+    if args.command == 'inventory': inventory()
+    elif args.command == 'link-current': link_current()
+    else: archive(args.tag)
 
 
 if __name__ == "__main__":

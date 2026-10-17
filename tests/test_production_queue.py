@@ -1,0 +1,66 @@
+"""Prevent duplicate calls, stale approvals and import/review lost updates."""
+from contextlib import ExitStack
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+from PIL import Image
+from tools.common import file_sha256, read_json, write_json
+from mod_nailong.tools import portraits, production_queue as queue
+
+
+class ProductionQueueTests(unittest.TestCase):
+    def fixture(self, root, stack):
+        mod = root / 'mod_nailong'
+        for module, name, value in [(queue, 'ROOT', root), (portraits, 'ROOT', root), (portraits, 'MOD', mod), (portraits, 'RECORD', mod/'data/generated.json')]:
+            stack.enter_context(patch.object(module, name, value))
+        image = root/'portrait.png'; Image.new('RGBA', (3, 3), 'gold').save(image)
+        digest = file_sha256(image)
+        prompt = root/'prompt.txt'; prompt.write_text('Exact frozen prompt', encoding='utf-8')
+        rows = {}
+        for key in ['a'*64, 'b'*64]:
+            rows[key] = {'image': 'portrait.png', 'image_sha256': digest, 'review': 'pending', 'art_direction': 'hair-features-v1', 'request_journal': f'mod_nailong/data/generation-requests/{key}.json'}
+            write_json(mod/f'data/generation-requests/{key}.json', {'attempts': [{'number': 1, 'status': 'prepared', 'prompt': prompt.read_text(), 'prompt_file': 'prompt.txt', 'prompt_sha256': file_sha256(prompt), 'inputs': [{'sha256': digest}], 'output_sha256': digest}]})
+        write_json(mod/'data/generated.json', {'portraits': rows})
+        write_json(mod/'data/generation-failures.json', {'attempts': []})
+        write_json(mod/'data/image-retry-queue.json', {'sources': {}})
+        evidence = root/'review.json'
+        write_json(evidence, {'pages': [{'path': str(image), 'sha256': digest, 'entries': [{'source_sha256': key, 'image_sha256': digest} for key in rows]}]})
+        job = {'key': 'a'*64, 'prompt': prompt.read_text(), 'references': [str(image)]}
+        return mod, image, digest, evidence, job
+
+    def test_unknown_call_outcome_blocks_next_call_and_duplicate_claim(self):
+        with tempfile.TemporaryDirectory() as temp, ExitStack() as stack:
+            mod, image, digest, evidence, job = self.fixture(Path(temp), stack)
+            queue.begin(job)
+            with self.assertRaisesRegex(ValueError, 'already claimed'):
+                queue.begin(job)
+            with self.assertRaisesRegex(ValueError, 'unknown outcome'):
+                queue.begin(dict(job, key='b'*64))
+            queue.returned(job['key'], image=image)
+            queue.begin(dict(job, key='b'*64))
+
+    def test_staged_approval_preserves_a_later_import(self):
+        with tempfile.TemporaryDirectory() as temp, ExitStack() as stack:
+            mod, image, digest, evidence, job = self.fixture(Path(temp), stack)
+            queue.stage_review(job['key'], digest, 'approved', evidence)
+            data = read_json(mod/'data/generated.json')
+            data['portraits']['new-import'] = {'sentinel': 'imported while reviewer worked'}
+            write_json(mod/'data/generated.json', data)
+            self.assertEqual(queue.apply_reviews(), {'applied': 1, 'stale_not_applied': 0})
+            result = read_json(mod/'data/generated.json')['portraits']
+            self.assertEqual(result['new-import']['sentinel'], 'imported while reviewer worked')
+            self.assertEqual(result[job['key']]['collar_fit']['image_sha256'], digest)
+
+    def test_approval_for_old_attempt_does_not_approve_new_attempt(self):
+        with tempfile.TemporaryDirectory() as temp, ExitStack() as stack:
+            mod, image, digest, evidence, job = self.fixture(Path(temp), stack)
+            queue.stage_review(job['key'], digest, 'approved', evidence)
+            journal = mod/f'data/generation-requests/{job["key"]}.json'
+            data = read_json(journal); data['attempts'][-1]['number'] = 2; write_json(journal, data)
+            self.assertEqual(queue.apply_reviews(), {'applied': 0, 'stale_not_applied': 1})
+            self.assertEqual(read_json(mod/'data/generated.json')['portraits'][job['key']]['review'], 'pending')
+
+
+if __name__ == '__main__':
+    unittest.main()

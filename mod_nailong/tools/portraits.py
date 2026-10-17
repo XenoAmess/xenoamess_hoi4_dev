@@ -40,12 +40,24 @@ def record_fullsize_origin(key, image_path, root=None):
     root = root or ROOT
     image_path = Path(image_path)
     digest = file_sha256(image_path)
+    # Same-volume hardlink: put the actual master in the project without another
+    # physical PNG copy. These content-addressed files are never edited in place.
+    local = root/"mod_nailong/assets/generated_fullsize"/(digest+".png")
+    local.parent.mkdir(parents=True,exist_ok=True)
+    if not local.exists():
+        __import__('os').link(image_path, local)
+    if file_sha256(local) != digest:
+        raise ValueError('Project fullsize master does not match returned PNG')
     receipt = {"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":str(image_path.resolve()),"sha256":digest,"review_at_utc":__import__('datetime').datetime.fromtimestamp(__import__('time').time()+7*86400,__import__('datetime').timezone.utc).isoformat(),"reason":"Original PNG required for fullsize archive and art revision; GitHub backup is confirmed only by data/fullsize-archives.json"}
+    receipt['workspace_master'] = local.relative_to(root).as_posix()
     # Keep an immutable per-output locator as well as the latest source locator.
     # Revising a portrait must not erase the path to its previous HD original.
     immutable = root/"runtime/generated-origins/by-sha"/(digest+".json")
     if not immutable.exists():
         write_json(immutable, receipt)
+    else:
+        # Scanning, linking or resuming an import does not renew protection.
+        receipt['review_at_utc'] = read_json(immutable)['review_at_utc']
     write_json(root/"runtime/generated-origins"/(key+".json"), receipt)
 
 def ingest(key, image_path, prompt_file, replace_reason=None):
