@@ -20,3 +20,5 @@
 历史说明：此前先只保留本机原件，随后建立了 `art-masters-001` 至 `004` 分卷附件。用户本次决定覆盖该存储方式。旧上传器已经移除，`archive --tag ...` 入口明确拒绝上传；旧附件只在全部 PNG 已进入 Git 且远端字节完整核验后退役。原 [`data/fullsize-archives.json`](../data/fullsize-archives.json)、旧备份快照和 prompt 传输勘误保留历史事实，并注明退役后的可用性；不能继续把已撤下附件当成可下载副本。
 
 本机生成缓存、构建和其他派生副本继续遵守共享存储策略及有期限的用途复核。本次迁移不删除本机原始 PNG、不改写公开 Git 历史、不改变 Steam 状态。
+
+退役已完成：`machine_id: bf-202609141645-5434332d4d`，`2026-10-17T18:07:41.825196+00:00`。在固定 commit `eca824fd909a0555b37627cb917a2facd1b03f0d` 的 545 张原件全部完成匿名下载与 SHA-256/大小核验后，已移除上述四个素材 Release 的 35 个附件。Release 条目仅保留历史说明和 Git 文件链接；精确 asset ID、时间与读回见[退役回执](../data/fullsize-release-retirement.json)。后续新输出继续直接进入 Git。

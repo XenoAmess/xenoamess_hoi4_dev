@@ -11,3 +11,5 @@
 高清归档 `art-masters-002` 内的 PNG 字节及 ZIP SHA 仍正确。该次法国首发的 ZIP prompt 快照保存的是当时预存的预期文本，应以本更正及其实际 prompt 文件为准。原 ZIP 保留不覆盖；归档索引与附件说明追加此更正，不把历史元数据静默换成另一份。
 
 后续使用 `production_queue.py export-job` 输出 ASCII 转义 JSON，客户端 `JSON.parse` 恢复原始 Unicode。调用前，JS 执行器把**将实际发送的完整 job**保存为 UTF-8 请求快照，再交给 `begin --actual-job-file` 与冻结 journal 的 prompt / 输入 SHA 核对；只读取原 job 文件不足以证明跨进程传输无损，缺少实际快照时拒绝派发。新增测试实际模拟 CP936→UTF-8 破坏并确认拒绝派发，同时验证 ASCII JSON 往返后文本完全一致。
+
+2026-10-18 存储方式更正：用户要求原始高清 PNG 直接进入 Git。上述“原 ZIP 保留”描述的是勘误当时的状态；现已在全部对应原件通过 Git 远端完整字节核验后撤下旧 ZIP 与补充附件。此 prompt 更正文件、预期原稿、实际调用词及原 ZIP SHA 历史记录继续留在 Git，事实和记录时间边界不变。`machine_id: bf-202609141645-5434332d4d`，退役时间 `2026-10-17T18:07:41.825196+00:00`，见[退役回执](../data/fullsize-release-retirement.json)。
