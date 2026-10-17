@@ -23,3 +23,5 @@ ZIP 不落本地磁盘，读写缓冲为每路 1 MiB，中央目录及小型索�
 本机初始清点：`machine_id: bf-202609141645-5434332d4d`，2026-10-17 15:05:30 UTC，证据为项目生成 journal、实验 manifest、本机生成定位回执与逐文件 SHA。509 个已记录不同高清输出全部找回，共 950,919,533 bytes；当前 401 张头像的母版均存在。该数字只描述该次快照，不代表后续输出已经自动归档。实际备份成功时间与附件身份以归档索引为准。
 
 本机原件和缓存继续遵守共享存储策略及有期限的用途复核，不在本次归档中删除。远端副本读回完成也不自动授权回收仍在使用的原件。
+
+已验证归档快照：`machine_id: bf-202609141645-5434332d4d`，2026-10-17 16:03:39 UTC（北京时间 10 月 18 日）：536 个已记录高清输出，合计 1,003,017,026 bytes，现有 418 张头像的母版均有远端副本。[首批 515 张／30 卷](https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/tag/art-masters-001)及[增量 21 张／2 卷](https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/tag/art-masters-002)均完成认证及匿名完整读回。逐图查找、卷 SHA 和核验时间见[归档索引](../data/fullsize-archives.json)，范围及保留复核见[快照](../data/fullsize-backup-checkpoint.json)。后续新增不自动算入这份历史快照。
