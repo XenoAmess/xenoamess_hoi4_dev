@@ -19,3 +19,7 @@ Windows 的跨进程 prompt 传输必须使用 `export-job` 的 ASCII 转义 JSO
 2026-10-18 的[实际调度回执](../data/checkpoint-publication-overlap.json)记录本地提交完成、真实后续调用、固定提交推送与原始 PNG 读回的 UTC 时间及机器身份，证明后续调用与文件传输实际重叠。拒绝结果同样按真实结果记录，不把调用已派发当作生成成功或合格图。[当前读回快照](../data/fullsize-git-checkpoint.json)说明固定 commit 和覆盖范围；通过一批校验或推送后持续调度下一张，任务目标仍是全量人物头像。
 
 若批次首项因已存在的同人物服务拒绝而暂缓，checkpoint 必须在该批**第一项实际允许派发的请求**处触发，不能只按数组下标 0 触发。若整批均暂缓，则由唯一执行者在确认无未知调用/导入后执行空闲 checkpoint，保留真实暂缓状态，不声称发生生成重叠。important-027 的首项暂缓曾暴露这一调度缺口；后续执行器已改为 first-eligible 标志，并将 important-026 与 important-027 的实际结果一起纳入下一固定提交。已准备但错过当前批次的返修，只把同一冻结请求移到未调用的后续批次；不因此重新生成或覆盖旧实际 payload。
+
+2026-10-18 的冷却调度已实际插入 important-043 与 important-044 之间：[cooldown-010 回执](../data/retry-scheduler-batches/cooldown-010.json)绑定 `machine_id: bf-202609141645-5434332d4d`，逐项记录实际截止、调用时间、原请求参数 SHA 与返回结果；12 次实际调用中 1 次返回图片、11 次拒绝。其后立即继续 important-044，没有等整批审图。冷却批次完成只证明调用结果，不能自动批准返回图。
+
+用户随后将累计上限更新为 8 次，详见[新规则](image-retry-policy.md)。调度入口源码已纳入仓库 `tools/retry_scheduler_next.py`、`retry_scheduler_claim.py`、`retry_scheduler_complete.py`；`retry_scheduler_merge.py` 只合入已经实际审阅的原请求证明，不领取额度，`retry_transport_proof.py` 只生成技术核对和输入审阅页。唯一生成执行者在空闲边界分配、领取、单路执行并关闭实际批次；第二轮及以后必须使用最近拒绝的新八小时截止和当前实际快照，不复用旧截止冒充已冷却。原手工审阅只在提示词、输入字节和顺序完全一致时复用。`--inspect-only` 不同步或消耗队列。runtime 兼容入口转入这些版本化源码，不维护另一套重试政策。
