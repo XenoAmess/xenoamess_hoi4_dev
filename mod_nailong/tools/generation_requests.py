@@ -179,20 +179,15 @@ def main():
                 failures.setdefault("attempts",[]).append({"source_sha256":args.key,"source_path":asset["path"],"status":"blocked",
                     "machine_id":machine_id(),"observed_at_utc":utc_now(),"tool":"built-in imagegen","code":"moderation_blocked",
                     "request_id":request_ids[0] if request_ids else None,"actual_error":error,"prompt":a["prompt"],"inputs":a["inputs"],
-                    "retry":"Continue unrelated sources. Only an allowed request/tool-permitted retry may run once after the recorded eight-hour cooldown, with exact original prompt and inputs; no alternate route."})
+                    "journal_attempt_number":a['number'],
+                    "retry":"Continue unrelated sources. When allowed and tool-permitted, wait at least eight hours after EACH refusal and reuse the exact prompt and inputs; stop on success or after eight cumulative source retries. No alternate route."})
                 held=failures.setdefault("held_source_paths",[])
                 if asset["path"] not in held:held.append(asset["path"])
                 write_json(failures_path,failures)
         write_json(file,data)
         if args.command=="fail":
             from mod_nailong.tools.image_retries import sync
-            queue=sync()
-            if data["attempts"][-1].get("retry_of_attempt"):
-                queue["sources"][args.key].update(state="retry_failed_no_more_automatic_retries",failed_at_utc=utc_now())
-                write_json(MOD/"data/image-retry-queue.json",queue)
-            elif queue.get('sources',{}).get(args.key,{}).get('retries_used',0)>=1:
-                queue['sources'][args.key].update(state='new_art_request_refused_retry_quota_exhausted',latest_refusal_at_utc=utc_now(),latest_refused_prompt_sha256=data['attempts'][-1]['prompt_sha256'])
-                write_json(MOD/'data/image-retry-queue.json',queue)
+            sync() # Sole producer applies the policy and the new refusal's full CD.
 
 if __name__=="__main__":
     sys.stdout.reconfigure(encoding="utf-8");main()

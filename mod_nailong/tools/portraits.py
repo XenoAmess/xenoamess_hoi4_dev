@@ -132,7 +132,7 @@ def approve(keys):
             accepted=retry.get('accepted_retry_output_sha256')
             if not any(h.get('previous_image_sha256')==accepted for h in row.get('revision_history',[])):
                 raise SystemExit('Art revision does not descend from accepted exact retry')
-            retry.update(state='approved_after_single_cooldown_retry_and_art_correction',approved_at_utc=utc_now(),approved_image_sha256=row['image_sha256'])
+            retry.update(state='approved_after_cooldown_retry_and_art_correction',approved_at_utc=utc_now(),approved_image_sha256=row['image_sha256'])
         if row.get("request_journal"):
             path=ROOT/row["request_journal"];journal=read_json(path)
             attempt=journal["attempts"][-1]
@@ -140,7 +140,7 @@ def approve(keys):
             attempt.update(status="approved",reviewed_at_utc=utc_now(),review="approved")
             write_json(path,journal)
             if attempt.get("retry_of_attempt"):
-                retry.update(state="approved_after_single_cooldown_retry",approved_at_utc=utc_now())
+                retry.update(state="approved_after_cooldown_retry",approved_at_utc=utc_now(),successful_retry_number=attempt.get('cooldown_retry_number',retry.get('retries_used')))
                 for failure in failures.get("attempts",[]):
                     if failure["source_sha256"]==key:
                         failure["resolved_by_retry"]={"output_sha256":row["image_sha256"],"approved_at_utc":utc_now(),"original_refusal_preserved":True}

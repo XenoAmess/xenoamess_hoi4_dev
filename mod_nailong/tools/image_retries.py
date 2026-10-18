@@ -1,4 +1,4 @@
-"""Plan eight-hour, single-use retries. Never calls an image API or schedules OS jobs."""
+"""Plan up to eight unchanged retries, eight hours after each service refusal."""
 from datetime import datetime,timedelta,timezone
 from pathlib import Path
 import argparse
@@ -8,25 +8,53 @@ from tools.common import ROOT,read_json,write_json,utc_now,machine_id,file_sha25
 from PIL import Image
 MOD=ROOT/'mod_nailong';QUEUE=MOD/'data/image-retry-queue.json'
 
+def policy():
+    settings=read_json(MOD/'data/image-retry-policy.json')
+    assert settings['cooldown_hours']==8
+    assert settings['max_cooldown_retries_per_source']==8
+    return settings
+
+def refresh_refusal(entry, latest, settings):
+    """Migrate an exhausted old allowance without resetting consumed calls."""
+    limit=settings['max_cooldown_retries_per_source']
+    entry['max_cooldown_retries']=limit
+    if not latest or latest['status']!='failed':return
+    if 'moderation_blocked' not in latest.get('error',''):return
+    observed=latest.get('observed_at_utc')
+    if not observed:return
+    deadline=(datetime.fromisoformat(observed.replace('Z','+00:00'))+timedelta(hours=settings['cooldown_hours'])).isoformat()
+    # Never weaken a previously conservative lower bound or an existing CD.
+    if datetime.fromisoformat(entry['not_before_utc'])>datetime.fromisoformat(deadline):deadline=entry['not_before_utc']
+    old_state=entry['state']
+    new_state='cooling_down' if entry['retries_used']<limit else 'retry_limit_reached'
+    if old_state in ('retry_failed_no_more_automatic_retries','new_art_request_refused_retry_quota_exhausted'):
+        entry.setdefault('policy_migrations',[]).append({'machine_id':machine_id(),'observed_at_utc':utc_now(),
+            'previous_state':old_state,'previous_retries_used':entry['retries_used'],
+            'new_max_cooldown_retries':limit,'user_instruction_date':settings['user_instruction_date'],
+            'reason':'User raised the cumulative source allowance to eight; preserve old failures and consumed calls.'})
+    entry.update(state=new_state,last_refusal_receipt_utc=observed,not_before_utc=deadline,
+                 cooldown_origin_attempt=latest['number'])
+
 def require_editable_service_state(key,record,latest,edit_existing):
     """Only a returned exact retry can release a held source for an art edit."""
     path=MOD/'data/generation-failures.json';failures=read_json(path)
     held=[f for f in failures.get('attempts',[]) if f['source_sha256']==key and f.get('status')=='blocked' and not f.get('resolved_by_retry')]
     if not held:return
     queue=read_json(QUEUE);entry=queue.get('sources',{}).get(key,{})
-    proof=(edit_existing and record and latest and entry.get('retries_used')==1
+    proof=(edit_existing and record and latest and 1<=entry.get('retries_used',0)<=policy()['max_cooldown_retries_per_source']
            and entry.get('state')=='generated_pending_visual_review'
            and latest.get('retry_of_attempt')
            and latest.get('status') in ('generated_pending_visual_review','generated_rejected_visual_review')
            and entry.get('output_sha256')==record.get('image_sha256')==latest.get('output_sha256')
            and file_sha256(ROOT/record['image'])==record['image_sha256'])
-    if not proof:raise SystemExit('Service-held source: only the exact single cooldown retry is allowed; no new prompt or input')
+    if not proof:raise SystemExit('Service-held source: only an eligible exact cooldown retry is allowed; no new prompt or input')
     for failure in held:
         failure['resolved_by_retry']={'status':'service_returned_image_art_correction_pending','output_sha256':record['image_sha256'],'observed_at_utc':utc_now(),'original_refusal_preserved':True}
     entry.update(state='service_retry_succeeded_art_correction_pending',accepted_retry_output_sha256=record['image_sha256'],art_correction_started_at_utc=utc_now())
     write_json(path,failures);write_json(QUEUE,queue)
 
 def sync():
+    settings=policy()
     queue=read_json(QUEUE) if QUEUE.exists() else {'schema':'naiwa-image-retry-queue-v1','sources':{}}
     for failure in read_json(MOD/'data/generation-failures.json').get('attempts',[]):
         if failure.get('status')!='blocked':continue
@@ -39,20 +67,35 @@ def sync():
         else:basis='Recorded refusal receipt UTC'
         started=datetime.fromisoformat(observed.replace('Z','+00:00'))
         queue['sources'][key]={'first_refusal_receipt_utc':observed,'time_basis':basis,
-            'not_before_utc':(started+timedelta(hours=8)).isoformat(),'retries_used':0,'state':'cooling_down',
+            'not_before_utc':(started+timedelta(hours=settings['cooldown_hours'])).isoformat(),'retries_used':0,'state':'cooling_down',
             'request_id':failure.get('request_id'),'machine_id':machine_id(),'recorded_at_utc':utc_now(),
             'eligibility':'Must confirm underlying request is allowed and tool permits retry; keep exact original prompt and inputs'}
+    for key,entry in queue['sources'].items():
+        path=MOD/'data/generation-requests'/(key+'.json')
+        attempts=read_json(path)['attempts'] if path.exists() else []
+        refresh_refusal(entry,attempts[-1] if attempts else None,settings)
+    queue['policy']={'user_instruction_date':settings['user_instruction_date'],
+                     'cooldown_hours':settings['cooldown_hours'],'max_cooldown_retries_per_source':settings['max_cooldown_retries_per_source']}
     write_json(QUEUE,queue)
     return queue
 
 def claim(key):
     queue=sync();entry=queue['sources'][key]
-    if entry['retries_used']>=1:raise SystemExit('Retry already consumed; no second automatic retry')
+    limit=policy()['max_cooldown_retries_per_source']
+    if entry['retries_used']>=limit:raise SystemExit('Retry limit reached; eight cumulative cooldown retries already consumed')
     if datetime.now(timezone.utc)<datetime.fromisoformat(entry['not_before_utc']):raise SystemExit('Eight-hour cooldown has not elapsed')
     journal_path=MOD/'data/generation-requests'/(key+'.json')
     if not journal_path.exists():raise SystemExit('Original full prompt/inputs need recovery before retry')
     journal=read_json(journal_path)
-    original=next(a for a in reversed(journal['attempts']) if a['status']=='failed')
+    original=journal['attempts'][-1]
+    if original['status']!='failed':raise SystemExit('Retry already consumed or result unresolved/returned; do not claim another call')
+    if entry['state']!='cooling_down':raise SystemExit('Unresolved or non-service failure; inspect before claiming a retry')
+    root=original
+    while root.get('retry_of_attempt'):
+        previous=next(a for a in journal['attempts'] if a['number']==root['retry_of_attempt'])
+        if root['prompt']!=previous['prompt'] or root['inputs']!=previous['inputs']:
+            raise SystemExit('Retry chain prompt or ordered input identities changed; recover exact evidence')
+        root=previous
     from mod_nailong.tools.generation_requests import original as export_original
     asset=next(a for a in read_json(MOD/'data/catalog.json')['assets'] if a['source_sha256']==key)
     references=[]
@@ -66,18 +109,20 @@ def claim(key):
     number=len(journal['attempts'])+1
     promptfile=MOD/'assets/prompts'/f'{key}-{number:03}.txt'
     promptfile.write_text(original['prompt'],encoding='utf-8',newline='\n')
+    retry_number=entry['retries_used']+1
     attempt={**original,'number':number,'status':'prepared','prompt_file':promptfile.relative_to(ROOT).as_posix(),
         'prompt_sha256':file_sha256(promptfile),'prepared_at_utc':utc_now(),'retry_of_attempt':original['number'],
+        'retry_root_attempt':root['number'],'cooldown_retry_number':retry_number,
         'cooldown_not_before_utc':entry['not_before_utc'],'eligibility_confirmed_by':'Codex reviewed allowed request and tool conditions before --confirm-eligible'}
-    for field in ['error','observed_at_utc','output','output_sha256','generated_at_utc','review','rejection_reason','prompt_transport_correction','intended_prompt','intended_prompt_file','intended_prompt_sha256','actual_request_verification']:attempt.pop(field,None)
-    entry.update(retries_used=1,state='claimed_before_call',claimed_at_utc=utc_now())
+    for field in ['error','observed_at_utc','output','output_sha256','fullsize_sha256','fullsize_image','generated_at_utc','review','reviewed_at_utc','rejection_reason','prompt_transport_correction','intended_prompt','intended_prompt_file','intended_prompt_sha256','actual_request_verification']:attempt.pop(field,None)
+    entry.update(retries_used=retry_number,state='claimed_before_call',claimed_at_utc=utc_now())
     write_json(QUEUE,queue)
     journal['attempts'].append(attempt);write_json(journal_path,journal)
     source_image=export_original(asset)
     transparent=Image.open(source_image).getchannel('A').getextrema()[0]<255
     write_json(ROOT/'runtime/cooldown-retry-job.json',{'key':key,'prompt':original['prompt'],'references':references,
         'transparent':transparent,'journal':journal_path.relative_to(ROOT).as_posix()})
-    print('Single retry consumed and exact original request prepared; call only built-in imagegen')
+    print(f'Cooldown retry {retry_number}/{limit} consumed and exact original request prepared; call only built-in imagegen')
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('command',choices=['sync','due','claim']);p.add_argument('--key');p.add_argument('--confirm-eligible',action='store_true')
@@ -88,6 +133,6 @@ def main():
     queue=sync();now=datetime.now(timezone.utc)
     for key,e in queue['sources'].items():
         due=now>=datetime.fromisoformat(e['not_before_utc'])
-        if a.command=='sync' or due and e['retries_used']==0:print(key[:12],e['not_before_utc'],e['state'],f"used={e['retries_used']}")
+        if a.command=='sync' or due and e['state']=='cooling_down' and e['retries_used']<policy()['max_cooldown_retries_per_source']:print(key[:12],e['not_before_utc'],e['state'],f"used={e['retries_used']}")
 
 if __name__=='__main__':main()
