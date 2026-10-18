@@ -6,19 +6,21 @@ from tools.common import ROOT,read_json,write_json,file_sha256,sha256,machine_id
 from mod_nailong.tools.build_release import build,verify
 KEY='0198603566189470fb173b47c179055d93461815d71e3ec1421c14df457ddd0f'
 def main():
- parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--mode',choices=['sprite-size','cornered-tile','cornered-buttons','cornered-icon-size','masked-hd-sampler'],default='sprite-size');args=parser.parse_args()
+ parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--mode',choices=['sprite-size','cornered-tile','cornered-buttons','cornered-icon-size','masked-hd-sampler','masked-hd-sampler-g'],default='sprite-size');args=parser.parse_args()
  manifest=build(args.output,preview=True,validation_keys={KEY})
  text='spriteTypes = {\n spriteType = {\n  name = GFX_portrait_USA_franklin_delano_roosevelt\n  texturefile = "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds"\n  size = { x = 156 y = 210 }\n }\n}\n'
  if args.mode.startswith('cornered-'):text='spriteTypes = {\n corneredTileSpriteType = {\n  name = GFX_portrait_USA_franklin_delano_roosevelt\n  texturefile = "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds"\n  size = { x = 156 y = 210 }\n  borderSize = { x = 0 y = 0 }\n  tilingCenter = no\n }\n}\n'
  relative='interface/zz_naiwa_hd_sprite_size_probe.gfx';path=args.output/'staging'/relative;path.parent.mkdir(parents=True);path.write_text(text,encoding='utf-8',newline='\n')
  manifest['files'].append({'path':relative,'bytes':path.stat().st_size,'sha256':file_sha256(path)});manifest['files'].sort(key=lambda r:r['path'])
- if args.mode=='masked-hd-sampler':
+ if args.mode.startswith('masked-hd-sampler'):
   from PIL import Image
   carrier_relative='gfx/interface/naiwa_hd_size_carrier_156_210.dds';carrier=args.output/'staging'/carrier_relative;carrier.parent.mkdir(parents=True,exist_ok=True)
   Image.new('RGBA',(156,210),(0,0,0,0)).save(carrier,format='DDS')
-  effect_relative='gfx/FX/naiwa_hd_portrait_sampler.shader';effect=args.output/'staging'/effect_relative;effect.parent.mkdir(parents=True,exist_ok=True)
-  effect.write_bytes((ROOT/'mod_nailong/assets/runtime/hd_portrait_sampler.shader').read_bytes())
-  text='spriteTypes = {\n maskedShieldType = {\n  name = GFX_portrait_USA_franklin_delano_roosevelt\n  textureFile1 = "'+carrier_relative+'"\n  textureFile2 = "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds"\n  effectFile = "'+effect_relative+'"\n }\n}\n'
+  shader_name='hd_portrait_sampler_g' if args.mode.endswith('-g') else 'hd_portrait_sampler'
+  effect_relative='gfx/FX/naiwa_'+shader_name+'.shader';effect=args.output/'staging'/effect_relative;effect.parent.mkdir(parents=True,exist_ok=True)
+  shader=(ROOT/f'mod_nailong/assets/runtime/{shader_name}.shader').read_bytes();effect.write_bytes(shader)
+  effect_reference=effect_relative.removesuffix('.shader')+'.lua' if args.mode.endswith('-g') else effect_relative
+  text='spriteTypes = {\n maskedShieldType = {\n  name = GFX_portrait_USA_franklin_delano_roosevelt\n  textureFile1 = "'+carrier_relative+'"\n  textureFile2 = "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds"\n  effectFile = "'+effect_reference+'"\n }\n}\n'
   path.write_text(text,encoding='utf-8',newline='\n')
   for item in manifest['files']:
    if item['path']==relative:item.update(bytes=path.stat().st_size,sha256=file_sha256(path))
@@ -40,7 +42,7 @@ def main():
   manifest['files'].append({'path':gui_relative,'bytes':gui_path.stat().st_size,'sha256':file_sha256(gui_path)})
   source_binding={'path':str(original),'sha256':file_sha256(original),'changes':('Only minor_country_leader scale 0.696 and lobby country_leader scale 0.4 controls changed from iconType to buttonType' if args.mode=='cornered-buttons' else 'Only explicit iconType size constraints 108x146 and 62x84 added to minor_country_leader and lobby country_leader')+'; stock scales and positions preserved. Development output only, stock GUI not committed.'}
  manifest['files'].sort(key=lambda r:r['path'])
- manifest['development_fixture']={'kind':'Unqualified '+args.mode+' logical size property experiment','source_sha256':KEY,'property':'size = { x = 156 y = 210 }','hd_raster_unchanged':True,'formal_release_eligible':False,'expected_outcome':'Observe in real game; this build does not claim the property/type works for portraits','native_gui_source':source_binding}
+ manifest['development_fixture']={'kind':'Unqualified '+args.mode+' logical size property experiment','source_sha256':KEY,'property':'native-size transparent layout carrier and original-HD shader sampler' if args.mode.startswith('masked-') else 'size = { x = 156 y = 210 }','hd_raster_unchanged':True,'formal_release_eligible':False,'expected_outcome':'Observe in real game; this build does not claim the property/type works for portraits','native_gui_source':source_binding}
  write_json(args.output/'manifest.json',manifest)
  with zipfile.ZipFile(args.output/'naiwa-world.zip','w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
   for row in manifest['files']:

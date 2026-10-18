@@ -46,6 +46,13 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None):
         validation_keys=set(validation_keys)
         if not validation_keys or not validation_keys<={a['source_sha256'] for a in selected.values()}:raise SystemExit('Unknown or empty validation source selection')
         selected={path:a for path,a in selected.items() if a['source_sha256'] in validation_keys}
+    # Fullsize encoding is not proof that all native GUI consumers display it
+    # correctly. Actual probes found overflow, so a complete art catalog alone
+    # must not accidentally unlock a broken formal release.
+    qualification_file=MOD/'data/hd-display-qualification.json'
+    qualification=read_json(qualification_file) if qualification_file.exists() else {'status':'unqualified'}
+    if not preview and qualification.get('status')!='qualified_for_release':
+        raise SystemExit('RELEASE BLOCKED: fullsize portrait display compatibility remains unqualified; actual GUI overflow must be resolved and evidenced before release')
     files={}
     file_records=[]
     def emit(name,data):

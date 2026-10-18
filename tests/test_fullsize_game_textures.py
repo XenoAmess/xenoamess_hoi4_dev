@@ -36,5 +36,7 @@ class FullsizeGameTextures(unittest.TestCase):
   builder.verify(output)
  def test_subset_cannot_bypass_formal_scope(self):
   with self.assertRaisesRegex(SystemExit,'Validation subsets'):builder.payload(validation_keys={self.key})
+ def test_complete_art_does_not_unlock_unqualified_hd_display(self):
+  with self.assertRaisesRegex(SystemExit,'display compatibility remains unqualified'):builder.payload(preview=False)
 
 if __name__=='__main__':unittest.main()
