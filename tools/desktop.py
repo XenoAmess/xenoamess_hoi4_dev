@@ -65,9 +65,11 @@ def click(args):
     x=round((args.x-left)*width/view_width)
     y=round((args.y-top)*height/view_height)
     if not (0<=x<width and 0<=y<height):raise SystemExit("Mapped click out of bounds")
-    gui.click(x,y)
+    move_only=getattr(args,'move_only',False)
+    if move_only:gui.moveTo(x,y,duration=.15)
+    else:gui.click(x,y)
     after=list(gui.size())
-    receipt={"machine_id":machine_id(),"observed_at_utc":utc_now(),"source_screenshot":str(Path(args.screenshot).resolve()),"source_sha256":file_sha256(Path(args.screenshot)),"image_size":[width,height],"desktop_before":list(current),"preview_content_rect":args.content_rect,"preview_point":[args.x,args.y],"desktop_point":[x,y],"target_hwnd":args.hwnd,"desktop_after":after,"input_ack":True,"business_result":"unverified; take a fresh screenshot/OCR"}
+    receipt={"machine_id":machine_id(),"observed_at_utc":utc_now(),"source_screenshot":str(Path(args.screenshot).resolve()),"source_sha256":file_sha256(Path(args.screenshot)),"image_size":[width,height],"desktop_before":list(current),"preview_content_rect":args.content_rect,"preview_point":[args.x,args.y],"desktop_point":[x,y],"target_hwnd":args.hwnd,"desktop_after":after,'input_type':'mouse move only' if move_only else 'mouse click',"input_ack":True,"business_result":"unverified; take a fresh screenshot/OCR"}
     write_json(Path(args.receipt),receipt)
     if after!=list(current):raise SystemExit("Desktop dimensions changed after input; receipt saved, stop and observe")
     print("Mouse input sent; business result requires fresh screenshot/OCR")
@@ -87,7 +89,12 @@ def keys(args):
     if windows.GetForegroundWindow()!=args.hwnd:raise SystemExit("Focus changed")
     if args.text_file is not None:args.text=Path(args.text_file).read_text(encoding="utf-8").strip()
     text_readback=None
-    if args.text is not None:
+    scan_events=None
+    if args.scan_codes:
+        if args.text is not None:raise SystemExit('Scan-code mode is for explicit keys/hotkeys only, not clipboard text')
+        from tools.keyboard_scan_codes import send_keys
+        scan_events=send_keys(args.hotkey or [args.key])
+    elif args.text is not None:
         import win32clipboard
         win32clipboard.OpenClipboard()
         try:
@@ -110,7 +117,7 @@ def keys(args):
             raise SystemExit("Focused text field readback differs from requested text; stop and observe")
     elif args.hotkey:gui.hotkey(*args.hotkey)
     else:gui.press(args.key)
-    write_json(Path(args.receipt),{"machine_id":machine_id(),"observed_at_utc":utc_now(),"target_hwnd":args.hwnd,"langid":"0x0409","input_ack":True,"keys":args.hotkey or args.key,"text":args.text,"text_readback":text_readback,"business_result":"Text verified via real Ctrl+A/Ctrl+C where supplied; page/action effect still requires screenshot/OCR"})
+    write_json(Path(args.receipt),{"machine_id":machine_id(),"observed_at_utc":utc_now(),"target_hwnd":args.hwnd,"langid":"0x0409","input_ack":True,'input_backend':'Windows SendInput real keyboard scan codes' if args.scan_codes else 'pyautogui virtual-key keyboard events','scan_events':scan_events,"keys":args.hotkey or args.key,"text":args.text,"text_readback":text_readback,"business_result":"Text verified via real Ctrl+A/Ctrl+C where supplied; page/action effect still requires screenshot/OCR"})
     print("Keyboard input sent; business result requires fresh screenshot/OCR")
 
 def main():
@@ -128,9 +135,11 @@ def main():
     mouse.add_argument("--hwnd",type=int,required=True)
     mouse.add_argument("--receipt",required=True)
     mouse.add_argument("--max-age",type=int,default=120)
+    mouse.add_argument('--move-only',action='store_true',help='Move the real cursor through the same coordinate guard, without clicking')
     keyboard=sub.add_parser("keys")
     keyboard.add_argument("--hwnd",type=int,required=True)
     keyboard.add_argument("--receipt",required=True)
+    keyboard.add_argument('--scan-codes',action='store_true',help='Real SendInput keyboard scan codes for DirectX key/hotkey input; result still needs screenshot readback')
     group=keyboard.add_mutually_exclusive_group(required=True)
     group.add_argument("--key")
     group.add_argument("--hotkey",nargs="+")
