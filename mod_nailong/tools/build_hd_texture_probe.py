@@ -6,7 +6,7 @@ from tools.common import ROOT,read_json,write_json,file_sha256,sha256,machine_id
 from mod_nailong.tools.build_release import build,verify
 KEY='0198603566189470fb173b47c179055d93461815d71e3ec1421c14df457ddd0f'
 def main():
- parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--mode',choices=['sprite-size','cornered-tile','cornered-buttons','cornered-icon-size','cornered-unknown-initializer','masked-hd-sampler','masked-hd-sampler-g','uv-window-shader','uv-clipped-containers','progress-hd-native'],default='sprite-size');args=parser.parse_args()
+ parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--mode',choices=['sprite-size','cornered-tile','cornered-buttons','cornered-icon-size','cornered-unknown-initializer','masked-hd-sampler','masked-hd-sampler-g','uv-window-shader','uv-clipped-containers','progress-hd-native','animation-hd-sampler'],default='sprite-size');args=parser.parse_args()
  manifest=build(args.output,preview=True,validation_keys={KEY})
  text='spriteTypes = {\n spriteType = {\n  name = GFX_portrait_USA_franklin_delano_roosevelt\n  texturefile = "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds"\n  size = { x = 156 y = 210 }\n }\n}\n'
  if args.mode.startswith('cornered-'):text='spriteTypes = {\n corneredTileSpriteType = {\n  name = GFX_portrait_USA_franklin_delano_roosevelt\n  texturefile = "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds"\n  size = { x = 156 y = 210 }\n  borderSize = { x = 0 y = 0 }\n  tilingCenter = no\n }\n}\n'
@@ -27,6 +27,22 @@ def main():
    if item['path']==relative:item.update(bytes=path.stat().st_size,sha256=file_sha256(path))
   for rel,p in [(carrier_relative,carrier),(effect_relative,effect)]:manifest['files'].append({'path':rel,'bytes':p.stat().st_size,'sha256':file_sha256(p)})
  source_binding=None
+ if args.mode=='animation-hd-sampler':
+  from PIL import Image
+  binding=manifest['bindings'][0];width,height=binding['original_game_size']
+  carrier_relative=f'gfx/interface/naiwa_empty_layout_{width}_{height}.dds';carrier=args.output/'staging'/carrier_relative;carrier.parent.mkdir(parents=True,exist_ok=True)
+  Image.new('RGBA',(width,height),(0,0,0,0)).save(carrier,format='DDS')
+  effect_relative='gfx/FX/naiwa_hd_animation_sampler.shader';effect=args.output/'staging'/effect_relative;effect.parent.mkdir(parents=True,exist_ok=True)
+  effect.write_bytes((ROOT/'mod_nailong/assets/runtime/hd_portrait_animation_sampler.shader').read_bytes())
+  portrait_relative=binding['path'] if 'path' in binding else 'gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds'
+  assert portrait_relative=='gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds'
+  text=('spriteTypes = {\n spriteType = {\n name = GFX_portrait_USA_franklin_delano_roosevelt\n texturefile = "'+carrier_relative+'"\n effectFile = "gfx/FX/naiwa_hd_animation_sampler.lua"\n noOfFrames = 1\n animation = {\n animationmaskfile = "'+carrier_relative+'"\n animationtexturefile = "'+portrait_relative+'"\n animationrotation = 0\n animationlooping = yes\n animationtime = 26\n animationdelay = 0\n animationblendmode = "normal"\n animationtype = "scrolling"\n animationrotationoffset = { x = 0 y = 0 }\n animationtexturescale = { x = 1 y = 1 }\n }\n legacy_lazy_load = no\n }\n}\n')
+  path.write_text(text,encoding='utf-8',newline='\n')
+  for item in manifest['files']:
+   if item['path']==relative:item.update(bytes=path.stat().st_size,sha256=file_sha256(path))
+  for rel,p in [(carrier_relative,carrier),(effect_relative,effect)]:manifest['files'].append({'path':rel,'bytes':p.stat().st_size,'sha256':file_sha256(p)})
+  source_binding={'changes':'Normal sprite keeps native-size empty layout carrier. Stock animation texture slot 2 binds untouched HD portrait; custom shader uses static unmodified 0..1 UV rather than animation time/offset. No GUI/gameplay or portrait raster change. Dynamic binding, scaling, alpha hit testing, tooltip and selection are unqualified.',
+   'native_source_evidence':[{'path':str(game_root()/rel),'sha256':file_sha256(game_root()/rel)} for rel in ['gfx/FX/buttonstate.fxh','gfx/FX/buttonstate.shader','interface/frontendmainview.gfx','interface/goals_shine.gfx']]}
  if args.mode=='cornered-unknown-initializer':
   import re
   from PIL import Image

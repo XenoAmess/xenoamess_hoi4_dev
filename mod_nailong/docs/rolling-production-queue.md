@@ -23,3 +23,5 @@ Windows 的跨进程 prompt 传输必须使用 `export-job` 的 ASCII 转义 JSO
 2026-10-18 的冷却调度已实际插入 important-043 与 important-044 之间：[cooldown-010 回执](../data/retry-scheduler-batches/cooldown-010.json)绑定 `machine_id: bf-202609141645-5434332d4d`，逐项记录实际截止、调用时间、原请求参数 SHA 与返回结果；12 次实际调用中 1 次返回图片、11 次拒绝。其后立即继续 important-044，没有等整批审图。冷却批次完成只证明调用结果，不能自动批准返回图。
 
 用户随后将累计上限更新为 8 次，详见[新规则](image-retry-policy.md)。调度入口源码已纳入仓库 `tools/retry_scheduler_next.py`、`retry_scheduler_claim.py`、`retry_scheduler_complete.py`；`retry_scheduler_merge.py` 只合入已经实际审阅的原请求证明，不领取额度，`retry_transport_proof.py` 只生成技术核对和输入审阅页。唯一生成执行者在空闲边界分配、领取、单路执行并关闭实际批次；第二轮及以后必须使用最近拒绝的新八小时截止和当前实际快照，不复用旧截止冒充已冷却。原手工审阅只在提示词、输入字节和顺序完全一致时复用。`--inspect-only` 不同步或消耗队列。runtime 兼容入口转入这些版本化源码，不维护另一套重试政策。
+
+2026-10-19 补齐了一批已到期请求的人工资格：93 份实际请求以完整提示词的无损段落重建、原始派发快照及逐输入 SHA 核验，实际看完全部输入/编辑目标和共同角色参考，再加入原有单路调度池。合入后的池为 130 个来源；合入本身不领取额度、不调用图片工具，也不代表已经重试或成功。另 10 项缺少实际调用前快照证明，继续未合格，不猜测原参数。机器、实际 UTC 和逐项证据见[人工资格记录](../data/retry-manual-qualification-2026-10-19-cohort-017.json)。
