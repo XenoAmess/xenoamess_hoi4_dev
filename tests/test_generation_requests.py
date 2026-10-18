@@ -1,4 +1,4 @@
-"""A historical exact retry must retain its old art direction on import."""
+"""Preserve fullsize edit inputs, exact retry direction and interrupted imports."""
 from pathlib import Path
 import tempfile
 import unittest
@@ -9,6 +9,59 @@ from mod_nailong.tools import generation_requests as requests
 from mod_nailong.tools.art_contract import portrait_ready
 
 class RequestImportTests(unittest.TestCase):
+    def edit_fixture(self, root):
+        mod=root/'mod_nailong';key='c'*64
+        source=root/'original.png';Image.new('RGBA',(3,4),'silver').save(source)
+        game=mod/'assets/portraits'/(key+'.png');game.parent.mkdir(parents=True)
+        Image.new('RGBA',(3,4),'gold').save(game)
+        master=mod/'assets/generated_fullsize/original.png';master.parent.mkdir(parents=True)
+        Image.new('RGBA',(30,40),'gold').save(master)
+        reference=mod/'assets/reference/naiwa.png';reference.parent.mkdir(parents=True)
+        Image.new('RGBA',(7,7),'yellow').save(reference)
+        row={'image':game.relative_to(root).as_posix(),'image_sha256':file_sha256(game),
+             'generated_fullsize_image':master.relative_to(root).as_posix(),'generated_fullsize_sha256':file_sha256(master),'review':'rejected'}
+        write_json(mod/'data/generated.json',{'portraits':{key:row}})
+        write_json(mod/'data/catalog.json',{'assets':[{'source_sha256':key,'size':[3,4],'path':'gfx/exact.dds'}]})
+        return mod,key,source,game,master,row
+
+    def test_new_edit_uses_fullsize_bytes_and_records_exact_target(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);mod,key,source,game,master,row=self.edit_fixture(root)
+            with patch.object(requests,'ROOT',root),patch.object(requests,'MOD',mod),patch.object(requests,'REQUESTS',mod/'data/generation-requests'),patch.object(requests,'original',return_value=source),patch('mod_nailong.tools.image_retries.require_editable_service_state'):
+                job=requests.prepare(key,'Edit moustache only',True)
+            self.assertEqual(job['references'][0],str(master))
+            target=read_json(mod/f'data/generation-requests/{key}.json')['attempts'][0]['inputs'][0]
+            self.assertEqual(target['sha256'],file_sha256(master))
+            self.assertNotEqual(target['sha256'],file_sha256(game))
+            self.assertEqual(target['derived_game_image_sha256'],file_sha256(game))
+            self.assertEqual(file_sha256(game),row['image_sha256'])
+
+    def test_missing_or_changed_declared_master_cannot_fall_back_to_thumbnail(self):
+        for defect in ('missing-file','changed-bytes','missing-path'):
+            with self.subTest(defect=defect),tempfile.TemporaryDirectory() as temp:
+                root=Path(temp);mod,key,source,game,master,row=self.edit_fixture(root)
+                if defect=='missing-file':master.unlink()
+                elif defect=='changed-bytes':master.write_bytes(b'changed')
+                else:
+                    row.pop('generated_fullsize_image')
+                    write_json(mod/'data/generated.json',{'portraits':{key:row}})
+                with patch.object(requests,'ROOT',root),patch.object(requests,'MOD',mod),patch.object(requests,'REQUESTS',mod/'data/generation-requests'),patch.object(requests,'original',return_value=source),patch('mod_nailong.tools.image_retries.require_editable_service_state'):
+                    with self.assertRaisesRegex(ValueError,'fullsize edit target is missing or changed'):
+                        requests.prepare(key,'Edit moustache only',True)
+                self.assertFalse((mod/f'data/generation-requests/{key}.json').exists())
+                self.assertEqual(file_sha256(game),row['image_sha256'])
+
+    def test_old_record_without_declared_master_keeps_explicit_legacy_boundary(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);mod,key,source,game,master,row=self.edit_fixture(root)
+            row.pop('generated_fullsize_image');row.pop('generated_fullsize_sha256')
+            write_json(mod/'data/generated.json',{'portraits':{key:row}})
+            with patch.object(requests,'ROOT',root),patch.object(requests,'MOD',mod),patch.object(requests,'REQUESTS',mod/'data/generation-requests'),patch.object(requests,'original',return_value=source),patch('mod_nailong.tools.image_retries.require_editable_service_state'):
+                job=requests.prepare(key,'Migrate legacy art',True)
+            self.assertEqual(file_sha256(Path(job['references'][0])),row['image_sha256'])
+            target=read_json(mod/f'data/generation-requests/{key}.json')['attempts'][0]['inputs'][0]
+            self.assertIn('no declared master',target['role'])
+
     def partial_import_fixture(self, root):
         mod=root/'mod_nailong';key='b'*64
         image=root/'returned.png';Image.new('RGBA',(4,4),'gold').save(image)
