@@ -6,7 +6,7 @@ from tools.common import ROOT,read_json,write_json,file_sha256,sha256,machine_id
 from mod_nailong.tools.build_release import build,verify
 KEY='0198603566189470fb173b47c179055d93461815d71e3ec1421c14df457ddd0f'
 def main():
- parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--mode',choices=['sprite-size','cornered-tile','cornered-buttons','cornered-icon-size','masked-hd-sampler','masked-hd-sampler-g'],default='sprite-size');args=parser.parse_args()
+ parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--mode',choices=['sprite-size','cornered-tile','cornered-buttons','cornered-icon-size','masked-hd-sampler','masked-hd-sampler-g','uv-window-shader'],default='sprite-size');args=parser.parse_args()
  manifest=build(args.output,preview=True,validation_keys={KEY})
  text='spriteTypes = {\n spriteType = {\n  name = GFX_portrait_USA_franklin_delano_roosevelt\n  texturefile = "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds"\n  size = { x = 156 y = 210 }\n }\n}\n'
  if args.mode.startswith('cornered-'):text='spriteTypes = {\n corneredTileSpriteType = {\n  name = GFX_portrait_USA_franklin_delano_roosevelt\n  texturefile = "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds"\n  size = { x = 156 y = 210 }\n  borderSize = { x = 0 y = 0 }\n  tilingCenter = no\n }\n}\n'
@@ -26,6 +26,15 @@ def main():
    if item['path']==relative:item.update(bytes=path.stat().st_size,sha256=file_sha256(path))
   for rel,p in [(carrier_relative,carrier),(effect_relative,effect)]:manifest['files'].append({'path':rel,'bytes':p.stat().st_size,'sha256':file_sha256(p)})
  source_binding=None
+ if args.mode=='uv-window-shader':
+  binding=manifest['bindings'][0];nw,nh=binding['original_game_size'];hw,hh=binding['size']
+  shader=(ROOT/'mod_nailong/assets/runtime/hd_portrait_uv_window.shader').read_text(encoding='utf-8').replace('__WINDOW_X__',format(nw/hw,'.12g')).replace('__WINDOW_Y__',format(nh/hh,'.12g'))
+  relative_effect=f'gfx/FX/naiwa_hd_window_{nw}_{nh}_{hw}_{hh}.shader';effect=args.output/'staging'/relative_effect;effect.parent.mkdir(parents=True,exist_ok=True);effect.write_text(shader,encoding='utf-8',newline='\n')
+  manifest['files'].append({'path':relative_effect,'bytes':effect.stat().st_size,'sha256':file_sha256(effect)})
+  text='spriteTypes = {\n spriteType = {\n  name = GFX_portrait_USA_franklin_delano_roosevelt\n  texturefile = "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds"\n  effectFile = "'+relative_effect.removesuffix('.shader')+'.lua"\n }\n}\n'
+  path.write_text(text,encoding='utf-8',newline='\n')
+  for item in manifest['files']:
+   if item['path']==relative:item.update(bytes=path.stat().st_size,sha256=file_sha256(path))
  if args.mode in ('cornered-buttons','cornered-icon-size'):
   import re
   original=game_root()/'interface/frontendgamesetupview.gui'
@@ -43,6 +52,7 @@ def main():
   source_binding={'path':str(original),'sha256':file_sha256(original),'changes':('Only minor_country_leader scale 0.696 and lobby country_leader scale 0.4 controls changed from iconType to buttonType' if args.mode=='cornered-buttons' else 'Only explicit iconType size constraints 108x146 and 62x84 added to minor_country_leader and lobby country_leader')+'; stock scales and positions preserved. Development output only, stock GUI not committed.'}
  manifest['files'].sort(key=lambda r:r['path'])
  manifest['development_fixture']={'kind':'Unqualified '+args.mode+' logical size property experiment','source_sha256':KEY,'property':'native-size transparent layout carrier and original-HD shader sampler' if args.mode.startswith('masked-') else 'size = { x = 156 y = 210 }','hd_raster_unchanged':True,'formal_release_eligible':False,'expected_outcome':'Observe in real game; this build does not claim the property/type works for portraits','native_gui_source':source_binding}
+ if args.mode=='uv-window-shader':manifest['development_fixture'].update(property='Full original texture sampled into a native-size UV window; engine quad dimensions unchanged',uv_window=[nw/hw,nh/hh],hit_testing_and_layout='unqualified; actual clicks and all portrait consumer classes must be checked')
  write_json(args.output/'manifest.json',manifest)
  with zipfile.ZipFile(args.output/'naiwa-world.zip','w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
   for row in manifest['files']:
