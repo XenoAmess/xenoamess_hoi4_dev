@@ -34,9 +34,9 @@
 4. 调用前用 `generation_requests.py prepare --key <原图SHA256> --prompt-file <实际提示词.txt>` 固定完整 prompt 与输入；调用后用 `generation_requests.py finish --key <原图SHA256> --image <生成文件.png>` 导入。修改旧图加 `--edit-existing`。工具只做规范尺寸转换，保存修订、输入和输出 SHA；原始高清 PNG 按原字节保存进工作树。交付前用 `master_archive.py sync-git` 补齐全部历史及新输出的索引，再将 PNG 实际文件提交、推送到 Git；核验方法见[高清母版说明](docs/fullsize-masters.md)。已返回图片的本地导入中断按[严格恢复机制](docs/interrupted-import-recovery.md)续接，不能因此重复生成。对照实验使用其专用 recorder，同样在调用前落盘。
 5. 审图与下一张生成重叠，使用 `review_pairs.py` 对照原图与当前图，核对毛发、服装、神态和领口；`production_queue.py review` 只排队 SHA / attempt 绑定的人工决定，由同一生成执行者在导入之间 `apply-reviews`。不并发改写共享 manifest，未看图不得批准；见[滚动队列及实测](docs/rolling-production-queue.md)。
 6. `python mod_nailong/tools/portraits.py coverage`：读回生成/审图数量。
-7. `python mod_nailong/tools/build_release.py --preview --check`：双构建，逐文件核对 ZIP、DDS 解码与原尺寸。`--preview --output <全新目录>` 生成显式不完整预览包；正式构建不带 `--preview`，会在覆盖不足或缺失引用未解决时拒绝。
+7. `python mod_nailong/tools/build_release.py --preview --check --validation-sample 4`：对明确标注的四个高清样本双构建，逐文件核对 ZIP、DDS 解码与母版分辨率；这不是整库构建验收。`--preview --source-key <原图SHA> --output <全新目录>` 可生成少量高清实机验证包。完整高清导出前执行共享存储预算；正式构建不带 `--preview`，覆盖不足、未审图或缺失引用仍会拒绝。
 
-构建按原版虚拟纹理路径覆盖，只包含已生成并审查的图片和 descriptor。不覆盖人物属性、国家历史或全局目录，不使用 `replace_path`。头像原尺寸保留，小图透明度经 DDS RGBA 保存。
+构建按原版虚拟纹理路径覆盖，只包含已生成并审查的图片和 descriptor。不覆盖人物属性、国家历史或全局目录，不使用 `replace_path`。按 2026-10-18 最新要求，游戏 DDS 直接从高清母版流式编码，保留完整分辨率和透明度，不再先缩回原版尺寸。高清在各界面的布局兼容须实际验证，只有证明确实必须缩放的个别项才允许例外；现有小图保留作审图预览和历史派生。
 
 共享虚拟路径的多个 DLC 变体全部保留在库存；当前 builder 默认按 DLC 数字 ID 选择本机全部已安装内容的候选，`--packages` 可冻结指定 DLC 列表（空列表表示仅原版）。这一顺序仍须对照目标启用 DLC 的实机验证，不能据静态规则声称任意 DLC 组合已通过。
 

@@ -4,6 +4,7 @@ import unittest
 
 from mod_nailong.tools.catalog import assignments, sprite_definitions
 from mod_nailong.tools.build_release import payload, build, verify
+from tools.common import ROOT,read_json
 
 
 class PortraitPipelineTests(unittest.TestCase):
@@ -31,7 +32,10 @@ class PortraitPipelineTests(unittest.TestCase):
     def test_published_texture_tampering_is_detected(self):
         with tempfile.TemporaryDirectory() as folder:
             output=Path(folder)/"release"
-            manifest=build(output,preview=True)
+            rows=read_json(ROOT/'mod_nailong/data/generated.json')['portraits']
+            from mod_nailong.tools.build_release import ready
+            key=next(k for k,r in rows.items() if ready(r))
+            manifest=build(output,preview=True,validation_keys={key})
             texture=next(r for r in manifest["files"] if r["path"].endswith(".dds"))
             (output/"staging"/texture["path"]).write_bytes(b"wrong image")
             with self.assertRaisesRegex(SystemExit,"Manifest/ZIP mismatch"):

@@ -3,7 +3,7 @@
 继承根目录 `AGENTS.md`。本目录仅服务奶蛙头像模组，不混入其他产品。
 
 - `assets/reference/naiwa.png` 是用户 ZIP 提供的唯一角色身份基准。
-- `assets/portraits/<source_sha256>.png` 是逐原图生成并技术缩放后的可重建输入；`data/generated.json` 保存每张来源、提示词、结果与审图。
+- `assets/portraits/<source_sha256>.png` 是逐原图生成后的原版尺寸审图预览和历史派生；`data/generated.json` 保存每张来源、提示词、结果与审图。2026-10-18 最新规则：builder 默认使用 `generated_fullsize_image` 高清母版编码游戏 DDS，保留全部像素和分辨率，不先缩小或模糊。只有经过实际验证必须缩放的个别项才允许例外，记录原图/母版 SHA、问题、实际显示位置、机器 ID、UTC 和证据；不能凭旧尺寸断言推定必须缩小。
 - 高清母版按工具返回的原始 PNG 字节直接提交到普通 Git：`assets/generated_fullsize/<输出SHA256>.png`。包含实验、被替换版本与审图未通过的实际输出，不使用 Release 附件或 LFS 指针。`data/fullsize-files.json` 保存逐图相对路径、大小、尺寸、SHA 与生成记录关联；`master_archive.py sync-git` 补齐全部历史记录，导入新图自动保存母版文件。提交、推送与远端固定 commit 原始 PNG 读回分别留证，未完成不能声称已远端核验。旧 `data/fullsize-archives.json` 仅作已退役附件的历史记录。详见 `docs/fullsize-masters.md`；保存母版不抵扣美术审图。
 - `data/catalog.json` 包含原版与本机已安装 DLC 的大/小人物头像库存；生成批次可续跑。原图完全相同才允许去重，不能按相近衣服或同一人物姓名合并不同变体。
 - 明确的 `gfx/interface/ideas/portrait_*` 人物文件即使未绑定角色、没有标准 `GFX_portrait_*` 名字也须纳入；新增范围先实际审图，不能把技术蒙版或背景面板整批当人物。补漏保留旧库存 SHA、前后数量和来源证据。
