@@ -108,10 +108,16 @@ def stage_review(key,image_sha,decision,evidence_file,reason=''):
     evidence_file=Path(evidence_file);evidence=read_json(evidence_file)
     matches=[(p,e) for p in evidence['pages'] for e in p['entries'] if e['source_sha256']==key and e['image_sha256']==image_sha]
     if len(matches)!=1:raise ValueError('Review evidence does not bind this exact image')
-    page,_=matches[0]
+    page,entry=matches[0]
+    fullsize_sha=entry.get('generated_fullsize_sha256')
+    if entry.get('attempt_number') is not None and entry['attempt_number']!=a['number']:
+        raise ValueError('Reviewed request attempt changed')
+    if fullsize_sha and (row.get('generated_fullsize_sha256')!=fullsize_sha or a.get('fullsize_sha256')!=fullsize_sha or not row.get('generated_fullsize_image') or file_sha256(ROOT/row['generated_fullsize_image'])!=fullsize_sha):
+        raise ValueError('Reviewed fullsize image changed')
     if file_sha256(Path(page['path']))!=page['sha256']:raise ValueError('Reviewed contact sheet changed')
     path=control()/f'reviews/pending/{key}-{image_sha}.json';path.parent.mkdir(parents=True,exist_ok=True)
     record={'source_sha256':key,'image_sha256':image_sha,'attempt_number':a['number'],'decision':decision,'reason':reason,'machine_id':machine_id(),'reviewed_and_staged_at_utc':utc_now(),'review_evidence_sha256':file_sha256(evidence_file),'review_page_sha256':page['sha256'],'reviewer':'Codex actual manual comparison; staging itself is not automatic visual approval'}
+    if fullsize_sha:record['generated_fullsize_sha256']=fullsize_sha
     if path.exists():
         old=read_json(path)
         if any(old[f]!=record[f] for f in ['source_sha256','image_sha256','attempt_number','decision','reason']):raise ValueError('Conflicting pending review')
@@ -130,6 +136,9 @@ def apply_reviews():
             row=read_json(mod()/'data/generated.json')['portraits'].get(key,{})
             a=journal(key)
             valid=(row.get('image_sha256')==decision['image_sha256'] and a['number']==decision['attempt_number'] and a.get('output_sha256')==decision['image_sha256'] and file_sha256(ROOT/row['image'])==decision['image_sha256'])
+            if valid and decision.get('generated_fullsize_sha256'):
+                fullsize=decision['generated_fullsize_sha256']
+                valid=(row.get('generated_fullsize_sha256')==fullsize and a.get('fullsize_sha256')==fullsize and bool(row.get('generated_fullsize_image')) and file_sha256(ROOT/row['generated_fullsize_image'])==fullsize)
             if not valid:
                 decision['application']='stale_not_applied';stale+=1
             else:

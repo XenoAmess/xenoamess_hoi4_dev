@@ -100,6 +100,30 @@ class ProductionQueueTests(unittest.TestCase):
             second.write_bytes(b'changed request bytes')
             with self.assertRaisesRegex(ValueError,'snapshot bytes changed'):queue.attempt_for_snapshot(job['key'],second)
 
+    def hd_evidence(self,root,mod,evidence,key):
+        master=root/'master.png';Image.new('RGBA',(20,30),'blue').save(master);digest=file_sha256(master)
+        rows=read_json(mod/'data/generated.json');rows['portraits'][key].update(generated_fullsize_image='master.png',generated_fullsize_sha256=digest);write_json(mod/'data/generated.json',rows)
+        journal=mod/f'data/generation-requests/{key}.json';history=read_json(journal);history['attempts'][-1]['fullsize_sha256']=digest;write_json(journal,history)
+        data=read_json(evidence)
+        for page in data['pages']:
+            for entry in page['entries']:
+                if entry['source_sha256']==key:entry.update(generated_fullsize_sha256=digest,attempt_number=1)
+        write_json(evidence,data);return master
+
+    def test_hd_review_rejects_a_different_master_with_same_preview(self):
+        with tempfile.TemporaryDirectory() as temp,ExitStack() as stack:
+            root=Path(temp);mod,image,digest,evidence,job=self.fixture(root,stack)
+            master=self.hd_evidence(root,mod,evidence,job['key']);Image.new('RGBA',(20,30),'red').save(master)
+            with self.assertRaisesRegex(ValueError,'fullsize image changed'):queue.stage_review(job['key'],digest,'approved',evidence)
+
+    def test_staged_hd_review_cannot_approve_master_tampering(self):
+        with tempfile.TemporaryDirectory() as temp,ExitStack() as stack:
+            root=Path(temp);mod,image,digest,evidence,job=self.fixture(root,stack)
+            master=self.hd_evidence(root,mod,evidence,job['key'])
+            queue.stage_review(job['key'],digest,'approved',evidence);Image.new('RGBA',(20,30),'red').save(master)
+            self.assertEqual(queue.apply_reviews(),{'applied':0,'stale_not_applied':1})
+            self.assertEqual(read_json(mod/'data/generated.json')['portraits'][job['key']]['review'],'pending')
+
 
 if __name__ == '__main__':
     unittest.main()
