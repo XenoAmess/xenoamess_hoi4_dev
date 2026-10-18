@@ -82,6 +82,24 @@ class ProductionQueueTests(unittest.TestCase):
             self.assertEqual(queue.apply_reviews(), {'applied': 0, 'stale_not_applied': 1})
             self.assertEqual(read_json(mod/'data/generated.json')['portraits'][job['key']]['review'], 'pending')
 
+    def test_identical_retry_payloads_have_distinct_dispatch_identities(self):
+        with tempfile.TemporaryDirectory() as temp, ExitStack() as stack:
+            root=Path(temp);mod,image,digest,evidence,job=self.fixture(root,stack)
+            first=root/'first-call.json';second=root/'second-call.json';write_json(first,job);write_json(second,job)
+            self.assertEqual(file_sha256(first),file_sha256(second))
+            queue.begin(job,first);queue.returned(job['key'],image=image)
+            journal=mod/f'data/generation-requests/{job["key"]}.json'
+            history=read_json(journal);old=history['attempts'][0];old['status']='failed'
+            fresh={k:v for k,v in old.items() if k!='actual_request_verification'};fresh.update(number=2,status='prepared')
+            history['attempts'].append(fresh);write_json(journal,history)
+            queue.begin(job,second)
+            self.assertEqual(queue.attempt_for_snapshot(job['key'],first)['number'],1)
+            self.assertEqual(queue.attempt_for_snapshot(job['key'],second)['number'],2)
+            unclaimed=root/'unclaimed-copy.json';write_json(unclaimed,job)
+            with self.assertRaisesRegex(ValueError,'uniquely dispatched'):queue.attempt_for_snapshot(job['key'],unclaimed)
+            second.write_bytes(b'changed request bytes')
+            with self.assertRaisesRegex(ValueError,'snapshot bytes changed'):queue.attempt_for_snapshot(job['key'],second)
+
 
 if __name__ == '__main__':
     unittest.main()
