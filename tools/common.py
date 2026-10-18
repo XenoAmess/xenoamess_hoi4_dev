@@ -57,7 +57,18 @@ def write_json(path: Path, value) -> None:
             time.sleep(delay)
 
 def read_json(path: Path):
-    return json.loads(path.read_text(encoding="utf-8"))
+    # An atomic replacement can briefly leave the old Windows file in a
+    # delete-pending/share-denied state. Retry only opening this same file;
+    # never substitute cached data or retry malformed/missing JSON.
+    for delay in (0.02, 0.05, 0.1, 0.25, 0.5, None):
+        try:
+            body = path.read_text(encoding="utf-8")
+        except PermissionError:
+            if delay is None:
+                raise
+            time.sleep(delay)
+        else:
+            return json.loads(body)
 
 def game_root(value: str | None = None) -> Path:
     candidate = value or os.environ.get("HOI4_GAME_ROOT")
