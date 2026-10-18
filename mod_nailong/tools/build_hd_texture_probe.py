@@ -36,12 +36,20 @@ def main():
   effect.write_bytes((ROOT/'mod_nailong/assets/runtime/hd_portrait_animation_sampler.shader').read_bytes())
   portrait_relative=binding['path'] if 'path' in binding else 'gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds'
   assert portrait_relative=='gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds'
+  master=ROOT/'mod_nailong/assets/generated_fullsize'/f'{binding["fullsize_master_sha256"]}.png'
+  assert file_sha256(master)==binding['fullsize_master_sha256']
+  with Image.open(master) as original,Image.open(args.output/'staging'/portrait_relative) as payload:
+   assert original.size==payload.size==tuple(binding['size'])
+   assert original.convert('RGBA').tobytes()==payload.convert('RGBA').tobytes(),'HD payload pixels changed'
+   decoded_pixel_sha256=sha256(payload.convert('RGBA').tobytes())
+  with Image.open(carrier) as empty:assert empty.size==(width,height) and empty.getchannel('A').getextrema()==(0,0)
   text=('spriteTypes = {\n spriteType = {\n name = GFX_portrait_USA_franklin_delano_roosevelt\n texturefile = "'+carrier_relative+'"\n effectFile = "gfx/FX/naiwa_hd_animation_sampler.lua"\n noOfFrames = 1\n animation = {\n animationmaskfile = "'+carrier_relative+'"\n animationtexturefile = "'+portrait_relative+'"\n animationrotation = 0\n animationlooping = yes\n animationtime = 26\n animationdelay = 0\n animationblendmode = "normal"\n animationtype = "scrolling"\n animationrotationoffset = { x = 0 y = 0 }\n animationtexturescale = { x = 1 y = 1 }\n }\n legacy_lazy_load = no\n }\n}\n')
   path.write_text(text,encoding='utf-8',newline='\n')
   for item in manifest['files']:
    if item['path']==relative:item.update(bytes=path.stat().st_size,sha256=file_sha256(path))
   for rel,p in [(carrier_relative,carrier),(effect_relative,effect)]:manifest['files'].append({'path':rel,'bytes':p.stat().st_size,'sha256':file_sha256(p)})
   source_binding={'changes':'Normal sprite keeps native-size empty layout carrier. Stock animation texture slot 2 binds untouched HD portrait; custom shader uses static unmodified 0..1 UV rather than animation time/offset. No GUI/gameplay or portrait raster change. Dynamic binding, scaling, alpha hit testing, tooltip and selection are unqualified.',
+   'payload_rgba_pixels_equal_master':True,'payload_rgba_pixel_sha256':decoded_pixel_sha256,'empty_carrier_is_not_a_downsampled_portrait':True,
    'native_source_evidence':[{'path':str(game_root()/rel),'sha256':file_sha256(game_root()/rel)} for rel in ['gfx/FX/buttonstate.fxh','gfx/FX/buttonstate.shader','interface/frontendmainview.gfx','interface/goals_shine.gfx']]}
  if args.mode=='cornered-unknown-initializer':
   import re
@@ -103,6 +111,7 @@ def main():
  manifest['development_fixture']={'kind':'Unqualified '+args.mode+' logical size property experiment','source_sha256':KEY,'property':'native-size transparent layout carrier and original-HD shader sampler' if args.mode.startswith('masked-') else 'size = { x = 156 y = 210 }','hd_raster_unchanged':True,'formal_release_eligible':False,'expected_outcome':'Observe in real game; this build does not claim the property/type works for portraits','native_gui_source':source_binding}
  if args.mode in ('uv-window-shader','uv-clipped-containers'):manifest['development_fixture'].update(property='Full original texture sampled into a native-size UV window; engine quad dimensions unchanged',uv_window=[nw/hw,nh/hh],hit_testing_and_layout='unqualified; actual clicks and all portrait consumer classes must be checked')
  if args.mode=='progress-hd-native':manifest['development_fixture'].update(property='Native progressbartype explicit logical size and unchanged HD texture in both samplers; stock GUI and shader unchanged',native_source_evidence=[{'path':str(game_root()/rel),'sha256':file_sha256(game_root()/rel)} for rel in ['interface/load_screen.gfx','gfx/FX/progress.shader']],consumer_binding_and_scale='unqualified until actual game inspection; native loading bar support does not prove portrait compatibility')
+ if args.mode=='animation-hd-sampler':manifest['development_fixture'].update(property='Native-size empty normal sprite with unchanged fullsize portrait in animation sampler 2; static original UV, no animation or GUI size override')
  write_json(args.output/'manifest.json',manifest)
  with zipfile.ZipFile(args.output/'naiwa-world.zip','w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
   for row in manifest['files']:
