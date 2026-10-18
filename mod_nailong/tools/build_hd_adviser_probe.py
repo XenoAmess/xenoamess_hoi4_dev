@@ -18,6 +18,7 @@ ALIASES = ('GFX_portrait_USA_william_halsey_jr_small', 'GFX_idea_USA_william_hal
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--mode', choices=['cornered-tile', 'masking-hd-sampler'], default='cornered-tile')
     args = parser.parse_args()
     manifest = build(args.output, preview=True, validation_keys={KEY})
     assert len(manifest['bindings']) == 1
@@ -38,8 +39,30 @@ def main():
         pattern = r'name\s*=\s*"?' + re.escape(alias) + r'"?\s+texturefile\s*=\s*"' + re.escape(binding['path']) + r'"'
         assert re.search(pattern, text, flags=re.IGNORECASE), (alias, rel)
     chunks = ['spriteTypes = {']
+    carrier_relative = None
+    if args.mode == 'masking-hd-sampler':
+        carrier_relative = f'gfx/interface/naiwa_white_layout_{width}_{height}.dds'
+        carrier = args.output / 'staging' / carrier_relative
+        carrier.parent.mkdir(parents=True, exist_ok=True)
+        Image.new('RGBA', (width, height), (255, 255, 255, 255)).save(carrier, format='DDS')
+        effect_relative = 'gfx/FX/naiwa_hd_masking_sampler.shader'
+        effect = args.output / 'staging' / effect_relative
+        effect.parent.mkdir(parents=True, exist_ok=True)
+        effect.write_bytes((ROOT / 'mod_nailong/assets/runtime/hd_portrait_masking_sampler.shader').read_bytes())
+        for rel, item in [(carrier_relative, carrier), (effect_relative, effect)]:
+            manifest['files'].append({'path': rel, 'bytes': item.stat().st_size, 'sha256': file_sha256(item)})
     for alias in ALIASES:
-        chunks.append(f''' corneredTileSpriteType = {{
+        if args.mode == 'masking-hd-sampler':
+            chunks.append(f''' spriteType = {{
+  name = "{alias}"
+  texturefile = "{carrier_relative}"
+  masking_texture = "{binding['path']}"
+  effectFile = "gfx/FX/naiwa_hd_masking_sampler.lua"
+  noOfFrames = 1
+  legacy_lazy_load = no
+ }}''')
+        else:
+            chunks.append(f''' corneredTileSpriteType = {{
   name = "{alias}"
   texturefile = "{binding['path']}"
   size = {{ x = {width} y = {height} }}
@@ -54,9 +77,10 @@ def main():
     manifest['files'].append({'path': relative, 'bytes': target.stat().st_size, 'sha256': file_sha256(target)})
     manifest['files'].sort(key=lambda row: row['path'])
     manifest['development_fixture'] = {
-        'kind': 'Unqualified adviser cornered-tile logical size experiment',
+        'kind': f'Unqualified adviser {args.mode} logical size experiment',
         'source_sha256': KEY, 'aliases': list(ALIASES), 'logical_size': [width, height],
         'hd_raster_unchanged': True, 'hd_pixel_readback_identical': True,
+        'layout_carrier_contains_no_portrait_pixels': carrier_relative is not None,
         'formal_release_eligible': False, 'gui_or_gameplay_changes': False,
         'native_binding_sources': [{'path': str(game_root() / rel), 'sha256': file_sha256(game_root() / rel)} for rel in sources],
         'acceptance': 'Not run. Must inspect real Chief of Navy picker, binding, layout and usable close button; this does not qualify other portrait classes.'
