@@ -1,0 +1,50 @@
+{
+  "schema": "naiwa-hd-native-texture-probe-v1",
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-18T04:43:36.291262+00:00",
+  "game_exe": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Hearts of Iron IV\\hoi4.exe",
+  "actual_exe_sha256": "7dc947be34970da1e1c787bcddbe7f62b610ff258aebf8f06aa8b348f3a031d5",
+  "game_version_from_actual_menu": "Operation Postern v1.19.3.0.c01a (5632) (S)",
+  "game_menu_screenshot": "runtime/hd-test-menu.png",
+  "build": "C:\\workspace\\xenoamess_hoi4_dev\\dist\\hd-native-texture-probe-20261018-a",
+  "manifest_sha256": "4b83baa33b70e3569f48660881e3f77779bae286c336da850a2ead9d35f6e911",
+  "binding": {
+    "path": "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds",
+    "package": "base",
+    "source_sha256": "0198603566189470fb173b47c179055d93461815d71e3ec1421c14df457ddd0f",
+    "sha256": "5e7b2e7a674732ecdcd71625d5e00e56f87093094af4a0ad8dec5e7f89e80f9b",
+    "size": [
+      1081,
+      1455
+    ],
+    "original_game_size": [
+      156,
+      210
+    ],
+    "fullsize_master_sha256": "ef51fa24086e5076fcf4e2fe4e74e24f6ad299bd99d4abc8ece69a63c9e4c07e",
+    "resized": false,
+    "resolution_policy": "original-fullsize-master; compatibility not implied by static encoding"
+  },
+  "game_interaction": "Fresh screenshots, OCR and real mouse/keyboard only. No MCP, UIA, injected bridge, process memory or debug interface.",
+  "result": "HD texture loaded but rendered too large in stock Select Country card, extending across lower UI; raw raster cannot simply replace the native-sized texture in this position.",
+  "screenshot": "mod_nailong/docs/media/hd-raw-country-selection-overflow.png",
+  "screenshot_sha256": "660c6acbdbd4ada0a8eb57d2e5756cdf2f3189ac61f941b277212d45c928187e",
+  "screenshot_observed_at_utc": "2026-10-18T04:14:23.434449+00:00",
+  "native_gui_sources": [
+    {
+      "path": "interface/frontendgamesetupview.gui",
+      "sha256": "829f1bb6002021dbe644706a30a31470c680e4fa5087f1c5b5c6ad762cce4494",
+      "observation": "country_entry/country_leader uses scale=0.75 and no declared fit size; source readback, not an inference that all other widgets must fail"
+    }
+  ],
+  "next_action": "Try retaining original HD raster and adjusting logical UI/sprite size. No global downscale exception created.",
+  "scope": "One original 1081x1455 master in one stock country-selection position at 1920x1080. Does not establish all portrait classes, UI scales or other machines.",
+  "steam_offline_fresh_receipts": [
+    "runtime/hd-test-steam-fresh.json",
+    "runtime/hd-test-hoi4-library.json",
+    "runtime/hd-test-steam-after-exit.json"
+  ],
+  "normal_exit_input": "runtime/hd-test-close-scancodes.json",
+  "exit_readback": "runtime/hd-test-steam-after-exit.json",
+  "native_keyboard_note": "Pyautogui virtual-key Alt+F4/Escape did not change the visible game. Real SendInput scan-code Alt+Tab and Alt+F4 produced fresh Steam pixels and the game window was absent from the next visible-window observation. API ACK alone was not counted as exit."
+}
