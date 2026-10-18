@@ -6,10 +6,11 @@ from tools.common import ROOT,read_json,write_json,file_sha256,sha256,machine_id
 from mod_nailong.tools.build_release import build,verify
 KEY='0198603566189470fb173b47c179055d93461815d71e3ec1421c14df457ddd0f'
 def main():
- parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--mode',choices=['sprite-size','cornered-tile','cornered-buttons','cornered-icon-size','masked-hd-sampler','masked-hd-sampler-g','uv-window-shader','uv-clipped-containers'],default='sprite-size');args=parser.parse_args()
+ parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--mode',choices=['sprite-size','cornered-tile','cornered-buttons','cornered-icon-size','masked-hd-sampler','masked-hd-sampler-g','uv-window-shader','uv-clipped-containers','progress-hd-native'],default='sprite-size');args=parser.parse_args()
  manifest=build(args.output,preview=True,validation_keys={KEY})
  text='spriteTypes = {\n spriteType = {\n  name = GFX_portrait_USA_franklin_delano_roosevelt\n  texturefile = "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds"\n  size = { x = 156 y = 210 }\n }\n}\n'
  if args.mode.startswith('cornered-'):text='spriteTypes = {\n corneredTileSpriteType = {\n  name = GFX_portrait_USA_franklin_delano_roosevelt\n  texturefile = "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds"\n  size = { x = 156 y = 210 }\n  borderSize = { x = 0 y = 0 }\n  tilingCenter = no\n }\n}\n'
+ if args.mode=='progress-hd-native':text='spriteTypes = {\n progressbartype = {\n name = "GFX_portrait_USA_franklin_delano_roosevelt"\n color = { 1.0 1.0 1.0 }\n colortwo = { 1.0 1.0 1.0 }\n textureFile1 = "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds"\n textureFile2 = "gfx/leaders/USA/Portrait_USA_Franklin_Roosevelt.dds"\n size = { x = 156 y = 210 }\n effectFile = "gfx/FX/progress.lua"\n horizontal = yes\n steps = 1000000\n }\n}\n'
  relative='interface/zz_naiwa_hd_sprite_size_probe.gfx';path=args.output/'staging'/relative;path.parent.mkdir(parents=True);path.write_text(text,encoding='utf-8',newline='\n')
  manifest['files'].append({'path':relative,'bytes':path.stat().st_size,'sha256':file_sha256(path)});manifest['files'].sort(key=lambda r:r['path'])
  if args.mode.startswith('masked-hd-sampler'):
@@ -71,6 +72,7 @@ def main():
  manifest['files'].sort(key=lambda r:r['path'])
  manifest['development_fixture']={'kind':'Unqualified '+args.mode+' logical size property experiment','source_sha256':KEY,'property':'native-size transparent layout carrier and original-HD shader sampler' if args.mode.startswith('masked-') else 'size = { x = 156 y = 210 }','hd_raster_unchanged':True,'formal_release_eligible':False,'expected_outcome':'Observe in real game; this build does not claim the property/type works for portraits','native_gui_source':source_binding}
  if args.mode in ('uv-window-shader','uv-clipped-containers'):manifest['development_fixture'].update(property='Full original texture sampled into a native-size UV window; engine quad dimensions unchanged',uv_window=[nw/hw,nh/hh],hit_testing_and_layout='unqualified; actual clicks and all portrait consumer classes must be checked')
+ if args.mode=='progress-hd-native':manifest['development_fixture'].update(property='Native progressbartype explicit logical size and unchanged HD texture in both samplers; stock GUI and shader unchanged',native_source_evidence=[{'path':str(game_root()/rel),'sha256':file_sha256(game_root()/rel)} for rel in ['interface/load_screen.gfx','gfx/FX/progress.shader']],consumer_binding_and_scale='unqualified until actual game inspection; native loading bar support does not prove portrait compatibility')
  write_json(args.output/'manifest.json',manifest)
  with zipfile.ZipFile(args.output/'naiwa-world.zip','w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
   for row in manifest['files']:
