@@ -4,14 +4,14 @@ from pathlib import Path
 from datetime import datetime
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,machine_id,utc_now,file_sha256
+from mod_nailong.tools.production_queue import attempt_for_snapshot
 directory=ROOT/'runtime/retry-scheduler';state_path=directory/'state.json';state=read_json(state_path)
 assert state['machine_id']==machine_id();pending=state['pending'];assert pending and pending['batch']==sys.argv[1]
 assert file_sha256(ROOT/pending['proof'])==pending['proof_sha256']
 proof={c['key']:c for c in read_json(ROOT/pending['proof'])};queue=read_json(ROOT/'mod_nailong/data/image-retry-queue.json')['sources'];records=[]
 for key in pending['source_keys']:
  actual=ROOT/f'runtime/dispatch-actual/{pending["batch"]}-{key}.json';sha=file_sha256(actual)
- matches=[a for a in read_json(ROOT/f'mod_nailong/data/generation-requests/{key}.json')['attempts'] if a.get('actual_request_verification',{}).get('actual_request_snapshot_sha256')==sha]
- assert len(matches)==1;a=matches[0];c=proof[key]
+ a=attempt_for_snapshot(key,actual);c=proof[key]
  assert a['status'] not in ['prepared','calling','cancelled_before_generation'] and a.get('retry_of_attempt')==c['verified_failed_attempt']
  expected=c.get('next_retry_number',1)
  assert queue[key]['retries_used']==expected and a.get('cooldown_retry_number',1)==expected and a['prompt']==c['prompt']

@@ -40,6 +40,25 @@ def export_job(jobs_file,key):
     job=next(j for j in read_json(Path(jobs_file)) if j['key']==key)
     return json.dumps(job,ensure_ascii=True)
 
+def attempt_for_snapshot(key, actual_job_file):
+    """Equal payloads on separate retries need distinct dispatch identities."""
+    actual=Path(actual_job_file).resolve();digest=file_sha256(actual)
+    history=read_json(mod()/f'data/generation-requests/{key}.json')
+    matches=[]
+    for attempt in history['attempts']:
+        path=control()/f'dispatch/{key}-{attempt["number"]:03}.json'
+        if not path.exists():continue
+        dispatch=read_json(path)
+        snapshot=dispatch.get('actual_request_snapshot_file')
+        if not snapshot or Path(snapshot).resolve()!=actual:continue
+        if dispatch.get('actual_request_snapshot_sha256')!=digest:raise ValueError('Dispatch snapshot bytes changed')
+        proof=attempt.get('actual_request_verification',{})
+        if proof.get('actual_request_snapshot_sha256')!=digest or proof.get('machine_id')!=dispatch.get('machine_id'):raise ValueError('Attempt verification does not match its actual dispatch')
+        if dispatch.get('attempt_number')!=attempt['number'] or dispatch.get('source_sha256')!=key:raise ValueError('Dispatch source/attempt identity changed')
+        matches.append(attempt)
+    if len(matches)!=1:raise ValueError('Expected one uniquely dispatched attempt for this snapshot path')
+    return matches[0]
+
 def begin(job,actual_job_file=None):
     key=job['key'];a=journal(key)
     if a['status']!='prepared': raise ValueError('Request is not prepared; do not call imagegen again')
