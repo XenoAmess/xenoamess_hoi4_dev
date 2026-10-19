@@ -18,6 +18,20 @@ from mod_nailong.tools.portraits import ingest, record_fullsize_origin
 MOD = ROOT / "mod_nailong"
 REQUESTS = MOD / "data/generation-requests"
 
+def alpha_instruction(asset):
+    """Describe exterior alpha without deleting opaque original asset content."""
+    path=asset['path'].replace('\\','/').lower()
+    photo_card=path.startswith('gfx/interface/ideas/') and max(asset['size'])<100
+    if photo_card:
+        return ("\nOutput alpha: genuine transparent RGBA ONLY OUTSIDE the complete original photograph FRAME AND NOTE silhouette. "
+                "The photographic BACKING INSIDE the frame is a required OPAQUE surface: preserve its original background color and texture behind the character all the way to the inner frame rim. "
+                "Never turn the gaps between frame and character into transparent holes or a window. Keep the actual tilted photo rectangle, frame rim and overlapping note intact. "
+                "Do not invent a new backdrop outside the whole card. Retain source clothing, hair, headgear, lighting and crop at full generated resolution.")
+    return ("\nOutput alpha: preserve genuine transparent RGBA outside the original asset's outer silhouette. "
+            "Retain all original opaque content, including any existing background or dark vignette that is part of this source; do not erase it into alpha holes. "
+            "Where the original exterior is transparent, do not invent a new solid canvas, halo or studio backdrop. "
+            "Retain source clothing, hair, headgear, lighting and portrait crop at full generated resolution.")
+
 def original(asset):
     src = read_json(ROOT / "runtime/source-index.json")[asset["id"]]
     if src["member"]:
@@ -32,9 +46,9 @@ def original(asset):
 def prepare(key, prompt, edit_existing=False):
     asset=next(a for a in read_json(MOD/"data/catalog.json")["assets"] if a["source_sha256"]==key)
     source=original(asset)
-    transparent=Image.open(source).getchannel("A").getextrema()[0]<255
+    with Image.open(source) as image:transparent=image.getchannel("A").getextrema()[0]<255
     if transparent:
-        prompt += "\nOutput alpha: keep a genuine fully transparent RGBA background outside the portrait silhouette. No painted gray backdrop, halo, studio gradient or rectangular plate. Retain the source's clothing, hair, headgear and portrait crop."
+        prompt += alpha_instruction(asset)
     record=read_json(MOD/"data/generated.json")["portraits"].get(key)
     file=REQUESTS/(key+".json")
     journal=read_json(file) if file.exists() else {"schema":"naiwa-generation-requests-v1","source_sha256":key,"attempts":[]}
@@ -72,7 +86,8 @@ def prepare(key, prompt, edit_existing=False):
     promptfile.parent.mkdir(parents=True,exist_ok=True);promptfile.write_text(prompt,encoding="utf-8",newline="\n")
     attempt={"number":n,"status":"prepared","method":"built-in imagegen", "art_direction":"hair-features-v1",
         "prompt":prompt,"prompt_file":promptfile.relative_to(ROOT).as_posix(),"prompt_sha256":file_sha256(promptfile),
-        "inputs":inputs,"edit_existing":edit_existing,"machine_id":machine_id(),"prepared_at_utc":utc_now()}
+        "inputs":inputs,"edit_existing":edit_existing,"machine_id":machine_id(),"prepared_at_utc":utc_now(),
+        "alpha_prompt_policy":"source-content-v2" if transparent else "source-opaque-v1"}
     journal["attempts"].append(attempt);write_json(file,journal)
     return {"key":key,"source":asset["path"],"references":paths,"original":str(source),
         "size":asset["size"],"transparent":transparent,"prompt":prompt,

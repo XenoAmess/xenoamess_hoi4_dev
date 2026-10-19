@@ -36,6 +36,44 @@ class RequestImportTests(unittest.TestCase):
             self.assertEqual(target['derived_game_image_sha256'],file_sha256(game))
             self.assertEqual(file_sha256(game),row['image_sha256'])
 
+    def test_transparent_photo_card_keeps_opaque_backing_and_frozen_request(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);mod,key,source,game,master,row=self.edit_fixture(root)
+            with Image.open(source) as image:
+                image.putpixel((0,0),(0,0,0,0));image.save(source)
+            write_json(mod/'data/catalog.json',{'assets':[{'source_sha256':key,'size':[3,4],'path':'gfx/interface/ideas/portrait_card.dds'}]})
+            source_sha=file_sha256(source);master_sha=file_sha256(master)
+            with patch.object(requests,'ROOT',root),patch.object(requests,'MOD',mod),patch.object(requests,'REQUESTS',mod/'data/generation-requests'),patch.object(requests,'original',return_value=source),patch('mod_nailong.tools.image_retries.require_editable_service_state'):
+                job=requests.prepare(key,'Correct cap badge only',True)
+                journal=mod/f'data/generation-requests/{key}.json'
+                before=file_sha256(journal)
+                with self.assertRaisesRegex(SystemExit,'Unresolved prepared request'):
+                    requests.prepare(key,'A changed prompt must not replace this request',True)
+                self.assertEqual(file_sha256(journal),before)
+            attempt=read_json(journal)['attempts'][0]
+            self.assertTrue(job['transparent'])
+            self.assertIn('required OPAQUE surface',job['prompt'])
+            self.assertIn('ONLY OUTSIDE the complete original photograph FRAME AND NOTE silhouette',job['prompt'])
+            self.assertNotIn('No painted gray backdrop',job['prompt'])
+            self.assertEqual(attempt['prompt'],job['prompt'])
+            self.assertEqual(attempt['prompt_sha256'],file_sha256(root/attempt['prompt_file']))
+            self.assertEqual(attempt['alpha_prompt_policy'],'source-content-v2')
+            self.assertEqual(file_sha256(source),source_sha)
+            self.assertEqual(file_sha256(master),master_sha)
+
+    def test_small_standalone_alpha_keeps_original_vignette_without_inventing_card(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);mod,key,source,game,master,row=self.edit_fixture(root)
+            with Image.open(source) as image:
+                image.putpixel((0,0),(0,0,0,0));image.save(source)
+            write_json(mod/'data/catalog.json',{'assets':[{'source_sha256':key,'size':[3,4],'path':'gfx/leaders/TST/shadowed.dds'}]})
+            with patch.object(requests,'ROOT',root),patch.object(requests,'MOD',mod),patch.object(requests,'REQUESTS',mod/'data/generation-requests'),patch.object(requests,'original',return_value=source),patch('mod_nailong.tools.image_retries.require_editable_service_state'):
+                job=requests.prepare(key,'Preserve dark original illumination',True)
+            self.assertTrue(job['transparent'])
+            self.assertIn('existing background or dark vignette',job['prompt'])
+            self.assertNotIn('photograph FRAME',job['prompt'])
+            self.assertEqual(job['references'][0],str(master))
+
     def test_missing_or_changed_declared_master_cannot_fall_back_to_thumbnail(self):
         for defect in ('missing-file','changed-bytes','missing-path'):
             with self.subTest(defect=defect),tempfile.TemporaryDirectory() as temp:
