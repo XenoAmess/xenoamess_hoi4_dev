@@ -49,7 +49,7 @@ def unique_aliases(records, selected_paths):
     return aliases
 
 
-def augment(output, manifest, aliases, source_proofs):
+def augment(output, manifest, aliases, source_proofs, native_include_proofs=None):
     """Add layout-only carriers; DDS/PNG equality is checked for every sample."""
     from mod_nailong.tools.build_release import verify
     output=Path(output);staging=output/'staging'
@@ -95,6 +95,7 @@ def augment(output, manifest, aliases, source_proofs):
         'formal_release_eligible':False,'hd_raster_resized':False,
         'carrier_contains_no_portrait_pixels':True,'gui_or_gameplay_changes':False,
         'aliases':aliases,'native_source_proofs':[p for p in source_proofs if p['id'] in used],
+        'native_shader_include_proofs':native_include_proofs or [],
         'fullsize_pixel_proofs':pixel_proofs,
         'live_acceptance':'Not run; every actual consumer, tooltip and hit area requires separate runtime evidence. Static parsing and unchanged bytes do not qualify display.'}
     write_json(output/'manifest.json',manifest)

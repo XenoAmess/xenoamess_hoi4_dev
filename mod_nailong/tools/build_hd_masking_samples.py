@@ -27,7 +27,8 @@ def main():
         records.extend(dict(r,source_id=source_id) for r in sprite_records(raw.decode('utf-8-sig',errors='replace')))
     aliases=unique_aliases(records,paths)
     manifest=build(args.output,preview=True,validation_keys=keys)
-    manifest=augment(args.output,manifest,aliases,proofs)
+    includes=[{'path':rel,'sha256':file_sha256(install/rel)} for rel in ['gfx/FX/buttonstate.fxh','gfx/FX/buttonstate.shader']]
+    manifest=augment(args.output,manifest,aliases,proofs,includes)
     write_json(args.output/'build-receipt.json',{'machine_id':machine_id(),'observed_at_utc':utc_now(),
         'source':'Actual local native alias binding hashes, master/DDS full RGBA equality and exact manifest/ZIP verification',
         'source_keys':sorted(keys),'aliases':len(aliases),'hd_raster_resized':False,'preview':True,'live_acceptance':'not-run',
