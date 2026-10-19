@@ -19,6 +19,12 @@ def desktop_modules():
     import win32gui
     return pyautogui,win32gui
 
+def console_text(text):
+    # Imported callers may retain Windows GBK stdout instead of CLI UTF-8.
+    # Escape only unsupported console characters; saved receipts keep full UTF-8.
+    encoding=sys.stdout.encoding or 'utf-8'
+    print(text.encode(encoding,errors='backslashreplace').decode(encoding))
+
 def observe(output,ocr=False):
     gui,windows=desktop_modules()
     output=Path(output)
@@ -37,8 +43,8 @@ def observe(output,ocr=False):
         receipt["ocr"]=result
         receipt["ocr_language"]=language
     write_json(output.with_suffix(".json"),receipt)
-    print(__import__('json').dumps({k:v for k,v in receipt.items() if k!="ocr"},ensure_ascii=False,indent=2))
-    if ocr:print("OCR TEXT:",receipt["ocr"].get("text",""))
+    console_text(__import__('json').dumps({k:v for k,v in receipt.items() if k!="ocr"},ensure_ascii=False,indent=2))
+    if ocr:console_text("OCR TEXT: "+receipt["ocr"].get("text",""))
     return receipt
 
 def focus(hwnd):
