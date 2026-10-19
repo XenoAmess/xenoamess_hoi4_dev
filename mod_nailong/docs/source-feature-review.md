@@ -61,3 +61,5 @@ important-095 实际修好了翼形帽徽，但完整高清图又显示相框内
 另一项排队复查发现 `civil` 是服装后缀，却曾被当作姓氏，导致 Calles 在不同人物 Avila 的拒绝后被误暂缓。实际原生角色分别为 `MEX_plutarco_calles` 与 `MEX_manuel_avila_camacho`，原图也明显不同；已修正后缀解析，保留未派发的取消记录并将 Calles 重新排入 HIGH。真实同人物的大小图、服装变体、相同原生角色与同来源守卫继续有效，见[服装后缀身份修正](../data/source-identity-civil-suffix-correction-2026-10-19.json)。这不是对实际拒绝改词重试，也不清零来源累计次数。
 
 先前 important-032 的 Europe Generic Land 3 误增胡须，返修曾被服务拒绝；其原请求在 cooldown-030 实际返回后已查看原图/高清对照，确认去掉误增胡须且保留发型、衣物和领口，当前批准状态已读回并追加于原[来源修正记录](../data/europe-land3-source-correction-032.json)。旧错误图、误批编号更正和各次失败历史均保留。
+
+2026-10-19 后续实际高清审查：Vafiadis 已恢复微张嘴的上齿和口腔，暗色 Goring 变体已恢复深暗面部与制服，两张当前母版的实际完整高清复核及先前 staging 顺序补注见[后续审查回执](../data/review-order-followup-100-102-2026-10-19.json)。Guiana 六人群像返修已去掉误增的羽毛手杖，恢复双手空举，见[群像修复与实际批准](../data/multifigure-scene-review-098.json)；董事会七人群像的完整高清审查另见[104 群像记录](../data/board-of-directors-scene-review-104.json)。Fokker 的张嘴笑未保留原图上齿，当前图已撤出合格集并冻结局部返修，不能把请求准备算作完成，见[表情返修记录](../data/fokker-expression-followup-2026-10-19.json)。Messe 的照片背板返修实际遭服务拒绝，保留原请求及冷却，见[原有跟进记录](../data/messe-cap-crest-followup-2026-10-19.json)。
