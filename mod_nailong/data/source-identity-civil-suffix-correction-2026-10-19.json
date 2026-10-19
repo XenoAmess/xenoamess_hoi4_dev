@@ -1,0 +1,44 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-19T09:55:04.186111+00:00",
+  "source": "Actual native character identity inventory, retained never-dispatched cancellation and corrected parser readback",
+  "affected_source_sha256": "dd8a2fc20061dbdace5c4ed5ab8152f010568a4ed0cd460a1565a3c65f578ed4",
+  "affected_source_paths": [
+    "gfx/leaders/MEX/portrait_mex_calles_civil.dds"
+  ],
+  "affected_native_characters": [
+    "MEX_plutarco_calles"
+  ],
+  "incorrectly_conflicting_source_sha256": "e7d0a248aa564941f3bba0c85bf3b89662fd71c4c4975227ed3f16f5022816f2",
+  "conflicting_paths": [
+    "gfx/leaders/MEX/portrait_mex_avila_civil.dds"
+  ],
+  "conflicting_native_characters": [
+    "MEX_manuel_avila_camacho"
+  ],
+  "cause": "Previous surname parser treated the outfit suffix civil as the person name, merging two visibly and natively distinct people.",
+  "correction": "Strip trailing outfit/role labels before identity fallback; actual same-source and shared-native-character matches, real same-person variants, spellings and cumulative retry policy remain guarded.",
+  "old_cancelled_attempt_number": 1,
+  "old_prompt_sha256": "d31f23befe31969c3a66642899a6cc72c5bc7d157dc3e7746907271ebac44e1b",
+  "old_cancellation_and_prompt_retained": true,
+  "old_source_actual_call": false,
+  "next_state": "Distinct HIGH original selected into important-104; new prompt preparation and actual generation remain separate steps",
+  "not_a_service_retry": true,
+  "source_retry_quota_reset": false,
+  "parser_sha256": "3b8f87c8351f9987f7bf60a0be4c3a4ba962d3379949dea6b5d62b95fab63a18",
+  "tests": {
+    "command": "python -m unittest discover -s tests",
+    "actual_exit_code": 0,
+    "tests_passed": 64,
+    "actual_duration_seconds": 2.96,
+    "meaningful_cases": [
+      "Calles/Avila civil variants remain distinct",
+      "same person outfit variants remain held",
+      "same native character/source overrides naming",
+      "Donitz spellings",
+      "Joliot-Curie distinct people",
+      "photo backing and vignette alpha",
+      "unchanged prepared prompt/input files"
+    ]
+  }
+}
