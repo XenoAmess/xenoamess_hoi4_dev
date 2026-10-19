@@ -13,7 +13,7 @@ xenoamess_hoi4_dev/
 └── mod_nailong/
     ├── AGENTS.md
     ├── README.md
-    ├── assets/                # 用户参考图、提示词、生成后规范尺寸 PNG
+    ├── assets/                # 用户参考图、完整提示词、原始高清 PNG 及审图派生图
     ├── data/                  # 原图清点、生成来源与审图记录
     ├── mod/                   # 游戏 payload 源（生成 DDS 不入库）
     ├── tools/                 # 清点、续跑、导入、构建
