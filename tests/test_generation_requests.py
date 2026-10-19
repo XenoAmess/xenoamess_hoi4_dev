@@ -57,7 +57,9 @@ class RequestImportTests(unittest.TestCase):
             self.assertNotIn('No painted gray backdrop',job['prompt'])
             self.assertEqual(attempt['prompt'],job['prompt'])
             self.assertEqual(attempt['prompt_sha256'],file_sha256(root/attempt['prompt_file']))
-            self.assertEqual(attempt['alpha_prompt_policy'],'source-content-v2')
+            self.assertEqual(attempt['alpha_prompt_policy'],'source-content-v3-opaque-body')
+            self.assertIn('coat lapels, collar, tie',job['prompt'])
+            self.assertIn('FULLY OPAQUE (alpha 255)',job['prompt'])
             self.assertEqual(file_sha256(source),source_sha)
             self.assertEqual(file_sha256(master),master_sha)
 
@@ -71,6 +73,8 @@ class RequestImportTests(unittest.TestCase):
                 job=requests.prepare(key,'Preserve dark original illumination',True)
             self.assertTrue(job['transparent'])
             self.assertIn('existing background or dark vignette',job['prompt'])
+            self.assertIn('Dark cloth is colored material, not transparent background',job['prompt'])
+            self.assertIn('actual exterior boundary',job['prompt'])
             self.assertNotIn('photograph FRAME',job['prompt'])
             self.assertEqual(job['references'][0],str(master))
 

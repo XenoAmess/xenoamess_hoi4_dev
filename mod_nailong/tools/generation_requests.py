@@ -20,17 +20,20 @@ REQUESTS = MOD / "data/generation-requests"
 
 def alpha_instruction(asset):
     """Describe exterior alpha without deleting opaque original asset content."""
+    opaque_body=(" All originally OPAQUE subject surfaces must remain FULLY OPAQUE (alpha 255): yellow head/body, hair, beard, dark or black clothing, coat lapels, collar, tie, buttons and decorations. "
+                 "Dark cloth is colored material, not transparent background. Never fade garment interiors into semi-transparent patches, holes, white haze or see-through fabric. "
+                 "Keep any genuine source outer-edge alpha falloff only at that actual exterior boundary; preserve actual source transparency rather than making the subject itself translucent.")
     path=asset['path'].replace('\\','/').lower()
     photo_card=path.startswith('gfx/interface/ideas/') and max(asset['size'])<100
     if photo_card:
         return ("\nOutput alpha: genuine transparent RGBA ONLY OUTSIDE the complete original photograph FRAME AND NOTE silhouette. "
                 "The photographic BACKING INSIDE the frame is a required OPAQUE surface: preserve its original background color and texture behind the character all the way to the inner frame rim. "
                 "Never turn the gaps between frame and character into transparent holes or a window. Keep the actual tilted photo rectangle, frame rim and overlapping note intact. "
-                "Do not invent a new backdrop outside the whole card. Retain source clothing, hair, headgear, lighting and crop at full generated resolution.")
+                "Do not invent a new backdrop outside the whole card. Retain source clothing, hair, headgear, lighting and crop at full generated resolution."+opaque_body)
     return ("\nOutput alpha: preserve genuine transparent RGBA outside the original asset's outer silhouette. "
             "Retain all original opaque content, including any existing background or dark vignette that is part of this source; do not erase it into alpha holes. "
             "Where the original exterior is transparent, do not invent a new solid canvas, halo or studio backdrop. "
-            "Retain source clothing, hair, headgear, lighting and portrait crop at full generated resolution.")
+            "Retain source clothing, hair, headgear, lighting and portrait crop at full generated resolution."+opaque_body)
 
 def original(asset):
     src = read_json(ROOT / "runtime/source-index.json")[asset["id"]]
@@ -87,7 +90,7 @@ def prepare(key, prompt, edit_existing=False):
     attempt={"number":n,"status":"prepared","method":"built-in imagegen", "art_direction":"hair-features-v1",
         "prompt":prompt,"prompt_file":promptfile.relative_to(ROOT).as_posix(),"prompt_sha256":file_sha256(promptfile),
         "inputs":inputs,"edit_existing":edit_existing,"machine_id":machine_id(),"prepared_at_utc":utc_now(),
-        "alpha_prompt_policy":"source-content-v2" if transparent else "source-opaque-v1"}
+        "alpha_prompt_policy":"source-content-v3-opaque-body" if transparent else "source-opaque-v1"}
     journal["attempts"].append(attempt);write_json(file,journal)
     return {"key":key,"source":asset["path"],"references":paths,"original":str(source),
         "size":asset["size"],"transparent":transparent,"prompt":prompt,
