@@ -8,7 +8,9 @@ def surname(path):
  stem=Path(path).stem.lower()
  if 'generic' in stem:return None
  parts=stem.split('_')
- while parts and (parts[-1] in {'small','large'} or parts[-1].isdigit()):parts.pop()
+ # Outfit/role suffixes are not surnames. Treating every *_civil image
+ # as one person wrongly held Calles after a different Avila portrait.
+ while parts and (parts[-1] in {'small','large','civil','civilian','military','army','navy','admiral','scientist','unaligned','leader'} or parts[-1].isdigit()):parts.pop()
  if not parts:return None
  if parts[-1] in {'jr','sr','ii','iii','iv','vi','vii','viii','ix','x','pasha'}:return '_'.join(parts[-2:])
  return 'doenitz' if parts[-1]=='donitz' else parts[-1]

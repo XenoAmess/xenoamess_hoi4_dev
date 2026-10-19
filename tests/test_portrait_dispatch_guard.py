@@ -32,4 +32,21 @@ class PortraitDispatchGuardTest(unittest.TestCase):
     def test_donitz_spelling_variants_remain_held(self):
         self.assertTrue(same_service_family('one','two',entry('portrait_GER_karl_donitz.dds'),entry('idea_GER_karl_doenitz.dds')))
 
+    def test_civil_outfit_suffix_does_not_merge_distinct_native_people(self):
+        calles=entry('gfx/leaders/MEX/portrait_mex_calles_civil.dds','MEX_plutarco_calles')
+        avila=entry('gfx/leaders/MEX/portrait_mex_avila_civil.dds','MEX_manuel_avila_camacho')
+        self.assertEqual(surname(calles['paths'][0]),'calles')
+        self.assertEqual(surname(avila['paths'][0]),'avila')
+        self.assertFalse(same_service_family('calles','avila',calles,avila))
+        self.assertFalse(same_service_family('avila','calles',avila,calles))
+
+    def test_outfit_variants_of_actual_same_person_remain_held(self):
+        for suffix in ['civil','civilian','military','army','navy','admiral','scientist','unaligned','leader']:
+            with self.subTest(suffix=suffix):
+                base=entry('portrait_MEX_manuel_avila_camacho.dds')
+                variant=entry('portrait_MEX_manuel_avila_camacho_'+suffix+'_small.dds')
+                self.assertTrue(same_service_family('base','variant',base,variant))
+                other=entry('portrait_MEX_plutarco_calles_'+suffix+'_small.dds')
+                self.assertFalse(same_service_family('base','other',base,other))
+
 if __name__=='__main__':unittest.main()
