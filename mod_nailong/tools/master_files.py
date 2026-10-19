@@ -42,7 +42,10 @@ def sync_git(snapshot=None, root=ROOT):
         target.parent.mkdir(parents=True, exist_ok=True)
         if not target.exists():
             os.link(source, target)
-        if file_sha256(target) != digest or target.stat().st_size != item['bytes']:
+        # The source was just fully hashed. A target naming that same file
+        # (including a new hardlink) contains those exact bytes; independent
+        # existing targets still need their own complete checksum.
+        if target.stat().st_size != item['bytes'] or (not target.samefile(source) and file_sha256(target) != digest):
             raise ValueError('Git master bytes do not match: ' + digest)
         with Image.open(target) as image:
             image.verify()

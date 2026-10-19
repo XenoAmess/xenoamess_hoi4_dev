@@ -4,10 +4,12 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from PIL import Image
 from tools.common import write_json, read_json
 from mod_nailong.tools.master_files import sync_git, verify_tree, master_path
+from mod_nailong.tools import master_archive
 
 
 class MasterFilesTests(unittest.TestCase):
@@ -65,6 +67,35 @@ class MasterFilesTests(unittest.TestCase):
             snap['historical_fullsize_sha_missing']=['missing']
             with self.assertRaisesRegex(ValueError,'missing'):
                 sync_git(snap,root)
+
+    def test_independent_existing_target_is_not_trusted_by_name(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            _, original, digest, snap=self.fixture(root)
+            target=root/master_path(digest);target.parent.mkdir(parents=True)
+            raw=bytearray(original.read_bytes());raw[-1]^=1;target.write_bytes(raw)
+            with self.assertRaisesRegex(ValueError,'Git master bytes'):
+                sync_git(snap,root)
+
+    def test_inventory_prefers_complete_project_masters_and_recovers_missing_ones(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);mod, original, digest, _=self.fixture(root)
+            retained=root/master_path(digest);retained.parent.mkdir(parents=True)
+            retained.write_bytes(original.read_bytes())
+            cache=root/'.codex/generated_images/session/output.png';cache.parent.mkdir(parents=True)
+            cache.write_bytes(original.read_bytes())
+            write_json(root/'runtime/generated-origins/source.json',{'source':str(cache)})
+            real_hash=master_archive.file_sha256
+            with patch.object(master_archive,'ROOT',root),patch.object(master_archive,'MOD',mod),patch.object(master_archive,'INVENTORY',root/'runtime/inventory.json'),patch.object(master_archive,'recorded_outputs',return_value=({digest},{'source':digest},{digest:[]})):
+                with patch.object(master_archive,'file_sha256',wraps=real_hash) as hashes:
+                    result=master_archive.inventory()
+                    self.assertEqual(result['historical_fullsize_sha_missing'],[])
+                    self.assertEqual(Path(result['masters'][0]['path']),retained)
+                    self.assertEqual(hashes.call_count,1)
+                retained.unlink()
+                recovered=master_archive.inventory()
+                self.assertEqual(recovered['historical_fullsize_sha_missing'],[])
+                self.assertEqual(Path(recovered['masters'][0]['path']),cache)
 
 
 if __name__=='__main__':unittest.main()

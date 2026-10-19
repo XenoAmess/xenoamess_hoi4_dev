@@ -38,5 +38,22 @@ class FullsizeGameTextures(unittest.TestCase):
   with self.assertRaisesRegex(SystemExit,'Validation subsets'):builder.payload(validation_keys={self.key})
  def test_complete_art_does_not_unlock_unqualified_hd_display(self):
   with self.assertRaisesRegex(SystemExit,'display compatibility remains unqualified'):builder.payload(preview=False)
+ def test_validation_sample_builds_the_enabled_dlc_variant(self):
+  catalog={'assets':[{'id':'base','path':'gfx/leaders/TST/sample.dds','package':'base','source_sha256':self.key,'size':[3,4]},
+                     {'id':'dlc1','path':'gfx/leaders/TST/sample.dds','package':'dlc/dlc1','source_sha256':'b'*64,'size':[3,4]},
+                     {'id':'dlc2','path':'gfx/leaders/TST/sample.dds','package':'dlc/dlc2','source_sha256':'c'*64,'size':[3,4]}],
+           'game_version':'test','unresolved_references':[]}
+  rows={key:dict(self.row) for key in [self.key,'b'*64,'c'*64]}
+  write_json(self.mod/'data/catalog.json',catalog);write_json(self.mod/'data/generated.json',{'portraits':rows})
+  for packages,expected in [(None,'c'*64),(['dlc/dlc1'],'b'*64),([],self.key)]:
+   with self.subTest(packages=packages):
+    keys=builder.validation_sample_keys(catalog,rows,4,packages)
+    self.assertEqual(keys,[expected])
+    output=self.root/('sample-'+expected[0]);manifest=builder.build(output,preview=True,packages=packages,validation_keys=keys)
+    self.assertEqual([b['source_sha256'] for b in manifest['bindings']],[expected]);builder.verify(output)
+ def test_validation_sample_does_not_substitute_superseded_ready_art(self):
+  catalog={'assets':[{'id':'base','path':'gfx/leaders/TST/sample.dds','package':'base','source_sha256':self.key,'size':[3,4]},
+                     {'id':'dlc','path':'gfx/leaders/TST/sample.dds','package':'dlc/dlc1','source_sha256':'b'*64,'size':[3,4]}]}
+  self.assertEqual(builder.validation_sample_keys(catalog,{self.key:self.row},4),[])
 
 if __name__=='__main__':unittest.main()

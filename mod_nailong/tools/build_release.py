@@ -20,6 +20,23 @@ def ready(row):
     from mod_nailong.tools.art_contract import portrait_ready
     return portrait_ready(row)
 
+def profile_assets(catalog, packages=None):
+    def rank(asset):
+        if asset['package']=='base':return -1
+        match=re.search(r'dlc(\d+)',asset['package'])
+        return int(match[1]) if match else 0
+    eligible=[a for a in catalog['assets'] if packages is None or a['package']=='base' or a['package'] in packages]
+    selected={}
+    for asset in sorted(eligible,key=lambda a:(rank(a),a['package'],a['path'])):
+        selected[asset['path'].lower()]=asset
+    return selected
+
+def validation_sample_keys(catalog, generated, count, packages=None):
+    # Sample the actual profile after DLC overrides. A reviewed superseded
+    # source must not become an unknown sample key or replace unreviewed DLC art.
+    return sorted({a['source_sha256'] for a in profile_assets(catalog,packages).values()
+                   if ready(generated.get(a['source_sha256'],{}))})[:count]
+
 def payload(preview=False, packages=None, validation_keys=None, sink=None):
     catalog=read_json(MOD/"data/catalog.json")
     generated=read_json(MOD/"data/generated.json")["portraits"]
@@ -29,18 +46,9 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None):
     if not preview and catalog["unresolved_references"]:
         raise SystemExit(f"RELEASE BLOCKED: {len(catalog['unresolved_references'])} unresolved baseline character references need analysis")
     if not generated:raise SystemExit("No generated art available")
-    selected={}
     # Product build profile is explicit. Higher numbered DLC wins shared texture paths;
     # preserve every distinct variant as a generation input, never flatten the inventory.
-    def rank(asset):
-        if asset["package"]=="base":return -1
-        match=re.search(r"dlc(\d+)",asset["package"])
-        return int(match[1]) if match else 0
-    eligible=[a for a in catalog["assets"] if packages is None or a["package"]=="base" or a["package"] in packages]
-    for asset in sorted(eligible,key=lambda a:(rank(a),a["package"],a["path"])):
-        # Choose profile variant BEFORE checking art readiness; a missing DLC image
-        # must not silently turn into another package's generated portrait.
-        selected[asset["path"].lower()]=asset
+    selected=profile_assets(catalog,packages)
     if validation_keys is not None:
         if not preview:raise SystemExit('Validation subsets are development previews only; never a formal release')
         validation_keys=set(validation_keys)
@@ -139,7 +147,8 @@ def main():
     if args.validation_sample is not None:
         if not args.preview or args.source_key or not 1<=args.validation_sample<=12:parser.error('Use --preview and a validation sample between 1 and 12, without --source-key')
         rows=read_json(MOD/'data/generated.json')['portraits']
-        validation_keys=sorted(k for k,r in rows.items() if ready(r))[:args.validation_sample]
+        validation_keys=validation_sample_keys(read_json(MOD/'data/catalog.json'),rows,args.validation_sample,args.packages)
+        if not validation_keys:raise SystemExit('No reviewed portraits in selected profile')
     if args.check:
         with tempfile.TemporaryDirectory(prefix="naiwa-repro-") as folder:
             first,second=Path(folder)/"a",Path(folder)/"b"

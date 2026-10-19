@@ -100,7 +100,12 @@ def inventory():
         raise SystemExit("Inventory metadata budget exceeded")
     from PIL import Image
     found = {}
-    for path in sorted(paths):
+    canonical = MOD / 'assets/generated_fullsize'
+    # Hash retained project originals first. Once every recorded digest is
+    # found, receipt-proven cache copies cannot add another required output.
+    for path in sorted(paths, key=lambda p: (p.parent != canonical, str(p))):
+        if expected <= found.keys():
+            break
         if time.monotonic() > deadline:
             raise SystemExit('Inventory time budget exceeded; no missing-file conclusion published')
         if not path.is_file():
