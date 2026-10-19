@@ -166,6 +166,41 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 63b50f06-2ada-498f-8d03-f1938c17d220.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-18T23:18:39.425802+00:00"
+    },
+    {
+      "number": 5,
+      "status": "prepared",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image 1 is the actual returned full-resolution yellow mascot portrait EDIT TARGET. Image 2 is the exact original game portrait and authority for visible hair and clothes. Image 3 is the exact yellow mascot identity. Make ONE local correction: REMOVE the invented small brown upper-lip moustache. The original person is CLEAN-SHAVEN: nose and lip shading is not hair. Restore a completely smooth yellow upper lip and smooth yellow chin, no moustache, goatee, beard or stubble. KEEP the mascot normal small grey lip and horizontal mouth unchanged: remove only the extra brown hair ABOVE the mouth. Preserve short straight side-parted brown-grey scalp hair, eyebrows, green-ringed eyes, strong sideward head angle, muted background and exact crop. Keep the original olive military jacket with OPEN lapels, pale grey shirt, muted khaki necktie, dark collar patches and small metal insignia exactly as in the target and original. Keep compact rounded yellow head seated directly inside the already fitted broad collar; no separate tall yellow neck or cream bib. Do not change correct hair, eyes, outfit, medals, pose or background, do not invent headgear, human ears or nose, text or people.",
+      "prompt_file": "mod_nailong/assets/prompts/fefce424c990b4839f198d774e282c51f892074458986e21a0d6b423f8342065-005.txt",
+      "prompt_sha256": "0635fe5b26a58b25f162f374c56f426d4ee06229a9f92fe1023aa3771e299aab",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/ccdb8d65a05cf6aacbd3b7ca7c226cc5d88db3873b74d599c5e090fc91cbc0d3.png",
+          "sha256": "ccdb8d65a05cf6aacbd3b7ca7c226cc5d88db3873b74d599c5e090fc91cbc0d3",
+          "derived_game_image_sha256": "02c3766dd873f0ea3f79ba8d3aabbd2eb000e2b3e1a9d98f7f115bec249563e2"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "fefce424c990b4839f198d774e282c51f892074458986e21a0d6b423f8342065",
+          "converted_png_sha256": "7e2b04cbb0c497c3b46ec63afb92ecb6d4c3941da46d0c0b8fc6f049df1b3292"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-19T07:19:31.396180+00:00",
+      "retry_of_attempt": 4,
+      "retry_root_attempt": 3,
+      "cooldown_retry_number": 2,
+      "cooldown_not_before_utc": "2026-10-19T07:18:39.425802+00:00",
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible"
     }
   ]
 }
