@@ -10,10 +10,14 @@ from mod_nailong.tools.art_contract import portrait_ready
 
 class FacialHairInstructionTests(unittest.TestCase):
     def test_tiny_pale_lip_detail_does_not_assert_a_moustache(self):
-        direction=requests.facial_hair_instruction('Retain only the actual tiny pale-grey upper-lip detail, smooth clean chin; no broad moustache from shadows.')
-        self.assertIn('do not establish a moustache',direction)
-        self.assertNotIn('Retain actual source upper-lip moustache only',direction)
-        self.assertIn('exact tiny lip-region appearance',direction)
+        descriptions=['Retain only the actual tiny pale-grey upper-lip detail, smooth clean chin; no broad moustache from shadows.',
+                      'High receding forehead and round spectacles. Retain only the source fine pale lip detail, smooth clean chin.']
+        for description in descriptions:
+            with self.subTest(description=description):
+                direction=requests.facial_hair_instruction(description)
+                self.assertIn('do not establish a moustache',direction)
+                self.assertNotIn('Retain actual source upper-lip moustache only',direction)
+                self.assertIn('exact tiny lip-region appearance',direction)
 
     def test_tiny_dark_lip_appearance_also_keeps_uncertainty(self):
         direction=requests.facial_hair_instruction('Retain only the actual very fine dark upper-lip appearance, clean chin; original cap.')

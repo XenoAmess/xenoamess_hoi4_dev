@@ -23,7 +23,7 @@ def facial_hair_instruction(description):
     features=description.strip().lower()
     if 'clean-shaven' in features:
         return 'CLEAN-SHAVEN: smooth yellow upper lip and chin; no moustache, beard, goatee or chin tuft. Skin shadows are not hair.'
-    if (features.startswith('retain only')
+    if ('retain only' in features
             and ('lip detail' in features or 'lip appearance' in features)
             and 'moustache only' not in features):
         return ('Upper-lip restraint: copy only the exact tiny lip-region appearance visible in this source, at its actual fine extent and colour. '
