@@ -18,6 +18,31 @@ from mod_nailong.tools.portraits import ingest, record_fullsize_origin
 MOD = ROOT / "mod_nailong"
 REQUESTS = MOD / "data/generation-requests"
 
+def source_alpha_policy(image):
+    """A nearly opaque full canvas is not evidence of an exterior cutout.
+
+    This affects only new requests. Original input bytes and frozen requests
+    remain unchanged; lower alpha still uses the conservative existing policy.
+    """
+    minimum, maximum = image.convert('RGBA').getchannel('A').getextrema()
+    near_opaque = 249 <= minimum < 255
+    return {
+        'original_alpha_extrema': [minimum, maximum],
+        'transparent_background': minimum < 249,
+        'alpha_prompt_policy': ('source-near-opaque-backdrop-v1' if near_opaque else
+                                'source-opaque-v1' if minimum == 255 else
+                                'source-content-v3-opaque-body'),
+    }
+
+
+def near_opaque_backdrop_instruction():
+    return ("\nOutput background: this exact original has a COMPLETE near-opaque canvas, "
+            "with every source alpha value at least 249/255. Its existing backdrop is required image content. "
+            "Preserve the original backdrop color, texture, illumination and full rectangular extent behind the mascot. "
+            "Return an opaque full-canvas portrait, not a transparent figure cutout. Do not remove or replace the original background. "
+            "Keep the source clothing, hair, facial hair, accessories, pose and crop unchanged apart from the requested mascot conversion or targeted art repair.")
+
+
 def alpha_instruction(asset):
     """Describe exterior alpha without deleting opaque original asset content."""
     opaque_body=(" All originally OPAQUE subject surfaces must remain FULLY OPAQUE (alpha 255): yellow head/body, hair, beard, dark or black clothing, coat lapels, collar, tie, buttons and decorations. "
@@ -49,9 +74,12 @@ def original(asset):
 def prepare(key, prompt, edit_existing=False):
     asset=next(a for a in read_json(MOD/"data/catalog.json")["assets"] if a["source_sha256"]==key)
     source=original(asset)
-    with Image.open(source) as image:transparent=image.getchannel("A").getextrema()[0]<255
+    with Image.open(source) as image:alpha_policy=source_alpha_policy(image)
+    transparent=alpha_policy['transparent_background']
     if transparent:
         prompt += alpha_instruction(asset)
+    elif alpha_policy['alpha_prompt_policy']=='source-near-opaque-backdrop-v1':
+        prompt += near_opaque_backdrop_instruction()
     record=read_json(MOD/"data/generated.json")["portraits"].get(key)
     file=REQUESTS/(key+".json")
     journal=read_json(file) if file.exists() else {"schema":"naiwa-generation-requests-v1","source_sha256":key,"attempts":[]}
@@ -90,7 +118,7 @@ def prepare(key, prompt, edit_existing=False):
     attempt={"number":n,"status":"prepared","method":"built-in imagegen", "art_direction":"hair-features-v1",
         "prompt":prompt,"prompt_file":promptfile.relative_to(ROOT).as_posix(),"prompt_sha256":file_sha256(promptfile),
         "inputs":inputs,"edit_existing":edit_existing,"machine_id":machine_id(),"prepared_at_utc":utc_now(),
-        "alpha_prompt_policy":"source-content-v3-opaque-body" if transparent else "source-opaque-v1"}
+        **alpha_policy}
     journal["attempts"].append(attempt);write_json(file,journal)
     return {"key":key,"source":asset["path"],"references":paths,"original":str(source),
         "size":asset["size"],"transparent":transparent,"prompt":prompt,

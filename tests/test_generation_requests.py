@@ -9,6 +9,34 @@ from mod_nailong.tools import generation_requests as requests
 from mod_nailong.tools.art_contract import portrait_ready
 
 class RequestImportTests(unittest.TestCase):
+    def test_near_opaque_canvas_is_not_an_exterior_cutout(self):
+        for minimum in (249, 250, 254):
+            with self.subTest(minimum=minimum),tempfile.TemporaryDirectory() as temp:
+                root=Path(temp);mod,key,source,game,master,row=self.edit_fixture(root)
+                with Image.open(source) as image:
+                    image.putpixel((0,0),(190,185,160,minimum));image.save(source)
+                before=file_sha256(source)
+                with patch.object(requests,'ROOT',root),patch.object(requests,'MOD',mod),patch.object(requests,'REQUESTS',mod/'data/generation-requests'),patch.object(requests,'original',return_value=source),patch('mod_nailong.tools.image_retries.require_editable_service_state'):
+                    job=requests.prepare(key,'Restore original cream backdrop',True)
+                attempt=read_json(mod/f'data/generation-requests/{key}.json')['attempts'][0]
+                self.assertFalse(job['transparent'])
+                self.assertIn('opaque full-canvas portrait',job['prompt'])
+                self.assertIn('Do not remove or replace the original background',job['prompt'])
+                self.assertEqual(attempt['original_alpha_extrema'],[minimum,255])
+                self.assertEqual(attempt['alpha_prompt_policy'],'source-near-opaque-backdrop-v1')
+                self.assertEqual(file_sha256(source),before)
+                self.assertEqual(job['references'][0],str(master))
+
+    def test_alpha_policy_keeps_lower_alpha_and_opaque_boundary_behavior(self):
+        for minimum in (0, 128, 248, 249, 254, 255):
+            with self.subTest(minimum=minimum):
+                image=Image.new('RGBA',(2,2),(100,90,80,255))
+                image.putpixel((0,0),(100,90,80,minimum))
+                policy=requests.source_alpha_policy(image)
+                self.assertEqual(policy['transparent_background'],minimum<249)
+                self.assertEqual(policy['original_alpha_extrema'],[minimum,255])
+        self.assertEqual(policy['alpha_prompt_policy'],'source-opaque-v1')
+
     def edit_fixture(self, root):
         mod=root/'mod_nailong';key='c'*64
         source=root/'original.png';Image.new('RGBA',(3,4),'silver').save(source)
