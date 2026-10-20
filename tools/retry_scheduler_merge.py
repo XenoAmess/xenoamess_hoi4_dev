@@ -71,7 +71,7 @@ def merge_candidates(source,root=None):
   assert [file_sha256(Path(p)) for p in c['references']]==c['input_sha256'],'Actual input bytes changed'
   assert c['not_before_utc']==queue[key]['not_before_utc']
   assert queue[key].get('cooldown_origin_attempt',a['number'])==a['number']
-  entry=dict(c,verified_failed_attempt=a['number'],verified_actual_snapshot_sha256=v['actual_request_snapshot_sha256'],manual_review_source=source.relative_to(root).as_posix(),manual_review_source_sha256=file_sha256(source))
+  entry=dict(c,original_tool_transparent_background=v['transparent_background'],requires_manual_policy_review=True,verified_failed_attempt=a['number'],verified_actual_snapshot_sha256=v['actual_request_snapshot_sha256'],manual_review_source=source.relative_to(root).as_posix(),manual_review_source_sha256=file_sha256(source))
   if key in pool['requests']:
    old=pool['requests'][key]
    if not same_payload(old,entry):
