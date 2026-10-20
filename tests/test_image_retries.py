@@ -79,6 +79,28 @@ class ImageRetryGuards(unittest.TestCase):
         self.assertEqual(read_json(retries.QUEUE)['sources'][self.key]['retries_used'], 0)
         self.assertEqual(len(read_json(self.journal)['attempts']), 1)
 
+    def test_near_opaque_retry_keeps_actual_false_flag_across_retry_chain(self):
+        Image.new('RGBA',(2,2),(100,100,100,254)).save(self.original)
+        data=read_json(self.journal)
+        data['attempts'][0]['inputs'][0]['converted_png_sha256']=file_sha256(self.original)
+        data['attempts'][0]['actual_request_verification']={'actual_recorded_before_call':True,'transparent_background':False}
+        write_json(self.journal,data)
+        retries.claim(self.key)
+        self.assertIs(read_json(self.root/'runtime/cooldown-retry-job.json')['transparent'],False)
+        self.assertIs(read_json(self.journal)['attempts'][-1]['cooldown_retry_tool_transparent_background'],False)
+        self.refuse_latest();FixedClock.instant+=timedelta(hours=8)
+        retries.claim(self.key)
+        self.assertIs(read_json(self.root/'runtime/cooldown-retry-job.json')['transparent'],False)
+        self.assertEqual(read_json(retries.QUEUE)['sources'][self.key]['retries_used'],2)
+
+    def test_conflicting_retry_flag_refuses_before_quota_consumption(self):
+        data=read_json(self.journal)
+        data['attempts'][0].update(cooldown_retry_tool_transparent_background=False,actual_request_verification={'actual_recorded_before_call':True,'transparent_background':True})
+        write_json(self.journal,data)
+        with self.assertRaisesRegex(SystemExit,'transparency conflicts'):retries.claim(self.key)
+        self.assertEqual(read_json(retries.QUEUE)['sources'][self.key]['retries_used'],0)
+        self.assertEqual(len(read_json(self.journal)['attempts']),1)
+
     def test_retry_reuses_recovered_actual_text_with_a_new_recording_boundary(self):
         data=read_json(self.journal)
         actual='Exact recovered label: \ufffd\ufffd\ufffd\ufffd\n'

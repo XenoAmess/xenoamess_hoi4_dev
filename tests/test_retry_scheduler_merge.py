@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 from tools.common import read_json,write_json,file_sha256
 from tools import retry_scheduler_merge as merge
+from tools.retry_scheduler_claim import expected_transparency
 
 class RetryApprovalVersionTests(unittest.TestCase):
  def setUp(self):
@@ -72,6 +73,16 @@ class RetryApprovalVersionTests(unittest.TestCase):
  def test_changed_actual_input_bytes_are_rejected(self):
   Path(self.refs[0]).write_bytes(b'changed target')
   with self.assertRaises(AssertionError):self.run_merge()
+
+ def test_claim_derives_missing_flag_only_from_exact_actual_snapshot(self):
+  c=dict(self.candidate,verified_actual_snapshot_sha256=self.failed['actual_request_verification']['actual_request_snapshot_sha256'])
+  self.assertIs(expected_transparency(c,self.failed),True)
+  c['verified_actual_snapshot_sha256']='0'*64
+  with self.assertRaises(AssertionError):expected_transparency(c,self.failed)
+
+ def test_claim_rejects_flag_conflicting_with_actual_request(self):
+  c=dict(self.candidate,original_tool_transparent_background=False)
+  with self.assertRaises(AssertionError):expected_transparency(c,self.failed)
 
  def test_exhausted_source_is_skipped_without_reset(self):
   q=read_json(self.queue);q['sources'][self.key]['retries_used']=8;write_json(self.queue,q)

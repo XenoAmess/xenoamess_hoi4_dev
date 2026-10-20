@@ -106,6 +106,20 @@ def claim(key):
             p=export_original(asset);expected=source['converted_png_sha256']
         if file_sha256(p)!=expected:raise SystemExit('Original input bytes no longer match; recover evidence before retry')
         references.append(str(p))
+    # A cooldown repeats the actual tool flag even if future alpha policy changes.
+    verification=original.get('actual_request_verification',{})
+    verified_alpha=verification.get('transparent_background')
+    frozen_alpha=original.get('cooldown_retry_tool_transparent_background')
+    if verification.get('actual_recorded_before_call') and isinstance(verified_alpha,bool):
+        transparent=verified_alpha
+        if isinstance(frozen_alpha,bool) and frozen_alpha!=transparent:
+            raise SystemExit('Recorded retry transparency conflicts with actual call; reconcile before consuming quota')
+    elif isinstance(frozen_alpha,bool):
+        transparent=frozen_alpha
+    else:
+        source_image=export_original(asset)
+        with Image.open(source_image) as source:
+            transparent=source.convert('RGBA').getchannel('A').getextrema()[0]<255
     number=len(journal['attempts'])+1
     promptfile=MOD/'assets/prompts'/f'{key}-{number:03}.txt'
     promptfile.write_text(original['prompt'],encoding='utf-8',newline='\n')
@@ -113,13 +127,12 @@ def claim(key):
     attempt={**original,'number':number,'status':'prepared','prompt_file':promptfile.relative_to(ROOT).as_posix(),
         'prompt_sha256':file_sha256(promptfile),'prepared_at_utc':utc_now(),'retry_of_attempt':original['number'],
         'retry_root_attempt':root['number'],'cooldown_retry_number':retry_number,
-        'cooldown_not_before_utc':entry['not_before_utc'],'eligibility_confirmed_by':'Codex reviewed allowed request and tool conditions before --confirm-eligible'}
+        'cooldown_not_before_utc':entry['not_before_utc'],'cooldown_retry_tool_transparent_background':transparent,
+        'eligibility_confirmed_by':'Codex reviewed allowed request and tool conditions before --confirm-eligible'}
     for field in ['error','observed_at_utc','output','output_sha256','fullsize_sha256','fullsize_image','generated_at_utc','review','reviewed_at_utc','rejection_reason','prompt_transport_correction','intended_prompt','intended_prompt_file','intended_prompt_sha256','actual_request_verification']:attempt.pop(field,None)
     entry.update(retries_used=retry_number,state='claimed_before_call',claimed_at_utc=utc_now())
     write_json(QUEUE,queue)
     journal['attempts'].append(attempt);write_json(journal_path,journal)
-    source_image=export_original(asset)
-    transparent=Image.open(source_image).getchannel('A').getextrema()[0]<255
     write_json(ROOT/'runtime/cooldown-retry-job.json',{'key':key,'prompt':original['prompt'],'references':references,
         'transparent':transparent,'journal':journal_path.relative_to(ROOT).as_posix()})
     print(f'Cooldown retry {retry_number}/{limit} consumed and exact original request prepared; call only built-in imagegen')
