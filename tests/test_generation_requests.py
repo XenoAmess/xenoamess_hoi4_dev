@@ -8,6 +8,29 @@ from tools.common import file_sha256,read_json,write_json
 from mod_nailong.tools import generation_requests as requests
 from mod_nailong.tools.art_contract import portrait_ready
 
+class FacialHairInstructionTests(unittest.TestCase):
+    def test_tiny_pale_lip_detail_does_not_assert_a_moustache(self):
+        direction=requests.facial_hair_instruction('Retain only the actual tiny pale-grey upper-lip detail, smooth clean chin; no broad moustache from shadows.')
+        self.assertIn('do not establish a moustache',direction)
+        self.assertNotIn('Retain actual source upper-lip moustache only',direction)
+        self.assertIn('exact tiny lip-region appearance',direction)
+
+    def test_tiny_dark_lip_appearance_also_keeps_uncertainty(self):
+        direction=requests.facial_hair_instruction('Retain only the actual very fine dark upper-lip appearance, clean chin; original cap.')
+        self.assertIn('Do not grow a broad hair band',direction)
+        self.assertIn('actual fine extent and colour',direction)
+
+    def test_definite_moustache_keeps_its_extent_and_clean_chin(self):
+        direction=requests.facial_hair_instruction('Fine short white-grey upper-lip moustache only, clean chin; grey hair.')
+        self.assertIn('Retain actual source upper-lip moustache only',direction)
+        self.assertIn('no goatee or beard',direction)
+
+    def test_clean_shaven_and_full_beard_remain_distinct(self):
+        self.assertIn('CLEAN-SHAVEN',requests.facial_hair_instruction('Clean-shaven, short dark hair and dark suit.'))
+        beard=requests.facial_hair_instruction('Full compact white-grey chin/jaw beard and separate matching upper-lip moustache.')
+        self.assertIn('chin beard',beard)
+        self.assertNotIn('chin stays completely smooth',beard)
+
 class RequestImportTests(unittest.TestCase):
     def test_near_opaque_canvas_is_not_an_exterior_cutout(self):
         for minimum in (249, 250, 254):

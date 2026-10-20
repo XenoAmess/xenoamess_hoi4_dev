@@ -18,6 +18,23 @@ from mod_nailong.tools.portraits import ingest, record_fullsize_origin
 MOD = ROOT / "mod_nailong"
 REQUESTS = MOD / "data/generation-requests"
 
+def facial_hair_instruction(description):
+    """Keep uncertain lip detail from asserting a definite moustache band."""
+    features=description.strip().lower()
+    if 'clean-shaven' in features:
+        return 'CLEAN-SHAVEN: smooth yellow upper lip and chin; no moustache, beard, goatee or chin tuft. Skin shadows are not hair.'
+    if (features.startswith('retain only')
+            and ('lip detail' in features or 'lip appearance' in features)
+            and 'moustache only' not in features):
+        return ('Upper-lip restraint: copy only the exact tiny lip-region appearance visible in this source, at its actual fine extent and colour. '
+                'Skin shading, lip highlights and the mascot grey lip do not establish a moustache. Do not grow a broad hair band, beard or goatee. '
+                'Retain any definite tiny visible source moustache only to that exact extent and colour; a clean chin stays smooth yellow.')
+    if 'moustache only' in features or 'clean chin' in features or 'clean smooth chin' in features:
+        return 'Retain actual source upper-lip moustache only, in the exact visible color and extent; chin stays completely smooth yellow, no goatee or beard.'
+    return ('Retain the actual visible source facial hair with its correct extent and color; eyes, upper-lip moustache, '
+            'source-shaped open or closed creature mouth, chin beard in that top-to-bottom order. No invented hair from shadows.')
+
+
 def source_alpha_policy(image):
     """A nearly opaque full canvas is not evidence of an exterior cutout.
 
