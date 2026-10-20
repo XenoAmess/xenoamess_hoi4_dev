@@ -103,13 +103,13 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None):
     if "remote_file_id" in descriptor or "replace_path" in descriptor:raise SystemExit("Invalid descriptor")
     if preview:descriptor=descriptor.replace("(Development)","(INCOMPLETE PREVIEW)")
     emit('descriptor.mod',descriptor.encode('utf-8'))
-    return files,{"schema":"naiwa-release-manifest-v2","preview":preview,"art_complete":not missing,"game_version":catalog["game_version"],"catalog_sha256":file_sha256(MOD/"data/catalog.json"),"source_textures":len(catalog["assets"]),"generated_unique_images":len(generated),"selected_profile":sorted(packages) if packages is not None else "all-installed-catalog-packages; highest DLC numeric ID on shared paths","unresolved_baseline_references":len(catalog["unresolved_references"]),"profile_missing_texture_count":len(profile_missing),'texture_resolution_policy':'original fullsize master; no pre-downscale','validation_source_keys':sorted(validation_keys) if validation_keys is not None else None,'validation_scope':'selected development subset only' if validation_keys is not None else 'entire selected profile',"bindings":bindings,"files":sorted(file_records,key=lambda r:r['path'])}
+    return files,{"schema":"naiwa-release-manifest-v2","archive_filename":"gangnailongxin.zip","preview":preview,"art_complete":not missing,"game_version":catalog["game_version"],"catalog_sha256":file_sha256(MOD/"data/catalog.json"),"source_textures":len(catalog["assets"]),"generated_unique_images":len(generated),"selected_profile":sorted(packages) if packages is not None else "all-installed-catalog-packages; highest DLC numeric ID on shared paths","unresolved_baseline_references":len(catalog["unresolved_references"]),"profile_missing_texture_count":len(profile_missing),'texture_resolution_policy':'original fullsize master; no pre-downscale','validation_source_keys':sorted(validation_keys) if validation_keys is not None else None,'validation_scope':'selected development subset only' if validation_keys is not None else 'entire selected profile',"bindings":bindings,"files":sorted(file_records,key=lambda r:r['path'])}
 
 def build(output,preview=False,packages=None,validation_keys=None):
     if output.exists():raise SystemExit("Output already exists; choose a fresh --output path")
     staging=output/"staging"
     staging.mkdir(parents=True)
-    archive=output/"naiwa-world.zip"
+    archive=output/"gangnailongxin.zip"
     with zipfile.ZipFile(archive,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=9) as handle:
         def emit(name,data):
             target=staging/Path(name);target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
@@ -128,7 +128,10 @@ def verify(output):
     expected={r["path"]:r for r in manifest["files"]}
     actual={p.relative_to(output/"staging").as_posix() for p in (output/"staging").rglob("*") if p.is_file()}
     if actual!=set(expected):raise SystemExit("Staging file set differs from manifest")
-    with zipfile.ZipFile(output/"naiwa-world.zip") as archive:
+    # Older immutable build receipts predate the product-name correction.
+    # Their original ZIP remains verifiable; every new build declares its name.
+    archive_name=manifest.get('archive_filename','naiwa-world.zip')
+    with zipfile.ZipFile(output/archive_name) as archive:
         if set(archive.namelist())!=set(expected):raise SystemExit("ZIP file set differs from manifest")
         for name,row in expected.items():
             raw=(output/"staging"/name).read_bytes()
@@ -154,12 +157,12 @@ def main():
             first,second=Path(folder)/"a",Path(folder)/"b"
             build(first,args.preview,args.packages,validation_keys)
             build(second,args.preview,args.packages,validation_keys)
-            if (first/"manifest.json").read_bytes()!=(second/"manifest.json").read_bytes() or file_sha256(first/'naiwa-world.zip')!=file_sha256(second/'naiwa-world.zip'):raise SystemExit("Reproducibility check failed")
+            if (first/"manifest.json").read_bytes()!=(second/"manifest.json").read_bytes() or file_sha256(first/'gangnailongxin.zip')!=file_sha256(second/'gangnailongxin.zip'):raise SystemExit("Reproducibility check failed")
             print('PASS: deterministic double build, exact staging/manifest/ZIP and HD texture decode; scope='+('selected preview validation subset' if validation_keys is not None else 'entire selected profile'))
         return
     if not args.output:parser.error("Choose a fresh --output or use --check")
     manifest=build(args.output,args.preview,args.packages,validation_keys)
-    write_json(args.output/"build-receipt.json",{"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":"build_release.py + manifest.json","zip_sha256":file_sha256(args.output/"naiwa-world.zip"),"preview":args.preview,"files":len(manifest["files"]),"live_acceptance":"not-run"})
+    write_json(args.output/"build-receipt.json",{"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":"build_release.py + manifest.json","zip_sha256":file_sha256(args.output/"gangnailongxin.zip"),"preview":args.preview,"files":len(manifest["files"]),"live_acceptance":"not-run"})
     print(f"Built {len(manifest['bindings'])} portrait overrides: {args.output.resolve()}")
 
 if __name__=="__main__":

@@ -99,7 +99,7 @@ def augment(output, manifest, aliases, source_proofs, native_include_proofs=None
         'fullsize_pixel_proofs':pixel_proofs,
         'live_acceptance':'Not run; every actual consumer, tooltip and hit area requires separate runtime evidence. Static parsing and unchanged bytes do not qualify display.'}
     write_json(output/'manifest.json',manifest)
-    with zipfile.ZipFile(output/'naiwa-world.zip','w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
+    with zipfile.ZipFile(output/'gangnailongxin.zip','w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
         for row in manifest['files']:
             info=zipfile.ZipInfo(row['path'],date_time=(2020,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=0o100644<<16;info.create_system=3
             archive.writestr(info,(staging/row['path']).read_bytes(),compress_type=zipfile.ZIP_DEFLATED,compresslevel=9)

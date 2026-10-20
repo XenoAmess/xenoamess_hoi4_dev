@@ -135,7 +135,7 @@ def main():
  if args.mode=='animation-hd-sampler':manifest['development_fixture'].update(property='Native-size empty normal sprite with unchanged fullsize portrait in animation sampler 2; static original UV, no animation or GUI size override')
  if args.mode=='masking-hd-sampler':manifest['development_fixture'].update(property='Native-size empty normal sprite with unchanged fullsize portrait through masking_texture slot 5; no GUI size override')
  write_json(args.output/'manifest.json',manifest)
- with zipfile.ZipFile(args.output/'naiwa-world.zip','w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
+ with zipfile.ZipFile(args.output/'gangnailongxin.zip','w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
   for row in manifest['files']:
    info=zipfile.ZipInfo(row['path'],date_time=(2020,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=0o100644<<16;info.create_system=3
    archive.writestr(info,(args.output/'staging'/row['path']).read_bytes(),compress_type=zipfile.ZIP_DEFLATED,compresslevel=9)

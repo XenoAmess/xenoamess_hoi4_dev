@@ -86,7 +86,7 @@ def main():
         'acceptance': 'Not run. Must inspect real Chief of Navy picker, binding, layout and usable close button; this does not qualify other portrait classes.'
     }
     write_json(args.output / 'manifest.json', manifest)
-    with zipfile.ZipFile(args.output / 'naiwa-world.zip', 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+    with zipfile.ZipFile(args.output / 'gangnailongxin.zip', 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for row in manifest['files']:
             info = zipfile.ZipInfo(row['path'], date_time=(2020, 1, 1, 0, 0, 0))
             info.compress_type = zipfile.ZIP_DEFLATED

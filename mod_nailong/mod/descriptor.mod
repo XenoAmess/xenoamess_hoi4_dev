@@ -2,5 +2,5 @@ version="0.1.0-dev"
 tags={
     "Graphics"
 }
-name="奶蛙世界 / Naiwa World (Development)"
+name="钢奶龙心 (Development)"
 supported_version="1.19.*"
