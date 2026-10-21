@@ -66,7 +66,7 @@ try:
     time.sleep(2)
  observed=run('git','ls-remote','origin','refs/heads/master',timeout=120).split()[0]
  if observed!=commit:run('git','merge-base','--is-ancestor',commit,observed,timeout=30)
- receipt.update(status='committed_and_pushed',pushed_at_utc=utc_now(),remote_master_observed=observed)
+ receipt.update(status='committed_and_pushed',pushed_at_utc=receipt.get('pushed_at_utc') or utc_now(),remote_master_observed=observed)
  write_json(out,receipt)
  lock.unlink();acquired=False
  run(sys.executable,str(ROOT/'runtime/verify-production-commit.py'),commit,batch,timeout=1200)

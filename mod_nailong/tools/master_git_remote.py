@@ -101,7 +101,26 @@ def verify_remote(commit='HEAD'):
 
 
 def json_api(endpoint):
-    return __import__('json').loads(subprocess.check_output(['gh','api',endpoint],cwd=ROOT,text=True,encoding='utf-8'))
+    # This is an idempotent metadata read. A truncated transport or TLS timeout
+    # must not invalidate a completed push or become an image-service retry.
+    transient=('tls handshake timeout','unexpected end of json input',
+               'connection reset','connection was reset','unexpected eof',
+               'i/o timeout','connection timed out')
+    for attempt in range(3):
+        try:
+            raw=subprocess.check_output(['gh','api',endpoint],cwd=ROOT,text=True,
+                                        encoding='utf-8',stderr=subprocess.PIPE,timeout=180)
+        except (subprocess.CalledProcessError,subprocess.TimeoutExpired) as error:
+            detail=error.stderr or ''
+            if isinstance(detail,bytes):detail=detail.decode('utf-8',errors='replace')
+            retryable=isinstance(error,subprocess.TimeoutExpired) or any(t in detail.lower() for t in transient)
+            if not retryable or attempt==2:raise
+            print(f'Remote Git metadata transport interrupted; bounded read retry {attempt+1}/2',flush=True)
+            time.sleep((2,5)[attempt])
+        else:
+            # A successful command with invalid JSON is not guessed to be a
+            # transient network error; parsing/authorization failures surface.
+            return __import__('json').loads(raw)
 
 
 if __name__=='__main__':
