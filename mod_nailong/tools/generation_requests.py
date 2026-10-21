@@ -88,7 +88,7 @@ def original(asset):
     with Image.open(io.BytesIO(raw)) as im:im.convert("RGBA").save(out)
     return out
 
-def prepare(key, prompt, edit_existing=False):
+def prepare(key, prompt, edit_existing=False, *, replacement_reason=None):
     asset=next(a for a in read_json(MOD/"data/catalog.json")["assets"] if a["source_sha256"]==key)
     source=original(asset)
     with Image.open(source) as image:alpha_policy=source_alpha_policy(image)
@@ -102,6 +102,10 @@ def prepare(key, prompt, edit_existing=False):
     journal=read_json(file) if file.exists() else {"schema":"naiwa-generation-requests-v1","source_sha256":key,"attempts":[]}
     if journal["attempts"] and journal["attempts"][-1]["status"]=="prepared":
         raise SystemExit("Unresolved prepared request; inspect before resubmitting")
+    if replacement_reason is not None and not replacement_reason.strip():
+        raise ValueError('Replacement reason must be explicit and nonempty')
+    if record and not edit_existing and not replacement_reason:
+        raise ValueError('Original-based replacement requires an explicit replacement_reason before generation')
     from mod_nailong.tools.image_retries import require_editable_service_state
     require_editable_service_state(key,record,journal['attempts'][-1] if journal['attempts'] else None,edit_existing)
     paths=[];inputs=[]
@@ -136,6 +140,8 @@ def prepare(key, prompt, edit_existing=False):
         "prompt":prompt,"prompt_file":promptfile.relative_to(ROOT).as_posix(),"prompt_sha256":file_sha256(promptfile),
         "inputs":inputs,"edit_existing":edit_existing,"machine_id":machine_id(),"prepared_at_utc":utc_now(),
         **alpha_policy}
+    if replacement_reason:
+        attempt['replacement_reason']=replacement_reason
     journal["attempts"].append(attempt);write_json(file,journal)
     return {"key":key,"source":asset["path"],"references":paths,"original":str(source),
         "size":asset["size"],"transparent":transparent,"prompt":prompt,
@@ -187,7 +193,8 @@ def finish(key,image):
         record_fullsize_origin(key,image,root=ROOT)
         recovered=True
     else:
-        ingest(key,image,ROOT/a["prompt_file"],a.get('revision_goal','visual_feature_correction') if a["edit_existing"] else None)
+        replacement_reason=a.get('replacement_reason') or (a.get('revision_goal','visual_feature_correction') if a['edit_existing'] else None)
+        ingest(key,image,ROOT/a["prompt_file"],replacement_reason)
     generated=read_json(MOD/"data/generated.json")
     from mod_nailong.tools.master_files import master_path
     generated["portraits"][key]["generated_fullsize_image"]=master_path(fullsize_sha)
@@ -209,6 +216,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument("command",choices=["legacy","batch","prepare","finish","fail","cancel","reject"])
     p.add_argument("--key");p.add_argument("--prompt-file",type=Path);p.add_argument("--edit-existing",action="store_true");p.add_argument("--image");p.add_argument("--message")
     p.add_argument("--message-file",type=Path)
+    p.add_argument("--replacement-reason",help="Explicit pre-call reason for an original-based replacement without an edit target")
     p.add_argument("--jobs-file",type=Path);p.add_argument("--directions-file",type=Path)
     args=p.parse_args()
     if args.command=="legacy":legacy()
@@ -219,7 +227,7 @@ def main():
         prepared=[prepare(j["key"],common+"\nVisible source-specific features: "+d,False) for j,d in zip(jobs,directions)]
         write_json(ROOT/"runtime/current-hair-jobs.json",prepared)
         print(f"Saved {len(prepared)} full prompts before any generation calls")
-    elif args.command=="prepare":write_json(ROOT/"runtime/prepared-image-job.json",prepare(args.key,args.prompt_file.read_text(encoding="utf-8"),args.edit_existing))
+    elif args.command=="prepare":write_json(ROOT/"runtime/prepared-image-job.json",prepare(args.key,args.prompt_file.read_text(encoding="utf-8"),args.edit_existing,replacement_reason=args.replacement_reason))
     elif args.command=="finish":
         try:
             finish(args.key,args.image)

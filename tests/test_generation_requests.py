@@ -91,6 +91,40 @@ class RequestImportTests(unittest.TestCase):
             self.assertEqual(target['derived_game_image_sha256'],file_sha256(game))
             self.assertEqual(file_sha256(game),row['image_sha256'])
 
+    def test_original_based_replacement_requires_reason_before_journaling(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);mod,key,source,game,master,row=self.edit_fixture(root)
+            before=file_sha256(mod/'data/generated.json')
+            with patch.object(requests,'ROOT',root),patch.object(requests,'MOD',mod),patch.object(requests,'REQUESTS',mod/'data/generation-requests'),patch.object(requests,'original',return_value=source):
+                with self.assertRaisesRegex(ValueError,'replacement_reason before generation'):
+                    requests.prepare(key,'Independent original-based correction',False)
+            self.assertFalse((mod/f'data/generation-requests/{key}.json').exists())
+            self.assertEqual(file_sha256(mod/'data/generated.json'),before)
+            self.assertEqual(file_sha256(game),row['image_sha256'])
+
+    def test_original_based_replacement_freezes_reason_and_imports_without_edit_target(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);mod,key,source,game,master,row=self.edit_fixture(root)
+            reason='Independently regenerate actual rejected cap fitting from its exact original'
+            returned=root/'returned.png';Image.new('RGBA',(30,40),'orange').save(returned)
+            def completed_ingest(source_key,image,prompt_path,replace_reason):
+                self.assertEqual(source_key,key);self.assertEqual(replace_reason,reason)
+                self.assertEqual(file_sha256(Path(image)),file_sha256(returned))
+                with Image.open(image) as raw:raw.resize((3,4)).save(game)
+                write_json(mod/'data/generated.json',{'portraits':{key:{'source_sha256':key,'image':game.relative_to(root).as_posix(),'image_sha256':file_sha256(game),'generated_fullsize_sha256':file_sha256(returned),'prompt':prompt_path.read_text(encoding='utf-8'),'size':[3,4],'review':'pending'}}})
+            with patch.object(requests,'ROOT',root),patch.object(requests,'MOD',mod),patch.object(requests,'REQUESTS',mod/'data/generation-requests'),patch.object(requests,'original',return_value=source),patch('mod_nailong.tools.image_retries.require_editable_service_state'),patch.object(requests,'ingest',side_effect=completed_ingest) as importer:
+                job=requests.prepare(key,'Independent original-based correction',False,replacement_reason=reason)
+                attempt=read_json(mod/f'data/generation-requests/{key}.json')['attempts'][0]
+                self.assertFalse(attempt['edit_existing']);self.assertEqual(attempt['replacement_reason'],reason)
+                self.assertEqual(job['references'],[str(source),str(mod/'assets/reference/naiwa.png')])
+                self.assertEqual(attempt['inputs'][0]['role'],'original source portrait')
+                requests.finish(key,str(returned))
+                importer.assert_called_once()
+            after=read_json(mod/f'data/generation-requests/{key}.json')['attempts'][0]
+            self.assertEqual(after['status'],'generated_pending_visual_review')
+            self.assertEqual(after['fullsize_sha256'],file_sha256(returned))
+            self.assertFalse(portrait_ready(read_json(mod/'data/generated.json')['portraits'][key]))
+
     def test_transparent_photo_card_keeps_opaque_backing_and_frozen_request(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);mod,key,source,game,master,row=self.edit_fixture(root)
