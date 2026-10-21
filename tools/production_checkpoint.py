@@ -13,8 +13,8 @@ from mod_nailong.tools.production_priority import build
 from mod_nailong.tools.art_contract import portrait_ready
 from mod_nailong.tools.production_queue import attempt_for_snapshot
 
-def execute(*args):
- p=subprocess.run(list(args),cwd=ROOT,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=180)
+def execute(*args,timeout=180):
+ p=subprocess.run(list(args),cwd=ROOT,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=timeout)
  if p.returncode:raise RuntimeError(p.stdout+'\n'+p.stderr)
  return p.stdout.strip()
 
@@ -38,7 +38,7 @@ for name in completed:
   requests.append({'source_sha256':job['key'],'source':job['source'],'attempt_number':a['number'],'status':a['status'],'call_dispatched':True,'prompt_sha256':a['prompt_sha256'],'fullsize_sha256':a.get('fullsize_sha256'),'output_sha256':a.get('output_sha256'),'this_output_qualified':bool(a.get('output_sha256')==row.get('image_sha256') and portrait_ready(row)),'current_source_ready':portrait_ready(row) if row else False,'actual_request_verification':a['actual_request_verification']})
  write_json(ROOT/f'mod_nailong/data/production-batches/{name}.json',{'machine_id':machine_id(),'observed_at_utc':utc_now(),'actual_calls':sum(a['call_dispatched'] for a in requests),'deferred_without_call':sum(not a['call_dispatched'] for a in requests),'returned_images':sum(bool(a['fullsize_sha256']) for a in requests),'failed_calls':sum(a['status']=='failed' for a in requests),'qualified_outputs_from_this_batch':sum(a['this_output_qualified'] for a in requests),'requests':requests,'retry_policy_path':'mod_nailong/data/image-retry-policy.json','retry_policy_sha256':file_sha256(ROOT/'mod_nailong/data/image-retry-policy.json'),'scope':'Exact actual-payload proof binds each batch attempt. Failed/refused/rejected outputs do not count as qualified. New sources remain HIGH-first. Each eligible retry retains exact prompt/input bytes and order, uses one builtin lane, observes at least eight hours after the latest refusal and consumes the cumulative source quota in the bound policy without resetting previous use.'})
 sync_git();coverage(True);build()
-print(execute(sys.executable,'mod_nailong/tools/audit_art.py'),flush=True)
+print(execute(sys.executable,'mod_nailong/tools/audit_art.py',timeout=900),flush=True)
 print(execute(sys.executable,'mod_nailong/tools/build_release.py','--preview','--check','--validation-sample','4'),flush=True)
 git=['git','-c','gc.auto=0','-c','maintenance.auto=false']
 assert execute('git','branch','--show-current')=='master'
