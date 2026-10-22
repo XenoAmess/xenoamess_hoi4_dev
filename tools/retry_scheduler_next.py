@@ -1,11 +1,15 @@
 """Actor-only idle-boundary allocation; --inspect-only is fully read-only."""
-import sys,os,json,hashlib
+import sys,os,json,hashlib,argparse
 from pathlib import Path
 from datetime import datetime,timezone
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,machine_id,utc_now,file_sha256
 from mod_nailong.tools.image_retries import policy,sync
-inspect='--inspect-only' in sys.argv
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--inspect-only',action='store_true')
+parser.add_argument('--limit',type=int,choices=range(1,13),default=12)
+args=parser.parse_args()
+inspect=args.inspect_only
 directory=ROOT/'runtime/retry-scheduler';state_path=directory/'state.json';state=read_json(state_path)
 assert state['machine_id']==machine_id()
 if state['pending']:
@@ -33,7 +37,7 @@ for key,c in pool['requests'].items():
   # Previous manual content review remains valid only for identical prompt/input bytes.
   ready.append(dict(c,not_before_utc=q['not_before_utc'],verified_failed_attempt=a['number'],verified_actual_snapshot_sha256=v['actual_request_snapshot_sha256'],retries_used_before_claim=q['retries_used'],next_retry_number=q['retries_used']+1))
  except (AssertionError,KeyError,FileNotFoundError) as error:unavailable.append({'source_sha256':key,'reason':type(error).__name__+': '+str(error)})
-ready.sort(key=lambda c:(c['not_before_utc'],c['key']));ready=ready[:12]
+ready.sort(key=lambda c:(c['not_before_utc'],c['key']));ready=ready[:args.limit]
 if inspect or not ready:
  print(json.dumps({'count':len(ready),'source_keys':[c['key'] for c in ready],'unavailable':unavailable,'inspect_only':inspect},ensure_ascii=True));raise SystemExit(0)
 # This process is invoked by the same producer only after its previous batch ended.
