@@ -61,19 +61,29 @@ def sync_git(snapshot=None, root=ROOT):
     write_json(root / 'mod_nailong/data/fullsize-files.json', index)
     generated_path = root / 'mod_nailong/data/generated.json'
     generated = read_json(generated_path)
+    generated_changed = False
     for row in generated['portraits'].values():
-        row['generated_fullsize_image'] = master_path(row['generated_fullsize_sha256'])
+        expected_path = master_path(row['generated_fullsize_sha256'])
+        if row.get('generated_fullsize_image') != expected_path:
+            row['generated_fullsize_image'] = expected_path
+            generated_changed = True
         for revision in row.get('revision_history', []):
             if revision.get('previous_fullsize_sha256'):
-                revision['previous_fullsize_image'] = master_path(revision['previous_fullsize_sha256'])
-    write_json(generated_path, generated)
+                expected_path = master_path(revision['previous_fullsize_sha256'])
+                if revision.get('previous_fullsize_image') != expected_path:
+                    revision['previous_fullsize_image'] = expected_path
+                    generated_changed = True
+    if generated_changed:
+        write_json(generated_path, generated)
     for path in (root / 'mod_nailong/data/generation-requests').glob('*.json'):
         journal = read_json(path)
         changed = False
         for attempt in journal['attempts']:
             if attempt.get('fullsize_sha256'):
-                attempt['fullsize_image'] = master_path(attempt['fullsize_sha256'])
-                changed = True
+                expected_path = master_path(attempt['fullsize_sha256'])
+                if attempt.get('fullsize_image') != expected_path:
+                    attempt['fullsize_image'] = expected_path
+                    changed = True
         if changed:
             write_json(path, journal)
     print({'masters': index['count'], 'original_png_bytes': index['original_png_bytes'],

@@ -1,0 +1,43 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window37",
+  "after_window": "resume-20261024-boundary-window36",
+  "created_at_utc": "2026-10-23T23:00:46.326Z",
+  "prepare_commands": [],
+  "events": [
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T23:01:09.551Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window36 --wait-seconds 900"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T23:04:13.684Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window36 --wait-seconds 900",
+      "exit_code": 0
+    },
+    {
+      "phase": "durable_gate_released",
+      "observed_at_utc": "2026-10-23T23:04:13.541986+00:00",
+      "ready": true,
+      "window_id": "resume-20261024-boundary-window36",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "receipt": "mod_nailong/data/production-window-timings/resume-20261024-boundary-window36-completed.json"
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T23:04:13.685Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T23:04:14.590Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "exit_code": 0
+    }
+  ],
+  "scope": "Disk receipt gates the next sole executor; cross-exec in-memory store values are not used to release a handover. Preparation occurs only after the exact preceding window has completed imports.",
+  "status": "completed",
+  "prepared_at_utc": "2026-10-23T23:04:14.590Z",
+  "completed_at_utc": "2026-10-23T23:09:00.733Z"
+}

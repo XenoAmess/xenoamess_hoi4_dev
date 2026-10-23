@@ -20,7 +20,8 @@ class RemoteMetadataReadTests(unittest.TestCase):
     def test_authorization_failure_is_not_retried(self):
         error=subprocess.CalledProcessError(1,['gh'],stderr='HTTP 403: Resource not accessible')
         with patch('mod_nailong.tools.master_git_remote.subprocess.check_output',side_effect=error) as run,patch('mod_nailong.tools.master_git_remote.time.sleep') as sleep:
-            with self.assertRaises(subprocess.CalledProcessError):json_api('repos/example/git/trees/fixed')
+            with self.assertRaises(subprocess.CalledProcessError) as caught:json_api('repos/example/git/trees/fixed')
+            self.assertIn('HTTP 403: Resource not accessible',' '.join(caught.exception.__notes__))
             self.assertEqual(run.call_count,1);sleep.assert_not_called()
 
     def test_persistent_transport_failure_has_three_attempt_bound(self):
@@ -33,6 +34,14 @@ class RemoteMetadataReadTests(unittest.TestCase):
         with patch('mod_nailong.tools.master_git_remote.subprocess.check_output',return_value='{') as run,patch('mod_nailong.tools.master_git_remote.time.sleep') as sleep:
             with self.assertRaises(json.JSONDecodeError):json_api('repos/example/git/trees/fixed')
             self.assertEqual(run.call_count,1);sleep.assert_not_called()
+
+    def test_error_diagnostics_redact_credential_shapes(self):
+        error=subprocess.CalledProcessError(1,['gh'],stderr='HTTP 403 Bearer private-value ghp_sensitive123 github_pat_secret456')
+        with patch('mod_nailong.tools.master_git_remote.subprocess.check_output',side_effect=error):
+            with self.assertRaises(subprocess.CalledProcessError) as caught:json_api('repos/example/git/trees/fixed')
+        notes=' '.join(caught.exception.__notes__)
+        for secret in ['private-value','ghp_sensitive123','github_pat_secret456']:self.assertNotIn(secret,notes)
+        self.assertIn('HTTP 403',notes)
 
 
 if __name__=='__main__':unittest.main()

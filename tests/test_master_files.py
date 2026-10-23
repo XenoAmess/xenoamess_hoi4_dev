@@ -68,6 +68,28 @@ class MasterFilesTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'missing'):
                 sync_git(snap,root)
 
+    def test_repeated_sync_preserves_unchanged_journals_but_repairs_stale_paths(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            mod, original, digest, snap=self.fixture(root)
+            sync_git(snap,root)
+            journal_path=mod/'data/generation-requests/source.json'
+            generated_path=mod/'data/generated.json'
+            with patch('mod_nailong.tools.master_files.write_json',wraps=write_json) as writes:
+                sync_git(snap,root)
+                targets=[call.args[0] for call in writes.call_args_list]
+                self.assertNotIn(journal_path,targets)
+                self.assertNotIn(generated_path,targets)
+            journal=read_json(journal_path)
+            journal['attempts'][0]['fullsize_image']='stale/path.png'
+            write_json(journal_path,journal)
+            with patch('mod_nailong.tools.master_files.write_json',wraps=write_json) as writes:
+                sync_git(snap,root)
+                self.assertEqual(sum(call.args[0]==journal_path for call in writes.call_args_list),1)
+                self.assertNotIn(generated_path,[call.args[0] for call in writes.call_args_list])
+            self.assertEqual(read_json(journal_path)['attempts'][0]['fullsize_image'],master_path(digest))
+            self.assertEqual(read_json(journal_path)['attempts'][0]['prompt_sha256'],'frozen-prompt-sha')
+
     def test_independent_existing_target_is_not_trusted_by_name(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder)

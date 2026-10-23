@@ -1,0 +1,55 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window39",
+  "after_window": "resume-20261024-boundary-window38",
+  "created_at_utc": "2026-10-23T23:14:19.754Z",
+  "prepare_commands": [
+    "python tools\\prepare_reviewed_art_repairs.py resume-20261024-original-garment3 resumed-20261024-agent-clothes-note5-agent-b-review.json,resumed-20261024-agent-pose-clothes6-root-5-6-review.json 3 284"
+  ],
+  "events": [
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T23:14:20.318Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window38 --wait-seconds 900"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T23:14:21.676Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window38 --wait-seconds 900",
+      "exit_code": 0
+    },
+    {
+      "phase": "durable_gate_released",
+      "observed_at_utc": "2026-10-23T23:14:21.422784+00:00",
+      "ready": true,
+      "window_id": "resume-20261024-boundary-window38",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "receipt": "mod_nailong/data/production-window-timings/resume-20261024-boundary-window38-completed.json"
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T23:14:21.676Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T23:14:25.803Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T23:14:25.803Z",
+      "command": "python tools\\prepare_reviewed_art_repairs.py resume-20261024-original-garment3 resumed-20261024-agent-clothes-note5-agent-b-review.json,resumed-20261024-agent-pose-clothes6-root-5-6-review.json 3 284"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T23:14:30.754Z",
+      "command": "python tools\\prepare_reviewed_art_repairs.py resume-20261024-original-garment3 resumed-20261024-agent-clothes-note5-agent-b-review.json,resumed-20261024-agent-pose-clothes6-root-5-6-review.json 3 284",
+      "exit_code": 0
+    }
+  ],
+  "scope": "Disk receipt gates the next sole executor; cross-exec in-memory store values are not used to release a handover. Preparation occurs only after the exact preceding window has completed imports.",
+  "status": "prepared_for_next_window",
+  "prepared_at_utc": "2026-10-23T23:14:30.754Z"
+}

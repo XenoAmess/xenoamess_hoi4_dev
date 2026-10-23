@@ -116,6 +116,11 @@ def json_api(endpoint):
         except (subprocess.CalledProcessError,subprocess.TimeoutExpired) as error:
             detail=error.stderr or ''
             if isinstance(detail,bytes):detail=detail.decode('utf-8',errors='replace')
+            if detail.strip():
+                import re
+                safe=re.sub(r'(?i)(bearer\s+|token\s+)[^\s]+',r'\1[REDACTED]',detail)
+                safe=re.sub(r'\b(?:gh[pousr]_[A-Za-z0-9_]+|github_pat_[A-Za-z0-9_]+)\b','[REDACTED]',safe)
+                error.add_note('GitHub metadata read stderr: '+safe.strip()[:3000])
             retryable=isinstance(error,subprocess.TimeoutExpired) or any(t in detail.lower() for t in transient)
             if not retryable or attempt==2:raise
             print(f'Remote Git metadata transport interrupted; bounded read retry {attempt+1}/2',flush=True)
