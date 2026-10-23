@@ -25,11 +25,36 @@ def master_path(digest):
     return 'mod_nailong/assets/generated_fullsize/' + digest + '.png'
 
 
+def recorded_master_candidates(root):
+    """Locate complete retained candidates; sync_git still verifies every byte.
+
+    This is not a verified inventory or a checksum cache. If any recorded path
+    is absent, retain the full receipt-based recovery search.
+    """
+    from mod_nailong.tools.master_archive import recorded_outputs
+    expected, current, provenance = recorded_outputs(root / 'mod_nailong')
+    paths = {digest: root / master_path(digest) for digest in expected}
+    if any(not path.is_file() for path in paths.values()):
+        return None
+    masters = []
+    for digest, path in sorted(paths.items()):
+        with Image.open(path) as image:
+            size, mode = list(image.size), image.mode
+        masters.append({'path': str(path), 'sha256': digest,
+                        'bytes': path.stat().st_size, 'size': size, 'mode': mode,
+                        'provenance': provenance[digest]})
+    return {'scope': 'Unverified recorded-path candidates only; every source must pass sync_git full SHA256 and PNG verification before adoption/index publication.',
+            'current_masters_missing': [], 'historical_fullsize_sha_missing': [],
+            'masters': masters}
+
+
 def sync_git(snapshot=None, root=ROOT):
     """Adopt only recorded, byte-verified originals; never overwrite a master."""
     if snapshot is None:
-        from mod_nailong.tools.master_archive import inventory
-        snapshot = inventory()
+        snapshot = recorded_master_candidates(root)
+        if snapshot is None:
+            from mod_nailong.tools.master_archive import inventory
+            snapshot = inventory()
     if snapshot['current_masters_missing'] or snapshot['historical_fullsize_sha_missing']:
         raise ValueError('Recorded masters are missing; migration must remain incomplete')
     entries = {}

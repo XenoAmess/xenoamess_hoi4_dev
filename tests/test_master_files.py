@@ -99,6 +99,38 @@ class MasterFilesTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'Git master bytes'):
                 sync_git(snap,root)
 
+    def test_complete_retained_set_skips_discovery_but_hashes_recorded_bytes(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);mod,original,digest,snap=self.fixture(root)
+            target=root/master_path(digest);target.parent.mkdir(parents=True)
+            target.write_bytes(original.read_bytes())
+            orphan=target.parent/('f'*64+'.png');orphan.write_bytes(original.read_bytes())
+            from mod_nailong.tools import master_files
+            with patch.object(master_archive,'inventory',side_effect=AssertionError('No duplicate discovery read')),patch.object(master_files,'file_sha256',wraps=master_files.file_sha256) as hashes:
+                result=sync_git(root=root)
+                self.assertEqual(hashes.call_count,1)
+            self.assertEqual(set(result['outputs']),{digest})
+            self.assertEqual(target.read_bytes(),original.read_bytes())
+
+    def test_complete_retained_names_never_substitute_for_full_checksum(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);mod,original,digest,snap=self.fixture(root)
+            target=root/master_path(digest);target.parent.mkdir(parents=True)
+            raw=bytearray(original.read_bytes());raw[-1]^=1;target.write_bytes(raw)
+            with patch.object(master_archive,'inventory',side_effect=AssertionError('No discovery fallback for corrupt bytes')):
+                with self.assertRaisesRegex(ValueError,'changed before adoption'):
+                    sync_git(root=root)
+            self.assertFalse((mod/'data/fullsize-files.json').exists())
+
+    def test_missing_retained_candidate_keeps_receipt_recovery_and_full_hash(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);mod,original,digest,snap=self.fixture(root)
+            with patch.object(master_archive,'inventory',return_value=snap) as inventory:
+                result=sync_git(root=root)
+            inventory.assert_called_once_with()
+            self.assertEqual(result['count'],1)
+            self.assertEqual((root/master_path(digest)).read_bytes(),original.read_bytes())
+
     def test_inventory_prefers_complete_project_masters_and_recovers_missing_ones(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);mod, original, digest, _=self.fixture(root)

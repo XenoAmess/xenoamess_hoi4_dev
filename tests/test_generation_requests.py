@@ -8,6 +8,43 @@ from tools.common import file_sha256,read_json,write_json
 from mod_nailong.tools import generation_requests as requests
 from mod_nailong.tools.art_contract import portrait_ready
 
+class ArtPreparationBoundaryTests(unittest.TestCase):
+    def fixture(self):
+        return [{'number':1,'status':'generated_rejected_visual_review','fullsize_sha256':'raw'},
+                {'number':2,'status':'cancelled_before_generation','deferred_service_families':[{'source_sha256':'family'}]}]
+
+    def validate(self, history, root, failures=None, family=None):
+        from mod_nailong.tools.art_preparation_guard import validate_art_boundary
+        return validate_art_boundary(history,'source','raw',root,failures or [],{'family':family or [{'number':3,'status':'approved','fullsize_sha256':'returned'}]})
+
+    def test_uncalled_cancelled_draft_requires_actual_rejected_png_and_released_family(self):
+        with tempfile.TemporaryDirectory() as temp:
+            result=self.validate(self.fixture(),Path(temp))
+            self.assertEqual(result['cancelled_attempts'],[2])
+            self.assertEqual(result['original_service_families_now_returned']['family']['fullsize_sha256'],'returned')
+
+    def test_changed_old_master_or_failed_source_cannot_start_changed_art(self):
+        with tempfile.TemporaryDirectory() as temp:
+            for defect in ['changed-sha','failed-source']:
+                history=self.fixture()
+                if defect=='changed-sha':history[0]['fullsize_sha256']='different'
+                else:history[-1]['status']='failed'
+                with self.subTest(defect=defect),self.assertRaises(ValueError):self.validate(history,Path(temp))
+
+    def test_actual_dispatch_evidence_blocks_cancelled_draft_recovery(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);history=self.fixture();history[-1]['actual_request_verification']={'proof':'existing'}
+            with self.assertRaisesRegex(ValueError,'dispatch evidence'):self.validate(history,root)
+            history[-1].pop('actual_request_verification');(root/'source-002.json').write_text('{}')
+            with self.assertRaisesRegex(ValueError,'dispatch evidence'):self.validate(history,root)
+
+    def test_unresolved_refusal_or_later_family_failure_cannot_be_bypassed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            for key in ['source','family']:
+                with self.subTest(key=key),self.assertRaises(ValueError):self.validate(self.fixture(),Path(temp),[{'source_sha256':key,'status':'blocked'}])
+            with self.assertRaisesRegex(ValueError,'latest actual successful PNG'):
+                self.validate(self.fixture(),Path(temp),family=[{'number':4,'status':'failed'}])
+
 class FacialHairInstructionTests(unittest.TestCase):
     def test_tiny_pale_lip_detail_does_not_assert_a_moustache(self):
         descriptions=['Retain only the actual tiny pale-grey upper-lip detail, smooth clean chin; no broad moustache from shadows.',
