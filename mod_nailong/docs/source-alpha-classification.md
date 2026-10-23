@@ -7,3 +7,5 @@
 这只适用于新准备的合规美术请求。被服务拒绝的冻结请求必须继续保持原prompt、参数和输入字节；不得通过本入口改写或绕过冷却。尚未发送的独立美术返修如需更正参数，先逐项证明没有dispatch，再保留旧请求并登记取消，随后新建attempt。见[本轮未发送请求调整](../data/resumed-20261023-unsubmitted-canvas-job-reconciliation.json)。
 
 返回后仍须人工检查整幅背景、衣物及人物内部是否实际不透明，并复查原图特征与领口；参数正确、静态数值或构建通过均不等于审图或HOI4实机通过。
+
+本轮普通美术返修还发现：只读取最近一次请求可能丢失更早已逐项记录的完整画布理由。后续准备器可沿该来源的历史 attempt 查找已有 `source-manually-verified-opaque-canvas-v1` 记录，但必须核对其原图转换 PNG SHA 与当前原图完全一致，保留原理由，并在新准备回执登记继承自哪一次 attempt。这只影响实际返回 PNG 之后的新美术返修；不改写历史实际参数、被拒请求或冷却重试。漏传理由产生的透明返回仍保留原始字节并撤出合格集，见[保留原特征批次审图](../data/resumed-20261023-original-features7-review.json)与[表情批次审图](../data/resumed-20261023-expression-badges8-review.json)。

@@ -1,0 +1,24 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observation_record": "mod_nailong/data/resumed-20261023-speed-trend-1535.json",
+  "observation_utc": "2026-10-23T15:36:13.159618+00:00",
+  "time_zone": "Asia/Shanghai UTC+08",
+  "observed_facts": [
+    "2026-10-20, 21 and 22 whole-calendar-day returned PNG counts are 1221, 922 and 401; 2026-10-23 through 23:36 local has 373. These include pauses and art corrections and are not qualified-source counts.",
+    "Today 12-16 and 16-20 local returned 95 and 93 PNGs, or 23.75 and 23.25 per hour; 20-23:36 returned 59, approximately 16.4 per hour, about 30 percent lower than 16-20.",
+    "Successful dispatch-to-recorded-return median was 32.00 seconds on Oct22 and 43.08 seconds on Oct23, but Oct20/21 were 45.38/44.13 seconds. This is not a monotonic multi-day service slowdown.",
+    "Today has 435 actual dispatches, 373 PNG returns and 62 tool errors. All 435 records had a durable final result at the observation cutoff.",
+    "Approximately 13.7 hours of between-batch no-dispatch intervals remain after the 03:14 local restart. That interval class includes input preparation, review, orchestration and other work; timestamps alone cannot allocate it precisely to each activity.",
+    "Today has a recorded successful dispatch-to-return outlier of 1802.5 seconds at 23:01 local. The interval includes transport and client receipt persistence; no server-side timing is available.",
+    "Qualified-source snapshots grew from 3838 at 09:50 to 3941 at 21:00, an increase of 103 over about 11.17 hours. This is net registered art qualification, distinct from PNG output, with pending reviews and repairs still outstanding."
+  ],
+  "causal_assessment": [
+    "The dominant observed wall-time loss is between batches. Source verification, fine-detail review, preparing small batches and client orchestration are work categories actually performed, but their individual durations were not instrumented, so no exact per-category attribution is claimed.",
+    "Longer typical successful recorded intervals and occasional long waits also reduce throughput; this establishes client-observed waiting, not the server-side cause.",
+    "Tool errors reduce returned PNGs per dispatch; cooled retries retain the original payload and consume lifetime quota, and cannot be replaced by altered requests to speed up output.",
+    "Fine art repairs can return another PNG without increasing qualified-source progress. This phase includes repeated collar, mouth, background opacity, note and outfit corrections; difficult or ambiguous results remain rejected or pending.",
+    "Existing checkpoint push/readback network recoveries are documented separately. No measured allocation proves that they account for all between-batch gaps."
+  ],
+  "execution_change": "Prepare and actually review the next allowed HIGH input set while the current single builtin lane is running; apply decisions only at the sole importer's safe boundary, then dispatch the next batch promptly. No extra image lanes, altered refusals, reduced quality gate or completed-source inflation.",
+  "limits": "Unknown historical interrupted calls are excluded from measured occupied duration; they are not treated as continuously running until now. The report is a time-bounded local ledger observation, not live game acceptance, overall completion or a claim of server throttling."
+}
