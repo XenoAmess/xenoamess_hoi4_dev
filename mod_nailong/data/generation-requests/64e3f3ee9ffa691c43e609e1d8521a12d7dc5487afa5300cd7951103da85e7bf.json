@@ -102,6 +102,61 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID fcd1eb7a-ceff-4a3c-933e-777c36fb6bf7.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-22T00:49:10.648913+00:00"
+    },
+    {
+      "number": 3,
+      "status": "prepared",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image1 is the exact full-resolution returned mascot portrait EDIT TARGET. Image2 is the exact original game portrait and sole source authority. Image3 is the user mascot identity reference.\nRequired source-specific correction: Exact native original and actual returned raw-master alpha comparison inspected. The original has a broad visible smiling mouth with a clear light strip of teeth and relaxed/lifted mouth corners. The return loses that expression into a small closed stern mouth with no visible smile. Restore the actual source smile, small visible teeth strip and cheek/brow expression directly from image2. Do not invent a huge grin, facial hair or change source pose. Preserve unrelated actual dark combed hair, smooth facial-hair state, blue uniform/jacket, real pale oval lapel fittings, white shirt/dark tie, pose/lighting/crop, compact broad collar fit and intact opaque photo/card interior with true exterior alpha.\nPreserve all unrelated original hair, actual facial hair, clothing, collar open/closed state, actual insignia/accessories, pose, gaze, expression, illumination and crop. Keep the near-round compact yellow mascot head with a curved chin and VERY SHORT BROAD neck transition at the original neckline. Fit collar circumference and shoulder lines to the mascot; do not extend a tapered yellow column down to a narrow human collar, add a cream bib or close an open V. Faint upper-lip appearance is not authority to grow a dense moustache. Indistinct gold ornament is not authority to add a crisp named anchor, crown, bird or star: preserve actual visible outline, colour and footprint with natural material texture; keep clearly established original symbols. Preserve exact frame, overlapping paper and wholly opaque original photo interior/backing. Genuine alpha is restricted to actual exterior silhouette and original edge falloff. No new clips, pins, note hardware, readable text, figure or panel. Keep target raw-HD resolution and aspect ratio. One targeted independent art repair.\nOutput alpha: genuine transparent RGBA ONLY OUTSIDE the complete original photograph FRAME AND NOTE silhouette. The photographic BACKING INSIDE the frame is a required OPAQUE surface: preserve its original background color and texture behind the character all the way to the inner frame rim. Never turn the gaps between frame and character into transparent holes or a window. Keep the actual tilted photo rectangle, frame rim and overlapping note intact. Do not invent a new backdrop outside the whole card. Retain source clothing, hair, headgear, lighting and crop at full generated resolution. All originally OPAQUE subject surfaces must remain FULLY OPAQUE (alpha 255): yellow head/body, hair, beard, dark or black clothing, coat lapels, collar, tie, buttons and decorations. Dark cloth is colored material, not transparent background. Never fade garment interiors into semi-transparent patches, holes, white haze or see-through fabric. Keep any genuine source outer-edge alpha falloff only at that actual exterior boundary; preserve actual source transparency rather than making the subject itself translucent.",
+      "prompt_file": "mod_nailong/assets/prompts/64e3f3ee9ffa691c43e609e1d8521a12d7dc5487afa5300cd7951103da85e7bf-003.txt",
+      "prompt_sha256": "72389dfaa2a3fbc86985b3572ba0d80630ee44d412f4b33e3f885ad50b7123d2",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/046786bffbba8b8a59ba249cb26f4c548abe0b759e12545716c95d970b15f7b7.png",
+          "sha256": "046786bffbba8b8a59ba249cb26f4c548abe0b759e12545716c95d970b15f7b7",
+          "derived_game_image_sha256": "20d7fabd78848b5e638f4baace63ba45127cbb9f87a54080a5c94f39de932950"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "64e3f3ee9ffa691c43e609e1d8521a12d7dc5487afa5300cd7951103da85e7bf",
+          "converted_png_sha256": "8d39fb354452ca2525fdf1a90d34e98242c293895b6e573adb664a7fc1e81e56"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-23T09:04:30.944425+00:00",
+      "original_alpha_extrema": [
+        0,
+        255
+      ],
+      "transparent_background": true,
+      "alpha_prompt_policy": "source-content-v3-opaque-body",
+      "retry_of_attempt": 2,
+      "retry_root_attempt": 2,
+      "cooldown_retry_number": 1,
+      "cooldown_not_before_utc": "2026-10-22T08:49:10.826615+00:00",
+      "cooldown_retry_tool_transparent_background": true,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-23T09:05:44.690798+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "e6f3c1496feb7e7dde9ef95a3656080de8b8924ad40c39002014ff285dcbd520",
+        "prompt_sha256": "72389dfaa2a3fbc86985b3572ba0d80630ee44d412f4b33e3f885ad50b7123d2",
+        "input_sha256": [
+          "046786bffbba8b8a59ba249cb26f4c548abe0b759e12545716c95d970b15f7b7",
+          "8d39fb354452ca2525fdf1a90d34e98242c293895b6e573adb664a7fc1e81e56",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": true
+      }
     }
   ]
 }
