@@ -153,6 +153,63 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID df52611b-a5bd-479f-8bd4-7ace464be4aa. safety_violations=[abuse].\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-23T06:44:40.777571+00:00"
+    },
+    {
+      "number": 4,
+      "status": "failed",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image 1 is the exact unchanged full-resolution returned yellow mascot portrait EDIT TARGET. Image 2 is the exact original game portrait and sole authority for the background and composition. Image 3 is the user mascot reference.\nRequired actual art correction: RESTORE THE COMPLETE ORIGINAL PAINTED BACKDROP behind the mascot over the entire original rectangular canvas. This target incorrectly removes that required backdrop into a transparent figure cutout. Image 2 has a near-opaque cream/beige/grey painted background everywhere; retain its exact visible colour, texture, vignette, lighting and shadow. Return an opaque full rectangular portrait with that original backdrop; no figure cutout, blank white canvas, new studio setting, frame or note. Do not move, resize, crop or replace the existing figure in this targeted background repair.\nPreserve every unrelated source-visible feature: original hairstyle/baldness, eyebrows and actual facial-hair state/extent/colour; original cap, crown, helmet, glasses or other headgear/accessory; exact garment/uniform design and fastening; source decoration shapes, visible number and arrangement; pose, gaze, expression, lighting and crop. Do not infer symbols or clothes from identity or filename. Maintain the recognizable near-round yellow mascot head with green-ringed eyes and small source-shaped mouth, a curved chin and short broad fitted neck at the existing garment. No long yellow stalk, pinched/floating collar, cream neck bib, new beard or medal. Keep the target raw-HD resolution, detail and aspect ratio. One independent exact-source background correction. No readable new text, watermark, comparison panel or extra figure.\nOutput background: this exact original has a COMPLETE near-opaque canvas, with every source alpha value at least 249/255. Its existing backdrop is required image content. Preserve the original backdrop color, texture, illumination and full rectangular extent behind the mascot. Return an opaque full-canvas portrait, not a transparent figure cutout. Do not remove or replace the original background. Keep the source clothing, hair, facial hair, accessories, pose and crop unchanged apart from the requested mascot conversion or targeted art repair.",
+      "prompt_file": "mod_nailong/assets/prompts/d7725f680e18c079a84378f5371754e0e4585167f902a022ff67167d4f39cfdf-004.txt",
+      "prompt_sha256": "b37e4f00b839e38e4530331b9b9d1763734b7bc7f6a42bd1bae2e4a98defccad",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/4d7c19f554897d55d393b017bd428fd0695e27d6a71145fa18de9f1dec4327a3.png",
+          "sha256": "4d7c19f554897d55d393b017bd428fd0695e27d6a71145fa18de9f1dec4327a3",
+          "derived_game_image_sha256": "65894fc020f206cec53f8f2c055d255c8ef37616a312dd3d95ebf8c5dace94c3"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "d7725f680e18c079a84378f5371754e0e4585167f902a022ff67167d4f39cfdf",
+          "converted_png_sha256": "3bbf75a77b7d7b580411d6998ccad560f75d8d6232c48f53622986b3ef460964"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-23T15:36:55.842040+00:00",
+      "original_alpha_extrema": [
+        254,
+        255
+      ],
+      "transparent_background": false,
+      "alpha_prompt_policy": "source-near-opaque-backdrop-v1",
+      "retry_of_attempt": 3,
+      "retry_root_attempt": 2,
+      "cooldown_retry_number": 2,
+      "cooldown_not_before_utc": "2026-10-23T14:44:40.777571+00:00",
+      "cooldown_retry_tool_transparent_background": false,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-23T15:37:08.367517+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "5a65dd85d7f2eb9d26f2badadb3ff83bb4fda00decc89f1f3a61ebca27feb481",
+        "prompt_sha256": "b37e4f00b839e38e4530331b9b9d1763734b7bc7f6a42bd1bae2e4a98defccad",
+        "input_sha256": [
+          "4d7c19f554897d55d393b017bd428fd0695e27d6a71145fa18de9f1dec4327a3",
+          "3bbf75a77b7d7b580411d6998ccad560f75d8d6232c48f53622986b3ef460964",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": false
+      },
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID d7a9c619-9109-4e6e-933e-1275be17a255.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"input\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
+      "observed_at_utc": "2026-10-23T15:37:15.700143+00:00"
     }
   ]
 }
