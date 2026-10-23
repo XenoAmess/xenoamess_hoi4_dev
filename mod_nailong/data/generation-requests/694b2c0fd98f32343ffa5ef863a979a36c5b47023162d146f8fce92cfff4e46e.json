@@ -282,6 +282,69 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 71f8eaed-0e09-4616-b82e-930c0b93d2e5.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-20T06:27:14.264263+00:00"
+    },
+    {
+      "number": 7,
+      "status": "generated_rejected_visual_review",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image1 is the exact unchanged full-resolution returned mascot portrait EDIT TARGET. Image2 is the exact original game portrait and sole lighting/clothing/composition authority. Image3 is the user mascot identity reference.\nRequired source-specific correction: Actual exact source, white/cyan/alpha comparison and full raw recheck: the original full dark vignette is now restored, and this improvement is retained. However the return still adds a brighter golden rim along the cheek/neck and more readable brown/yellow facial exposure than the deliberately almost-black original. The original face/eyes and collar remain much closer to black, with only faint original edge illumination. Correct only the exposure and rim intensity to that actual source. Preserve the restored opaque original background, swept dark hair, clean-shaven face, original dark uniform/collar patches/tie, pose and crop; do not remove the vignette or add front lighting. No programmatic colour edit; another targeted built-in art repair is required.\nMatch Image2 near-black silhouette exposure faithfully. The head, face, eyes and clothes are barely discernible in its black shadow. Use only the original faint edge illumination in its actual strength and extent; remove the extra warm golden glow on the cheek and long neck edge. Do not add frontal fill, reveal hidden detail, normalize exposure or turn the vignette into a transparent figure cutout. Preserve the existing full original grey/black vignette, genuine source outer alpha falloff only, actual dark swept hairstyle, eyebrows, clean-shaven upper lip/chin, uniform lapels/collar patches/shirt/tie, expression, head angle and crop. Keep the compact near-round mascot head and short broad neck fitting the original collar. No new symbols, accessories, panels, note or frame. Preserve the raw target full-HD resolution and aspect ratio. One targeted exposure art repair; all previous returned attempts remain archived.\nOutput background: this exact original has a COMPLETE near-opaque canvas, with every source alpha value at least 249/255. Its existing backdrop is required image content. Preserve the original backdrop color, texture, illumination and full rectangular extent behind the mascot. Return an opaque full-canvas portrait, not a transparent figure cutout. Do not remove or replace the original background. Keep the source clothing, hair, facial hair, accessories, pose and crop unchanged apart from the requested mascot conversion or targeted art repair.",
+      "prompt_file": "mod_nailong/assets/prompts/694b2c0fd98f32343ffa5ef863a979a36c5b47023162d146f8fce92cfff4e46e-007.txt",
+      "prompt_sha256": "9d8aef1fbecc276323d0be8b2b40024a742c698bda59e5ccc7d5bcea0bab19f5",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/7629dd0464f3cd9426f96e7e6e8d82402d429bd859cd5e7107514b1afcbe61f9.png",
+          "sha256": "7629dd0464f3cd9426f96e7e6e8d82402d429bd859cd5e7107514b1afcbe61f9",
+          "derived_game_image_sha256": "a1d25c0ef8e775dafece1c587863f8212a48ae25c06887429b54961924c89ee1"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "694b2c0fd98f32343ffa5ef863a979a36c5b47023162d146f8fce92cfff4e46e",
+          "converted_png_sha256": "73fd397ffbdfa71e84048437d8253221862df16a495d0c039c602ac0cf4773a2"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-23T21:19:37.376528+00:00",
+      "original_alpha_extrema": [
+        253,
+        255
+      ],
+      "transparent_background": false,
+      "alpha_prompt_policy": "source-near-opaque-backdrop-v1",
+      "retry_of_attempt": 6,
+      "retry_root_attempt": 6,
+      "cooldown_retry_number": 4,
+      "cooldown_not_before_utc": "2026-10-20T14:27:14.264263+00:00",
+      "cooldown_retry_tool_transparent_background": false,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-23T21:21:19.149311+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "d911b3909113ad4eaf410d823a9c8d36921ee52eb247753833bde01a8b4aabdc",
+        "prompt_sha256": "9d8aef1fbecc276323d0be8b2b40024a742c698bda59e5ccc7d5bcea0bab19f5",
+        "input_sha256": [
+          "7629dd0464f3cd9426f96e7e6e8d82402d429bd859cd5e7107514b1afcbe61f9",
+          "73fd397ffbdfa71e84048437d8253221862df16a495d0c039c602ac0cf4773a2",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": false
+      },
+      "generated_at_utc": "2026-10-23T21:21:52.297494+00:00",
+      "fullsize_sha256": "6b2dde8a1e55b585041f513cc9b6e0038ee19de48ecdcf19ff698f02cbdab539",
+      "fullsize_image": "mod_nailong/assets/generated_fullsize/6b2dde8a1e55b585041f513cc9b6e0038ee19de48ecdcf19ff698f02cbdab539.png",
+      "output": "mod_nailong/assets/portraits/694b2c0fd98f32343ffa5ef863a979a36c5b47023162d146f8fce92cfff4e46e.png",
+      "output_sha256": "e08d432a0f03241eeabc086d1c69053d899dea26da669931a0f3fa039184ac3d",
+      "review": "rejected",
+      "rejection_reason": "Actually viewed all three real cooldown084 raw masters against exact source, white/cyan and alpha. Targeted source-specific neck/mouth/exposure remains defective; real returned service retries have ended. The original face is deliberately almost black with eyes and mouth barely discernible. The return still reveals brown/yellow facial exposure and readable eyes, and adds a strong golden edge on the right cheek/neck. Match the original near-black concealment and faint original rim strength only; preserve original silhouette/hair, dark uniform, collar/shirt/tie, crop and opaque vignette. Do not add face fill or bright green eyes.",
+      "reviewed_at_utc": "2026-10-23T21:30:52.025106+00:00"
     }
   ]
 }

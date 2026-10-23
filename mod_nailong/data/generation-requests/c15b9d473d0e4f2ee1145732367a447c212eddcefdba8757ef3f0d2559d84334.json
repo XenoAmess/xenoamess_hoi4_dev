@@ -236,6 +236,70 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 6f4ef4df-00c9-49db-8c35-f5591aeb2639.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-23T06:27:36.570252+00:00"
+    },
+    {
+      "number": 6,
+      "status": "generated_rejected_visual_review",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image1 is the actual raw-HD mascot edit target. Image2 is the exact original game portrait/card and sole authority for visible features. Image3 is the user mascot identity reference.\nActual observed correction: The requested background repair still did not restore the original backdrop: cyan/alpha comparison shows a cutout and irregular transparent edge artifacts. Restore the entire original opaque grey-green painted background and solid originally opaque subject/clothing, keeping swept dark hair, calm clean closed mouth, grey-green pinstripe suit, pale blue shirt and blue tie, compact head and short broad neck.\nKeep all unrelated source-visible hairstyle and hair colour, eyebrows and exact fine facial-hair state, glasses, headgear when actually present, clothes/neckwear, badges/buttons/straps, expression, gaze, pose, crop and lighting. Smooth golden-yellow compact round mascot head with green-ringed black eyes and a small mouth adapted to the actual source expression. No human skin/nose/ears, broad invented facial-hair band or hat replacing real hair.\nOnly when the original actually has a photograph frame/note, retain that entire tilted frame and overlapping paper with indistinct markings, opaque photographic backing and true exterior alpha outside the complete original card. A standalone full portrait retains its entire original painted backdrop and must not acquire a new photo frame or note. Preserve genuine original transparency only where it really exists. Dark cloth stays fully opaque. Short broad fitted neck with rounded chin immediately meeting actual garment, preserve its open/closed state and do not add a neck column, separate roll, cream bib or floating collar. Keep full raw-HD detail, resolution and original aspect ratio; no invented text, watermark, new symbols, people or panels.\nOutput background: the exact original was visually verified to be a COMPLETE rectangular painted portrait, with no fully transparent source pixels. Its small original alpha variation does not establish an exterior figure cutout. Preserve the entire original background colour, texture, lighting and crop to all four canvas edges. Return a fully opaque rectangular image, alpha 255 throughout the originally opaque backdrop and subject, including hair, glasses, dark clothing and corners. Do not copy an incorrect target cutout mask or partial transparency. No transparent backdrop, fog, see-through fabric, haze, halo or invented frame/note. Keep every unrelated source feature unchanged.",
+      "prompt_file": "mod_nailong/assets/prompts/c15b9d473d0e4f2ee1145732367a447c212eddcefdba8757ef3f0d2559d84334-006.txt",
+      "prompt_sha256": "d6fc154a3748acabedd0e60255e7dd5522cc4d6ac550cf6db44d6cbabc0e9cd5",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/3fb955978a486dc09b38abe3c6d16c3728465534eb027e13c7abd282c7de7478.png",
+          "sha256": "3fb955978a486dc09b38abe3c6d16c3728465534eb027e13c7abd282c7de7478",
+          "derived_game_image_sha256": "c0b47660d5fefa306bd6634ce89b26501f924aeeb50d5482ec7cd12e2f899ed6"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "c15b9d473d0e4f2ee1145732367a447c212eddcefdba8757ef3f0d2559d84334",
+          "converted_png_sha256": "f3969e14d8f93735c4f1c9de057dd1eb1e6cc4802ef955c7f339d737a8c01775"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-23T21:19:38.854084+00:00",
+      "original_alpha_extrema": [
+        247,
+        255
+      ],
+      "transparent_background": false,
+      "alpha_prompt_policy": "source-manually-verified-opaque-canvas-v1",
+      "opaque_canvas_reason": "Actually viewed complete exact original rectangular painted backdrop, including every corner and garment crop, in SHA-bound source/raw comparison pages recorded in resumed-20261023-retry059-details4-review.json and resumed-20261023-cooldown062-review.json. Exact source SHA256 c15b9d473d0e4f2ee1145732367a447c212eddcefdba8757ef3f0d2559d84334; converted PNG SHA256 f3969e14d8f93735c4f1c9de057dd1eb1e6cc4802ef955c7f339d737a8c01775; original alpha extrema (247, 255). All source pixels are nonzero and the visible backdrop is required full-canvas content, not a figure cutout. Explicit manual classification, not a new global threshold or a source-pixel edit.",
+      "retry_of_attempt": 5,
+      "retry_root_attempt": 5,
+      "cooldown_retry_number": 2,
+      "cooldown_not_before_utc": "2026-10-23T14:27:36.570252+00:00",
+      "cooldown_retry_tool_transparent_background": false,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-23T21:23:44.769967+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "d7aa7115301864a55e14dba331b03f99a5e16e6962fa763028aef08310b20ae3",
+        "prompt_sha256": "d6fc154a3748acabedd0e60255e7dd5522cc4d6ac550cf6db44d6cbabc0e9cd5",
+        "input_sha256": [
+          "3fb955978a486dc09b38abe3c6d16c3728465534eb027e13c7abd282c7de7478",
+          "f3969e14d8f93735c4f1c9de057dd1eb1e6cc4802ef955c7f339d737a8c01775",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": false
+      },
+      "generated_at_utc": "2026-10-23T21:24:23.841246+00:00",
+      "fullsize_sha256": "99d434d482190352436c3f5fdfac16f642516e94f4d44bd5a7cf3dcfb0ce71c3",
+      "fullsize_image": "mod_nailong/assets/generated_fullsize/99d434d482190352436c3f5fdfac16f642516e94f4d44bd5a7cf3dcfb0ce71c3.png",
+      "output": "mod_nailong/assets/portraits/c15b9d473d0e4f2ee1145732367a447c212eddcefdba8757ef3f0d2559d84334.png",
+      "output_sha256": "ef62c292e915fe0eadf6665998bad181017a2288e6485dfe5e311e1f13338767",
+      "review": "rejected",
+      "rejection_reason": "Actually viewed all three real cooldown084 raw masters against exact source, white/cyan and alpha. Targeted source-specific neck/mouth/exposure remains defective; real returned service retries have ended. Actual source mouth has a small visible opening and the lower face/neck is compact. Current output closes it to the generic grey wedge and leaves an elongated tapering yellow lower head/neck. Restore the narrow original mouth opening and compact rounded chin/short broad collar fit, preserving swept dark hair, pinstripe suit, blue tie and restored opaque source backdrop.",
+      "reviewed_at_utc": "2026-10-23T21:30:53.217257+00:00"
     }
   ]
 }

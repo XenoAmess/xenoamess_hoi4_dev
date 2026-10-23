@@ -30,10 +30,10 @@ for key,c in pool['requests'].items():
   d=read_json(ROOT/f'runtime/production-queue/dispatch/{key}-{a["number"]:03}.json');snapshot=Path(d['actual_request_snapshot_file'])
   assert file_sha256(snapshot)==v['actual_request_snapshot_sha256']==d['actual_request_snapshot_sha256']
   actual=read_json(snapshot)
-  assert a['prompt']==c['prompt']==actual['prompt'] and c['references']==actual['references']
-  assert actual['transparent']==c['transparent']==v['transparent_background']
+  assert a['prompt']==c['prompt']==actual['prompt'] and c['references']==actual['references'],'approval_payload_outdated: manually reconcile the latest failed frozen prompt and ordered inputs; no quota claimed'
+  assert actual['transparent']==c['transparent']==v['transparent_background'],'approval_tool_flags_outdated: manually reconcile the latest frozen tool flag; no quota claimed'
   assert hashlib.sha256(c['prompt'].encode('utf-8')).hexdigest()==a['prompt_sha256']
-  assert [file_sha256(Path(p)) for p in c['references']]==c['input_sha256']==v['input_sha256']==d['input_sha256']
+  assert [file_sha256(Path(p)) for p in c['references']]==c['input_sha256']==v['input_sha256']==d['input_sha256'],'approval_input_bytes_mismatch: keep request held for exact-byte reconciliation; no quota claimed'
   # Previous manual content review remains valid only for identical prompt/input bytes.
   ready.append(dict(c,not_before_utc=q['not_before_utc'],verified_failed_attempt=a['number'],verified_actual_snapshot_sha256=v['actual_request_snapshot_sha256'],retries_used_before_claim=q['retries_used'],next_retry_number=q['retries_used']+1))
  except (AssertionError,KeyError,FileNotFoundError) as error:unavailable.append({'source_sha256':key,'reason':type(error).__name__+': '+str(error)})

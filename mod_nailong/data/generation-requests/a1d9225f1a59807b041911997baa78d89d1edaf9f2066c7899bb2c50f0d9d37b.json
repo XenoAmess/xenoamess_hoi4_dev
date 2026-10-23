@@ -236,6 +236,63 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 2d6b721e-bd82-4a15-ac1e-759199dc792b.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-23T13:02:13.755143+00:00"
+    },
+    {
+      "number": 6,
+      "status": "failed",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image1 is the actual raw-HD mascot edit target. Image2 is the exact original game portrait/card and sole authority for visible features. Image3 is the user mascot identity reference.\nActual observed correction: Complete original painted backdrop is restored and opaque, but original slightly parted lips are replaced by the closed grey reference lip. Restore the actual narrow mouth opening without a grin or invented teeth. Preserve receding short dark hair, round glasses, clean face, black formal coat/white shirt/black bow tie, original pose/crop, rounded head and short broad collar fit.\nKeep all unrelated source-visible hairstyle and hair colour, eyebrows and exact fine facial-hair state, glasses, headgear when actually present, clothes/neckwear, badges/buttons/straps, expression, gaze, pose, crop and lighting. Smooth golden-yellow compact round mascot head with green-ringed black eyes and a small mouth adapted to the actual source expression. No human skin/nose/ears, broad invented facial-hair band or hat replacing real hair.\nOnly when the original actually has a photograph frame/note, retain that entire tilted frame and overlapping paper with indistinct markings, opaque photographic backing and true exterior alpha outside the complete original card. A standalone full portrait retains its entire original painted backdrop and must not acquire a new photo frame or note. Preserve genuine original transparency only where it really exists. Dark cloth stays fully opaque. Short broad fitted neck with rounded chin immediately meeting actual garment, preserve its open/closed state and do not add a neck column, separate roll, cream bib or floating collar. Keep full raw-HD detail, resolution and original aspect ratio; no invented text, watermark, new symbols, people or panels.\nOutput background: this exact original has a COMPLETE near-opaque canvas, with every source alpha value at least 249/255. Its existing backdrop is required image content. Preserve the original backdrop color, texture, illumination and full rectangular extent behind the mascot. Return an opaque full-canvas portrait, not a transparent figure cutout. Do not remove or replace the original background. Keep the source clothing, hair, facial hair, accessories, pose and crop unchanged apart from the requested mascot conversion or targeted art repair.",
+      "prompt_file": "mod_nailong/assets/prompts/a1d9225f1a59807b041911997baa78d89d1edaf9f2066c7899bb2c50f0d9d37b-006.txt",
+      "prompt_sha256": "7651e38ccc7cd2f5994a1741189b7f07f091fce0700712c88a2ad117325ca549",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/b15f6ae8aa4cfe6e3fa9544da39a1644efb2bf6aee81b4e4475b4cff044eea31.png",
+          "sha256": "b15f6ae8aa4cfe6e3fa9544da39a1644efb2bf6aee81b4e4475b4cff044eea31",
+          "derived_game_image_sha256": "ccc40a0aec84afffdd4a76b956f9e0f7f40e6aa08fc50d6ab331e023c7b44ae2"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "a1d9225f1a59807b041911997baa78d89d1edaf9f2066c7899bb2c50f0d9d37b",
+          "converted_png_sha256": "d317009add37124a796cf8deab179c30622b8a33a20ce75dcb8803011c25acd7"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-23T21:31:53.755052+00:00",
+      "original_alpha_extrema": [
+        249,
+        255
+      ],
+      "transparent_background": false,
+      "alpha_prompt_policy": "source-near-opaque-backdrop-v1",
+      "retry_of_attempt": 5,
+      "retry_root_attempt": 5,
+      "cooldown_retry_number": 2,
+      "cooldown_not_before_utc": "2026-10-23T21:02:13.755143+00:00",
+      "cooldown_retry_tool_transparent_background": false,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-23T21:32:31.348106+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "8a67d668a45df4c9384fab9bbb7503d55b9e7fe8b1946a212a911cdc354f8d10",
+        "prompt_sha256": "7651e38ccc7cd2f5994a1741189b7f07f091fce0700712c88a2ad117325ca549",
+        "input_sha256": [
+          "b15f6ae8aa4cfe6e3fa9544da39a1644efb2bf6aee81b4e4475b4cff044eea31",
+          "d317009add37124a796cf8deab179c30622b8a33a20ce75dcb8803011c25acd7",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": false
+      },
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 700a8801-2240-44aa-8300-f54e391b37d4.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
+      "observed_at_utc": "2026-10-23T21:33:00.334442+00:00"
     }
   ]
 }

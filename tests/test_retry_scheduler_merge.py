@@ -56,6 +56,37 @@ class RetryApprovalVersionTests(unittest.TestCase):
   with self.assertRaises(AssertionError):self.run_merge()
   self.assertEqual(read_json(self.pool)['requests'][self.key],self.old)
 
+ def make_original_regeneration(self):
+  self.job['references']=self.refs[1:]
+  snapshot=self.root/'runtime/actual.json';write_json(snapshot,self.job)
+  hashes=[file_sha256(Path(p)) for p in self.job['references']]
+  reason='Frozen original-based replacement after actual rejection of returned art.'
+  self.failed.update(edit_existing=False,replacement_reason=reason,inputs=[{'role':'original source portrait','raw_sha256':self.key,'converted_png_sha256':hashes[0]},{'role':'user mascot reference','sha256':hashes[1]}])
+  self.failed['actual_request_verification'].update(actual_request_snapshot_sha256=file_sha256(snapshot),input_sha256=hashes)
+  self.candidate.update(references=self.job['references'],input_sha256=hashes)
+  proof=self.candidate['approval_supersession'];proof.pop('edit_target_fullsize_sha256')
+  proof.update(failed_actual_snapshot_sha256=file_sha256(snapshot),art_correction_mode='regenerate_from_exact_original',replacement_reason_sha256=hashlib.sha256(reason.encode()).hexdigest(),original_source_sha256=self.key,rejected_fullsize_sha256=self.target)
+  write_json(self.journal,{'attempts':self.attempts})
+
+ def test_original_regeneration_versions_approval_and_preserves_lifetime_quota(self):
+  self.make_original_regeneration();qsha=file_sha256(self.queue);jsha=file_sha256(self.journal)
+  result=self.run_merge();self.assertEqual(result['archived_previous_versions'],1)
+  self.assertEqual(read_json(self.pool)['requests'][self.key]['references'],self.refs[1:])
+  self.assertEqual(file_sha256(self.queue),qsha);self.assertEqual(file_sha256(self.journal),jsha)
+  self.assertEqual(result['quota_claims'],0);self.assertEqual(result['image_calls'],0)
+
+ def test_original_regeneration_requires_frozen_replacement_reason(self):
+  self.make_original_regeneration();self.failed.pop('replacement_reason');write_json(self.journal,{'attempts':self.attempts})
+  with self.assertRaises(AssertionError):self.run_merge()
+
+ def test_original_regeneration_requires_actual_rejected_return(self):
+  self.make_original_regeneration();self.target_return['status']='generated_pending_visual_review';write_json(self.journal,{'attempts':self.attempts})
+  with self.assertRaises(AssertionError):self.run_merge()
+
+ def test_original_regeneration_cannot_substitute_a_different_source(self):
+  self.make_original_regeneration();self.failed['inputs'][0]['raw_sha256']='c'*64;write_json(self.journal,{'attempts':self.attempts})
+  with self.assertRaises(AssertionError):self.run_merge()
+
  def test_stale_previous_approval_is_rejected(self):
   self.candidate['approval_supersession']['previous_entry_sha256']='0'*64
   with self.assertRaises(AssertionError):self.run_merge()

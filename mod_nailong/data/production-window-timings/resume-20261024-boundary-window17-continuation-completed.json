@@ -1,0 +1,56 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window17",
+  "after_window": "resume-20261024-boundary-window16",
+  "created_at_utc": "2026-10-23T21:02:08.991Z",
+  "prepare_commands": [
+    "python tools\\prepare_reviewed_art_repairs.py resume-20261024-neck-note3 resumed-20261024-small-finer-v46-tail-review.json,resumed-20261024-small-finer-v47-review.json 3 266"
+  ],
+  "events": [
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T21:02:09.059Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window16 --wait-seconds 900"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T21:02:10.140Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window16 --wait-seconds 900",
+      "exit_code": 0
+    },
+    {
+      "phase": "durable_gate_released",
+      "observed_at_utc": "2026-10-23T21:02:10.109761+00:00",
+      "ready": true,
+      "window_id": "resume-20261024-boundary-window16",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "receipt": "mod_nailong/data/production-window-timings/resume-20261024-boundary-window16-completed.json"
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T21:02:10.140Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T21:02:25.871Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T21:02:25.871Z",
+      "command": "python tools\\prepare_reviewed_art_repairs.py resume-20261024-neck-note3 resumed-20261024-small-finer-v46-tail-review.json,resumed-20261024-small-finer-v47-review.json 3 266"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T21:02:29.124Z",
+      "command": "python tools\\prepare_reviewed_art_repairs.py resume-20261024-neck-note3 resumed-20261024-small-finer-v46-tail-review.json,resumed-20261024-small-finer-v47-review.json 3 266",
+      "exit_code": 0
+    }
+  ],
+  "scope": "Disk receipt gates the next sole executor; cross-exec in-memory store values are not used to release a handover. Preparation occurs only after the exact preceding window has completed imports.",
+  "status": "completed",
+  "prepared_at_utc": "2026-10-23T21:02:29.124Z",
+  "completed_at_utc": "2026-10-23T21:10:08.165Z"
+}

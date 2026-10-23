@@ -1,0 +1,91 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window20",
+  "after_window": "resume-20261024-boundary-window19",
+  "created_at_utc": "2026-10-23T21:12:46.265Z",
+  "prepare_commands": [
+    "python tools\\retry_scheduler_complete.py cooldown-083",
+    "python tools\\retry_scheduler_merge.py mod_nailong\\data\\resumed-20261024-cohort29-range9-16-reviewed-proof.json",
+    "python tools\\retry_scheduler_next.py --limit 8",
+    "python tools\\retry_scheduler_claim.py 084 runtime\\retry-scheduler\\cooldown-084-proof.json"
+  ],
+  "events": [
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T21:13:55.002Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window19 --wait-seconds 900"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T21:19:31.669Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window19 --wait-seconds 900",
+      "exit_code": 0
+    },
+    {
+      "phase": "durable_gate_released",
+      "observed_at_utc": "2026-10-23T21:19:31.653932+00:00",
+      "ready": true,
+      "window_id": "resume-20261024-boundary-window19",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "receipt": "mod_nailong/data/production-window-timings/resume-20261024-boundary-window19-completed.json"
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T21:19:31.669Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T21:19:31.875Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T21:19:31.875Z",
+      "command": "python tools\\retry_scheduler_complete.py cooldown-083"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T21:19:32.199Z",
+      "command": "python tools\\retry_scheduler_complete.py cooldown-083",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T21:19:32.199Z",
+      "command": "python tools\\retry_scheduler_merge.py mod_nailong\\data\\resumed-20261024-cohort29-range9-16-reviewed-proof.json"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T21:19:34.656Z",
+      "command": "python tools\\retry_scheduler_merge.py mod_nailong\\data\\resumed-20261024-cohort29-range9-16-reviewed-proof.json",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T21:19:34.656Z",
+      "command": "python tools\\retry_scheduler_next.py --limit 8"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T21:19:36.070Z",
+      "command": "python tools\\retry_scheduler_next.py --limit 8",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T21:19:36.070Z",
+      "command": "python tools\\retry_scheduler_claim.py 084 runtime\\retry-scheduler\\cooldown-084-proof.json"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T21:19:39.233Z",
+      "command": "python tools\\retry_scheduler_claim.py 084 runtime\\retry-scheduler\\cooldown-084-proof.json",
+      "exit_code": 0
+    }
+  ],
+  "scope": "Disk receipt gates the next sole executor; cross-exec in-memory store values are not used to release a handover. Preparation occurs only after the exact preceding window has completed imports.",
+  "status": "prepared_for_next_window",
+  "prepared_at_utc": "2026-10-23T21:19:39.233Z"
+}

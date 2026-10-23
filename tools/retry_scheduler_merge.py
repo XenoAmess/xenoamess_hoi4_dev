@@ -17,7 +17,7 @@ def validate_supersession(old,candidate,attempts,row):
  assert proof and proof['previous_entry_sha256']==entry_digest(old),'Missing or stale approval-version proof'
  assert proof.get('retry_counter_reset') is False and proof.get('reason')
  latest=attempts[-1];v=latest['actual_request_verification']
- assert latest['status']=='failed' and latest.get('edit_existing') is True
+ assert latest['status']=='failed'
  assert proof['failed_attempt_number']==latest['number']
  assert proof['failed_actual_snapshot_sha256']==v['actual_request_snapshot_sha256']
  assert proof['previous_prompt_sha256']==hashlib.sha256(old['prompt'].encode('utf-8')).hexdigest()
@@ -28,13 +28,26 @@ def validate_supersession(old,candidate,attempts,row):
  assert success['prompt']==old['prompt']
  assert success['actual_request_verification']['input_sha256']==old['input_sha256']
  assert success['actual_request_verification']['transparent_background']==old['transparent']
- target=latest['inputs'][0]
- assert target['role']=='previous generated fullsize edit target'
- assert target['sha256']==proof['edit_target_fullsize_sha256']==candidate['input_sha256'][0]
- returned=next(a for a in attempts if a.get('fullsize_sha256')==target['sha256'])
+ if latest.get('edit_existing') is True:
+  target=latest['inputs'][0]
+  assert target['role']=='previous generated fullsize edit target'
+  assert target['sha256']==proof['edit_target_fullsize_sha256']==candidate['input_sha256'][0]
+  rejected_sha=target['sha256']
+ else:
+  # An original-based art replacement still requires the actual rejected PNG,
+  # the frozen pre-call replacement reason and the exact original/user inputs.
+  assert latest.get('edit_existing') is False and proof.get('art_correction_mode')=='regenerate_from_exact_original'
+  reason=latest.get('replacement_reason');assert isinstance(reason,str) and reason.strip()
+  assert proof['replacement_reason_sha256']==hashlib.sha256(reason.encode('utf-8')).hexdigest()
+  original,user=latest['inputs'];assert len(candidate['references'])==len(candidate['input_sha256'])==2
+  assert original['role']=='original source portrait' and original['raw_sha256']==candidate['key']==proof['original_source_sha256']
+  assert user['role']=='user mascot reference'
+  assert candidate['input_sha256']==[original['converted_png_sha256'],user['sha256']]
+  rejected_sha=proof['rejected_fullsize_sha256']
+ returned=next(a for a in attempts if a.get('fullsize_sha256')==rejected_sha)
  assert success['number']<=returned['number']<latest['number']
  assert returned['status']=='generated_rejected_visual_review'
- assert row['review']=='rejected' and row['generated_fullsize_sha256']==target['sha256']
+ assert row['review']=='rejected' and row['generated_fullsize_sha256']==rejected_sha
  return copy.deepcopy(old)
 
 def require_idle(root):
