@@ -1,0 +1,55 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-gap-fix-window4",
+  "after_window": "resume-20261024-gap-fix-window3",
+  "created_at_utc": "2026-10-23T19:15:06.616Z",
+  "prepare_commands": [
+    "python runtime\\prepare-small-repairs3-20261023.py resume-20261024-profile-mouth4 resumed-20261024-small-finer-v30-review.json 4 253"
+  ],
+  "events": [
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T19:15:28.969Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-gap-fix-window3 --wait-seconds 900"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T19:16:18.059Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-gap-fix-window3 --wait-seconds 900",
+      "exit_code": 0
+    },
+    {
+      "phase": "durable_gate_released",
+      "observed_at_utc": "2026-10-23T19:16:18.044279+00:00",
+      "ready": true,
+      "window_id": "resume-20261024-gap-fix-window3",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "receipt": "mod_nailong/data/production-window-timings/resume-20261024-gap-fix-window3-completed.json"
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T19:16:18.060Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T19:16:18.257Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T19:16:18.258Z",
+      "command": "python runtime\\prepare-small-repairs3-20261023.py resume-20261024-profile-mouth4 resumed-20261024-small-finer-v30-review.json 4 253"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T19:16:21.897Z",
+      "command": "python runtime\\prepare-small-repairs3-20261023.py resume-20261024-profile-mouth4 resumed-20261024-small-finer-v30-review.json 4 253",
+      "exit_code": 0
+    }
+  ],
+  "scope": "Disk receipt gates the next sole executor; cross-exec in-memory store values are not used to release a handover. Preparation occurs only after the exact preceding window has completed imports.",
+  "status": "prepared_for_next_window",
+  "prepared_at_utc": "2026-10-23T19:16:21.897Z"
+}
