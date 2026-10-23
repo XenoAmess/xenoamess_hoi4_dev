@@ -35,13 +35,26 @@ def facial_hair_instruction(description):
             'source-shaped open or closed creature mouth, chin beard in that top-to-bottom order. No invented hair from shadows.')
 
 
-def source_alpha_policy(image):
+def source_alpha_policy(image, *, opaque_canvas_reason=None):
     """A nearly opaque full canvas is not evidence of an exterior cutout.
 
     This affects only new requests. Original input bytes and frozen requests
-    remain unchanged; lower alpha still uses the conservative existing policy.
+    remain unchanged. A new request may explicitly record a manually verified
+    full painted canvas even when its original nonzero alpha is below 249.
+    This is never inferred from a filename or applied to a real alpha cutout.
     """
     minimum, maximum = image.convert('RGBA').getchannel('A').getextrema()
+    if opaque_canvas_reason is not None:
+        if not opaque_canvas_reason.strip():
+            raise ValueError('Opaque canvas classification requires an explicit visual evidence reason')
+        if minimum == 0:
+            raise ValueError('A source with fully transparent pixels requires its genuine exterior alpha')
+        return {
+            'original_alpha_extrema': [minimum, maximum],
+            'transparent_background': False,
+            'alpha_prompt_policy': 'source-manually-verified-opaque-canvas-v1',
+            'opaque_canvas_reason': opaque_canvas_reason,
+        }
     near_opaque = 249 <= minimum < 255
     return {
         'original_alpha_extrema': [minimum, maximum],
@@ -58,6 +71,15 @@ def near_opaque_backdrop_instruction():
             "Preserve the original backdrop color, texture, illumination and full rectangular extent behind the mascot. "
             "Return an opaque full-canvas portrait, not a transparent figure cutout. Do not remove or replace the original background. "
             "Keep the source clothing, hair, facial hair, accessories, pose and crop unchanged apart from the requested mascot conversion or targeted art repair.")
+
+
+def verified_opaque_canvas_instruction():
+    return ("\nOutput background: the exact original was visually verified to be a COMPLETE rectangular painted portrait, "
+            "with no fully transparent source pixels. Its small original alpha variation does not establish an exterior figure cutout. "
+            "Preserve the entire original background colour, texture, lighting and crop to all four canvas edges. "
+            "Return a fully opaque rectangular image, alpha 255 throughout the originally opaque backdrop and subject, "
+            "including hair, glasses, dark clothing and corners. Do not copy an incorrect target cutout mask or partial transparency. "
+            "No transparent backdrop, fog, see-through fabric, haze, halo or invented frame/note. Keep every unrelated source feature unchanged.")
 
 
 def alpha_instruction(asset):
@@ -88,15 +110,17 @@ def original(asset):
     with Image.open(io.BytesIO(raw)) as im:im.convert("RGBA").save(out)
     return out
 
-def prepare(key, prompt, edit_existing=False, *, replacement_reason=None):
+def prepare(key, prompt, edit_existing=False, *, replacement_reason=None, opaque_canvas_reason=None):
     asset=next(a for a in read_json(MOD/"data/catalog.json")["assets"] if a["source_sha256"]==key)
     source=original(asset)
-    with Image.open(source) as image:alpha_policy=source_alpha_policy(image)
+    with Image.open(source) as image:alpha_policy=source_alpha_policy(image,opaque_canvas_reason=opaque_canvas_reason)
     transparent=alpha_policy['transparent_background']
     if transparent:
         prompt += alpha_instruction(asset)
     elif alpha_policy['alpha_prompt_policy']=='source-near-opaque-backdrop-v1':
         prompt += near_opaque_backdrop_instruction()
+    elif alpha_policy['alpha_prompt_policy']=='source-manually-verified-opaque-canvas-v1':
+        prompt += verified_opaque_canvas_instruction()
     record=read_json(MOD/"data/generated.json")["portraits"].get(key)
     file=REQUESTS/(key+".json")
     journal=read_json(file) if file.exists() else {"schema":"naiwa-generation-requests-v1","source_sha256":key,"attempts":[]}
@@ -217,6 +241,7 @@ def main():
     p.add_argument("--key");p.add_argument("--prompt-file",type=Path);p.add_argument("--edit-existing",action="store_true");p.add_argument("--image");p.add_argument("--message")
     p.add_argument("--message-file",type=Path)
     p.add_argument("--replacement-reason",help="Explicit pre-call reason for an original-based replacement without an edit target")
+    p.add_argument("--opaque-canvas-reason",help="Explicit visual evidence for a complete painted source canvas; new requests only")
     p.add_argument("--jobs-file",type=Path);p.add_argument("--directions-file",type=Path)
     args=p.parse_args()
     if args.command=="legacy":legacy()
@@ -227,7 +252,7 @@ def main():
         prepared=[prepare(j["key"],common+"\nVisible source-specific features: "+d,False) for j,d in zip(jobs,directions)]
         write_json(ROOT/"runtime/current-hair-jobs.json",prepared)
         print(f"Saved {len(prepared)} full prompts before any generation calls")
-    elif args.command=="prepare":write_json(ROOT/"runtime/prepared-image-job.json",prepare(args.key,args.prompt_file.read_text(encoding="utf-8"),args.edit_existing,replacement_reason=args.replacement_reason))
+    elif args.command=="prepare":write_json(ROOT/"runtime/prepared-image-job.json",prepare(args.key,args.prompt_file.read_text(encoding="utf-8"),args.edit_existing,replacement_reason=args.replacement_reason,opaque_canvas_reason=args.opaque_canvas_reason))
     elif args.command=="finish":
         try:
             finish(args.key,args.image)
