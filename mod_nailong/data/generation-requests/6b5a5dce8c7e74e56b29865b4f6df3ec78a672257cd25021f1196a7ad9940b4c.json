@@ -149,6 +149,48 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 2404665a-c323-43a6-87bf-9350baac0fce.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-19T20:27:20.084768+00:00"
+    },
+    {
+      "number": 4,
+      "status": "prepared",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image 1 is the exact full-resolution returned yellow mascot EDIT TARGET. Image 2 is the exact original game portrait and the sole authority for the complete painted rectangular canvas, garment crop and background. Image 3 is the user mascot reference. Repair the missing or translucent original surfaces. This source is an OPAQUE RECTANGULAR PAINTED PORTRAIT with NO fully transparent source pixels. Restore its complete original background color, texture and shading behind the head and shoulders to all four canvas edges. Restore all existing head, hair, garment, shoulders, lapels, scarf or wrap, collar, tie, buttons and original decorations to genuinely OPAQUE surfaces, alpha 255. Original clothing that reaches the bottom or side crop boundary must continue all the way there; do not copy the target's incorrect floating circular bust, erased corners, fading garment or cutout background. Do not add white haze, fog, halos, smoke or a new photographic border. Preserve the exact original source pose, gaze and expression, the mascot green-ringed eyes, the source-specific hairstyle and eyebrows, moustache/beard only where actually present, original glasses and headgear, garment design, original visible insignia, crop and light. Keep a compact round head and short broad neck naturally seated in the original fitted collar or preserve the original scarf/wrap without inventing a collar. Keep all already correct RGB materials; only reconstruct the original painted backdrop or garment portions that were wrongly removed. One portrait at full target detail and original aspect ratio. No new accessory, text, note, watermark, figure or comparison panel. Final output is the complete OPAQUE painted rectangle, with no transparent background or alpha holes.\nOutput alpha: preserve genuine transparent RGBA outside the original asset's outer silhouette. Retain all original opaque content, including any existing background or dark vignette that is part of this source; do not erase it into alpha holes. Where the original exterior is transparent, do not invent a new solid canvas, halo or studio backdrop. Retain source clothing, hair, headgear, lighting and portrait crop at full generated resolution. All originally OPAQUE subject surfaces must remain FULLY OPAQUE (alpha 255): yellow head/body, hair, beard, dark or black clothing, coat lapels, collar, tie, buttons and decorations. Dark cloth is colored material, not transparent background. Never fade garment interiors into semi-transparent patches, holes, white haze or see-through fabric. Keep any genuine source outer-edge alpha falloff only at that actual exterior boundary; preserve actual source transparency rather than making the subject itself translucent.",
+      "prompt_file": "mod_nailong/assets/prompts/6b5a5dce8c7e74e56b29865b4f6df3ec78a672257cd25021f1196a7ad9940b4c-004.txt",
+      "prompt_sha256": "b71e6d1b93c1f056366f8fddb171aa08ab7e7a6e35277db6498a2fe524de3d3e",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/7283d245ff908dd4024c6089b23a85c2d156078b103fd501f147921d0ce715b4.png",
+          "sha256": "7283d245ff908dd4024c6089b23a85c2d156078b103fd501f147921d0ce715b4",
+          "derived_game_image_sha256": "18db1f40eeae8d7d7e8e869b2511c499b01827643f2aa241bbe4f87a4650ea1b"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "6b5a5dce8c7e74e56b29865b4f6df3ec78a672257cd25021f1196a7ad9940b4c",
+          "converted_png_sha256": "d6440a97c8f0db67fd5785db00ef3c506fab13dca8367001b691d0e6978ff444"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-23T05:16:11.359674+00:00",
+      "alpha_prompt_policy": "source-content-v3-opaque-body",
+      "tool_parameters": {
+        "transparent_background": false,
+        "basis": "Actual source pixels plus white/cyan/alpha review confirm a full painted rectangle with no fully transparent source pixels. Use an explicitly opaque flag for this NEW correction of an actual successful returned image; prior successful/refused payloads remain unchanged.",
+        "scope": "Independent actual-return art correction; no refused request changed, no retry quota reset"
+      },
+      "retry_of_attempt": 3,
+      "retry_root_attempt": 3,
+      "cooldown_retry_number": 1,
+      "cooldown_not_before_utc": "2026-10-20T04:27:20.224237+00:00",
+      "cooldown_retry_tool_transparent_background": false,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible"
     }
   ]
 }
