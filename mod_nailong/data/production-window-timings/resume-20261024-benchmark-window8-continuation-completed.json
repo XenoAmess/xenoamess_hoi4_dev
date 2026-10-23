@@ -1,0 +1,56 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-benchmark-window8",
+  "after_window": "resume-20261024-benchmark-window7",
+  "created_at_utc": "2026-10-23T19:47:50.571Z",
+  "prepare_commands": [
+    "python runtime\\prepare-small-repairs3-20261023.py resume-20261024-collar-expression-canvas8 resumed-20261024-buffer7b2v32-returned-review.json,resumed-20261024-small-finer-v34-review.json,resumed-20261024-small-finer-v35-review.json 8 257 mod_nailong/data/source-canvas-manual-reviews-v34v35-20261024.json"
+  ],
+  "events": [
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T19:47:50.628Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-benchmark-window7 --wait-seconds 900"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T19:47:51.807Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-benchmark-window7 --wait-seconds 900",
+      "exit_code": 0
+    },
+    {
+      "phase": "durable_gate_released",
+      "observed_at_utc": "2026-10-23T19:47:51.786479+00:00",
+      "ready": true,
+      "window_id": "resume-20261024-benchmark-window7",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "receipt": "mod_nailong/data/production-window-timings/resume-20261024-benchmark-window7-completed.json"
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T19:47:51.807Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T19:48:08.004Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T19:48:08.005Z",
+      "command": "python runtime\\prepare-small-repairs3-20261023.py resume-20261024-collar-expression-canvas8 resumed-20261024-buffer7b2v32-returned-review.json,resumed-20261024-small-finer-v34-review.json,resumed-20261024-small-finer-v35-review.json 8 257 mod_nailong/data/source-canvas-manual-reviews-v34v35-20261024.json"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T19:48:15.491Z",
+      "command": "python runtime\\prepare-small-repairs3-20261023.py resume-20261024-collar-expression-canvas8 resumed-20261024-buffer7b2v32-returned-review.json,resumed-20261024-small-finer-v34-review.json,resumed-20261024-small-finer-v35-review.json 8 257 mod_nailong/data/source-canvas-manual-reviews-v34v35-20261024.json",
+      "exit_code": 0
+    }
+  ],
+  "scope": "Disk receipt gates the next sole executor; cross-exec in-memory store values are not used to release a handover. Preparation occurs only after the exact preceding window has completed imports.",
+  "status": "completed",
+  "prepared_at_utc": "2026-10-23T19:48:15.491Z",
+  "completed_at_utc": "2026-10-23T19:55:34.653Z"
+}
