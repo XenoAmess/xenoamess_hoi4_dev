@@ -1,7 +1,10 @@
-async function produce(jobFile,batch,checkpointCommand="") {
+async function produce(jobFile,batch,checkpointCommand="",options={}) {
+ const emit=(phase,detail={})=>options.onEvent?.({phase,batch,observed_at_utc:new Date().toISOString(),...detail});
+ emit("batch_started",{jobs_file:jobFile});
  const root="C:\\workspace\\xenoamess_hoi4_dev";
- const run=async(cmd,budget=1600)=>{let r=await tools.exec_command({cmd,shell:"cmd.exe",workdir:root,max_output_tokens:budget});while(r.session_id)r=await tools.write_stdin({session_id:r.session_id,chars:"",max_output_tokens:budget,yield_time_ms:1000});if(r.exit_code!==0)throw Error(JSON.stringify(r));return r;};
+ const run=async(cmd,budget=1600)=>{const start=Date.now();emit("local_command_started",{command:cmd});let r=await tools.exec_command({cmd,shell:"cmd.exe",login:false,workdir:root,max_output_tokens:budget});while(r.session_id)r=await tools.write_stdin({session_id:r.session_id,chars:"",max_output_tokens:budget,yield_time_ms:1000});emit("local_command_finished",{command:cmd,elapsed_ms:Date.now()-start,exit_code:r.exit_code});if(r.exit_code!==0)throw Error(JSON.stringify(r));return r;};
  const keys=JSON.parse((await run("python runtime\\batch-keys.py "+jobFile,3000)).output),todo=[...keys];
+ if(keys.length>8)throw Error("Bounded cell accepts at most8 actual requests");
  let checkpoint=null,checkpointResult=null,checkpointStarted=false,checkpointFailureRecorded=false;const pending=[];
  const flush=async()=>{
   if(checkpoint && !checkpointResult)return false;
@@ -36,10 +39,12 @@ async function produce(jobFile,batch,checkpointCommand="") {
   await tools.apply_patch("*** Begin Patch\n*** Add File: "+root+"\\"+actual+"\n+"+JSON.stringify(j,null,2).replaceAll("\n","\n+")+"\n*** End Patch");
   await run("python mod_nailong\\tools\\production_queue.py begin --actual-job-file "+actual+" --key "+key);
   notify(batch+" "+(keys.indexOf(key)+1)+"/"+keys.length+": "+j.source+"; exact payload frozen; one builtin lane");await yield_control();
-  if(j.references.length>2){const target=await tools.view_image({path:j.references[0]});image(target.image_url);}
+  // Exact original and current raw edit target already actually viewed on SHA-bound immutable comparison pages before preparation; do not re-display duplicate inputs here.
+  emit("image_invoked",{key});const imageStarted=Date.now();
   const promise=tools.image_gen__imagegen({prompt:j.prompt,referenced_image_paths:j.references,transparent_background:j.transparent}).then(r=>({r}),e=>({error:String(e)}));
   if(checkpointCommand&&!checkpointStarted){checkpointStarted=true;checkpoint=run(checkpointCommand,2500).then(r=>{checkpointResult={r};return checkpointResult;},e=>{checkpointResult={error:String(e)};return checkpointResult;});}
   const outcome=await promise;
+  emit("image_resolved",{key,elapsed_ms:Date.now()-imageStarted,error:outcome.error??null});
   if(outcome.error){
    const file="runtime\\"+batch+"-error-"+key+".txt";
    await tools.apply_patch("*** Begin Patch\n*** Add File: "+root+"\\"+file+"\n+"+outcome.error.replaceAll("\n","\n+")+"\n*** End Patch");
@@ -59,5 +64,6 @@ async function produce(jobFile,batch,checkpointCommand="") {
  if(checkpoint)await checkpoint;
  await flush();
  if(checkpointCommand&&!checkpointStarted)await run(checkpointCommand,2500);
- text(batch+" actual distinct requests finished; all returns/errors imported; no image call replayed");
+ emit("batch_completed");
+ notify(batch+" actual distinct requests finished; all returns/errors imported; no image call replayed");
 }
