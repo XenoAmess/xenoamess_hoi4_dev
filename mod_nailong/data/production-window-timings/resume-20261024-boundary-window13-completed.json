@@ -1,0 +1,542 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window13",
+  "started_at_utc": "2026-10-23T20:31:10.187Z",
+  "planned_requests": 5,
+  "batches": [
+    {
+      "batch": "resume-20261024-safe-refill5",
+      "jobs": "runtime\\production-resume-20261024-safe-refill5-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-23T20:31:10.243Z",
+      "batch": "resume-20261024-safe-refill5"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:10.243Z",
+      "jobs_file": "runtime\\production-resume-20261024-safe-refill5-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:10.243Z",
+      "command": "python runtime\\batch-keys.py runtime\\production-resume-20261024-safe-refill5-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:10.419Z",
+      "command": "python runtime\\batch-keys.py runtime\\production-resume-20261024-safe-refill5-jobs.json",
+      "elapsed_ms": 176,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:10.419Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:10.652Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 233,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:10.652Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:10.868Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 216,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:10.868Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-safe-refill5-jobs.json --key f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:11.093Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-safe-refill5-jobs.json --key f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62",
+      "elapsed_ms": 225,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:11.093Z",
+      "command": "python runtime\\guard-dispatch-family.py f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:11.412Z",
+      "command": "python runtime\\guard-dispatch-family.py f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62",
+      "elapsed_ms": 319,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:11.469Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-safe-refill5-f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62.json --key f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:12.738Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-safe-refill5-f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62.json --key f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62",
+      "elapsed_ms": 1269,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:12.738Z",
+      "key": "f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:12.738Z",
+      "command": "python tools\\production_checkpoint.py resume-20261024-safe-refill5 resume-20261024-neutral-mouth-pose8 resume-20261024-source-opacity-details8 resume-20261024-boundary-test7 > runtime\\validation-20261024-boundary13.log 2>&1"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:36.765Z",
+      "key": "f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62",
+      "elapsed_ms": 24027,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:46.983Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-ec9eb6f5-a349-40ad-9de9-637069fb9f3d.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:47.236Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-ec9eb6f5-a349-40ad-9de9-637069fb9f3d.png",
+      "elapsed_ms": 253,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:47.238Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-safe-refill5-jobs.json --key 0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:47.448Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-safe-refill5-jobs.json --key 0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297",
+      "elapsed_ms": 210,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:47.448Z",
+      "command": "python runtime\\guard-dispatch-family.py 0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:47.731Z",
+      "command": "python runtime\\guard-dispatch-family.py 0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297",
+      "elapsed_ms": 283,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:52.054Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-safe-refill5-0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297.json --key 0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:53.168Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-safe-refill5-0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297.json --key 0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297",
+      "elapsed_ms": 1114,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:31:53.168Z",
+      "key": "0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:32:33.499Z",
+      "key": "0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297",
+      "elapsed_ms": 40331,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:32:38.515Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-c0e7e932-7c73-4fdc-a967-ab0a828bbd13.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:32:38.786Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-c0e7e932-7c73-4fdc-a967-ab0a828bbd13.png",
+      "elapsed_ms": 271,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:32:38.789Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-safe-refill5-jobs.json --key e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:32:39.103Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-safe-refill5-jobs.json --key e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901",
+      "elapsed_ms": 314,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:32:39.103Z",
+      "command": "python runtime\\guard-dispatch-family.py e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:32:39.502Z",
+      "command": "python runtime\\guard-dispatch-family.py e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901",
+      "elapsed_ms": 399,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:32:43.544Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-safe-refill5-e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901.json --key e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:32:45.186Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-safe-refill5-e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901.json --key e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901",
+      "elapsed_ms": 1642,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:32:45.186Z",
+      "key": "e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:33:47.594Z",
+      "key": "e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901",
+      "elapsed_ms": 62408,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:33:52.631Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-9c237fcc-f7d1-4bb8-9cb7-73065754bc05.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:33:52.940Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-9c237fcc-f7d1-4bb8-9cb7-73065754bc05.png",
+      "elapsed_ms": 309,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:33:52.943Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-safe-refill5-jobs.json --key 3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:33:53.210Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-safe-refill5-jobs.json --key 3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d",
+      "elapsed_ms": 267,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:33:53.210Z",
+      "command": "python runtime\\guard-dispatch-family.py 3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:33:53.514Z",
+      "command": "python runtime\\guard-dispatch-family.py 3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d",
+      "elapsed_ms": 304,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:33:57.705Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-safe-refill5-3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d.json --key 3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:33:59.114Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-safe-refill5-3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d.json --key 3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d",
+      "elapsed_ms": 1409,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:33:59.114Z",
+      "key": "3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:34:28.008Z",
+      "key": "3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d",
+      "elapsed_ms": 28894,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:34:33.196Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-168420c3-812b-47f7-82e8-26d3cb50da29.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:34:35.534Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-168420c3-812b-47f7-82e8-26d3cb50da29.png",
+      "elapsed_ms": 2338,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:34:35.535Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-safe-refill5-jobs.json --key 9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:34:35.793Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-safe-refill5-jobs.json --key 9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c",
+      "elapsed_ms": 258,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:34:35.793Z",
+      "command": "python runtime\\guard-dispatch-family.py 9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:34:36.154Z",
+      "command": "python runtime\\guard-dispatch-family.py 9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c",
+      "elapsed_ms": 361,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:34:38.279Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-safe-refill5-9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c.json --key 9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:34:39.686Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-safe-refill5-9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c.json --key 9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c",
+      "elapsed_ms": 1407,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:34:39.686Z",
+      "key": "9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:35:09.557Z",
+      "key": "9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c",
+      "elapsed_ms": 29871,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:35:14.614Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-d9c2416b-91b2-4842-a797-20d4173f8310.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:35:14.891Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-d9c2416b-91b2-4842-a797-20d4173f8310.png",
+      "elapsed_ms": 277,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:28.956Z",
+      "command": "python tools\\production_checkpoint.py resume-20261024-safe-refill5 resume-20261024-neutral-mouth-pose8 resume-20261024-source-opacity-details8 resume-20261024-boundary-test7 > runtime\\validation-20261024-boundary13.log 2>&1",
+      "elapsed_ms": 376218,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:28.957Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-ec9eb6f5-a349-40ad-9de9-637069fb9f3d.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:34.987Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key f6f8941e45b12834ff3e9757bbc4a0f342b827511a23688b1e046fba3ff35a62 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-ec9eb6f5-a349-40ad-9de9-637069fb9f3d.png",
+      "elapsed_ms": 6030,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:34.987Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-c0e7e932-7c73-4fdc-a967-ab0a828bbd13.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:41.228Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 0d0665793f83947f8d57edea2e768bbe38beeb6ec40d4253d56272b88069a297 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-c0e7e932-7c73-4fdc-a967-ab0a828bbd13.png",
+      "elapsed_ms": 6241,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:41.228Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-9c237fcc-f7d1-4bb8-9cb7-73065754bc05.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:44.737Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key e28ec18a051ed355bbd0e7ac58a9606d07b4a3de85f7bbe06aa5321210d46901 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-9c237fcc-f7d1-4bb8-9cb7-73065754bc05.png",
+      "elapsed_ms": 3509,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:44.737Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-168420c3-812b-47f7-82e8-26d3cb50da29.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:48.258Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 3f66e7948efb5bcef4c87799057fa871a7da54bb3bf4d226a5974aa51c212a1d --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-168420c3-812b-47f7-82e8-26d3cb50da29.png",
+      "elapsed_ms": 3521,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:48.258Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-d9c2416b-91b2-4842-a797-20d4173f8310.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:51.613Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 9b03ea333439046aa0db25f0a6b65bc514777913a563b37c159e263a8a208f4c --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-d9c2416b-91b2-4842-a797-20d4173f8310.png",
+      "elapsed_ms": 3355,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:51.613Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:51.901Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 288,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:51.901Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:52.142Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 241,
+      "exit_code": 0
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "resume-20261024-safe-refill5",
+      "observed_at_utc": "2026-10-23T20:37:52.142Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-23T20:37:52.142Z",
+      "batch": "resume-20261024-safe-refill5"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-23T20:37:52.142Z"
+}

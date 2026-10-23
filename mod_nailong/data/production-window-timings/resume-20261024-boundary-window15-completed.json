@@ -1,0 +1,360 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window15",
+  "started_at_utc": "2026-10-23T20:48:24.878Z",
+  "planned_requests": 2,
+  "batches": [
+    {
+      "batch": "resume-20261024-live-refill-card2",
+      "jobs": "runtime\\production-resume-20261024-live-refill-card2-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-23T20:48:24.929Z",
+      "batch": "resume-20261024-live-refill-card2"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:24.929Z",
+      "jobs_file": "runtime\\production-resume-20261024-live-refill-card2-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:24.930Z",
+      "command": "python runtime\\batch-keys.py runtime\\production-resume-20261024-live-refill-card2-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:25.112Z",
+      "command": "python runtime\\batch-keys.py runtime\\production-resume-20261024-live-refill-card2-jobs.json",
+      "elapsed_ms": 182,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:25.113Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:25.314Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 201,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:25.314Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:25.514Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 200,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:25.514Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-live-refill-card2-jobs.json --key 427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:25.695Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-live-refill-card2-jobs.json --key 427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1",
+      "elapsed_ms": 181,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:25.696Z",
+      "command": "python runtime\\guard-dispatch-family.py 427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:25.985Z",
+      "command": "python runtime\\guard-dispatch-family.py 427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1",
+      "elapsed_ms": 289,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:26.043Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-live-refill-card2-427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1.json --key 427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:27.122Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-live-refill-card2-427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1.json --key 427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1",
+      "elapsed_ms": 1079,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:48:27.122Z",
+      "key": "427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:13.130Z",
+      "key": "427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1",
+      "elapsed_ms": 46008,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:13.202Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-40c621bc-69fe-4fad-83d0-485a87d18e4a.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:13.469Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-40c621bc-69fe-4fad-83d0-485a87d18e4a.png",
+      "elapsed_ms": 267,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:13.470Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-40c621bc-69fe-4fad-83d0-485a87d18e4a.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:16.011Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 427282e9aa3601bd5f2ce084f42c470c6cf47013937d2bb528c69ce4ced779e1 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-40c621bc-69fe-4fad-83d0-485a87d18e4a.png",
+      "elapsed_ms": 2541,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:16.012Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:16.211Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 199,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:16.211Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:16.403Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 192,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:16.403Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:16.612Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 209,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:16.612Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:16.811Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 199,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:16.811Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-live-refill-card2-jobs.json --key abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:16.993Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-live-refill-card2-jobs.json --key abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038",
+      "elapsed_ms": 182,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:16.993Z",
+      "command": "python runtime\\guard-dispatch-family.py abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:17.245Z",
+      "command": "python runtime\\guard-dispatch-family.py abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038",
+      "elapsed_ms": 252,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:17.298Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-live-refill-card2-abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038.json --key abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:18.401Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-live-refill-card2-abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038.json --key abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038",
+      "elapsed_ms": 1103,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:18.401Z",
+      "key": "abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:58.234Z",
+      "key": "abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038",
+      "elapsed_ms": 39833,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:58.300Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-5ef77cda-4a58-495f-9025-b334dc750d31.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:58.575Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-5ef77cda-4a58-495f-9025-b334dc750d31.png",
+      "elapsed_ms": 275,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:49:58.577Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-5ef77cda-4a58-495f-9025-b334dc750d31.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:50:04.798Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key abaa5dd64a09ec4ad92a318e1a286f80a211670409a2662123ef37216dd4c038 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-5ef77cda-4a58-495f-9025-b334dc750d31.png",
+      "elapsed_ms": 6221,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:50:04.798Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:50:05.555Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 757,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:50:05.555Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:50:05.817Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 262,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:50:05.817Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:50:07.752Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 1935,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:50:07.752Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:50:08.018Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 266,
+      "exit_code": 0
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "resume-20261024-live-refill-card2",
+      "observed_at_utc": "2026-10-23T20:50:08.019Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-23T20:50:08.019Z",
+      "batch": "resume-20261024-live-refill-card2"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-23T20:50:08.019Z"
+}
