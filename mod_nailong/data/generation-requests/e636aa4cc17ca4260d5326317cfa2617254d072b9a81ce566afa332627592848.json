@@ -102,6 +102,48 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 2d0a1a1c-7be2-4e8d-8210-a7d12bac1798.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-21T19:08:43.408762+00:00"
+    },
+    {
+      "number": 3,
+      "status": "prepared",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image1 is the exact full-resolution returned mascot portrait EDIT TARGET. Image2 is the exact original game portrait and sole source authority. Image3 is the user mascot identity reference.\nRequired source-specific correction: Actual exact-native original and source/white/cyan/alpha comparison page inspected. The original has actual fine oval wire glasses at its eyes; the return removes them. Restore the exact source fine rims/bridge/temples without adding thicker or differently shaped eyewear. Preserve actual compact moustache, short greying hair, dark coat and white shirt/dark tie. Preserve all unrelated original features, complete opaque photo/card interior, true exterior alpha, lighting/crop, compact near-round mascot head and very short broad collar fit. No filename-based hair, symbols or garments.\nPreserve all unrelated original hair, actual facial hair, clothing, collar open/closed state, actual insignia/accessories, pose, gaze, expression, illumination and crop. Keep the near-round compact yellow mascot head with a curved chin and VERY SHORT BROAD neck transition at the original neckline. Fit collar circumference and shoulder lines to the mascot; do not extend a tapered yellow column down to a narrow human collar, add a cream bib or close an open V. Faint upper-lip appearance is not authority to grow a dense moustache. Indistinct gold ornament is not authority to add a crisp named anchor, crown, bird or star: preserve actual visible outline, colour and footprint with natural material texture; keep clearly established original symbols. Preserve exact frame, overlapping paper and wholly opaque original photo interior/backing. Genuine alpha is restricted to actual exterior silhouette and original edge falloff. No new clips, pins, note hardware, readable text, figure or panel. Keep target raw-HD resolution and aspect ratio. One targeted independent art repair.\nOutput alpha: genuine transparent RGBA ONLY OUTSIDE the complete original photograph FRAME AND NOTE silhouette. The photographic BACKING INSIDE the frame is a required OPAQUE surface: preserve its original background color and texture behind the character all the way to the inner frame rim. Never turn the gaps between frame and character into transparent holes or a window. Keep the actual tilted photo rectangle, frame rim and overlapping note intact. Do not invent a new backdrop outside the whole card. Retain source clothing, hair, headgear, lighting and crop at full generated resolution. All originally OPAQUE subject surfaces must remain FULLY OPAQUE (alpha 255): yellow head/body, hair, beard, dark or black clothing, coat lapels, collar, tie, buttons and decorations. Dark cloth is colored material, not transparent background. Never fade garment interiors into semi-transparent patches, holes, white haze or see-through fabric. Keep any genuine source outer-edge alpha falloff only at that actual exterior boundary; preserve actual source transparency rather than making the subject itself translucent.",
+      "prompt_file": "mod_nailong/assets/prompts/e636aa4cc17ca4260d5326317cfa2617254d072b9a81ce566afa332627592848-003.txt",
+      "prompt_sha256": "2a319a38f48173aec6085fb70ad5485324af225a3ecbe139f69c243c9227d099",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/d531e8d29623ec5e3758b437c2dd4ab62b5a040bedcda545fc498a2fbf631689.png",
+          "sha256": "d531e8d29623ec5e3758b437c2dd4ab62b5a040bedcda545fc498a2fbf631689",
+          "derived_game_image_sha256": "2d5e2f670b7c62e97ae82a281eb210ff58e946bb6c92fd40bbdd4b5d8b268197"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "e636aa4cc17ca4260d5326317cfa2617254d072b9a81ce566afa332627592848",
+          "converted_png_sha256": "40c3ed48616a5e03aacb070110cf2f8a5d6fb6e59927bdfca88ff2458de8b9f4"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-23T08:45:19.220423+00:00",
+      "original_alpha_extrema": [
+        0,
+        255
+      ],
+      "transparent_background": true,
+      "alpha_prompt_policy": "source-content-v3-opaque-body",
+      "retry_of_attempt": 2,
+      "retry_root_attempt": 2,
+      "cooldown_retry_number": 1,
+      "cooldown_not_before_utc": "2026-10-22T03:08:43.573062+00:00",
+      "cooldown_retry_tool_transparent_background": true,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible"
     }
   ]
 }
