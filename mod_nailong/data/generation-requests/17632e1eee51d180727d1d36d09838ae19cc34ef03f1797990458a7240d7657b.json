@@ -96,6 +96,61 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 0c629d99-0151-4ecb-8434-aed56a5ee709.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-21T23:50:04.258159+00:00"
+    },
+    {
+      "number": 3,
+      "status": "prepared",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image 1 is the exact unchanged full-resolution returned yellow mascot portrait EDIT TARGET. Image 2 is the exact original game portrait and sole authority for the background and composition. Image 3 is the user mascot reference.\nRequired actual art correction: RESTORE THE COMPLETE ORIGINAL PAINTED BACKDROP behind the mascot over the entire original rectangular canvas. This target incorrectly removes that required backdrop into a transparent figure cutout. Image 2 has a near-opaque cream/beige/grey painted background everywhere; retain its exact visible colour, texture, vignette, lighting and shadow. Return an opaque full rectangular portrait with that original backdrop; no figure cutout, blank white canvas, new studio setting, frame or note. Preserve the existing figure scale and crop except for the independently observed source-specific corrections explicitly listed below.\nPreserve every unrelated source-visible feature: original hairstyle/baldness, eyebrows and actual facial-hair state/extent/colour; original cap, crown, helmet, glasses or other headgear/accessory; exact garment/uniform design and fastening; source decoration shapes, visible number and arrangement; pose, gaze, expression, lighting and crop. Do not infer symbols or clothes from identity or filename. Maintain the recognizable near-round yellow mascot head with green-ringed eyes and small source-shaped mouth, a curved chin and short broad fitted neck at the existing garment. No long yellow stalk, pinched/floating collar, cream neck bib, new beard or medal. Keep the target raw-HD resolution, detail and aspect ratio. One independent exact-source background correction. No readable new text, watermark, comparison panel or extra figure.\nOutput background: this exact original has a COMPLETE near-opaque canvas, with every source alpha value at least 249/255. Its existing backdrop is required image content. Preserve the original backdrop color, texture, illumination and full rectangular extent behind the mascot. Return an opaque full-canvas portrait, not a transparent figure cutout. Do not remove or replace the original background. Keep the source clothing, hair, facial hair, accessories, pose and crop unchanged apart from the requested mascot conversion or targeted art repair.",
+      "prompt_file": "mod_nailong/assets/prompts/17632e1eee51d180727d1d36d09838ae19cc34ef03f1797990458a7240d7657b-003.txt",
+      "prompt_sha256": "d1193346716639c39705b1213d409b11d6bf227e6deb289cf788ae7b3aa4e2b9",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/65aa8f4672b2b80ad654b4df2c961abf1f0a62414979cea80c83ff596822944c.png",
+          "sha256": "65aa8f4672b2b80ad654b4df2c961abf1f0a62414979cea80c83ff596822944c",
+          "derived_game_image_sha256": "4484f2587d927471bb7fb0a4f0f9de985135202e5763be425a4f92ce76d8964e"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "17632e1eee51d180727d1d36d09838ae19cc34ef03f1797990458a7240d7657b",
+          "converted_png_sha256": "ebc01edb7f57cdd00849a6039deefead9cad1c5ab675ef851bcf5616f051b508"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-23T08:55:10.700941+00:00",
+      "original_alpha_extrema": [
+        253,
+        255
+      ],
+      "transparent_background": false,
+      "alpha_prompt_policy": "source-near-opaque-backdrop-v1",
+      "retry_of_attempt": 2,
+      "retry_root_attempt": 2,
+      "cooldown_retry_number": 1,
+      "cooldown_not_before_utc": "2026-10-22T07:50:04.418638+00:00",
+      "cooldown_retry_tool_transparent_background": false,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-23T08:58:00.922844+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "377119fac8c15c1f3f088a183f786bdc04b687391ef3df1ebf0943386de85603",
+        "prompt_sha256": "d1193346716639c39705b1213d409b11d6bf227e6deb289cf788ae7b3aa4e2b9",
+        "input_sha256": [
+          "65aa8f4672b2b80ad654b4df2c961abf1f0a62414979cea80c83ff596822944c",
+          "ebc01edb7f57cdd00849a6039deefead9cad1c5ab675ef851bcf5616f051b508",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": false
+      }
     }
   ]
 }
