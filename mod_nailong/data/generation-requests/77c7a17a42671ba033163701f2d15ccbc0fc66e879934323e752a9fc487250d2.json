@@ -92,6 +92,43 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID b922b63d-76af-4dca-bca3-e956663c2f28.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-19T15:08:24.087659+00:00"
+    },
+    {
+      "number": 3,
+      "status": "prepared",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image 1 is the exact fullsize yellow mascot EDIT TARGET; image 2 is the exact original portrait and authority for the requested correction; image 3 is the user mascot reference. Correct ONLY transparency inside the original dark-brown COAT. The current coat RGB is already the right plain dark cloth, but its interior alpha is wrongly semi-transparent, creating pale patches when placed on a light background. Restore all coat interior, lapels and shoulders to fully OPAQUE alpha 255, matching the exact original plain dark-brown fabric. Do not add fur or change clothing color/texture. Preserve the white shirt, dark tie and existing fitted collar; retain original exterior silhouette transparency only at its real outer edge. Preserve the original fullsize resolution, green-ringed eyes, yellow round mascot head and short broad neck, source hairstyle and clean-shaven face, original head angle, gaze, clothes, lighting and crop. Keep original opaque clothing and subject interiors fully opaque (alpha 255), and genuine source outer transparency only outside the actual silhouette. No new symbols, props, hair, clothes, text or comparison panel. No other changes.\nOutput alpha: preserve genuine transparent RGBA outside the original asset's outer silhouette. Retain all original opaque content, including any existing background or dark vignette that is part of this source; do not erase it into alpha holes. Where the original exterior is transparent, do not invent a new solid canvas, halo or studio backdrop. Retain source clothing, hair, headgear, lighting and portrait crop at full generated resolution. All originally OPAQUE subject surfaces must remain FULLY OPAQUE (alpha 255): yellow head/body, hair, beard, dark or black clothing, coat lapels, collar, tie, buttons and decorations. Dark cloth is colored material, not transparent background. Never fade garment interiors into semi-transparent patches, holes, white haze or see-through fabric. Keep any genuine source outer-edge alpha falloff only at that actual exterior boundary; preserve actual source transparency rather than making the subject itself translucent.",
+      "prompt_file": "mod_nailong/assets/prompts/77c7a17a42671ba033163701f2d15ccbc0fc66e879934323e752a9fc487250d2-003.txt",
+      "prompt_sha256": "dc556e96b85ef12d100199f0784a5b307ef3a65533dcc67ac459d176674097c1",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/f4f9d191515e5091043e90e3c46dfc1289a3609e6cfa452b5c08c7cd8cbb47f0.png",
+          "sha256": "f4f9d191515e5091043e90e3c46dfc1289a3609e6cfa452b5c08c7cd8cbb47f0",
+          "derived_game_image_sha256": "a67f4d5b91f5a3d2a49d82bdf6929d8bb87ff0509b606f7869dd2a697d7397a9"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "77c7a17a42671ba033163701f2d15ccbc0fc66e879934323e752a9fc487250d2",
+          "converted_png_sha256": "ac2fd23e0445e38513d7b3a8e38f822fcc33b6977c9759440b7274c5d2641020"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-23T04:02:09.569747+00:00",
+      "alpha_prompt_policy": "source-content-v3-opaque-body",
+      "retry_of_attempt": 2,
+      "retry_root_attempt": 2,
+      "cooldown_retry_number": 1,
+      "cooldown_not_before_utc": "2026-10-19T23:08:24.211297+00:00",
+      "cooldown_retry_tool_transparent_background": true,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible"
     }
   ]
 }
