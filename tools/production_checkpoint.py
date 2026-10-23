@@ -60,6 +60,7 @@ execute(*git,'add','--','tools/production_window_gate.py','tests/test_production
 execute(*git,'add','--','tools/builtin_window_continuation.js')
 execute(*git,'add','--','tools/production_benchmark.py')
 execute(*git,'add','--','tests/test_production_benchmark.py')
+execute(*git,'add','--','tools/prepare_reviewed_art_repairs.py','tools/production_prepare_boundary.py','tests/test_production_prepare_boundary.py')
 message=ROOT/'runtime/production-checkpoint-message.txt'
 message.write_text('Preserve reviewed HIGH portraits and original fullsize PNGs\n\nContinue the full portrait task across storage and validation checkpoints.\nKeep remote original verification bound to immutable Git metadata.\n',encoding='utf-8',newline='\n')
 if execute('git','diff','--cached','--name-only'):

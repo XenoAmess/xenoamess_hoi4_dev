@@ -1,0 +1,58 @@
+"""Consume one SHA-bound art-preparation intent at the sole producer's safe boundary."""
+import json
+import subprocess
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now, write_json
+
+
+def consume(root, expected_machine, runner=None):
+    folder = root / 'runtime/production-queue/preparation'
+    pending = sorted((folder / 'pending').glob('*.json'))
+    if not pending:
+        return {'prepared': False, 'reason': 'no_pending_intent'}
+    for path in (root / 'runtime/production-queue/dispatch').glob('*.json'):
+        if read_json(path).get('status') == 'calling':
+            return {'prepared': False, 'reason': 'actual_call_in_progress'}
+    # Invoked only after the producer's checkpoint barrier and imports have cleared.
+    path = pending[0]
+    intent = read_json(path)
+    script = root / 'tools/prepare_reviewed_art_repairs.py'
+    claimed = folder / 'claimed' / path.name
+    claimed.parent.mkdir(parents=True, exist_ok=True)
+    assert not claimed.exists(), 'Never replay a claimed preparation intent'
+    path.rename(claimed)
+    receipt = {'machine_id': expected_machine, 'intent': intent,
+               'claimed_at_utc': utc_now(), 'scope': 'Local preparation only; no image call or retry claim.'}
+    try:
+        assert intent['machine_id'] == expected_machine
+        assert intent['kind'] == 'reviewed_art_repairs'
+        assert file_sha256(script) == intent['preparer_sha256']
+        assert isinstance(intent['arguments'], list) and all(isinstance(a, str) for a in intent['arguments'])
+        for proof in intent['evidence']:
+            target = (root / proof['path']).resolve()
+            assert target.is_relative_to(root.resolve())
+            assert file_sha256(target) == proof['sha256']
+        if runner is None:
+            result = subprocess.run([sys.executable, str(script), *intent['arguments']], cwd=root,
+                                    capture_output=True, text=True, encoding='utf-8', errors='replace')
+        else:
+            result = runner(intent)
+        receipt.update(exit_code=result.returncode, stdout=result.stdout, stderr=result.stderr)
+        assert result.returncode == 0, 'Preparation failed; preserve claimed intent for reconciliation'
+        jobs = root / intent['expected_jobs_file']
+        assert jobs.resolve().is_relative_to(root.resolve())
+        assert [j['key'] for j in read_json(jobs)] == intent['expected_source_keys']
+        receipt.update(status='prepared', jobs_sha256=file_sha256(jobs), completed_at_utc=utc_now())
+    except Exception as error:
+        receipt.update(status='preparation_requires_reconciliation', error=str(error), completed_at_utc=utc_now())
+    output = root / 'mod_nailong/data/production-preparation-receipts' / path.name
+    assert not output.exists()
+    write_json(output, receipt)
+    return {'prepared': receipt['status'] == 'prepared', 'status': receipt['status'],
+            'receipt': output.relative_to(root).as_posix()}
+
+
+if __name__ == '__main__':
+    print(json.dumps(consume(ROOT, machine_id()), ensure_ascii=True))
