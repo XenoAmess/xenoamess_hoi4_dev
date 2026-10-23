@@ -92,6 +92,56 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 186a99ed-4a21-4eb1-beba-53321a6a3812.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-19T19:36:50.271323+00:00"
+    },
+    {
+      "number": 3,
+      "status": "prepared",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image 1 is the exact fullsize yellow mascot EDIT TARGET. Image 2 is its exact original portrait and the authority for opaque clothing, photo backing and true exterior alpha. Image 3 is the user mascot reference. Correct ONLY the incorrect interior transparency. Restore the FULL originally opaque garment, shoulders, lapels, collar, tie, buttons and decorations to solid opaque alpha 255, continuously to the original crop boundary where the original garment continues. The current soft fade has wrongly erased or made clothing see-through. Do not add fog, fur, white haze, glow, smoke, vignette-shaped clothing fade, or translucent fabric. Preserve the original photographic background and opaque interior where present; retain transparency only at the exact original genuine exterior edge, never through the person or clothing. Keep the actual original fabric colors and texture, original hairstyle, glasses, beard and moustache where present, exact expression and pose. Keep the yellow rounded mascot anatomy, green-ringed eyes, compact round head and short broad neck naturally fitted to the original collar. Do not change already correct RGB materials or invent new accessories, badges, props, hair or text. Preserve the original fullsize resolution and composition. One repaired portrait only, no comparison panel.\nOutput alpha: preserve genuine transparent RGBA outside the original asset's outer silhouette. Retain all original opaque content, including any existing background or dark vignette that is part of this source; do not erase it into alpha holes. Where the original exterior is transparent, do not invent a new solid canvas, halo or studio backdrop. Retain source clothing, hair, headgear, lighting and portrait crop at full generated resolution. All originally OPAQUE subject surfaces must remain FULLY OPAQUE (alpha 255): yellow head/body, hair, beard, dark or black clothing, coat lapels, collar, tie, buttons and decorations. Dark cloth is colored material, not transparent background. Never fade garment interiors into semi-transparent patches, holes, white haze or see-through fabric. Keep any genuine source outer-edge alpha falloff only at that actual exterior boundary; preserve actual source transparency rather than making the subject itself translucent.",
+      "prompt_file": "mod_nailong/assets/prompts/ec475b51fbc346c05201b78e99c73ed9ccd87eb1631d9f54af9cd03d724cad8d-003.txt",
+      "prompt_sha256": "2e43fb7214c9c0d45e4c95df52e668ba82aff817d30346b7b2d05cab8976397d",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/13c3736619f1cd661326b4a6f8234a2c2073a7c652b871a6e329ad9e073033d8.png",
+          "sha256": "13c3736619f1cd661326b4a6f8234a2c2073a7c652b871a6e329ad9e073033d8",
+          "derived_game_image_sha256": "56a7a56f8b01bb3768f334d57e66863eaa850082b70a849ee4d2cc701f839c27"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "ec475b51fbc346c05201b78e99c73ed9ccd87eb1631d9f54af9cd03d724cad8d",
+          "converted_png_sha256": "4cb481eb97c8420051f072a14d4ba658902211b707e2ea79aae42b53dc809c17"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-23T04:51:16.509398+00:00",
+      "alpha_prompt_policy": "source-content-v3-opaque-body",
+      "retry_of_attempt": 2,
+      "retry_root_attempt": 2,
+      "cooldown_retry_number": 1,
+      "cooldown_not_before_utc": "2026-10-20T03:36:50.408790+00:00",
+      "cooldown_retry_tool_transparent_background": true,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-23T05:08:04.445786+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "c0c973994eb15ead93ee24e8d9650dcab0bb97613825463ca25591806baeb5e9",
+        "prompt_sha256": "2e43fb7214c9c0d45e4c95df52e668ba82aff817d30346b7b2d05cab8976397d",
+        "input_sha256": [
+          "13c3736619f1cd661326b4a6f8234a2c2073a7c652b871a6e329ad9e073033d8",
+          "4cb481eb97c8420051f072a14d4ba658902211b707e2ea79aae42b53dc809c17",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": true
+      }
     }
   ]
 }
