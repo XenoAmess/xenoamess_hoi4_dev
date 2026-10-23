@@ -3,7 +3,8 @@
 The producer records returned paths but defers imports/failures until this exits.
 Only this checkpoint writes canonical metadata during that interval.
 """
-import sys,subprocess,json
+import sys,subprocess,json,time
+from contextlib import contextmanager
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,file_sha256,utc_now,machine_id
@@ -13,10 +14,23 @@ from mod_nailong.tools.production_priority import build
 from mod_nailong.tools.art_contract import portrait_ready
 from mod_nailong.tools.production_queue import attempt_for_snapshot
 
+def trace(phase,**details):
+ event={'machine_id':machine_id(),'observed_at_utc':utc_now(),'batch':batch,'phase':phase,**details}
+ with (ROOT/f'runtime/checkpoint-phases-{batch}.jsonl').open('a',encoding='utf-8',newline='\n') as stream:stream.write(json.dumps(event,ensure_ascii=True)+'\n')
+
+@contextmanager
+def timed(phase,**details):
+ started=time.perf_counter();trace(phase+'_started',**details)
+ try:yield
+ except BaseException as error:
+  trace(phase+'_failed',elapsed_seconds=round(time.perf_counter()-started,3),error=str(error),**details);raise
+ else:trace(phase+'_completed',elapsed_seconds=round(time.perf_counter()-started,3),**details)
+
 def execute(*args,timeout=180):
- p=subprocess.run(list(args),cwd=ROOT,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=timeout)
- if p.returncode:raise RuntimeError(p.stdout+'\n'+p.stderr)
- return p.stdout.strip()
+ with timed('command',command=list(args)):
+  p=subprocess.run(list(args),cwd=ROOT,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=timeout)
+  if p.returncode:raise RuntimeError(p.stdout+'\n'+p.stderr)
+  return p.stdout.strip()
 
 batch=sys.argv[1];completed=sys.argv[2:]
 receipt={'machine_id':machine_id(),'started_at_utc':utc_now(),'inflight_batch':batch,'imports_deferred_by_producer':True,'completed_batches':completed}
@@ -37,7 +51,9 @@ for name in completed:
   a=attempt_for_snapshot(job['key'],actual);row=rows.get(job['key'],{})
   requests.append({'source_sha256':job['key'],'source':job['source'],'attempt_number':a['number'],'status':a['status'],'call_dispatched':True,'prompt_sha256':a['prompt_sha256'],'fullsize_sha256':a.get('fullsize_sha256'),'output_sha256':a.get('output_sha256'),'this_output_qualified':bool(a.get('output_sha256')==row.get('image_sha256') and portrait_ready(row)),'current_source_ready':portrait_ready(row) if row else False,'actual_request_verification':a['actual_request_verification']})
  write_json(ROOT/f'mod_nailong/data/production-batches/{name}.json',{'machine_id':machine_id(),'observed_at_utc':utc_now(),'actual_calls':sum(a['call_dispatched'] for a in requests),'deferred_without_call':sum(not a['call_dispatched'] for a in requests),'returned_images':sum(bool(a['fullsize_sha256']) for a in requests),'failed_calls':sum(a['status']=='failed' for a in requests),'qualified_outputs_from_this_batch':sum(a['this_output_qualified'] for a in requests),'requests':requests,'retry_policy_path':'mod_nailong/data/image-retry-policy.json','retry_policy_sha256':file_sha256(ROOT/'mod_nailong/data/image-retry-policy.json'),'scope':'Exact actual-payload proof binds each batch attempt. Failed/refused/rejected outputs do not count as qualified. New sources remain HIGH-first. Each eligible retry retains exact prompt/input bytes and order, uses one builtin lane, observes at least eight hours after the latest refusal and consumes the cumulative source quota in the bound policy without resetting previous use.'})
-sync_git();coverage(True);build()
+with timed('archive_sync'):sync_git()
+with timed('coverage'):coverage(True)
+with timed('priority'):build()
 print(execute(sys.executable,'mod_nailong/tools/audit_art.py',timeout=900),flush=True)
 print(execute(sys.executable,'mod_nailong/tools/build_release.py','--preview','--check','--validation-sample','4'),flush=True)
 git=['git','-c','gc.auto=0','-c','maintenance.auto=false']
@@ -54,6 +70,7 @@ execute(*git,'add','--','README.md','tools/production_checkpoint.py','tools/prod
 execute(*git,'add','--','workshop/products.json')
 execute(*git,'add','--','tools/production_plan_state.py','tests/test_production_plan_state.py')
 execute(*git,'add','--','tests/test_master_remote_api.py')
+execute(*git,'add','--','tests/test_master_remote_reuse.py')
 execute(*git,'add','--','tools/continuous_builtin_producer.js')
 execute(*git,'add','--','tools/bounded_builtin_window.js','tools/production_gap_audit.py','tests/test_bounded_builtin_window.cjs')
 execute(*git,'add','--','tools/production_window_gate.py','tests/test_production_window_gate.py')

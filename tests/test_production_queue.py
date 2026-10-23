@@ -100,6 +100,28 @@ class ProductionQueueTests(unittest.TestCase):
             second.write_bytes(b'changed request bytes')
             with self.assertRaisesRegex(ValueError,'snapshot bytes changed'):queue.attempt_for_snapshot(job['key'],second)
 
+    def test_independent_manual_approvals_share_one_update_and_preserve_other_imports(self):
+        with tempfile.TemporaryDirectory() as temp,ExitStack() as stack:
+            root=Path(temp);mod,image,digest,evidence,job=self.fixture(root,stack)
+            keys=['a'*64,'b'*64]
+            for key in keys:queue.stage_review(key,digest,'approved',evidence)
+            rows=read_json(mod/'data/generated.json');rows['portraits']['later-import']={'sentinel':'preserved'};write_json(mod/'data/generated.json',rows)
+            with patch.object(portraits,'approve',wraps=portraits.approve) as approval:
+                self.assertEqual(queue.apply_reviews(),{'applied':2,'stale_not_applied':0})
+                approval.assert_called_once_with(keys)
+            result=read_json(mod/'data/generated.json')['portraits']
+            self.assertEqual(result['later-import'],{'sentinel':'preserved'})
+            self.assertTrue(all(result[key]['review']=='approved' for key in keys))
+
+    def test_failed_group_update_does_not_consume_queued_decisions(self):
+        with tempfile.TemporaryDirectory() as temp,ExitStack() as stack:
+            root=Path(temp);mod,image,digest,evidence,job=self.fixture(root,stack)
+            for key in ['a'*64,'b'*64]:queue.stage_review(key,digest,'approved',evidence)
+            with patch.object(portraits,'approve',side_effect=OSError('fixture write failure')):
+                with self.assertRaises(OSError):queue.apply_reviews()
+            self.assertEqual(len(list((queue.control()/'reviews/pending').glob('*.json'))),2)
+            self.assertEqual(len(list((queue.control()/'reviews/completed').glob('*.json'))),0)
+
     def hd_evidence(self,root,mod,evidence,key):
         master=root/'master.png';Image.new('RGBA',(20,30),'blue').save(master);digest=file_sha256(master)
         rows=read_json(mod/'data/generated.json');rows['portraits'][key].update(generated_fullsize_image='master.png',generated_fullsize_sha256=digest);write_json(mod/'data/generated.json',rows)
@@ -123,6 +145,18 @@ class ProductionQueueTests(unittest.TestCase):
             queue.stage_review(job['key'],digest,'approved',evidence);Image.new('RGBA',(20,30),'red').save(master)
             self.assertEqual(queue.apply_reviews(),{'applied':0,'stale_not_applied':1})
             self.assertEqual(read_json(mod/'data/generated.json')['portraits'][job['key']]['review'],'pending')
+
+    def test_changed_master_is_excluded_from_other_valid_grouped_approvals(self):
+        with tempfile.TemporaryDirectory() as temp,ExitStack() as stack:
+            root=Path(temp);mod,image,digest,evidence,job=self.fixture(root,stack)
+            master=self.hd_evidence(root,mod,evidence,job['key'])
+            for key in ['a'*64,'b'*64]:queue.stage_review(key,digest,'approved',evidence)
+            Image.new('RGBA',(20,30),'red').save(master)
+            with patch.object(portraits,'approve',wraps=portraits.approve) as approval:
+                self.assertEqual(queue.apply_reviews(),{'applied':1,'stale_not_applied':1})
+                approval.assert_called_once_with(['b'*64])
+            rows=read_json(mod/'data/generated.json')['portraits']
+            self.assertEqual(rows['a'*64]['review'],'pending');self.assertEqual(rows['b'*64]['review'],'approved')
 
 
 if __name__ == '__main__':

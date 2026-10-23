@@ -86,6 +86,9 @@ def verify_remote(commit='HEAD'):
             completed+=1
             if completed%25==0 or completed==index['count']:
                 print(f'Full raw PNG readbacks: {completed}/{index["count"]}',flush=True)
+    # A fully reused commit has no download completion callbacks. Persist its
+    # exact pinned proof too, before the global pointer can move to a newer one.
+    write_json(receipt_path,receipt)
     final={'schema':'naiwa-fullsize-git-checkpoint-v1','machine_id':machine_id(),'observed_at_utc':utc_now(),
            'repository':REPO,'commit':commit,'storage':'ordinary Git PNG files; no LFS or Release attachments',
            'verification':'Remote Git tree blob SHA/size match plus complete anonymous raw PNG download SHA256/size for every output; unchanged blobs may retain their earlier pinned readback commit/time',

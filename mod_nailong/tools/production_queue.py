@@ -126,7 +126,14 @@ def stage_review(key,image_sha,decision,evidence_file,reason=''):
         json.dump(record,stream,ensure_ascii=False,indent=2);stream.write('\n')
     return path
 
-def apply_reviews():
+def _review_matches(row,a,decision):
+    valid=(row.get('image_sha256')==decision['image_sha256'] and a['number']==decision['attempt_number'] and a.get('output_sha256')==decision['image_sha256'] and file_sha256(ROOT/row['image'])==decision['image_sha256'])
+    if valid and decision.get('generated_fullsize_sha256'):
+        fullsize=decision['generated_fullsize_sha256']
+        valid=(row.get('generated_fullsize_sha256')==fullsize and a.get('fullsize_sha256')==fullsize and bool(row.get('generated_fullsize_image')) and file_sha256(ROOT/row['generated_fullsize_image'])==fullsize)
+    return valid
+
+def _apply_reviews_in_order():
     # Only the generation worker calls this between import and the next call.
     pending=control()/'reviews/pending';completed=control()/'reviews/completed';completed.mkdir(parents=True,exist_ok=True)
     applied=stale=0
@@ -135,10 +142,7 @@ def apply_reviews():
             decision=read_json(path);key=decision['source_sha256']
             row=read_json(mod()/'data/generated.json')['portraits'].get(key,{})
             a=journal(key)
-            valid=(row.get('image_sha256')==decision['image_sha256'] and a['number']==decision['attempt_number'] and a.get('output_sha256')==decision['image_sha256'] and file_sha256(ROOT/row['image'])==decision['image_sha256'])
-            if valid and decision.get('generated_fullsize_sha256'):
-                fullsize=decision['generated_fullsize_sha256']
-                valid=(row.get('generated_fullsize_sha256')==fullsize and a.get('fullsize_sha256')==fullsize and bool(row.get('generated_fullsize_image')) and file_sha256(ROOT/row['generated_fullsize_image'])==fullsize)
+            valid=_review_matches(row,a,decision)
             if not valid:
                 decision['application']='stale_not_applied';stale+=1
             else:
@@ -147,6 +151,35 @@ def apply_reviews():
                 elif row.get('review')!='rejected' or row.get('review_reason')!=decision['reason']:
                     portraits.reject([key],decision['reason'])
                 decision['application']='applied';applied+=1
+            decision['applied_or_rejected_at_utc']=utc_now()
+            write_json(completed/path.name,decision);path.unlink()
+    return {'applied':applied,'stale_not_applied':stale}
+
+def apply_reviews():
+    # One executor, between imports/calls. Group independent manual approvals
+    # so coverage/index work is performed once rather than once per portrait.
+    pending=control()/'reviews/pending';completed=control()/'reviews/completed'
+    paths=sorted(pending.glob('*.json'))
+    if not paths:return {'applied':0,'stale_not_applied':0}
+    decisions=[read_json(path) for path in paths]
+    keys=[d['source_sha256'] for d in decisions]
+    if len(set(keys))!=len(keys):
+        return _apply_reviews_in_order()  # Preserve ordering across source versions.
+    applied=stale=0;completed.mkdir(parents=True,exist_ok=True)
+    with short_guard('review-apply'):
+        rows=read_json(mod()/'data/generated.json')['portraits'];plans=[];approvals=[]
+        for path,decision in zip(paths,decisions,strict=True):
+            key=decision['source_sha256'];row=rows.get(key,{})
+            valid=_review_matches(row,journal(key),decision)
+            plans.append((path,decision,row,valid))
+            if valid and decision['decision']=='approved' and row.get('review')!='approved':approvals.append(key)
+        if approvals:portraits.approve(approvals)
+        for path,decision,row,valid in plans:
+            if valid:
+                if decision['decision']=='rejected' and (row.get('review')!='rejected' or row.get('review_reason')!=decision['reason']):
+                    portraits.reject([decision['source_sha256']],decision['reason'])
+                decision['application']='applied';applied+=1
+            else:decision['application']='stale_not_applied';stale+=1
             decision['applied_or_rejected_at_utc']=utc_now()
             write_json(completed/path.name,decision);path.unlink()
     return {'applied':applied,'stale_not_applied':stale}

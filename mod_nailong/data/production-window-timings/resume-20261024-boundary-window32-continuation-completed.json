@@ -1,0 +1,56 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window32",
+  "after_window": "resume-20261024-boundary-window31",
+  "created_at_utc": "2026-10-23T22:30:59.950Z",
+  "prepare_commands": [
+    "python tools\\prepare_reviewed_art_repairs.py resume-20261024-body-note3 resumed-20261024-small-finer-v59-review.json,resumed-20261024-original-card-note3-returned-review.json 3 277 runtime\\after-cohort29-empty-canvas-map-20261024.json runtime\\body-note3-keys-20261024.json"
+  ],
+  "events": [
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T22:31:00.041Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window31 --wait-seconds 900"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T22:31:01.063Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window31 --wait-seconds 900",
+      "exit_code": 0
+    },
+    {
+      "phase": "durable_gate_released",
+      "observed_at_utc": "2026-10-23T22:31:01.042065+00:00",
+      "ready": true,
+      "window_id": "resume-20261024-boundary-window31",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "receipt": "mod_nailong/data/production-window-timings/resume-20261024-boundary-window31-completed.json"
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T22:31:01.063Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T22:31:11.585Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-23T22:31:11.585Z",
+      "command": "python tools\\prepare_reviewed_art_repairs.py resume-20261024-body-note3 resumed-20261024-small-finer-v59-review.json,resumed-20261024-original-card-note3-returned-review.json 3 277 runtime\\after-cohort29-empty-canvas-map-20261024.json runtime\\body-note3-keys-20261024.json"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-23T22:31:14.433Z",
+      "command": "python tools\\prepare_reviewed_art_repairs.py resume-20261024-body-note3 resumed-20261024-small-finer-v59-review.json,resumed-20261024-original-card-note3-returned-review.json 3 277 runtime\\after-cohort29-empty-canvas-map-20261024.json runtime\\body-note3-keys-20261024.json",
+      "exit_code": 0
+    }
+  ],
+  "scope": "Disk receipt gates the next sole executor; cross-exec in-memory store values are not used to release a handover. Preparation occurs only after the exact preceding window has completed imports.",
+  "status": "completed",
+  "prepared_at_utc": "2026-10-23T22:31:14.433Z",
+  "completed_at_utc": "2026-10-23T22:33:47.972Z"
+}
