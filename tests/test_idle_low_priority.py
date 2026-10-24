@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 from tools.common import read_json, write_json, file_sha256
-from tools.production_priority_gate import low_enabled, append_prepared_windows, POLICY
+from tools.production_priority_gate import low_enabled, append_prepared_windows, service_retry_allowed, POLICY
 from tools.rolling_production_queue import prioritize_high
 from mod_nailong.tools.production_priority import gate_lower_priority
 
@@ -23,6 +23,17 @@ class IdleLowPriorityTests(unittest.TestCase):
         self.assertFalse(low_enabled(self.root))
         write_json(self.policy, {'id': 'unknown', 'user_authorization_quote': 'fixture'})
         with self.assertRaises(AssertionError): low_enabled(self.root)
+
+    def test_high_refusal_skip_preserves_low_retries_and_priority_inventory(self):
+        self.enable()
+        self.assertTrue(service_retry_allowed(self.root, self.priority['h']))
+        body = read_json(self.policy)
+        body['skip_service_refused_high_retries'] = True
+        write_json(self.policy, body)
+        self.assertFalse(service_retry_allowed(self.root, self.priority['h']))
+        self.assertTrue(service_retry_allowed(self.root, self.priority['l']))
+        self.assertEqual(read_json(self.root / 'mod_nailong/data/production-priority.json')['sources'], self.priority)
+        self.assertTrue(low_enabled(self.root))
 
     def test_catalog_keeps_incomplete_high_and_requires_idle_authorization(self):
         low = [{'source_sha256': 'l'}]

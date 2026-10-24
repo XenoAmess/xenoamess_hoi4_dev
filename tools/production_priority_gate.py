@@ -20,6 +20,16 @@ def tier_allowed(root, entry):
     return entry['high_priority'] or low_enabled(root)
 
 
+def service_retry_allowed(root, entry):
+    """The user's HIGH refusal skip affects retries, not coverage or art approval."""
+    path = root / 'mod_nailong/data/production-scheduling-policy.json'
+    if not path.exists():
+        return True
+    body = read_json(path)
+    assert body['id'] == POLICY and body['user_authorization_quote']
+    return not (entry['high_priority'] and body.get('skip_service_refused_high_retries', False))
+
+
 def high_in_item(root, item, priority):
     return any(priority[j['key']]['high_priority'] for j in read_json(root / item['jobs']))
 

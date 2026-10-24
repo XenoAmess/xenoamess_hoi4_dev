@@ -4,6 +4,8 @@
 
 继承根目录 `AGENTS.md`。本目录仅服务“钢奶龙心”头像模组，不混入其他产品。正式名称遵照用户 2026-10-20 的更正，目录 `mod_nailong` 保留。
 
+- 2026-10-25 用户恢复 LOW 生产，要求跳过 HIGH 中被服务拒绝生成的来源；这些 HIGH 不再由本 Codex 执行链自动服务重试，未完成分母、拒绝记录和累计消耗仍保留。继续使用 Codex 内置图片工具，不使用供其他 AI 同事使用的 EvoLink skill。策略见 `data/production-scheduling-policy.json` 的 `skip_service_refused_high_retries`。
+
 - 2026-10-24 最新用户授权：没有可立即合规调用的 HIGH 时开始 LOW，HIGH 恢复可用后优先。LOW 同样完整审原图、冻结实际请求、逐图审查并保存原始 PNG；每个 LOW 窗口一张，单路边界重查 HIGH。此条覆盖旧的全部 HIGH 完成门禁，未完成 HIGH 仍保留在分母和进度中。策略见 `data/production-scheduling-policy.json`。
 
 - 2026-10-24 用户授权当前已耗尽的31个HIGH各再试一次；固定来源清单与完整授权见 `data/extra-retry-rounds/20261024-exhausted-high-31-one-more.json`。只对这些来源追加一次累计额度（8→9），其他来源仍为8；不清零、不扩展未来来源、不改变8小时冷却或冻结请求。文末默认八次规则须结合这项明确例外执行。

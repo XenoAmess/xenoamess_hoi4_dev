@@ -7,7 +7,7 @@ from tools.common import ROOT,read_json,write_json,machine_id,utc_now,file_sha25
 from mod_nailong.tools.image_retries import policy,sync
 from tools.retry_actual_proof import load_actual_request
 from mod_nailong.tools.retry_limits import retry_limit
-from tools.production_priority_gate import low_enabled
+from tools.production_priority_gate import low_enabled,service_retry_allowed
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--inspect-only',action='store_true')
 parser.add_argument('--high-only',action='store_true')
@@ -25,6 +25,7 @@ settings=policy()
 now=datetime.now(timezone.utc);ready=[];unavailable=[]
 for key,c in pool['requests'].items():
  q=queue[key]
+ if not service_retry_allowed(ROOT,priority[key]):continue
  if q['retries_used']>=retry_limit(settings,key) or q['state']!='cooling_down' or (not priority[key]['high_priority'] and (args.high_only or not low_enabled(ROOT))) or datetime.fromisoformat(q['not_before_utc'])>now:continue
  try:
   a=read_json(ROOT/f'mod_nailong/data/generation-requests/{key}.json')['attempts'][-1]
