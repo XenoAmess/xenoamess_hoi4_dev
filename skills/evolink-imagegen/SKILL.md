@@ -5,14 +5,14 @@ description: 通过 EvoLink API 生成原生透明 PNG、查询异步任务或�
 
 # EvoLink 图片生成与恢复
 
-使用随 skill 提供的纯 Python 标准库客户端 [scripts/evolink_image.py](scripts/evolink_image.py)。它支持 `gpt-image-2`、`gpt-image-2.5-sunburst` 原生透明路线和 `gemini-nano-banana-2.1` 官方路线，一次请求一张，无需安装 SDK。参数和状态见 [references/protocol.md](references/protocol.md)，历史验证与代码来源见 [references/provenance.md](references/provenance.md)。
+使用随 skill 提供的纯 Python 标准库客户端 [scripts/evolink_image.py](scripts/evolink_image.py)。它支持 `gpt-image-2`、`gpt-image-2.5-sunburst`、`gpt-image-2.5-flare` 原生透明路线和 `gemini-nano-banana-2.1` 官方路线，一次请求一张，无需安装 SDK。参数和状态见 [references/protocol.md](references/protocol.md)，历史验证与代码来源见 [references/provenance.md](references/provenance.md)。
 
 ## 执行前
 
 - 沿用用户已指定的供应商、任务范围、输出目录和项目规则。已有调用授权无需重复确认；创建 skill、读代码和预检本身不代表已获授权付费生成。HOI4 默认内置图片渠道的设置不因 skill 存在而改变。
 - 区分新任务、已有 task ID 的取回和美术返修。
 - 准备完整 UTF-8 prompt，明确输入图角色，实际查看需要参考的图片。现成客户端只接收公开 HTTPS 参考 URL；优先固定 commit 的 GitHub raw URL。仓库公开不代表本地参考图已公开；不自行上传本地或原版游戏素材，获授权的素材传输另行处理。
-- 默认 `model=gpt-image-2`，使用 `background=transparent`、`n=1`；`gpt-image-2.5-sunburst` 共用这些 GPT 参数。透明度由参数控制，prompt 描述主体、构图、风格和不变量，避免要求绘制棋盘格或绿幕。`--model gemini-nano-banana-2.1` 使用 Nano Banana 2.1 官方参数，`--resolution` 映射为该模型的 `quality=1K/2K/4K`，不发送 GPT 专属参数。其他模型、非透明输出或新参数先查所选路线当前官方文档，不冒用历史验证。
+- 默认 `model=gpt-image-2`，使用 `background=transparent`、`n=1`；`gpt-image-2.5-sunburst`、`gpt-image-2.5-flare` 共用这些 GPT 参数。透明度由参数控制，prompt 描述主体、构图、风格和不变量，避免要求绘制棋盘格或绿幕。`--model gemini-nano-banana-2.1` 使用 Nano Banana 2.1 官方参数，`--resolution` 映射为该模型的 `quality=1K/2K/4K`，不发送 GPT 专属参数。其他模型、非透明输出或新参数先查所选路线当前官方文档，不冒用历史验证。
 - 密钥从 `EVOLINK_API_KEY` 读取：先当前进程，再 Windows 用户级环境；交互终端可隐藏输入。密钥不进对话、命令行、文件或 Git。非交互环境缺密钥时报告配置缺口，不等待隐藏输入，不打印环境变量值。
 
 ## 新建一张

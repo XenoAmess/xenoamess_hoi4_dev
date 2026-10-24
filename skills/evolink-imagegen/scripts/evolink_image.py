@@ -4,7 +4,7 @@
 # See ../references/provenance.md and ../LICENSE for source and modifications.
 """Generate one EvoLink image asset without persisting the API key.
 
-Implements GPT Image 2, GPT Image 2.5 Sunburst, and Nano Banana 2.1 routes
+Implements GPT Image 2, GPT Image 2.5, and Nano Banana 2.1 routes
 and verifies PNG bytes. See the references for the pinned upstream source and
 route scope; verify current provider documentation before adding parameters.
 """
@@ -38,7 +38,7 @@ def parse_args() -> argparse.Namespace:
         description="Generate and download one PNG via EvoLink."
     )
     parser.add_argument("--prompt-file", type=Path)
-    parser.add_argument("--model", choices=("gpt-image-2", "gpt-image-2.5-sunburst", "gemini-nano-banana-2.1"), default="gpt-image-2")
+    parser.add_argument("--model", choices=("gpt-image-2", "gpt-image-2.5-sunburst", "gpt-image-2.5-flare", "gemini-nano-banana-2.1"), default="gpt-image-2")
     parser.add_argument("--dry-run", action="store_true", help="Validate a new request locally without credentials, writes or network calls.")
     parser.add_argument(
         "--output",
@@ -179,7 +179,7 @@ def require_resume_record(output: Path, task_id: str) -> None:
     if request_record.get("endpoint") != GENERATIONS_URL:
         raise RuntimeError(f"Archived request record has invalid 'endpoint': {request_path}")
     model = request_record.get("model")
-    if model in ("gpt-image-2", "gpt-image-2.5-sunburst"):
+    if model in ("gpt-image-2", "gpt-image-2.5-sunburst", "gpt-image-2.5-flare"):
         expected = {"background": "transparent", "n": 1}
         required_fields = ("size", "resolution", "quality", "image_urls")
     elif model == "gemini-nano-banana-2.1":
@@ -270,7 +270,7 @@ def build_request(args: argparse.Namespace) -> tuple[str, dict[str, Any]]:
         "model": args.model, "prompt": prompt, "size": args.size,
         "image_urls": args.image_url,
     }
-    if args.model in ("gpt-image-2", "gpt-image-2.5-sunburst"):
+    if args.model in ("gpt-image-2", "gpt-image-2.5-sunburst", "gpt-image-2.5-flare"):
         payload.update({
             "resolution": args.resolution, "quality": args.quality,
             "background": "transparent", "n": 1,

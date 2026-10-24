@@ -74,10 +74,12 @@ class EvoLinkSkillTests(unittest.TestCase):
         result, _, api, _ = self.run_client(['--task-id', 'fixture-task'], http, lambda request, timeout: Response(self.raw))
         self.assertEqual(result, 0); self.assertEqual(api.call_count, 1)
 
-    def test_gpt_image_25_sunburst_uses_native_transparent_fields(self):
-        args = type('Args', (), {'prompt_file': self.prompt, 'model': 'gpt-image-2.5-sunburst', 'size': '3:4', 'resolution': '2K', 'quality': 'high', 'image_url': ['https://example.org/source.png']})()
-        prompt, payload = client.build_request(args)
-        self.assertEqual(payload, {'model': 'gpt-image-2.5-sunburst', 'prompt': prompt, 'size': '3:4', 'image_urls': ['https://example.org/source.png'], 'resolution': '2K', 'quality': 'high', 'background': 'transparent', 'n': 1})
+    def test_gpt_image_25_models_use_native_transparent_fields(self):
+        for model in ('gpt-image-2.5-sunburst', 'gpt-image-2.5-flare'):
+            with self.subTest(model=model):
+                args = type('Args', (), {'prompt_file': self.prompt, 'model': model, 'size': '3:4', 'resolution': '2K', 'quality': 'high', 'image_url': ['https://example.org/source.png']})()
+                prompt, payload = client.build_request(args)
+                self.assertEqual(payload, {'model': model, 'prompt': prompt, 'size': '3:4', 'image_urls': ['https://example.org/source.png'], 'resolution': '2K', 'quality': 'high', 'background': 'transparent', 'n': 1})
 
     def test_nano_banana_uses_documented_request_fields(self):
         args = type('Args', (), {'prompt_file': self.prompt, 'model': 'gemini-nano-banana-2.1', 'size': '3:4', 'resolution': '2K', 'quality': 'high', 'image_url': ['https://example.org/source.png']})()
