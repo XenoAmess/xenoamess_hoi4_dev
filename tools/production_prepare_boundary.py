@@ -1,4 +1,5 @@
 """Consume one SHA-bound art-preparation intent at the sole producer's safe boundary."""
+import argparse
 import json
 import subprocess
 import sys
@@ -54,5 +55,26 @@ def consume(root, expected_machine, runner=None):
             'receipt': output.relative_to(root).as_posix()}
 
 
+def run_boundary(root, expected_machine, *, apply_reviews=None, runner=None):
+    """Apply staged reviews, then consume an intent in one sole-writer process."""
+    if apply_reviews is None:
+        return consume(root, expected_machine, runner)
+    for path in (root / 'runtime/production-queue/dispatch').glob('*.json'):
+        if read_json(path).get('status') == 'calling':
+            return {'prepared': False, 'reason': 'actual_call_in_progress',
+                    'reviews_applied': False}
+    review_result = apply_reviews()
+    result = consume(root, expected_machine, runner)
+    result['review_application'] = review_result
+    return result
+
+
 if __name__ == '__main__':
-    print(json.dumps(consume(ROOT, machine_id()), ensure_ascii=True))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--apply-reviews', action='store_true')
+    args = parser.parse_args()
+    applier = None
+    if args.apply_reviews:
+        from mod_nailong.tools.production_queue import apply_reviews
+        applier = apply_reviews
+    print(json.dumps(run_boundary(ROOT, machine_id(), apply_reviews=applier), ensure_ascii=True))

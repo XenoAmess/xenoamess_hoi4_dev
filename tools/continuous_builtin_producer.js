@@ -13,9 +13,8 @@ async function produce(jobFile,batch,checkpointCommand="",options={}) {
    else await run("python mod_nailong\\tools\\generation_requests.py finish --key "+item.key+" --image "+item.path);
    pending.shift();
   }
-  await run("python mod_nailong\\tools\\production_queue.py apply-reviews");
   // Only this executor mutates canonical requests, after checkpoint/import barriers.
-  const preparation=JSON.parse((await run("python tools\\production_prepare_boundary.py",1600)).output);
+  const preparation=JSON.parse((await run("python tools\\production_prepare_boundary.py --apply-reviews",1600)).output);
   if(preparation.status==="preparation_requires_reconciliation")notify(batch+": future preparation stopped for reconciliation; current prepared originals continue");
   if(checkpointResult?.error&&!checkpointFailureRecorded){
    const failure={machine_id:"bf-202609141645-5434332d4d",observed_at_utc:new Date().toISOString(),batch,jobs_file:jobFile,error:String(checkpointResult.error),status:"checkpoint_requires_reconciliation_unrelated_generation_continues",scope:"Checkpoint subprocess has exited. Actual returns/errors imported by the sole executor. No successful validation,commit,push or readback claimed for the failed checkpoint. Future checkpoint must reconcile and validate preserved task files;no image request replay or retry."};

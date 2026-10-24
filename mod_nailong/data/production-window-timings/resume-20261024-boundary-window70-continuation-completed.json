@@ -1,0 +1,56 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window70",
+  "after_window": "resume-20261024-boundary-window69",
+  "created_at_utc": "2026-10-24T04:29:01.923Z",
+  "prepare_commands": [
+    "python runtime\\prepare-fresh-high8-20261023.py revived003 resume-20261024-fresh-recovered310 310"
+  ],
+  "events": [
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T04:29:39.055Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window69 --wait-seconds 900"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T04:35:30.670Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window69 --wait-seconds 900",
+      "exit_code": 0
+    },
+    {
+      "phase": "durable_gate_released",
+      "observed_at_utc": "2026-10-24T04:35:30.653893+00:00",
+      "ready": true,
+      "window_id": "resume-20261024-boundary-window69",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "receipt": "mod_nailong/data/production-window-timings/resume-20261024-boundary-window69-completed.json"
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T04:35:30.670Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T04:35:30.890Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T04:35:30.890Z",
+      "command": "python runtime\\prepare-fresh-high8-20261023.py revived003 resume-20261024-fresh-recovered310 310"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T04:35:35.713Z",
+      "command": "python runtime\\prepare-fresh-high8-20261023.py revived003 resume-20261024-fresh-recovered310 310",
+      "exit_code": 0
+    }
+  ],
+  "scope": "Disk receipt gates the next sole executor; cross-exec in-memory store values are not used to release a handover. Preparation occurs only after the exact preceding window has completed imports.",
+  "status": "completed",
+  "prepared_at_utc": "2026-10-24T04:35:35.713Z",
+  "completed_at_utc": "2026-10-24T04:39:06.421Z"
+}

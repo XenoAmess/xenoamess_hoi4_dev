@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from tools.common import file_sha256, read_json, write_json
-from tools.production_prepare_boundary import consume
+from tools.production_prepare_boundary import consume, run_boundary
 
 
 class PreparationBoundaryTests(unittest.TestCase):
@@ -31,6 +31,37 @@ class PreparationBoundaryTests(unittest.TestCase):
 
     def test_empty_queue_does_no_work(self):
         self.assertFalse(consume(self.root, 'test')['prepared'])
+
+    def test_combined_boundary_applies_reviews_before_preparation(self):
+        self.queue()
+        order = []
+        def apply():
+            order.append('reviews')
+            return {'applied': 1}
+        def prepare(intent):
+            self.assertEqual(order, ['reviews'])
+            order.append('preparation')
+            return self.good_runner(intent)
+        result = run_boundary(self.root, 'test', apply_reviews=apply, runner=prepare)
+        self.assertEqual(order, ['reviews', 'preparation'])
+        self.assertTrue(result['prepared'])
+        self.assertEqual(result['review_application'], {'applied': 1})
+
+    def test_combined_boundary_never_applies_reviews_during_call(self):
+        self.queue()
+        write_json(self.root / 'runtime/production-queue/dispatch/current.json', {'status': 'calling'})
+        result = run_boundary(self.root, 'test', apply_reviews=lambda: self.fail('active call'),
+                              runner=lambda _: self.fail('active call'))
+        self.assertFalse(result['reviews_applied'])
+        self.assertTrue(self.pending.exists())
+
+    def test_failed_review_application_does_not_claim_preparation(self):
+        self.queue()
+        def fail():
+            raise ValueError('keep staged review for reconciliation')
+        with self.assertRaisesRegex(ValueError, 'keep staged review'):
+            run_boundary(self.root, 'test', apply_reviews=fail, runner=self.good_runner)
+        self.assertTrue(self.pending.exists())
 
     def test_active_actual_call_blocks_preparation_without_claim(self):
         self.queue()
