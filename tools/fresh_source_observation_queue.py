@@ -1,11 +1,12 @@
 """Reserve allowed unmade originals, HIGH first, for the existing two slots."""
-import argparse,json,os,re,sys,uuid
+import argparse,json,os,re,sys,uuid,io,zipfile
 from datetime import datetime,timezone
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now
 from tools.portrait_dispatch_guard import same_service_family
 from tools.production_priority_gate import low_enabled
+from PIL import Image
 
 def candidates(root,high_only=False):
  rows=read_json(root/'mod_nailong/data/generated.json')['portraits']
@@ -21,18 +22,36 @@ def candidates(root,high_only=False):
   if key in rows or key in nonperson or (not priority[key]['high_priority'] and (high_only or not low_enabled(root))) or key in blocked or a['path'].lower() in held:continue
   if any(same_service_family(key,b,priority[key],priority[b]) for b in blocked):continue
   original=root/f'runtime/references/{key}.png'
-  if not original.is_file() or not original.resolve().is_relative_to((root/'runtime/references').resolve()):continue
+  if not original.resolve().is_relative_to((root/'runtime/references').resolve()):continue
+  if not original.is_file() and (not a.get('id') or not (root/'runtime/source-index.json').is_file()):continue
   journal=root/f'mod_nailong/data/generation-requests/{key}.json';history=None
   if journal.exists():
    attempts=read_json(journal)['attempts']
    if not attempts or any(v['status']!='cancelled_before_generation' for v in attempts) or any((root/'runtime/production-queue/dispatch').glob(key+'-*.json')):continue
    history={'journal_sha256':file_sha256(journal)}
-  item={'key':key,'source':a['path'],'original':str(original),'original_png_sha256':file_sha256(original)}
+  item={'key':key,'source':a['path'],'original':str(original),'original_png_sha256':file_sha256(original) if original.is_file() else None}
+  if not original.is_file():item['original_source_asset_id']=a['id']
   if history:item['cancelled_request_history']=history
   out.append(item)
  out.sort(key=lambda item:(not priority[item['key']]['high_priority'],priority[item['key']].get('sort_key',[])))
  high=[item for item in out if priority[item['key']]['high_priority']]
  return high or out
+
+def extract_original(root,item):
+ """Decode one exact installed source; no scaling or artwork modification."""
+ target=Path(item['original'])
+ assert target.resolve().is_relative_to((root/'runtime/references').resolve())
+ if not target.exists():
+  source=read_json(root/'runtime/source-index.json')[item['original_source_asset_id']]
+  if source['member']:
+   with zipfile.ZipFile(source['path']) as archive:raw=archive.read(source['member'])
+  else:raw=Path(source['path']).read_bytes()
+  import hashlib
+  assert hashlib.sha256(raw).hexdigest()==item['key'],'Installed source changed; rescan, never substitute'
+  target.parent.mkdir(parents=True,exist_ok=True)
+  with Image.open(io.BytesIO(raw)) as image:image.convert('RGBA').save(target)
+ item['original_png_sha256']=file_sha256(target)
+ return item
 
 def claim(root,slot):
  assert slot in {'a','b'}
@@ -50,12 +69,25 @@ def claim(root,slot):
   if (root/f'mod_nailong/data/production-fresh-source-observations/{body["tag"]}.json').exists():
    return {'ready':False,'reason':'partial_source_observation_completion_requires_reconciliation','allocation':allocation.relative_to(root).as_posix()}
   return {'ready':True,'kind':'fresh_source_observation','slot':slot,'tag':body['tag'],'resume_existing_observation':True,'allocation':allocation.relative_to(root).as_posix(),'allocation_sha256':file_sha256(allocation),'sources':body['sources'],'config':f'runtime/{body["tag"]}-observations.json'}
+ if low_enabled(root):
+  rows=read_json(root/'mod_nailong/data/generated.json')['portraits']
+  waiting=[(k,r) for k,r in rows.items() if r.get('review') in {'pending','rejected'} and r.get('generated_fullsize_sha256')]
+  if waiting:
+   from tools.portrait_review_queue import reviewed_outputs
+   seen=reviewed_outputs(root)
+   for key,row in waiting:
+    if (key,row['generated_fullsize_sha256']) in seen or not row.get('request_journal'):continue
+    latest=read_json(root/row['request_journal'])['attempts'][-1]
+    if latest.get('fullsize_sha256')==row['generated_fullsize_sha256'] and latest['status'] in {'generated_pending_visual_review','generated_rejected_visual_review'}:
+     return {'ready':False,'reason':'review_current_output_before_more_original_observation','slot':slot}
  selected=[];tag='fresh-observed-'+datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')+'-'+slot+'-'+uuid.uuid4().hex[:8]
  for item in candidates(root):
   path=reserved/(item['key']+'.json')
   try:fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL)
   except FileExistsError:continue
-  with os.fdopen(fd,'w',encoding='utf-8') as stream:json.dump({'machine_id':machine_id(),'slot':slot,'tag':tag,'reserved_at_utc':utc_now(),'source':item},stream,ensure_ascii=True)
+  with os.fdopen(fd,'w',encoding='utf-8') as stream:
+   item=extract_original(root,item)
+   json.dump({'machine_id':machine_id(),'slot':slot,'tag':tag,'reserved_at_utc':utc_now(),'source':item},stream,ensure_ascii=True)
   selected.append(item)
   if len(selected)==4:break
  if not selected:return {'ready':False,'reason':'no_unreserved_allowed_unmade_originals','slot':slot}

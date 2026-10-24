@@ -41,6 +41,31 @@ class FreshObservationTests(unittest.TestCase):
   write_json(self.data/'generated.json',{'portraits':{self.keys[2]:{}}})
   write_json(self.data/'generation-failures.json',{'attempts':[{'source_sha256':self.keys[3],'status':'blocked'}]})
   self.assertEqual({s['key'] for s in queue.candidates(self.root)},set(self.keys[5:]))
+ def test_uncached_original_decodes_exact_source_without_resizing(self):
+  import hashlib
+  from PIL import Image
+  raw=self.root/'native.png';Image.new('RGBA',(7,9),(23,45,67,253)).save(raw)
+  key=hashlib.sha256(raw.read_bytes()).hexdigest();target=self.root/f'runtime/references/{key}.png'
+  write_json(self.root/'runtime/source-index.json',{'fixture':{'path':str(raw),'member':None}})
+  item=queue.extract_original(self.root,{'key':key,'original':str(target),'original_source_asset_id':'fixture'})
+  with Image.open(target) as im:self.assertEqual(im.size,(7,9));self.assertEqual(im.getpixel((2,3)),(23,45,67,253))
+  self.assertEqual(item['original_png_sha256'],file_sha256(target))
+ def test_uncached_changed_source_is_not_extracted_as_old_identity(self):
+  raw=self.root/'changed.bin';raw.write_bytes(b'changed installed source')
+  write_json(self.root/'runtime/source-index.json',{'fixture':{'path':str(raw),'member':None}})
+  target=self.root/f'runtime/references/{"f"*64}.png'
+  with self.assertRaisesRegex(AssertionError,'source changed'):
+   queue.extract_original(self.root,{'key':'f'*64,'original':str(target),'original_source_asset_id':'fixture'})
+  self.assertFalse(target.exists())
+ def test_current_output_feedback_precedes_unbounded_low_source_observation(self):
+  from tools.production_priority_gate import POLICY
+  write_json(self.data/'production-scheduling-policy.json',{'id':POLICY,'user_authorization_quote':'fixture','allow_low_when_no_immediate_high':True})
+  key=self.keys[0];journal=f'mod_nailong/data/generation-requests/{key}.json'
+  write_json(self.root/journal,{'attempts':[{'status':'generated_pending_visual_review','fullsize_sha256':'f'*64}]})
+  write_json(self.data/'generated.json',{'portraits':{key:{'review':'pending','generated_fullsize_sha256':'f'*64,'request_journal':journal}}})
+  with patch('tools.portrait_review_queue.reviewed_outputs',return_value=set()):result=self.claim()
+  self.assertFalse(result['ready']);self.assertEqual(result['reason'],'review_current_output_before_more_original_observation')
+  self.assertFalse((self.root/'runtime/fresh-source-observations/allocations').exists())
  def test_all_cancelled_history_is_allowed_only_without_any_dispatch(self):
   key=self.keys[0];journal=self.data/f'generation-requests/{key}.json';write_json(journal,{'attempts':[{'status':'cancelled_before_generation'}]})
   self.assertEqual(next(s for s in queue.candidates(self.root) if s['key']==key)['cancelled_request_history']['journal_sha256'],file_sha256(journal))
