@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now
 from mod_nailong.tools.image_retries import policy
+from tools.retry_actual_proof import load_actual_request
 
 def entry_digest(entry):
  return hashlib.sha256(json.dumps(entry,sort_keys=True,ensure_ascii=True,separators=(',',':')).encode('ascii')).hexdigest()
@@ -73,10 +74,7 @@ def merge_candidates(source,root=None):
    skipped.append(key);continue
   attempts=read_json(root/f'mod_nailong/data/generation-requests/{key}.json')['attempts'];a=attempts[-1]
   assert a['status']=='failed' and 'moderation_blocked' in a['error'] and a['machine_id']==machine
-  v=a['actual_request_verification'];assert v['actual_recorded_before_call'] and v['machine_id']==machine
-  d=read_json(root/f'runtime/production-queue/dispatch/{key}-{a["number"]:03}.json')
-  snapshot=Path(d['actual_request_snapshot_file']);assert file_sha256(snapshot)==v['actual_request_snapshot_sha256']
-  j=read_json(snapshot)
+  j,v=load_actual_request(root,key,a,c)
   assert j['key']==key and c['prompt']==j['prompt']==a['prompt'] and c['references']==j['references']
   assert c['transparent']==j['transparent']==v['transparent_background']
   assert hashlib.sha256(c['prompt'].encode('utf-8')).hexdigest()==a['prompt_sha256'] and c['input_sha256']==v['input_sha256']

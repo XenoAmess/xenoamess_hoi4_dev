@@ -5,6 +5,7 @@ from datetime import datetime,timezone
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,machine_id,utc_now,file_sha256
 from mod_nailong.tools.image_retries import policy,sync
+from tools.retry_actual_proof import load_actual_request
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--inspect-only',action='store_true')
 parser.add_argument('--limit',type=int,choices=range(1,13),default=12)
@@ -26,14 +27,11 @@ for key,c in pool['requests'].items():
   a=read_json(ROOT/f'mod_nailong/data/generation-requests/{key}.json')['attempts'][-1]
   assert a['status']=='failed' and 'moderation_blocked' in a['error']
   assert c['original_actual_prompt_verified'] and c['policy_reviewed'] is True
-  v=a['actual_request_verification'];assert a['machine_id']==v['machine_id']==machine_id() and v['actual_recorded_before_call'] is True
-  d=read_json(ROOT/f'runtime/production-queue/dispatch/{key}-{a["number"]:03}.json');snapshot=Path(d['actual_request_snapshot_file'])
-  assert file_sha256(snapshot)==v['actual_request_snapshot_sha256']==d['actual_request_snapshot_sha256']
-  actual=read_json(snapshot)
+  actual,v=load_actual_request(ROOT,key,a,c)
   assert a['prompt']==c['prompt']==actual['prompt'] and c['references']==actual['references'],'approval_payload_outdated: manually reconcile the latest failed frozen prompt and ordered inputs; no quota claimed'
   assert actual['transparent']==c['transparent']==v['transparent_background'],'approval_tool_flags_outdated: manually reconcile the latest frozen tool flag; no quota claimed'
   assert hashlib.sha256(c['prompt'].encode('utf-8')).hexdigest()==a['prompt_sha256']
-  assert [file_sha256(Path(p)) for p in c['references']]==c['input_sha256']==v['input_sha256']==d['input_sha256'],'approval_input_bytes_mismatch: keep request held for exact-byte reconciliation; no quota claimed'
+  assert [file_sha256(Path(p)) for p in c['references']]==c['input_sha256']==v['input_sha256'],'approval_input_bytes_mismatch: keep request held for exact-byte reconciliation; no quota claimed'
   # Previous manual content review remains valid only for identical prompt/input bytes.
   ready.append(dict(c,not_before_utc=q['not_before_utc'],verified_failed_attempt=a['number'],verified_actual_snapshot_sha256=v['actual_request_snapshot_sha256'],retries_used_before_claim=q['retries_used'],next_retry_number=q['retries_used']+1))
  except (AssertionError,KeyError,FileNotFoundError) as error:unavailable.append({'source_sha256':key,'reason':type(error).__name__+': '+str(error)})

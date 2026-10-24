@@ -1,7 +1,7 @@
 import tempfile,unittest
 from pathlib import Path
 from tools.common import write_json
-from tools.portrait_review_queue import reserve_candidates,wait_for_claim
+from tools.portrait_review_queue import reserve_candidates,wait_for_claim,reviewed_outputs,ALPHA_POLICY
 
 class ReviewSlotTests(unittest.TestCase):
  def setUp(self):
@@ -31,7 +31,7 @@ class ReviewSlotTests(unittest.TestCase):
   key='0'*64;journal=self.rows[key].pop('request_journal');deferred=[]
   jobs=reserve_candidates(self.root,self.rows,self.priority,set(),'a',deferred=deferred)
   self.assertNotIn(key,{j['key'] for j in jobs});self.assertEqual(deferred[0]['missing'],['request_journal'])
-  reservation=self.root/'runtime/rolling-review-queue/reservations'/(key+'-'+self.rows[key]['generated_fullsize_sha256']+'.json')
+  reservation=self.root/'runtime/rolling-review-queue/reservations'/ALPHA_POLICY/(key+'-'+self.rows[key]['generated_fullsize_sha256']+'.json')
   self.assertFalse(reservation.exists())
   self.rows[key]['request_journal']=journal
   self.assertIn(key,{j['key'] for j in reserve_candidates(self.root,self.rows,self.priority,set(),'b')})
@@ -49,5 +49,18 @@ class ReviewSlotTests(unittest.TestCase):
    return {'ready':True,'slot':slot}
   result=wait_for_claim('b',5,allocate,lambda:now[0],lambda seconds:now.__setitem__(0,now[0]+seconds))
   self.assertTrue(result['ready']);self.assertEqual(now[0],2)
+ def test_policy_reopens_only_old_pending_and_preserves_terminal_history(self):
+  write_json(self.root/'mod_nailong/data/alpha-acceptance-policy.json',{'id':ALPHA_POLICY,'effective_from_utc':'2026-10-24T09:10:00+00:00'})
+  decisions=[{'source_sha256':str(n)*64,'generated_fullsize_sha256':chr(97+n)*64,'decision':decision} for n,decision in enumerate(['pending','approved','rejected'])]
+  write_json(self.root/'mod_nailong/data/resumed-old-agent-review.json',{'reviewed_at_utc':'2026-10-24T08:00:00+00:00','decisions':decisions})
+  seen=reviewed_outputs(self.root)
+  self.assertNotIn(('0'*64,'a'*64),seen);self.assertIn(('1'*64,'b'*64),seen);self.assertIn(('2'*64,'c'*64),seen)
+  write_json(self.root/'mod_nailong/data/resumed-new-agent-review.json',{'reviewed_at_utc':'2026-10-24T09:11:00+00:00','decisions':[decisions[0]]})
+  self.assertIn(('0'*64,'a'*64),reviewed_outputs(self.root))
+ def test_old_policy_reservation_does_not_block_fresh_two_slot_review(self):
+  key='0'*64;digest=self.rows[key]['generated_fullsize_sha256']
+  write_json(self.root/'runtime/rolling-review-queue/reservations'/(key+'-'+digest+'.json'),{'slot':'a'})
+  first=reserve_candidates(self.root,self.rows,self.priority,set(),'a');second=reserve_candidates(self.root,self.rows,self.priority,set(),'b')
+  self.assertIn(key,{j['key'] for j in first});self.assertFalse({j['key'] for j in first}&{j['key'] for j in second})
 
 if __name__=='__main__':unittest.main()

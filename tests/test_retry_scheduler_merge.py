@@ -14,6 +14,7 @@ class RetryApprovalVersionTests(unittest.TestCase):
   self.root=Path(self.temp.name);self.key='a'*64;self.machine='fixture-machine'
   self.addCleanup(patch.stopall)
   patch.object(merge,'machine_id',return_value=self.machine).start()
+  patch('tools.retry_actual_proof.machine_id',return_value=self.machine).start()
   patch.object(merge,'policy',return_value={'max_cooldown_retries_per_source':8}).start()
   self.refs=[]
   for name in ['raw-target','source','user']:
@@ -27,7 +28,7 @@ class RetryApprovalVersionTests(unittest.TestCase):
   self.failed={'number':8,'status':'failed','machine_id':self.machine,'error':'moderation_blocked output receipt','prompt':self.job['prompt'],'prompt_sha256':hashlib.sha256(self.job['prompt'].encode()).hexdigest(),'edit_existing':True,'inputs':[{'role':'previous generated fullsize edit target','sha256':self.target}],'actual_request_verification':{'machine_id':self.machine,'actual_recorded_before_call':True,'actual_request_snapshot_sha256':file_sha256(snapshot),'input_sha256':hashes,'transparent_background':True}}
   self.attempts=[self.old_success,self.target_return,self.failed]
   self.journal=self.root/f'mod_nailong/data/generation-requests/{self.key}.json';write_json(self.journal,{'attempts':self.attempts})
-  write_json(self.root/f'runtime/production-queue/dispatch/{self.key}-008.json',{'status':'failed','actual_request_snapshot_file':str(snapshot)})
+  write_json(self.root/f'runtime/production-queue/dispatch/{self.key}-008.json',{'status':'failed','actual_request_snapshot_file':str(snapshot),'actual_request_snapshot_sha256':file_sha256(snapshot),'input_sha256':hashes})
   self.queue=self.root/'mod_nailong/data/image-retry-queue.json'
   write_json(self.queue,{'sources':{self.key:{'retries_used':2,'state':'cooling_down','not_before_utc':'2026-10-19T18:12:20+00:00','cooldown_origin_attempt':8}}})
   self.pool=self.root/'runtime/retry-scheduler/approved-pool.json';write_json(self.pool,{'machine_id':self.machine,'requests':{self.key:self.old}})
@@ -63,6 +64,7 @@ class RetryApprovalVersionTests(unittest.TestCase):
   reason='Frozen original-based replacement after actual rejection of returned art.'
   self.failed.update(edit_existing=False,replacement_reason=reason,inputs=[{'role':'original source portrait','raw_sha256':self.key,'converted_png_sha256':hashes[0]},{'role':'user mascot reference','sha256':hashes[1]}])
   self.failed['actual_request_verification'].update(actual_request_snapshot_sha256=file_sha256(snapshot),input_sha256=hashes)
+  write_json(self.root/f'runtime/production-queue/dispatch/{self.key}-008.json',{'status':'failed','actual_request_snapshot_file':str(snapshot),'actual_request_snapshot_sha256':file_sha256(snapshot),'input_sha256':hashes})
   self.candidate.update(references=self.job['references'],input_sha256=hashes)
   proof=self.candidate['approval_supersession'];proof.pop('edit_target_fullsize_sha256')
   proof.update(failed_actual_snapshot_sha256=file_sha256(snapshot),art_correction_mode='regenerate_from_exact_original',replacement_reason_sha256=hashlib.sha256(reason.encode()).hexdigest(),original_source_sha256=self.key,rejected_fullsize_sha256=self.target)

@@ -10,8 +10,24 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now
 
+ALPHA_POLICY='visible-alpha-v1'
+
+def reviewed_outputs(root):
+    """A changed acceptance rule reopens old pending decisions, never approvals."""
+    policy=read_json(root/'mod_nailong/data/alpha-acceptance-policy.json')
+    assert policy['id']==ALPHA_POLICY
+    seen=set()
+    for p in (root/'mod_nailong/data').glob('resumed-*review.json'):
+        report=read_json(p)
+        for e in report.get('decisions',[]):
+            if e.get('decision')!='pending' or report.get('reviewed_at_utc','')>=policy['effective_from_utc']:
+                seen.add((e.get('source_sha256'),e.get('generated_fullsize_sha256')))
+    for p in (root/'runtime/production-queue/reviews/pending').glob('*.json'):
+        e=read_json(p);seen.add((e.get('source_sha256'),e.get('generated_fullsize_sha256',e.get('image_sha256'))))
+    return seen
+
 def reserve_candidates(root,rows,priority,seen,slot,limit=4,deferred=None):
-    folder=root/'runtime/rolling-review-queue';reservations=folder/'reservations';reservations.mkdir(parents=True,exist_ok=True)
+    folder=root/'runtime/rolling-review-queue';reservations=folder/'reservations'/ALPHA_POLICY;reservations.mkdir(parents=True,exist_ok=True)
     assets={a['source_sha256']:a for a in read_json(root/'mod_nailong/data/catalog.json')['assets']};jobs=[]
     for key,row in rows.items():
         digest=row.get('generated_fullsize_sha256')
@@ -27,7 +43,7 @@ def reserve_candidates(root,rows,priority,seen,slot,limit=4,deferred=None):
         reservation=reservations/(key+'-'+digest+'.json')
         try:fd=os.open(reservation,os.O_WRONLY|os.O_CREAT|os.O_EXCL)
         except FileExistsError:continue
-        with os.fdopen(fd,'w',encoding='utf-8') as stream:json.dump({'slot':slot,'machine_id':machine_id(),'source_sha256':key,'generated_fullsize_sha256':digest,'reserved_at_utc':utc_now()},stream)
+        with os.fdopen(fd,'w',encoding='utf-8') as stream:json.dump({'slot':slot,'machine_id':machine_id(),'acceptance_policy':ALPHA_POLICY,'source_sha256':key,'generated_fullsize_sha256':digest,'reserved_at_utc':utc_now()},stream)
         jobs.append({'key':key,'source':assets[key]['path'],'original':str(root/'runtime/references'/(key+'.png')),'prompt':row['prompt']})
         if len(jobs)==limit:break
     return jobs
@@ -40,21 +56,14 @@ def claim(slot):
         statepath=folder/('slot-'+slot+'.json')
         state=read_json(statepath) if statepath.exists() else {'slot':slot,'sequence':0,'status':'available'}
         assert state['status']=='available','Prior assignment must be finalized, not silently repeated'
-        rows=read_json(ROOT/'mod_nailong/data/generated.json')['portraits'];priority=read_json(ROOT/'mod_nailong/data/production-priority.json')['sources'];seen=set()
-        # Never re-review the same output just because it remains pending.
-        for p in (ROOT/'mod_nailong/data').glob('resumed-*review.json'):
-            for e in read_json(p).get('decisions',[]):
-                key=e.get('source_sha256');digest=e.get('generated_fullsize_sha256')
-                if 'agent-' in p.name or e.get('decision')!='pending':seen.add((key,digest))
-        for p in (ROOT/'runtime/production-queue/reviews/pending').glob('*.json'):
-            e=read_json(p);seen.add((e.get('source_sha256'),e.get('generated_fullsize_sha256')))
+        rows=read_json(ROOT/'mod_nailong/data/generated.json')['portraits'];priority=read_json(ROOT/'mod_nailong/data/production-priority.json')['sources'];seen=reviewed_outputs(ROOT)
         deferred=[];jobs=reserve_candidates(ROOT,rows,priority,seen,slot,deferred=deferred)
         if not jobs:return {'ready':False,'reason':'current_output_metadata_not_yet_complete' if deferred else 'no_unassigned_current_HIGH_output','slot':slot,'metadata_deferred':deferred}
         sequence=state['sequence']+1;tag='rolling'+slot+str(sequence);jobpath=ROOT/f'runtime/fine-review4-{tag}-20261024-jobs.json';assert not jobpath.exists();write_json(jobpath,jobs)
         out=ROOT/f'runtime/resumed-20261024-fine-{tag}-alpha'
         result=subprocess.run([sys.executable,'mod_nailong/tools/review_alpha_sheet.py',jobpath.relative_to(ROOT).as_posix(),out.relative_to(ROOT).as_posix()],cwd=ROOT,capture_output=True,text=True,encoding='utf-8',errors='replace')
         assert result.returncode==0,result.stderr
-        state={'machine_id':machine_id(),'slot':slot,'sequence':sequence,'tag':tag,'status':'assigned','claimed_at_utc':utc_now(),'jobs':jobpath.relative_to(ROOT).as_posix(),'manifest':(out/'manifest.json').relative_to(ROOT).as_posix(),'manifest_sha256':file_sha256(out/'manifest.json'),'config':f'runtime/stage-{tag}-20261024.json','report':f'mod_nailong/data/resumed-20261024-{tag}-agent-review.json','source_keys':[j['key'] for j in jobs]}
+        state={'machine_id':machine_id(),'acceptance_policy':ALPHA_POLICY,'slot':slot,'sequence':sequence,'tag':tag,'status':'assigned','claimed_at_utc':utc_now(),'jobs':jobpath.relative_to(ROOT).as_posix(),'manifest':(out/'manifest.json').relative_to(ROOT).as_posix(),'manifest_sha256':file_sha256(out/'manifest.json'),'config':f'runtime/stage-{tag}-20261024.json','report':f'mod_nailong/data/resumed-20261024-{tag}-agent-review.json','source_keys':[j['key'] for j in jobs]}
         write_json(statepath,state);return {'ready':True,**state}
     finally:os.close(fd);lock.unlink()
 
