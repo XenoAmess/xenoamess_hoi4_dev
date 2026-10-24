@@ -1,0 +1,55 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window47",
+  "after_window": "resume-20261024-boundary-window46",
+  "created_at_utc": "2026-10-24T00:24:41.023Z",
+  "prepare_commands": [
+    "python mod_nailong\\tools\\prepare_ready_art_reviews.py resume-20261024-ready-reviews292 292 resumed-20261024-unblocked-cancelled4-agent-a-review.json resumed-20261024-refill-backdrop-clothes8-agent-b-review.json"
+  ],
+  "events": [
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T00:24:41.159Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window46 --wait-seconds 900"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T00:24:42.443Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window46 --wait-seconds 900",
+      "exit_code": 0
+    },
+    {
+      "phase": "durable_gate_released",
+      "observed_at_utc": "2026-10-24T00:24:42.422702+00:00",
+      "ready": true,
+      "window_id": "resume-20261024-boundary-window46",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "receipt": "mod_nailong/data/production-window-timings/resume-20261024-boundary-window46-completed.json"
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T00:24:42.443Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T00:24:42.653Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T00:24:42.653Z",
+      "command": "python mod_nailong\\tools\\prepare_ready_art_reviews.py resume-20261024-ready-reviews292 292 resumed-20261024-unblocked-cancelled4-agent-a-review.json resumed-20261024-refill-backdrop-clothes8-agent-b-review.json"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T00:28:37.786Z",
+      "command": "python mod_nailong\\tools\\prepare_ready_art_reviews.py resume-20261024-ready-reviews292 292 resumed-20261024-unblocked-cancelled4-agent-a-review.json resumed-20261024-refill-backdrop-clothes8-agent-b-review.json",
+      "exit_code": 0
+    }
+  ],
+  "scope": "Disk receipt gates the next sole executor; cross-exec in-memory store values are not used to release a handover. Preparation occurs only after the exact preceding window has completed imports.",
+  "status": "prepared_for_next_window",
+  "prepared_at_utc": "2026-10-24T00:28:37.786Z"
+}

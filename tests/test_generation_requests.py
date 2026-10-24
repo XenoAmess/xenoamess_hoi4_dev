@@ -9,6 +9,15 @@ from mod_nailong.tools import generation_requests as requests
 from mod_nailong.tools.art_contract import portrait_ready
 
 class ArtPreparationBoundaryTests(unittest.TestCase):
+    def test_ready_refill_accepts_only_actual_current_rejections_and_caps_eight(self):
+        from mod_nailong.tools.prepare_ready_art_reviews import eligible_entries
+        entries=[{'source_sha256':str(i),'decision':'rejected','generated_fullsize_sha256':'raw'} for i in range(12)]
+        rows={str(i):{'generated_fullsize_sha256':'raw','review':'pending'} for i in range(12)}
+        latest={str(i):{'status':'generated_pending_visual_review'} for i in range(12)}
+        rows['0']['generated_fullsize_sha256']='changed';entries[1]['decision']='approved';latest['2']['status']='failed'
+        chosen=eligible_entries([('report',{'decisions':entries})],rows,latest)
+        self.assertEqual([e['source_sha256'] for p,e in chosen],[str(i) for i in range(3,11)])
+
     def fixture(self):
         return [{'number':1,'status':'generated_rejected_visual_review','fullsize_sha256':'raw'},
                 {'number':2,'status':'cancelled_before_generation','deferred_service_families':[{'source_sha256':'family'}]}]
