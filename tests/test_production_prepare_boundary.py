@@ -34,6 +34,11 @@ class PreparationBoundaryTests(unittest.TestCase):
     def test_empty_queue_does_no_work(self):
         self.assertFalse(consume(self.root, 'test')['prepared'])
 
+    def test_original_replacement_intent_is_bound_to_its_distinct_preparer(self):
+        script=self.root/'tools/prepare_reviewed_original_replacements.py';script.write_text('different trusted preparer fixture',encoding='utf-8')
+        self.intent.update(kind='reviewed_original_replacements',preparer_sha256=file_sha256(script));self.queue()
+        self.assertTrue(consume(self.root,'test',self.good_runner)['prepared'])
+
     def test_combined_boundary_applies_reviews_before_preparation(self):
         self.queue()
         order = []

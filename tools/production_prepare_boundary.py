@@ -21,7 +21,9 @@ def consume(root, expected_machine, runner=None):
     # Invoked only after the producer's checkpoint barrier and imports have cleared.
     path = pending[0]
     intent = read_json(path)
-    script = root / 'tools/prepare_reviewed_art_repairs.py'
+    scripts={'reviewed_art_repairs':'tools/prepare_reviewed_art_repairs.py',
+             'reviewed_original_replacements':'tools/prepare_reviewed_original_replacements.py'}
+    script = root / scripts.get(intent.get('kind'),'tools/invalid-preparation-kind')
     claimed = folder / 'claimed' / path.name
     claimed.parent.mkdir(parents=True, exist_ok=True)
     assert not claimed.exists(), 'Never replay a claimed preparation intent'
@@ -30,7 +32,7 @@ def consume(root, expected_machine, runner=None):
                'claimed_at_utc': utc_now(), 'scope': 'Local preparation only; no image call or retry claim.'}
     try:
         assert intent['machine_id'] == expected_machine
-        assert intent['kind'] == 'reviewed_art_repairs'
+        assert intent['kind'] in scripts
         assert file_sha256(script) == intent['preparer_sha256']
         assert isinstance(intent['arguments'], list) and all(isinstance(a, str) for a in intent['arguments'])
         for proof in intent['evidence']:
