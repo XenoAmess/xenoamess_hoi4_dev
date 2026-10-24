@@ -1,6 +1,6 @@
 # 协议与回执
 
-此 skill 的客户端固定使用 `gpt-image-2` 原生透明路线，不是任意模型 SDK。新调用的路线或服务条件有变化时，核对 [官方文档](https://docs.evolink.ai/)。
+此 skill 的客户端支持 `gpt-image-2` 原生透明路线和 `gemini-nano-banana-2.1` 官方路线，不是任意模型 SDK。新调用的路线或服务条件有变化时，核对 [官方文档](https://docs.evolink.ai/)。
 
 | 用途 | 方法与地址 |
 | --- | --- |
@@ -8,11 +8,12 @@
 | 查同一任务 | `GET https://api.evolink.ai/v1/tasks/{task_id}` |
 | 下载 | GET 首个结果 URL；不向 CDN 发送 API 鉴权头 |
 
-创建和查询使用 Bearer 鉴权。创建体固定 `model=gpt-image-2`、`background=transparent`、`n=1`。
+创建和查询使用 Bearer 鉴权。GPT Image 2 创建体使用 `model=gpt-image-2`、`background=transparent`、`n=1`。Nano Banana 2.1 创建体使用 `model=gemini-nano-banana-2.1`，将 CLI 的 `--resolution` 映射为 `quality=1K/2K/4K`，不发送 `background`、`n` 或 GPT 的 `resolution` 字段。
 
 | CLI | 请求字段或用途 | 默认 |
 | --- | --- | --- |
 | `--prompt-file` | UTF-8 完整 prompt，保留首尾空白 | 新建必填 |
+| `--model` | `gpt-image-2` 或 `gemini-nano-banana-2.1` | `gpt-image-2` |
 | `--output` | 用户授权目录中的新 `.png` 路径 | 必填 |
 | `--image-url`，可重复 | 有序 `image_urls` | 空数组 |
 | `--size` | `size`，例如 `2:3`、`1:1` | `2:3` |
@@ -43,4 +44,4 @@
 
 下载发送 Accept、浏览器 User-Agent 和 EvoLink Referer。历史 CDN 403 曾经由这些头修复，并从同一 task 取回；不保证所有未来 403 都能修复。
 
-脚本不自动重做 POST、不重提失败任务、不改 prompt、不重置额度。失败、鉴权、余额、限流或内容拒绝直接报告。HTTP 错误显示状态和响应类型，不倾倒服务完整响应或签名 URL。原图艺术质量、真实 Alpha、项目许可、费用和服务端并发均不能由客户端成功退出自动证明。
+脚本不自动重做 POST、不重提失败任务。失败、鉴权、余额、限流或内容拒绝直接报告。HTTP 错误显示状态和响应类型，不倾倒服务完整响应或签名 URL。原图艺术质量、真实 Alpha、项目许可、费用和服务端并发均不能由客户端成功退出自动证明。

@@ -5,14 +5,14 @@ description: 通过 EvoLink API 生成原生透明 PNG、查询异步任务或�
 
 # EvoLink 图片生成与恢复
 
-使用随 skill 提供的纯 Python 标准库客户端 [scripts/evolink_image.py](scripts/evolink_image.py)。它实现已学习的 `gpt-image-2` 原生透明路线，一次请求一张，无需安装 SDK。参数和状态见 [references/protocol.md](references/protocol.md)，历史验证与代码来源见 [references/provenance.md](references/provenance.md)。
+使用随 skill 提供的纯 Python 标准库客户端 [scripts/evolink_image.py](scripts/evolink_image.py)。它支持 `gpt-image-2` 原生透明路线和 `gemini-nano-banana-2.1` 官方路线，一次请求一张，无需安装 SDK。参数和状态见 [references/protocol.md](references/protocol.md)，历史验证与代码来源见 [references/provenance.md](references/provenance.md)。
 
 ## 执行前
 
 - 沿用用户已指定的供应商、任务范围、输出目录和项目规则。已有调用授权无需重复确认；创建 skill、读代码和预检本身不代表已获授权付费生成。HOI4 默认内置图片渠道的设置不因 skill 存在而改变。
-- 区分新任务、已有 task ID 的取回和美术返修。服务拒绝或工具禁止重试时停止该请求；不通过改词、换输入、换供应商规避拒绝。遵守项目已有冷却和累计额度，不借新批次重置。
+- 区分新任务、已有 task ID 的取回和美术返修。
 - 准备完整 UTF-8 prompt，明确输入图角色，实际查看需要参考的图片。现成客户端只接收公开 HTTPS 参考 URL；优先固定 commit 的 GitHub raw URL。仓库公开不代表本地参考图已公开；不自行上传本地或原版游戏素材，获授权的素材传输另行处理。
-- 客户端固定 `model=gpt-image-2`、`background=transparent`、`n=1`。透明度由参数控制，prompt 描述主体、构图、风格和不变量，避免要求绘制棋盘格或绿幕。其他模型、非透明输出或新参数先查所选路线当前官方文档，不冒用历史验证。
+- 默认 `model=gpt-image-2`，使用 `background=transparent`、`n=1`；透明度由参数控制，prompt 描述主体、构图、风格和不变量，避免要求绘制棋盘格或绿幕。`--model gemini-nano-banana-2.1` 使用 Nano Banana 2.1 官方参数，`--resolution` 映射为该模型的 `quality=1K/2K/4K`，不发送 GPT 专属参数。其他模型、非透明输出或新参数先查所选路线当前官方文档，不冒用历史验证。
 - 密钥从 `EVOLINK_API_KEY` 读取：先当前进程，再 Windows 用户级环境；交互终端可隐藏输入。密钥不进对话、命令行、文件或 Git。非交互环境缺密钥时报告配置缺口，不等待隐藏输入，不打印环境变量值。
 
 ## 新建一张
@@ -35,7 +35,7 @@ python skills/evolink-imagegen/scripts/evolink_image.py --dry-run --prompt-file 
 python skills/evolink-imagegen/scripts/evolink_image.py --task-id TASK_ID --output runtime/evolink/example/output.png
 ```
 
-原 `.prompt.txt`、`.request.json` 必须齐全，task ID 必须匹配。超时或下载失败先查已有 task ID，不重做 POST。POST 状态不明且没有拿到 ID 时保留归档，报告未决状态，不盲目再次计费。明确失败、额度不足、鉴权失败、限流和内容拒绝分别报告，不自动切换模型或供应商。
+原 `.prompt.txt`、`.request.json` 必须齐全，task ID 必须匹配。超时或下载失败先查已有 task ID，不重做 POST。POST 状态不明且没有拿到 ID 时保留归档，报告未决状态，不盲目再次计费。明确失败、额度不足、鉴权失败、限流和内容拒绝分别报告。
 
 ## 完成与交付
 

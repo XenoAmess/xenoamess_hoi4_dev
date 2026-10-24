@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Adapted from XenoAmess/slay-the-spire-vivhite-mod, commit 94559b5a80ef4bdec8ff8a58042256902d8df713.
 # See ../references/provenance.md and ../LICENSE for source and modifications.
-"""Generate one EvoLink GPT Image asset without persisting the API key.
+"""Generate one EvoLink image asset without persisting the API key.
 
-Implements the learned GPT Image 2 native-transparent route and verifies PNG
-bytes. See the references for the pinned upstream source and route scope;
-verify current provider documentation before adding other model parameters.
+Implements GPT Image 2 native-transparent and Nano Banana 2.1 routes and
+verifies PNG bytes. See the references for the pinned upstream source and
+route scope; verify current provider documentation before adding parameters.
 """
 
 from __future__ import annotations
@@ -35,9 +35,10 @@ SUCCESS_STATES = {"completed", "succeeded", "success"}
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Generate and download one GPT Image 2 transparent PNG via EvoLink."
+        description="Generate and download one PNG via EvoLink."
     )
     parser.add_argument("--prompt-file", type=Path)
+    parser.add_argument("--model", choices=("gpt-image-2", "gemini-nano-banana-2.1"), default="gpt-image-2")
     parser.add_argument("--dry-run", action="store_true", help="Validate a new request locally without credentials, writes or network calls.")
     parser.add_argument(
         "--output",
@@ -175,18 +176,23 @@ def require_resume_record(output: Path, task_id: str) -> None:
         raise RuntimeError(f"Unreadable archived request record: {request_path}") from exc
     if not isinstance(request_record, dict):
         raise RuntimeError(f"Archived request record is not an object: {request_path}")
-    expected = {
-        "endpoint": GENERATIONS_URL,
-        "model": "gpt-image-2",
-        "background": "transparent",
-        "n": 1,
-    }
+    if request_record.get("endpoint") != GENERATIONS_URL:
+        raise RuntimeError(f"Archived request record has invalid 'endpoint': {request_path}")
+    model = request_record.get("model")
+    if model == "gpt-image-2":
+        expected = {"background": "transparent", "n": 1}
+        required_fields = ("size", "resolution", "quality", "image_urls")
+    elif model == "gemini-nano-banana-2.1":
+        expected = {}
+        required_fields = ("size", "quality", "image_urls")
+    else:
+        raise RuntimeError(f"Archived request record has invalid 'model': {request_path}")
     for field, value in expected.items():
         if request_record.get(field) != value:
             raise RuntimeError(
                 f"Archived request record has invalid {field!r}: {request_path}"
             )
-    for field in ("size", "resolution", "quality", "image_urls"):
+    for field in required_fields:
         if field not in request_record:
             raise RuntimeError(
                 f"Archived request record is missing {field!r}: {request_path}"
@@ -260,11 +266,18 @@ def build_request(args: argparse.Namespace) -> tuple[str, dict[str, Any]]:
     prompt = args.prompt_file.read_bytes().decode("utf-8")
     if not prompt.strip():
         raise RuntimeError(f"Prompt file is empty: {args.prompt_file}")
-    return prompt, {
-        "model": "gpt-image-2", "prompt": prompt, "size": args.size,
-        "resolution": args.resolution, "quality": args.quality,
-        "background": "transparent", "n": 1, "image_urls": args.image_url,
+    payload = {
+        "model": args.model, "prompt": prompt, "size": args.size,
+        "image_urls": args.image_url,
     }
+    if args.model == "gpt-image-2":
+        payload.update({
+            "resolution": args.resolution, "quality": args.quality,
+            "background": "transparent", "n": 1,
+        })
+    else:
+        payload["quality"] = args.resolution
+    return prompt, payload
 
 
 def main() -> int:

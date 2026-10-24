@@ -64,7 +64,7 @@ class EvoLinkSkillTests(unittest.TestCase):
         self.assertNotIn(self.key, archived); self.assertNotIn('temporary=fixture', archived)
 
     def test_existing_task_resume_never_creates_another_paid_task(self):
-        args = type('Args', (), {'prompt_file': self.prompt, 'size': '2:3', 'resolution': '2K', 'quality': 'high', 'image_url': []})()
+        args = type('Args', (), {'prompt_file': self.prompt, 'model': 'gpt-image-2', 'size': '2:3', 'resolution': '2K', 'quality': 'high', 'image_url': []})()
         prompt, payload = client.build_request(args)
         client.write_generation_record(self.output, prompt, payload)
         client.write_or_validate_task_record(self.output, 'fixture-task')
@@ -73,6 +73,12 @@ class EvoLinkSkillTests(unittest.TestCase):
             return {'status': 'completed', 'results': ['https://cdn.example/image.png']}
         result, _, api, _ = self.run_client(['--task-id', 'fixture-task'], http, lambda request, timeout: Response(self.raw))
         self.assertEqual(result, 0); self.assertEqual(api.call_count, 1)
+
+    def test_nano_banana_uses_documented_request_fields(self):
+        args = type('Args', (), {'prompt_file': self.prompt, 'model': 'gemini-nano-banana-2.1', 'size': '3:4', 'resolution': '2K', 'quality': 'high', 'image_url': ['https://example.org/source.png']})()
+        prompt, payload = client.build_request(args)
+        self.assertEqual(prompt.encode('utf-8'), self.prompt_bytes)
+        self.assertEqual(payload, {'model': 'gemini-nano-banana-2.1', 'prompt': prompt, 'size': '3:4', 'image_urls': ['https://example.org/source.png'], 'quality': '2K'})
 
     def test_failed_task_is_retained_without_resubmission(self):
         count = [0]
