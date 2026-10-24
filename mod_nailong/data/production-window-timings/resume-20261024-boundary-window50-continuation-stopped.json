@@ -1,0 +1,55 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window50",
+  "after_window": "resume-20261024-boundary-window49",
+  "created_at_utc": "2026-10-24T00:50:41.127Z",
+  "prepare_commands": [
+    "python mod_nailong\\tools\\prepare_ready_art_reviews.py resume-20261024-ready-reviews295 295 resumed-20261024-ready-reviews292-agent-a-review.json resumed-20261024-fine-b3-agent-b-review.json resumed-20261024-ready-reviews294-root-review.json"
+  ],
+  "events": [
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T00:50:41.240Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window49 --wait-seconds 900"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T00:50:42.886Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window49 --wait-seconds 900",
+      "exit_code": 0
+    },
+    {
+      "phase": "durable_gate_released",
+      "observed_at_utc": "2026-10-24T00:50:42.859833+00:00",
+      "ready": true,
+      "window_id": "resume-20261024-boundary-window49",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "receipt": "mod_nailong/data/production-window-timings/resume-20261024-boundary-window49-completed.json"
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T00:50:42.886Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T00:50:43.184Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T00:50:43.184Z",
+      "command": "python mod_nailong\\tools\\prepare_ready_art_reviews.py resume-20261024-ready-reviews295 295 resumed-20261024-ready-reviews292-agent-a-review.json resumed-20261024-fine-b3-agent-b-review.json resumed-20261024-ready-reviews294-root-review.json"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T01:00:13.225Z",
+      "command": "python mod_nailong\\tools\\prepare_ready_art_reviews.py resume-20261024-ready-reviews295 295 resumed-20261024-ready-reviews292-agent-a-review.json resumed-20261024-fine-b3-agent-b-review.json resumed-20261024-ready-reviews294-root-review.json",
+      "exit_code": 15
+    }
+  ],
+  "scope": "Disk receipt gates the next sole executor; cross-exec in-memory store values are not used to release a handover. Preparation occurs only after the exact preceding window has completed imports.",
+  "status": "stopped_requires_reconciliation",
+  "error": "Error: {\"chunk_id\":\"5cf7a1\",\"wall_time_seconds\":1.5437151,\"exit_code\":15,\"original_token_count\":0,\"output\":\"\"}"
+}

@@ -6,13 +6,27 @@ from tools.common import ROOT,read_json,file_sha256
 from PIL import Image
 MOD=ROOT/'mod_nailong'
 
+def verify_request_inputs(inputs, reference_path, reference_digest):
+    """Verify every expected hash against bytes read in this audit invocation.
+
+    The shared reference was fully read immediately before the portrait loop.
+    Its digest is an invocation-local snapshot, never a persisted/mtime cache.
+    Other paths retain a complete byte read, even if their names imply a hash.
+    """
+    for source in inputs:
+        if source.get('path'):
+            path=ROOT/source['path']
+            actual=reference_digest if path==reference_path else file_sha256(path)
+            assert actual==source['sha256'],str(path)
+
 def audit():
     catalog=read_json(MOD/'data/catalog.json')
     source_sizes={a['source_sha256']:a['size'] for a in catalog['assets']}
     records=read_json(MOD/'data/generated.json')['portraits']
     failures=read_json(MOD/'data/generation-failures.json')
     blocked={a['source_sha256'] for a in failures.get('attempts',[]) if a.get('status')=='blocked' and not a.get('resolved_by_retry')}
-    reference=file_sha256(MOD/'assets/reference/naiwa.png')
+    reference_path=MOD/'assets/reference/naiwa.png'
+    reference=file_sha256(reference_path)
     approved=0
     for key,row in records.items():
         assert key in source_sizes and row['source_sha256']==key,key
@@ -43,8 +57,7 @@ def audit():
                 assert file_sha256(intended)==a['intended_prompt_sha256'],str(intended)
             assert a['inputs'] and a['machine_id'],str(path)
             assert a['prepared_at_utc'] or (a.get('recovered_at_utc') and a.get('recording_boundary')),str(path)
-            for source in a['inputs']:
-                if source.get('path'):assert file_sha256(ROOT/source['path'])==source['sha256'],str(path)
+            verify_request_inputs(a['inputs'],reference_path,reference)
             requests+=1
     experiment=read_json(MOD/'experiments/hair-features-v1/manifest.json')
     assert len(experiment['assets'])==26 and len(experiment['jobs'])==23

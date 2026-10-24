@@ -61,6 +61,8 @@ assert execute('git','branch','--show-current')=='master'
 execute(*git,'add','--','AGENTS.md','mod_nailong','tests/test_master_files.py','tests/test_generation_requests.py','tests/test_retry_scheduler_merge.py','tests/test_image_retries.py','tests/test_portrait_pipeline.py','tests/test_fullsize_game_textures.py','tests/test_production_queue.py','tools/retry_scheduler_next.py','tools/retry_scheduler_merge.py','tools/retry_transport_proof.py','tools/retry_scheduler_complete.py','tools/retry_scheduler_claim.py','tools/portrait_dispatch_guard.py','tools/retry_statistics.py','tools/desktop.py','tools/keyboard_scan_codes.py','tools/desktop_verified_click.py','docs/maintenance/hd-display-probe-restoration-2026-10-19.json','docs/maintenance/portrait-production-capacity-2026-10-19.json')
 execute(*git,'add','--','tools/common.py','tests/test_json_read_sharing.py')
 execute(*git,'add','--','tests/test_fullsize_review.py')
+execute(*git,'add','--','tests/test_audit_art.py')
+execute(*git,'add','--','tests/test_ready_art_reports.py')
 execute(*git,'add','--','tests/test_portrait_dispatch_guard.py')
 execute(*git,'add','--','docs/maintenance/hd-adviser-probe-restoration-2026-10-19.json')
 execute(*git,'add','--','docs/maintenance/desktop-gbk-observation-2026-10-19.json')
