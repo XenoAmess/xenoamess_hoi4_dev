@@ -62,7 +62,7 @@
 
 ## 存储与工具
 
-- 项目内 EvoLink 技能位于 `skills/evolink-imagegen/SKILL.md`，包含原生透明 PNG 客户端、任务恢复和追加式归档。仅在任务选择 EvoLink 或维护已有该服务任务时应用；技能文件存在不改变本项目默认内置图片生产方式或服务拒绝规则。
+- 用户于 2026-10-25 明确：`skills/evolink-imagegen/SKILL.md` 保留给其他 AI 同事使用；当前 Codex 助手及接续本会话的执行者禁止使用该 skill 或其 EvoLink 图片生成客户端，继续使用 Codex 内置图片工具（imagegen 内置模式）。保留技能文件和其他 AI 同事的使用能力，不删除或全局停用技能；技能的存在不改变本执行链的生成工具选择、服务拒绝规则或当前休假暂停状态。
 
 - 统一采用 `docs/storage-retention-policy.md` 和 `.json`；任务开始、重型写入前、闭场检查容量、期限和保护。只有本项目已到期且无活跃引用的精确文件可回收；不能删个人文件、其他任务、在用游戏/依赖或整棵目录。
 - 全项目禁止 PowerShell 与其兼容入口；使用 Python 实现本机工具，命令启动显式使用 `cmd.exe`，避免环境默认 shell。
