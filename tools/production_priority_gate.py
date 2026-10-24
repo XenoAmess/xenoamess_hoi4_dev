@@ -30,6 +30,20 @@ def service_retry_allowed(root, entry):
     return not (entry['high_priority'] and body.get('skip_service_refused_high_retries', False))
 
 
+def low_feedback_enabled(root):
+    path = root / 'mod_nailong/data/production-scheduling-policy.json'
+    return path.exists() and low_enabled(root) and read_json(path).get('prioritize_ready_low_corrections', False)
+
+
+def low_correction_in_item(root, item, priority):
+    jobs = read_json(root / item['jobs'])
+    if any(priority[j['key']]['high_priority'] for j in jobs):
+        return False
+    return any(j.get('journal') and (
+        read_json(root / j['journal'])['attempts'][-1].get('edit_existing')
+        or read_json(root / j['journal'])['attempts'][-1].get('replacement_reason')) for j in jobs)
+
+
 def high_in_item(root, item, priority):
     return any(priority[j['key']]['high_priority'] for j in read_json(root / item['jobs']))
 

@@ -13,7 +13,7 @@ from mod_nailong.tools.ready_art_reports import reports as inbox_reports,indepen
 from mod_nailong.tools.prepare_ready_art_reviews import eligible_entries,service_held_keys
 from tools.accepted_retry_art import accepted_retry_art_proofs
 from mod_nailong.tools.retry_limits import retry_limit
-from tools.production_priority_gate import low_enabled,high_in_item,immediate_high_work
+from tools.production_priority_gate import low_enabled,high_in_item,immediate_high_work,low_feedback_enabled,low_correction_in_item
 
 def no_calling(root):
     assert not any(read_json(p).get('status')=='calling' for p in (root/'runtime/production-queue/dispatch').glob('*.json')),'Unresolved actual call: reconcile, never replay'
@@ -171,10 +171,14 @@ def prioritize_high(root,state,runner=None):
         else:allocate_exact_retry(root,state,runner,high_only=True)
         plan=read_json(path)
         high=next((i for i in range(index+1,len(plan['batches'])) if high_in_item(root,plan['batches'][i],priority)),None)
+    correction=False
+    if high is None and low_feedback_enabled(root) and not low_correction_in_item(root,plan['batches'][index],priority):
+        high=next((i for i in range(index+1,len(plan['batches'])) if low_correction_in_item(root,plan['batches'][i],priority)),None)
+        correction=high is not None
     if high is not None:
         item=plan['batches'].pop(high);plan['batches'].insert(index,item);write_json(path,plan)
         folder=root/'mod_nailong/data/production-priority-dispatches';receipt=folder/(state['run_id']+'-'+str(index)+'.json');assert not receipt.exists()
-        write_json(receipt,{'machine_id':state['machine_id'],'observed_at_utc':utc_now(),'window_index':index,'prior_plan_index':high,'prioritized_HIGH':item,'scope':'Same owner, no active call. Only the uncalled plan suffix reordered; job bytes, attempts, consumed retry counters and completed windows unchanged.'})
+        write_json(receipt,{'machine_id':state['machine_id'],'observed_at_utc':utc_now(),'window_index':index,'prior_plan_index':high,('prioritized_LOW_art_correction' if correction else 'prioritized_HIGH'):item,'scope':'Same owner, no active call. Only the uncalled plan suffix reordered; job bytes, attempts, consumed retry counters and completed windows unchanged.'})
 
 def refill_reviewed_backlog(root,expected_machine,runner=None,selector=None):
     """Prepare future windows between imports while the current window continues."""
@@ -187,7 +191,11 @@ def refill_reviewed_backlog(root,expected_machine,runner=None,selector=None):
     plan=read_json(root/'runtime/after128-continuous-plan.json')['batches']
     assert state['next_index']<=len(plan)
     queued=sum(len(read_json(root/item['jobs'])) for item in plan[state['next_index']:])
-    if queued>=24:return {'prepared':False,'reason':'prepared_backlog_at_target','queued_requests':queued}
+    if queued>=24:
+        if not low_feedback_enabled(root):return {'prepared':False,'reason':'prepared_backlog_at_target','queued_requests':queued}
+        priority=read_json(root/'mod_nailong/data/production-priority.json')['sources']
+        if any(low_correction_in_item(root,item,priority) for item in plan[state['next_index']:]):
+            return {'prepared':False,'reason':'prepared_LOW_correction_already_available','queued_requests':queued}
     if not (selector or ready_art)(root,expected_machine):return {'prepared':False,'reason':'no_current_allowed_manual_rejection','queued_requests':queued}
     index=len(plan);batch=owner['run_id']+'-batch'+str(index)
     run_checked(root,[sys.executable,'mod_nailong/tools/prepare_ready_art_reviews.py',batch,str(index),'--inbox'],runner)

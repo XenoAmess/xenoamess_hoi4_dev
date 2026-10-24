@@ -81,5 +81,24 @@ class IdleLowPriorityTests(unittest.TestCase):
         self.assertEqual(read_json(path), body)
         self.assertFalse((self.root / 'mod_nailong/data/generation-requests').exists())
 
+    def test_ready_low_correction_moves_ahead_of_fresh_low_without_payload_changes(self):
+        self.enable(); body = read_json(self.policy); body['prioritize_ready_low_corrections'] = True; write_json(self.policy, body)
+        write_json(self.root / 'runtime/fresh.json', [{'key': 'l', 'prompt': 'fresh exact'}])
+        write_json(self.root / 'runtime/fix.json', [{'key': 'm', 'prompt': 'fix exact', 'journal': 'runtime/fix-journal.json'}])
+        write_json(self.root / 'runtime/fix-journal.json', {'attempts': [{'status': 'prepared', 'edit_existing': True}]})
+        path = self.root / 'runtime/after128-continuous-plan.json'
+        write_json(path, {'batches': [{'batch': 'fresh', 'jobs': 'runtime/fresh.json'}, {'batch': 'fix', 'jobs': 'runtime/fix.json'}]})
+        before = file_sha256(self.root / 'runtime/fix.json')
+        with patch('tools.rolling_production_queue.ready_art', return_value=[]), patch('tools.rolling_production_queue.allocate_exact_retry', return_value=None):
+            prioritize_high(self.root, {'next_index': 0, 'run_id': 'fixture', 'machine_id': 'fixture'})
+        self.assertEqual([i['batch'] for i in read_json(path)['batches']], ['fix', 'fresh'])
+        self.assertEqual(file_sha256(self.root / 'runtime/fix.json'), before)
+        receipt = read_json(self.root / 'mod_nailong/data/production-priority-dispatches/fixture-0.json')
+        self.assertIn('prioritized_LOW_art_correction', receipt)
+        after = read_json(path)
+        with patch('tools.rolling_production_queue.ready_art', return_value=[]), patch('tools.rolling_production_queue.allocate_exact_retry', return_value=None):
+            prioritize_high(self.root, {'next_index': 0, 'run_id': 'fixture', 'machine_id': 'fixture'})
+        self.assertEqual(read_json(path), after)
+
 
 if __name__ == '__main__': unittest.main()
