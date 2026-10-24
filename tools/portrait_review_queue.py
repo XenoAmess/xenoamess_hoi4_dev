@@ -29,7 +29,10 @@ def reviewed_outputs(root):
 def reserve_candidates(root,rows,priority,seen,slot,limit=4,deferred=None):
     folder=root/'runtime/rolling-review-queue';reservations=folder/'reservations'/ALPHA_POLICY;reservations.mkdir(parents=True,exist_ok=True)
     assets={a['source_sha256']:a for a in read_json(root/'mod_nailong/data/catalog.json')['assets']};jobs=[]
-    for key,row in rows.items():
+    # One slot returns new production feedback promptly; the other drains older
+    # pending work. Both still reserve exact current SHAs under the same lock.
+    ordered=sorted(rows.items(),key=lambda item:item[1].get('imported_at_utc',''),reverse=slot=='a')
+    for key,row in ordered:
         digest=row.get('generated_fullsize_sha256')
         if row.get('review')!='pending' or not priority[key]['high_priority'] or not digest or (key,digest) in seen:continue
         missing=[field for field in ('request_journal','prompt') if not isinstance(row.get(field),str) or not row[field]]

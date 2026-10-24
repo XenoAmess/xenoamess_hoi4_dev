@@ -1,0 +1,808 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-large-logical-queue-v1-window343",
+  "started_at_utc": "2026-10-24T09:30:11.434Z",
+  "planned_requests": 8,
+  "batches": [
+    {
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "jobs": "runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-24T09:30:11.446Z",
+      "batch": "resume-20261024-after-policy-fresh14-01"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:11.446Z",
+      "jobs_file": "runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:11.446Z",
+      "command": "python runtime\\batch-keys.py runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:11.675Z",
+      "command": "python runtime\\batch-keys.py runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json",
+      "elapsed_ms": 229,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:11.675Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:14.999Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 3324,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:14.999Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:15.292Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464",
+      "elapsed_ms": 293,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:15.292Z",
+      "command": "python runtime\\guard-dispatch-family.py 13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:15.639Z",
+      "command": "python runtime\\guard-dispatch-family.py 13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464",
+      "elapsed_ms": 347,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:15.652Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-policy-fresh14-01-13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464.json --key 13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:16.913Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-policy-fresh14-01-13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464.json --key 13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464",
+      "elapsed_ms": 1261,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:16.913Z",
+      "key": "13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:16.914Z",
+      "command": "python tools\\production_checkpoint.py resume-20261024-after-policy-fresh14-01"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:45.255Z",
+      "key": "13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464",
+      "elapsed_ms": 28342,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:45.267Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-aa475856-85ec-475c-afc1-898c43a2b8bf.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:45.492Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-aa475856-85ec-475c-afc1-898c43a2b8bf.png",
+      "elapsed_ms": 225,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:46.230Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:46.425Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358",
+      "elapsed_ms": 195,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:46.425Z",
+      "command": "python runtime\\guard-dispatch-family.py 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:46.766Z",
+      "command": "python runtime\\guard-dispatch-family.py 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358",
+      "elapsed_ms": 341,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:46.779Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-policy-fresh14-01-5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358.json --key 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:47.953Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-policy-fresh14-01-5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358.json --key 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358",
+      "elapsed_ms": 1174,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:30:47.953Z",
+      "key": "5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:07.186Z",
+      "key": "5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358",
+      "elapsed_ms": 19233,
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID eba8028f-2345-4077-aa8f-f698d9d16a02.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:12.212Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358 --error-file runtime\\resume-20261024-after-policy-fresh14-01-error-5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:12.468Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358 --error-file runtime\\resume-20261024-after-policy-fresh14-01-error-5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358.txt",
+      "elapsed_ms": 256,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:12.468Z",
+      "command": "python runtime\\deferred-service-family-20261020.py 9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:12.816Z",
+      "command": "python runtime\\deferred-service-family-20261020.py 9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358",
+      "elapsed_ms": 348,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:12.816Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:13.103Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb",
+      "elapsed_ms": 287,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:13.103Z",
+      "command": "python runtime\\guard-dispatch-family.py 9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:13.509Z",
+      "command": "python runtime\\guard-dispatch-family.py 9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb",
+      "elapsed_ms": 406,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:17.231Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-policy-fresh14-01-9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb.json --key 9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:18.579Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-policy-fresh14-01-9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb.json --key 9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb",
+      "elapsed_ms": 1348,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:18.579Z",
+      "key": "9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:42.924Z",
+      "key": "9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb",
+      "elapsed_ms": 24345,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:42.939Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-8b48658f-bf9c-47e4-bd9a-6e4f502ade1f.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:43.169Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-8b48658f-bf9c-47e4-bd9a-6e4f502ade1f.png",
+      "elapsed_ms": 230,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:43.827Z",
+      "command": "python runtime\\deferred-service-family-20261020.py 3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:44.127Z",
+      "command": "python runtime\\deferred-service-family-20261020.py 3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358",
+      "elapsed_ms": 300,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:44.127Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:44.348Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551",
+      "elapsed_ms": 221,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:44.348Z",
+      "command": "python runtime\\guard-dispatch-family.py 3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:44.707Z",
+      "command": "python runtime\\guard-dispatch-family.py 3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551",
+      "elapsed_ms": 359,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:44.720Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-policy-fresh14-01-3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551.json --key 3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:46.379Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-policy-fresh14-01-3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551.json --key 3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551",
+      "elapsed_ms": 1659,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:31:46.379Z",
+      "key": "3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:32:27.199Z",
+      "key": "3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551",
+      "elapsed_ms": 40820,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:32:27.210Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-8e9c748f-0b04-4b22-af15-13de1c1caa8c.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:32:27.442Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-8e9c748f-0b04-4b22-af15-13de1c1caa8c.png",
+      "elapsed_ms": 232,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:32:28.041Z",
+      "command": "python runtime\\deferred-service-family-20261020.py 7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:32:28.360Z",
+      "command": "python runtime\\deferred-service-family-20261020.py 7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358",
+      "elapsed_ms": 319,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:32:28.360Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:32:28.653Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b",
+      "elapsed_ms": 293,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:32:28.653Z",
+      "command": "python runtime\\guard-dispatch-family.py 7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:32:29.053Z",
+      "command": "python runtime\\guard-dispatch-family.py 7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b",
+      "elapsed_ms": 400,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:32:29.066Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-policy-fresh14-01-7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b.json --key 7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:32:32.439Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-policy-fresh14-01-7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b.json --key 7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b",
+      "elapsed_ms": 3373,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:32:32.439Z",
+      "key": "7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:54.417Z",
+      "key": "7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b",
+      "elapsed_ms": 81978,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:54.424Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-1051760f-9dcc-48e6-b647-adbbaee95061.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:54.700Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-1051760f-9dcc-48e6-b647-adbbaee95061.png",
+      "elapsed_ms": 276,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:55.442Z",
+      "command": "python runtime\\deferred-service-family-20261020.py a81ad355f0771758fa159c29138a4a65840813ae56fba34eec6ec267672a0037 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:55.715Z",
+      "command": "python runtime\\deferred-service-family-20261020.py a81ad355f0771758fa159c29138a4a65840813ae56fba34eec6ec267672a0037 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358",
+      "elapsed_ms": 273,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:55.716Z",
+      "command": "python runtime\\deferred-service-family-20261020.py 8f53dc26bec02a7f1a6a617afb171d49e221fad8227b265d94e7384ce17f4bd0 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:56.065Z",
+      "command": "python runtime\\deferred-service-family-20261020.py 8f53dc26bec02a7f1a6a617afb171d49e221fad8227b265d94e7384ce17f4bd0 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358",
+      "elapsed_ms": 349,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:56.065Z",
+      "command": "python runtime\\deferred-service-family-20261020.py 4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:56.403Z",
+      "command": "python runtime\\deferred-service-family-20261020.py 4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358",
+      "elapsed_ms": 338,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:56.403Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:56.674Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7",
+      "elapsed_ms": 271,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:56.674Z",
+      "command": "python runtime\\guard-dispatch-family.py 4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:57.063Z",
+      "command": "python runtime\\guard-dispatch-family.py 4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7",
+      "elapsed_ms": 389,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:57.077Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-policy-fresh14-01-4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7.json --key 4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:58.693Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-policy-fresh14-01-4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7.json --key 4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7",
+      "elapsed_ms": 1616,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:33:58.693Z",
+      "key": "4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:34:37.836Z",
+      "key": "4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7",
+      "elapsed_ms": 39143,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:34:43.112Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-7a42db9b-a46f-4c84-8aa7-e0644b8183e9.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:34:43.726Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-7a42db9b-a46f-4c84-8aa7-e0644b8183e9.png",
+      "elapsed_ms": 614,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:34:44.234Z",
+      "command": "python runtime\\deferred-service-family-20261020.py a81ad355f0771758fa159c29138a4a65840813ae56fba34eec6ec267672a0037 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:34:44.458Z",
+      "command": "python runtime\\deferred-service-family-20261020.py a81ad355f0771758fa159c29138a4a65840813ae56fba34eec6ec267672a0037 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358",
+      "elapsed_ms": 224,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:34:44.458Z",
+      "command": "python runtime\\deferred-service-family-20261020.py 8f53dc26bec02a7f1a6a617afb171d49e221fad8227b265d94e7384ce17f4bd0 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:34:44.733Z",
+      "command": "python runtime\\deferred-service-family-20261020.py 8f53dc26bec02a7f1a6a617afb171d49e221fad8227b265d94e7384ce17f4bd0 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358",
+      "elapsed_ms": 275,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:34:56.732Z",
+      "command": "python tools\\production_checkpoint.py resume-20261024-after-policy-fresh14-01",
+      "elapsed_ms": 279818,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:34:56.732Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-aa475856-85ec-475c-afc1-898c43a2b8bf.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:05.831Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 13af3ac7689a6806a5196f03961f51c7849ae55e2410352922440ed5e9bc0464 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-aa475856-85ec-475c-afc1-898c43a2b8bf.png",
+      "elapsed_ms": 9099,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:05.831Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358 --message-file runtime\\resume-20261024-after-policy-fresh14-01-error-5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:07.946Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key 5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358 --message-file runtime\\resume-20261024-after-policy-fresh14-01-error-5b8624d5b0a448e2195af2442b3fa77d569f978f1e73ff18b5c5157d77e8e358.txt",
+      "elapsed_ms": 2115,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:07.946Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-8b48658f-bf9c-47e4-bd9a-6e4f502ade1f.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:15.636Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 9d483392fc5a136bba7157255fd88e54de60d9adfc22b5758ed0987d8077b8bb --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-8b48658f-bf9c-47e4-bd9a-6e4f502ade1f.png",
+      "elapsed_ms": 7690,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:15.636Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-8e9c748f-0b04-4b22-af15-13de1c1caa8c.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:23.765Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 3dcc964878838b349606e9ea25710d8dda7b089b0104911d37e4cfa7b5224551 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-8e9c748f-0b04-4b22-af15-13de1c1caa8c.png",
+      "elapsed_ms": 8129,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:23.765Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-1051760f-9dcc-48e6-b647-adbbaee95061.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:31.237Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 7fd8ff9f3cb50a0c6b3af646a96ae549fe6a7634ea5ccbb5999c11a2c48f059b --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-1051760f-9dcc-48e6-b647-adbbaee95061.png",
+      "elapsed_ms": 7471,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:31.237Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-7a42db9b-a46f-4c84-8aa7-e0644b8183e9.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:36.902Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 4d4684e5ef04aa14f9fcd654ce4e12e393e52fcb92abf8a7fc0aa1d9109076a7 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-7a42db9b-a46f-4c84-8aa7-e0644b8183e9.png",
+      "elapsed_ms": 5665,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:36.902Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:54.652Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 17750,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:54.653Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:59.418Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 4765,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:59.418Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key a81ad355f0771758fa159c29138a4a65840813ae56fba34eec6ec267672a0037"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:59.701Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key a81ad355f0771758fa159c29138a4a65840813ae56fba34eec6ec267672a0037",
+      "elapsed_ms": 283,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:35:59.701Z",
+      "command": "python runtime\\guard-dispatch-family.py a81ad355f0771758fa159c29138a4a65840813ae56fba34eec6ec267672a0037"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:36:00.180Z",
+      "command": "python runtime\\guard-dispatch-family.py a81ad355f0771758fa159c29138a4a65840813ae56fba34eec6ec267672a0037",
+      "elapsed_ms": 479,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:36:00.181Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:36:04.760Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 4579,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:36:04.760Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 8f53dc26bec02a7f1a6a617afb171d49e221fad8227b265d94e7384ce17f4bd0"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:36:05.082Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-policy-fresh14-01-jobs.json --key 8f53dc26bec02a7f1a6a617afb171d49e221fad8227b265d94e7384ce17f4bd0",
+      "elapsed_ms": 322,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:36:05.082Z",
+      "command": "python runtime\\guard-dispatch-family.py 8f53dc26bec02a7f1a6a617afb171d49e221fad8227b265d94e7384ce17f4bd0"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:36:05.616Z",
+      "command": "python runtime\\guard-dispatch-family.py 8f53dc26bec02a7f1a6a617afb171d49e221fad8227b265d94e7384ce17f4bd0",
+      "elapsed_ms": 534,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:36:05.616Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:36:11.206Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 5590,
+      "exit_code": 0
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "resume-20261024-after-policy-fresh14-01",
+      "observed_at_utc": "2026-10-24T09:36:11.206Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-24T09:36:11.206Z",
+      "batch": "resume-20261024-after-policy-fresh14-01"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-24T09:36:11.206Z"
+}

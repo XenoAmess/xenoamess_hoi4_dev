@@ -68,5 +68,10 @@ class ReviewSlotTests(unittest.TestCase):
   with patch.object(portrait_review_queue,'ROOT',self.root):result=portrait_review_queue.claim('a')
   self.assertFalse(result['ready']);self.assertFalse(result['allocation_claimed']);self.assertEqual(result['reason'],'acceptance_policy_record_not_available')
   self.assertFalse((self.root/'runtime/rolling-review-queue/allocation.lock').exists())
+ def test_new_output_feedback_and_old_pending_backlog_both_get_a_slot(self):
+  for n,row in enumerate(self.rows.values()):row['imported_at_utc']=f'2026-10-24T09:{n:02}:00+00:00'
+  newest=reserve_candidates(self.root,self.rows,self.priority,set(),'a',limit=2)
+  oldest=reserve_candidates(self.root,self.rows,self.priority,set(),'b',limit=2)
+  self.assertEqual([j['key'] for j in newest],['5'*64,'4'*64]);self.assertEqual([j['key'] for j in oldest],['0'*64,'1'*64])
 
 if __name__=='__main__':unittest.main()
