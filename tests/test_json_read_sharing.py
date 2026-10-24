@@ -68,8 +68,31 @@ class JsonWriteSharingTests(unittest.TestCase):
                     write_json(path, {'new': True})
             self.assertEqual(path.read_bytes(), old)
             self.assertEqual(read_json(path.with_name('record.json.tmp')), {'new': True})
-            self.assertLessEqual(replace.call_count, 9)
+            self.assertLessEqual(replace.call_count, 11)
             self.assertEqual(sleep.call_count, replace.call_count - 1)
+            self.assertLess(sum(call.args[0] for call in sleep.call_args_list), 33)
+
+    def test_replace_recovers_after_former_retry_budget_is_exhausted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'record.json'
+            path.write_text('{"old": true}', encoding='utf-8')
+            original_replace = Path.replace
+            attempts = []
+
+            def replace(temporary, target):
+                attempts.append(temporary)
+                self.assertEqual(read_json(path), {'old': True})
+                self.assertEqual(read_json(temporary), {'new': '钢奶龙心'})
+                if len(attempts) <= 9:
+                    raise PermissionError('longer Windows sharing denial')
+                return original_replace(temporary, target)
+
+            with patch.object(Path, 'replace', replace), patch('tools.common.time.sleep') as sleep:
+                write_json(path, {'new': '钢奶龙心'})
+            self.assertEqual(len(attempts), 10)
+            self.assertEqual(sleep.call_count, 9)
+            self.assertEqual(read_json(path), {'new': '钢奶龙心'})
+            self.assertFalse(path.with_name('record.json.tmp').exists())
 
     def test_other_filesystem_failure_is_not_retried(self):
         with tempfile.TemporaryDirectory() as directory:

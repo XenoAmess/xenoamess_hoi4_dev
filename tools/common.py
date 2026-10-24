@@ -47,7 +47,10 @@ def write_json(path: Path, value) -> None:
     # Windows readers/virus scanners can briefly deny replacement of an open
     # destination. Keep the old complete JSON visible and retry only this local
     # atomic replacement, never any image-generation request.
-    for delay in (0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 4, None):
+    # Large live journals can remain share-denied beyond the former ~8s
+    # budget. Bound replacement waits to ~32s and preserve the candidate on
+    # exhaustion; this never repeats the caller's image request or review.
+    for delay in (0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 4, 8, 16, None):
         try:
             temporary.replace(path)
             break
