@@ -53,6 +53,31 @@ class IsolatedProductionSyncTests(unittest.TestCase):
     def test_actual_fresh_source_batch_with_utc_T_is_a_safe_identifier(self):
         self.exercise(batch='resume-fresh-observed-20261024T123727-b-f506cb99-network-2')
 
+    def test_actual_long_batch_gets_bounded_deterministic_publication_label(self):
+        batch = 'resume-20261024-large-logical-queue-v4-idle392-matched-context-and-approved-chamber-20261024'
+        label = sync.publication_identifier(batch, 2)
+        self.assertLessEqual(len(label), 101)
+        self.assertEqual(label, sync.publication_identifier(batch, 2))
+        self.assertNotEqual(label, sync.publication_identifier(batch, 3))
+        self.exercise(batch=label)
+
+    def test_long_batches_with_same_prefix_retain_distinct_identity(self):
+        prefix = 'a' * 110
+        self.assertNotEqual(sync.publication_identifier(prefix + '-first', 1),
+                            sync.publication_identifier(prefix + '-second', 1))
+
+    def test_short_publication_label_keeps_original_name(self):
+        self.assertEqual(sync.publication_identifier('safe-20261024T140000', 1),
+                         'safe-20261024T140000-network-1')
+
+    def test_publication_label_never_hides_invalid_input(self):
+        for batch in ['../outside', 'a/b', 'a\\b', 'a b', '', '\u4e2d\u6587']:
+            with self.assertRaises(ValueError):
+                sync.publication_identifier(batch, 1)
+        for sequence in [0, -1, True, '1']:
+            with self.assertRaises(ValueError):
+                sync.publication_identifier('safe', sequence)
+
     def test_changed_commit_requires_revalidation_before_any_push(self):
         self.exercise('c' * 40)
 

@@ -3,7 +3,7 @@ import sys,os,subprocess,traceback,time,json
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,machine_id,utc_now
-from tools.isolated_production_sync import rebase_validated_commit
+from tools.isolated_production_sync import rebase_validated_commit,publication_identifier
 commit,batch=sys.argv[1:3]
 assert len(commit)==40 and all(c in '0123456789abcdef' for c in commit)
 out=ROOT/f'runtime/checkpoint-{batch}.json'
@@ -33,8 +33,9 @@ try:
  if synchronization.get('status')!='validated_commit_rebased_unchanged_fast_forward_eligible':
   for sync_attempt in range(1,3):
    history=receipt.setdefault('isolated_synchronization_attempt_history',[])
-   label=batch+'-network-'+str(len(history)+1)
-   item={'started_at_utc':utc_now(),'batch':label,'commit':commit};history.append(item)
+   sequence=len(history)+1
+   label=publication_identifier(batch,sequence)
+   item={'started_at_utc':utc_now(),'batch':label,'full_checkpoint_batch':batch,'publication_sequence':sequence,'commit':commit};history.append(item)
    try:
     synchronization=rebase_validated_commit(commit,label)
     item.update(status='succeeded',completed_at_utc=utc_now());receipt['isolated_git_synchronization']=synchronization;write_json(out,receipt);break

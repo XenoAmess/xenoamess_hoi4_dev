@@ -4,12 +4,25 @@ Production may keep writing call journals in the primary worktree. Never stash,
 reset, rebase or replace that live worktree to publish an immutable checkpoint.
 """
 from pathlib import Path
+import hashlib
 import re
 import subprocess
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT, machine_id, utc_now, write_json
+
+
+def publication_identifier(batch, sequence):
+    """Bound only the worktree label; keep the complete batch in its receipt."""
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9-]*', batch):
+        raise ValueError('Invalid publication batch identifier')
+    if type(sequence) is not int or sequence < 1:
+        raise ValueError('Expected a positive publication sequence')
+    label = batch + '-network-' + str(sequence)
+    if len(label) > 101:
+        label = label[:80] + '-' + hashlib.sha256(label.encode('ascii')).hexdigest()[:20]
+    return label
 
 
 def _git(*args, cwd=None):
