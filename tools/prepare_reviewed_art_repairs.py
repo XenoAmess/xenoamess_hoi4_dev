@@ -9,7 +9,7 @@ rows=read_json(ROOT/'mod_nailong/data/generated.json')['portraits'];priority=rea
 batch=sys.argv[1] if len(sys.argv)>1 else 'resume-20261023-small-repairs3'
 reports=['mod_nailong/data/'+name for name in (sys.argv[2] if len(sys.argv)>2 else 'resumed-20261023-small-finer-v3-review.json').split(',')]
 expected=int(sys.argv[3]) if len(sys.argv)>3 else 3
-plan_index=int(sys.argv[4]) if len(sys.argv)>4 else 178
+plan_index=(len(read_json(ROOT/'runtime/after128-continuous-plan.json')['batches']) if sys.argv[4]=='auto' else int(sys.argv[4])) if len(sys.argv)>4 else 178
 canvas_reviews=read_json(ROOT/sys.argv[5])['sources'] if len(sys.argv)>5 else {}
 custom_prompts=read_json(ROOT/sys.argv[7]) if len(sys.argv)>7 else {}
 assert not any(read_json(p).get('status')=='calling' for p in (ROOT/'runtime/production-queue/dispatch').glob('*.json'))

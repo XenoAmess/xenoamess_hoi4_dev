@@ -1,0 +1,57 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "recorded_after_actual_success_at_utc": "2026-10-24T13:11:34.217020+00:00",
+  "command": "python -m unittest tests.test_invocation_file_verifier tests.test_master_files tests.test_audit_art tests.test_original_replacement_preparation tests.test_reviewed_transport_retry tests.test_production_prepare_boundary",
+  "actual_tests_run": 43,
+  "actual_exit_code": 0,
+  "result": "OK",
+  "source_sha256_at_recording": {
+    "tools/invocation_file_verifier.py": "4382df4dfc3f2f04bc54c7118afb2a1ffc7a38112222a0248b0a4af662419705",
+    "mod_nailong/tools/master_files.py": "c767f8bc3c838db51459131f9a10d254cb35838dacd085cc160c20b4cc28de4d",
+    "mod_nailong/tools/audit_art.py": "b9cd25ebcd4a30f2772c66307db4605336555abc37812c55e66c9072ab8647c2",
+    "tools/production_checkpoint.py": "49a1c79319bebd90419f75c88f12b5568ffc90b84bece9dc867ee09519b06172",
+    "tests/test_invocation_file_verifier.py": "11a41a9a410fcaccb5aa23379304e3a225509b2b820f4a5e8eab2ef5090557a1"
+  },
+  "recording_boundary": "A documentation-only audit_art docstring clarification followed the actual43-test run; no functional audit change followed that run.",
+  "previous_real_checkpoint_timings": [
+    {
+      "phase": "archive_sync_completed",
+      "elapsed_seconds": 123.973,
+      "command": null
+    },
+    {
+      "phase": "coverage_completed",
+      "elapsed_seconds": 0.719,
+      "command": null
+    },
+    {
+      "phase": "priority_completed",
+      "elapsed_seconds": 14.768,
+      "command": null
+    },
+    {
+      "phase": "command_completed",
+      "elapsed_seconds": 112.968,
+      "command": [
+        "C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "mod_nailong/tools/audit_art.py"
+      ]
+    },
+    {
+      "phase": "command_completed",
+      "elapsed_seconds": 9.81,
+      "command": [
+        "C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "mod_nailong/tools/build_release.py",
+        "--preview",
+        "--check",
+        "--validation-sample",
+        "4"
+      ]
+    }
+  ],
+  "previous_actual_commit": "7a1887406f310ace4644c1dc703797f7c41d94ff",
+  "previous_checkpoint_scope": "Original checkpoint had no invocation verifier. It fully read originals for sync, then again for prompt-input/master audit. The one-source window blocked further imports/dispatch until local checkpoint completion; preserve this pause in the wall-clock benchmark.",
+  "change": "Share one process-local file verifier across full archive sync and art audit. Every path is fully byte-read in this checkpoint; only repeat reads with unchanged device/inode/size/mtime/ctime are reused. A new checkpoint starts empty. Same-size changes, replacement, missing files, conflicting expected digests and changes during read are tested. Existing PNG verification, complete inventory, sample build and remote pinned original download checks remain.",
+  "actual_performance_after_change": "pending actual safe-boundary adoption and timing; unit success is not throughput proof"
+}

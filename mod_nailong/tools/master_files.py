@@ -48,8 +48,9 @@ def recorded_master_candidates(root):
             'masters': masters}
 
 
-def sync_git(snapshot=None, root=ROOT):
+def sync_git(snapshot=None, root=ROOT, hasher=None):
     """Adopt only recorded, byte-verified originals; never overwrite a master."""
+    hash_file=hasher or file_sha256
     if snapshot is None:
         snapshot = recorded_master_candidates(root)
         if snapshot is None:
@@ -61,7 +62,7 @@ def sync_git(snapshot=None, root=ROOT):
     for item in sorted(snapshot['masters'], key=lambda item: item['sha256']):
         digest = item['sha256']
         source = Path(item['path'])
-        if file_sha256(source) != digest:
+        if hash_file(source) != digest:
             raise ValueError('Original changed before adoption: ' + digest)
         target = root / master_path(digest)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -70,7 +71,7 @@ def sync_git(snapshot=None, root=ROOT):
         # The source was just fully hashed. A target naming that same file
         # (including a new hardlink) contains those exact bytes; independent
         # existing targets still need their own complete checksum.
-        if target.stat().st_size != item['bytes'] or (not target.samefile(source) and file_sha256(target) != digest):
+        if target.stat().st_size != item['bytes'] or (not target.samefile(source) and hash_file(target) != digest):
             raise ValueError('Git master bytes do not match: ' + digest)
         with Image.open(target) as image:
             image.verify()
@@ -116,8 +117,9 @@ def sync_git(snapshot=None, root=ROOT):
     return index
 
 
-def audit_files(root=ROOT):
+def audit_files(root=ROOT, hasher=None):
     """Require every known output, including history and experiments, in Git files."""
+    hash_file=hasher or file_sha256
     from mod_nailong.tools.master_archive import recorded_outputs
     expected, _, _ = recorded_outputs(root / 'mod_nailong')
     index = read_json(root / 'mod_nailong/data/fullsize-files.json')
@@ -127,7 +129,7 @@ def audit_files(root=ROOT):
         if entry['path'] != master_path(digest):
             raise ValueError('Unexpected fullsize path')
         path = root / entry['path']
-        if path.stat().st_size != entry['bytes'] or file_sha256(path) != digest:
+        if path.stat().st_size != entry['bytes'] or hash_file(path) != digest:
             raise ValueError('Changed or missing original PNG: ' + entry['path'])
     if index['count'] != len(expected) or index['original_png_bytes'] != sum(e['bytes'] for e in index['outputs'].values()):
         raise ValueError('Inconsistent fullsize totals')

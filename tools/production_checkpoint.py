@@ -14,6 +14,7 @@ from mod_nailong.tools.production_priority import build
 from mod_nailong.tools.art_contract import portrait_ready
 from mod_nailong.tools.production_queue import attempt_for_snapshot
 from tools.checkpoint_schedule import automatic_checkpoint_deferral
+from tools.invocation_file_verifier import InvocationFileVerifier
 
 def trace(phase,**details):
  event={'machine_id':machine_id(),'observed_at_utc':utc_now(),'batch':batch,'phase':phase,**details}
@@ -57,10 +58,15 @@ for name in completed:
   a=attempt_for_snapshot(job['key'],actual);row=rows.get(job['key'],{})
   requests.append({'source_sha256':job['key'],'source':job['source'],'attempt_number':a['number'],'status':a['status'],'call_dispatched':True,'prompt_sha256':a['prompt_sha256'],'fullsize_sha256':a.get('fullsize_sha256'),'output_sha256':a.get('output_sha256'),'this_output_qualified':bool(a.get('output_sha256')==row.get('image_sha256') and portrait_ready(row)),'current_source_ready':portrait_ready(row) if row else False,'actual_request_verification':a['actual_request_verification']})
  write_json(ROOT/f'mod_nailong/data/production-batches/{name}.json',{'machine_id':machine_id(),'observed_at_utc':utc_now(),'actual_calls':sum(a['call_dispatched'] for a in requests),'deferred_without_call':sum(not a['call_dispatched'] for a in requests),'returned_images':sum(bool(a['fullsize_sha256']) for a in requests),'failed_calls':sum(a['status']=='failed' for a in requests),'qualified_outputs_from_this_batch':sum(a['this_output_qualified'] for a in requests),'requests':requests,'retry_policy_path':'mod_nailong/data/image-retry-policy.json','retry_policy_sha256':file_sha256(ROOT/'mod_nailong/data/image-retry-policy.json'),'scope':'Exact actual-payload proof binds each batch attempt. Failed/refused/rejected outputs do not count as qualified. New sources remain HIGH-first. Each eligible retry retains exact prompt/input bytes and order, uses one builtin lane, observes at least eight hours after the latest refusal and consumes the cumulative source quota in the bound policy without resetting previous use.'})
-with timed('archive_sync'):sync_git()
+byte_verifier=InvocationFileVerifier()
+with timed('archive_sync'):sync_git(hasher=byte_verifier)
 with timed('coverage'):coverage(True)
 with timed('priority'):build()
-print(execute(sys.executable,'mod_nailong/tools/audit_art.py',timeout=900),flush=True)
+with timed('art_audit'):
+ from mod_nailong.tools.audit_art import audit
+ audit(hasher=byte_verifier)
+receipt['invocation_byte_verification']=byte_verifier.summary()
+trace('invocation_byte_verification',**receipt['invocation_byte_verification'])
 print(execute(sys.executable,'mod_nailong/tools/build_release.py','--preview','--check','--validation-sample','4'),flush=True)
 git=['git','-c','gc.auto=0','-c','maintenance.auto=false']
 assert execute('git','branch','--show-current')=='master'
@@ -100,6 +106,7 @@ execute(*git,'add','--','tools/checkpoint_schedule.py','tests/test_checkpoint_sc
 execute(*git,'add','--','tools/accepted_retry_art.py','tests/test_accepted_retry_art.py')
 execute(*git,'add','--','tests/test_exact_art_review_selection.py')
 execute(*git,'add','--','tools/prepare_reviewed_transport_retry.py','tests/test_reviewed_transport_retry.py','docs/handoffs/2026-10-24-resume-preflight.json','docs/handoffs/2026-10-24-resume-activation.json')
+execute(*git,'add','--','tools/invocation_file_verifier.py','tests/test_invocation_file_verifier.py')
 message=ROOT/'runtime/production-checkpoint-message.txt'
 message.write_text('Preserve reviewed HIGH portraits and original fullsize PNGs\n\nContinue the full portrait task across storage and validation checkpoints.\nKeep remote original verification bound to immutable Git metadata.\n',encoding='utf-8',newline='\n')
 if execute('git','diff','--cached','--name-only'):

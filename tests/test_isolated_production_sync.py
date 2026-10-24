@@ -9,7 +9,7 @@ from tools import isolated_production_sync as sync
 
 
 class IsolatedProductionSyncTests(unittest.TestCase):
-    def exercise(self, rebased=None):
+    def exercise(self, rebased=None, batch='test-checkpoint'):
         commit = 'a' * 40
         calls = []
         with tempfile.TemporaryDirectory() as directory:
@@ -34,9 +34,9 @@ class IsolatedProductionSyncTests(unittest.TestCase):
             with patch.object(sync, 'ROOT', root), patch.object(sync, '_git', side_effect=git):
                 if rebased:
                     with self.assertRaisesRegex(RuntimeError, 'validate that result'):
-                        sync.rebase_validated_commit(commit, 'test-checkpoint')
+                        sync.rebase_validated_commit(commit, batch)
                 else:
-                    result = sync.rebase_validated_commit(commit, 'test-checkpoint')
+                    result = sync.rebase_validated_commit(commit, batch)
                     self.assertEqual(result['synchronized_commit'], commit)
             rebase = [(args, cwd) for args, cwd in calls if args[0] == 'rebase']
             self.assertEqual(len(rebase), 1)
@@ -49,6 +49,9 @@ class IsolatedProductionSyncTests(unittest.TestCase):
 
     def test_live_worktree_is_not_rebased_or_stashed(self):
         self.exercise()
+
+    def test_actual_fresh_source_batch_with_utc_T_is_a_safe_identifier(self):
+        self.exercise(batch='resume-fresh-observed-20261024T123727-b-f506cb99-network-2')
 
     def test_changed_commit_requires_revalidation_before_any_push(self):
         self.exercise('c' * 40)

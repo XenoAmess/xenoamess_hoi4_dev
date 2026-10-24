@@ -1,0 +1,14 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "recorded_at_utc": "2026-10-24T13:01:32.004336+00:00",
+  "failed_receipt": "mod_nailong/data/production-publish-failure-history/f68badbe5dc90957134da091b9e49e330605111e827c7b172933c0361f95c7dc.json",
+  "failed_receipt_sha256": "f68badbe5dc90957134da091b9e49e330605111e827c7b172933c0361f95c7dc",
+  "failed_commit": "7a1887406f310ace4644c1dc703797f7c41d94ff",
+  "finding": "Fresh-source identities contain uppercase UTC T; the isolated sync validator only accepted lowercase. Original failure occurred before any Git mutation or push. Permit the same safe ASCII upper/lower alphanumeric and hyphen alphabet, retaining path bounds.",
+  "validation": {
+    "command": "python -m unittest tests.test_isolated_production_sync",
+    "tests_run": 5,
+    "exit_code": 0
+  },
+  "scope": "Retry publisher of the already validated immutable commit only; no image replay, validation claim for newer imports, force push or primary-worktree rebase."
+}

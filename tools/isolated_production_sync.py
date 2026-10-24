@@ -26,7 +26,7 @@ def _git(*args, cwd=None):
 def rebase_validated_commit(commit, batch):
     if not re.fullmatch(r'[0-9a-f]{40}', commit):
         raise ValueError('Expected the full immutable validated commit SHA')
-    if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,100}', batch):
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9-]{0,100}', batch):
         raise ValueError('Invalid checkpoint identifier')
     assert _git('branch', '--show-current') == 'master'
     origin = _git('remote', 'get-url', 'origin').rstrip('/').lower()
