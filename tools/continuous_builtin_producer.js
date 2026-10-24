@@ -2,12 +2,13 @@ async function produce(jobFile,batch,checkpointCommand="",options={}) {
  const emit=(phase,detail={})=>options.onEvent?.({phase,batch,observed_at_utc:new Date().toISOString(),...detail});
  emit("batch_started",{jobs_file:jobFile});
  const root="C:\\workspace\\xenoamess_hoi4_dev";
- const run=async(cmd,budget=1600)=>{const start=Date.now();emit("local_command_started",{command:cmd});let r=await tools.exec_command({cmd,shell:"cmd.exe",login:false,workdir:root,max_output_tokens:budget});while(r.session_id)r=await tools.write_stdin({session_id:r.session_id,chars:"",max_output_tokens:budget,yield_time_ms:1000});emit("local_command_finished",{command:cmd,elapsed_ms:Date.now()-start,exit_code:r.exit_code});if(r.exit_code!==0)throw Error(JSON.stringify(r));return r;};
+ const run=async(cmd,budget=1600)=>{const start=Date.now();emit("local_command_started",{command:cmd});let r=await tools.exec_command({cmd,shell:"cmd.exe",login:false,workdir:root,max_output_tokens:budget});let output=r.output||"";while(r.session_id){r=await tools.write_stdin({session_id:r.session_id,chars:"",max_output_tokens:budget,yield_time_ms:1000});output+=r.output||"";}r={...r,output};emit("local_command_finished",{command:cmd,elapsed_ms:Date.now()-start,exit_code:r.exit_code});if(r.exit_code!==0)throw Error(JSON.stringify(r));return r;};
  const keys=JSON.parse((await run("python runtime\\batch-keys.py "+jobFile,3000)).output),todo=[...keys];
  if(keys.length>8)throw Error("Bounded cell accepts at most8 actual requests");
- let checkpoint=null,checkpointResult=null,checkpointStarted=false,checkpointFailureRecorded=false;const pending=[];
+ let checkpoint=null,checkpointResult=null,checkpointStarted=false,checkpointFailureRecorded=false,boundaryInitialized=false;const pending=[];
  const flush=async()=>{
   if(checkpoint && !checkpointResult)return false;
+  if(boundaryInitialized&&!pending.length)return true;
   while(pending.length){const item=pending[0];
    if(item.errorFile)await run("python mod_nailong\\tools\\generation_requests.py fail --key "+item.key+" --message-file "+item.errorFile);
    else await run("python mod_nailong\\tools\\generation_requests.py finish --key "+item.key+" --image "+item.path);
@@ -15,6 +16,7 @@ async function produce(jobFile,batch,checkpointCommand="",options={}) {
   }
   // Only this executor mutates canonical requests, after checkpoint/import barriers.
   const preparation=JSON.parse((await run("python tools\\production_prepare_boundary.py --apply-reviews",1600)).output);
+  boundaryInitialized=true;
   if(preparation.status==="preparation_requires_reconciliation")notify(batch+": future preparation stopped for reconciliation; current prepared originals continue");
   if(checkpointResult?.error&&!checkpointFailureRecorded){
    const failure={machine_id:"bf-202609141645-5434332d4d",observed_at_utc:new Date().toISOString(),batch,jobs_file:jobFile,error:String(checkpointResult.error),status:"checkpoint_requires_reconciliation_unrelated_generation_continues",scope:"Checkpoint subprocess has exited. Actual returns/errors imported by the sole executor. No successful validation,commit,push or readback claimed for the failed checkpoint. Future checkpoint must reconcile and validate preserved task files;no image request replay or retry."};

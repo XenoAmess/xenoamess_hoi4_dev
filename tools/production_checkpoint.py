@@ -13,6 +13,7 @@ from mod_nailong.tools.portraits import coverage
 from mod_nailong.tools.production_priority import build
 from mod_nailong.tools.art_contract import portrait_ready
 from mod_nailong.tools.production_queue import attempt_for_snapshot
+from tools.checkpoint_schedule import automatic_checkpoint_deferral
 
 def trace(phase,**details):
  event={'machine_id':machine_id(),'observed_at_utc':utc_now(),'batch':batch,'phase':phase,**details}
@@ -32,7 +33,12 @@ def execute(*args,timeout=180):
   if p.returncode:raise RuntimeError(p.stdout+'\n'+p.stderr)
   return p.stdout.strip()
 
-batch=sys.argv[1];completed=sys.argv[2:]
+batch=sys.argv[1];force='--force' in sys.argv[2:];completed=[arg for arg in sys.argv[2:] if arg!='--force']
+deferred=automatic_checkpoint_deferral(ROOT,force)
+if deferred:
+ path=ROOT/f'runtime/checkpoint-{batch}.json';assert not path.exists(),'Existing checkpoint receipt requires reconciliation'
+ write_json(path,dict(deferred,machine_id=machine_id(),requested_at_utc=utc_now(),inflight_batch=batch,imports_deferred_by_producer=False))
+ print(json.dumps(deferred,ensure_ascii=True),flush=True);raise SystemExit(0)
 receipt={'machine_id':machine_id(),'started_at_utc':utc_now(),'inflight_batch':batch,'imports_deferred_by_producer':True,'completed_batches':completed}
 print('Checkpoint '+batch+': preserving originals and completed batch metadata while one builtin call runs',flush=True)
 for name in completed:
@@ -88,6 +94,7 @@ execute(*git,'add','--','tests/test_production_benchmark.py')
 execute(*git,'add','--','tools/prepare_reviewed_art_repairs.py','tools/production_prepare_boundary.py','tests/test_production_prepare_boundary.py')
 execute(*git,'add','--','tools/prepare_reviewed_original_replacements.py','tests/test_original_replacement_preparation.py')
 execute(*git,'add','--','tools/prepare_reviewed_fresh_sources.py')
+execute(*git,'add','--','tools/checkpoint_schedule.py','tests/test_checkpoint_schedule.py')
 message=ROOT/'runtime/production-checkpoint-message.txt'
 message.write_text('Preserve reviewed HIGH portraits and original fullsize PNGs\n\nContinue the full portrait task across storage and validation checkpoints.\nKeep remote original verification bound to immutable Git metadata.\n',encoding='utf-8',newline='\n')
 if execute('git','diff','--cached','--name-only'):

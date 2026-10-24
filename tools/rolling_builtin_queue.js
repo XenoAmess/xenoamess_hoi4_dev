@@ -5,7 +5,9 @@ async function runLogicalQueue(spec,options={}) {
  if(!Number.isInteger(maxCalls)||maxCalls<1||maxCalls>192||maxBytes<8*65536||maxBytes>16*1024*1024)throw Error("Invalid logical transport bounds");
  const run=options.run||(async(cmd,budget=2500)=>{
   let r=await tools.exec_command({cmd,shell:"cmd.exe",login:false,workdir:root,max_output_tokens:budget});
-  while(r.session_id)r=await tools.write_stdin({session_id:r.session_id,chars:"",yield_time_ms:1000,max_output_tokens:budget});
+  let output=r.output||"";
+  while(r.session_id){r=await tools.write_stdin({session_id:r.session_id,chars:"",yield_time_ms:1000,max_output_tokens:budget});output+=r.output||"";}
+  r={...r,output};store(spec.runId+"_last_local_result",{command:cmd,result:r,observed_at_utc:new Date().toISOString()});
   if(r.exit_code!==0)throw Error(JSON.stringify(r));return r;
  });
  const sleep=options.sleep||(ms=>new Promise(resolve=>setTimeout(resolve,ms)));

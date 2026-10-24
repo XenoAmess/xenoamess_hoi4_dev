@@ -1,0 +1,8 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "original_receipt": "mod_nailong/data/production-code-deployments/20261024-producer-poll-chunks-empty-boundaries.json",
+  "observation": "Actual v2 window350 still ran5 preparation-boundary commands for2 actual calls. Storing a new source string in another exec did not cause the running execution unit to adopt it. The original receipt records a real cache write, but its statement that the next window would adopt the code was an unverified assumption.",
+  "actual_trace": "mod_nailong/data/production-diagnostic-20261024-empty-boundary-observation.json",
+  "correction": "Do not claim the redundant-boundary optimization was active in that window. Request a normal safe-window handover, preserve the queue and completed receipts, and load the verified source in a fresh execution unit. Inspect real subsequent command counts before claiming adoption.",
+  "main_task_continues": true
+}

@@ -53,24 +53,24 @@ test('direct producer entry also rejects an oversized batch before image calls',
  assert.equal(images,0);assert.equal(events[0].phase,'batch_started');
  assert.equal(events[1].phase,'local_command_started');assert.equal(events[2].phase,'local_command_finished');
 });
-test('future preparation and imports wait for the image and checkpoint barriers',async()=>{
+for(const withCheckpoint of [true,false])test('future preparation waits for real barriers without duplicate empty passes; checkpoint='+withCheckpoint,async()=>{
  let checkpointActive=false,imageActive=false,preparedChecks=0,imports=0;
  const context={Date,JSON,Error,notify:()=>{},yield_control:async()=>{},generatedImage:()=>{},store:()=>{},tools:{
   apply_patch:async()=>{},
   exec_command:async({cmd})=>{
    if(cmd==='checkpoint-fixture'){checkpointActive=true;return {session_id:1,output:''};}
    let output='{}';
-   if(cmd.includes('batch-keys.py'))output=JSON.stringify([key(1)]);
+   if(cmd.includes('batch-keys.py'))return {session_id:2,output:JSON.stringify([key(1),key(2)])};
    if(cmd.includes('export-job'))output=JSON.stringify({source:'fixture',prompt:'fixture',references:['C:\\fixture\\source.png','C:\\fixture\\reference.png'],transparent:false});
    if(cmd.includes('guard-dispatch-family'))output=JSON.stringify({eligible:true});
    if(cmd.includes('production_prepare_boundary')){assert.equal(checkpointActive,false);assert.equal(imageActive,false);preparedChecks++;output=JSON.stringify({prepared:false});}
    if(cmd.includes('generation_requests.py finish')){assert.equal(checkpointActive,false);assert.equal(imageActive,false);imports++;}
    return {exit_code:0,output};
   },
-  write_stdin:async()=>{await new Promise(resolve=>setTimeout(resolve,5));checkpointActive=false;return {exit_code:0,output:'checkpoint complete'};},
+  write_stdin:async({session_id})=>{if(session_id===2)return {exit_code:0,output:''};assert.equal(session_id,1);await new Promise(resolve=>setTimeout(resolve,5));checkpointActive=false;return {exit_code:0,output:'checkpoint complete'};},
   image_gen__imagegen:async()=>{imageActive=true;await Promise.resolve();imageActive=false;return {output_hint:'Saved as C:\\fixture\\output.png by default.'};}
  }};
  const produce=vm.runInNewContext('('+producerSource+')',context);
- await produce('runtime/a.json','a','checkpoint-fixture');
- assert.equal(imports,1);assert.ok(preparedChecks>=2);
+ await produce('runtime/a.json','a',withCheckpoint?'checkpoint-fixture':'');
+ assert.equal(imports,2);assert.equal(preparedChecks,withCheckpoint?2:3);
 });

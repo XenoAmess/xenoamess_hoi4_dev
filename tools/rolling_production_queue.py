@@ -74,9 +74,11 @@ def checkpoint_when_idle(root,state,runner=None):
     if not body.get('allow_idle'):return None
     no_calling(root)
     assert state['next_index']==len(read_json(root/'runtime/after128-continuous-plan.json')['batches']),'Prepared work must continue before idle checkpoint'
-    batch=state['run_id']+'-idle'+str(state['next_index'])
-    request.rename(request.with_name(state['run_id']+'-checkpoint-claimed-idle-'+str(state['next_index'])+'.json'))
-    result=run_checked(root,[sys.executable,'tools/production_checkpoint.py',batch],runner)
+    request_id=body.get('request_id','');assert not request_id or re.fullmatch('[A-Za-z0-9_-]{1,64}',request_id)
+    suffix=('-'+request_id) if request_id else ''
+    batch=state['run_id']+'-idle'+str(state['next_index'])+suffix
+    request.rename(request.with_name(state['run_id']+'-checkpoint-claimed-idle-'+str(state['next_index'])+suffix+'.json'))
+    result=run_checked(root,[sys.executable,'tools/production_checkpoint.py',batch]+(['--force'] if body.get('force') else []),runner)
     return {'batch':batch,'stdout_tail':result.stdout[-2500:],'scope':'Same sole owner, no unresolved call and no prepared/eligible work. Validation uses otherwise idle supply time; remote publisher remains separate.'}
 
 def allocate_exact_retry(root,state,runner=None):
@@ -175,7 +177,7 @@ def next_item(root,state,runner=None):
         body=read_json(request);assert body['machine_id']==state['machine_id'] and body['run_id']==state['run_id']
         minimum=body.get('min_requests',1);assert isinstance(minimum,int) and 1<=minimum<=8
         if count>=minimum:
-            item['checkpointCommand']='python tools\\production_checkpoint.py '+item['batch']
+            item['checkpointCommand']='python tools\\production_checkpoint.py '+item['batch']+(' --force' if body.get('force') else '')
             request.rename(request.with_name(state['run_id']+'-checkpoint-claimed-'+str(index)+'.json'))
     return {'ready':True,'index':index,'window_id':state['run_id']+'-window'+str(index),'plan':[item],'requests':count}
 
@@ -193,7 +195,12 @@ def main():
             finish_exact_retry(ROOT,state)
             receipt=read_json(ROOT/gate['receipt']);state['completed_windows']+=1;state['completed_source_requests']+=receipt['planned_requests'];state['next_index']+=1;state['after_window']=window;state['updated_at_utc']=utc_now();write_json(path,state);result=state
         else:
-            no_calling(ROOT);state.update(status='stopped_at_safe_boundary',reason=args.reason,stopped_at_utc=utc_now());write_json(path,state)
+            no_calling(ROOT)
+            stop_request=folder/(args.run_id+'-stop-requested.json')
+            if stop_request.exists():
+                requested=read_json(stop_request);assert requested['machine_id']==machine_id() and requested['run_id']==args.run_id
+                state['stop_request']=requested
+            state.update(status='stopped_at_safe_boundary',reason=state.get('stop_request',{}).get('reason',args.reason),stopped_at_utc=utc_now());write_json(path,state)
             evidence=ROOT/f'mod_nailong/data/production-window-timings/{args.run_id}-logical-queue-completed.json';assert not evidence.exists();write_json(evidence,state)
             (folder/'owner.json').rename(folder/(args.run_id+'-released-owner.json'));result=state
     print(json.dumps(result,ensure_ascii=True))

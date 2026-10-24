@@ -111,5 +111,18 @@ class LogicalQueueTests(unittest.TestCase):
   result=checkpoint_when_idle(self.root,state,runner)
   self.assertEqual(result['batch'],'run-idle1');self.assertFalse(request.exists());self.assertEqual(len(commands),1)
   self.assertIsNone(checkpoint_when_idle(self.root,state,lambda _:self.fail('replayed checkpoint')))
+ def test_forced_named_request_after_idle_deferral_preserves_both_receipts(self):
+  write_json(self.root/'runtime/after128-continuous-plan.json',{'batches':[]});state=claim(self.root,'run',0,'prior','m')
+  request=self.root/'runtime/rolling-production/run-checkpoint-requested.json';commands=[]
+  def runner(command):commands.append(command);return SimpleNamespace(returncode=0,stdout='actual outcome recorded separately',stderr='')
+  write_json(request,{'machine_id':'m','run_id':'run','allow_idle':True});first=checkpoint_when_idle(self.root,state,runner)
+  write_json(request,{'machine_id':'m','run_id':'run','allow_idle':True,'force':True,'request_id':'publish-fix-0952'});second=checkpoint_when_idle(self.root,state,runner)
+  self.assertEqual(first['batch'],'run-idle0');self.assertEqual(second['batch'],'run-idle0-publish-fix-0952');self.assertEqual(commands[-1][-1],'--force')
+  self.assertTrue((request.parent/'run-checkpoint-claimed-idle-0.json').exists());self.assertTrue((request.parent/'run-checkpoint-claimed-idle-0-publish-fix-0952.json').exists())
+ def test_checkpoint_request_identity_cannot_be_a_shell_fragment(self):
+  write_json(self.root/'runtime/after128-continuous-plan.json',{'batches':[]});state=claim(self.root,'run',0,'prior','m');request=self.root/'runtime/rolling-production/run-checkpoint-requested.json'
+  write_json(request,{'machine_id':'m','run_id':'run','allow_idle':True,'request_id':'bad & command'})
+  with self.assertRaises(AssertionError):checkpoint_when_idle(self.root,state,lambda _:self.fail('invalid request identity'))
+  self.assertTrue(request.exists())
 
 if __name__=='__main__':unittest.main()

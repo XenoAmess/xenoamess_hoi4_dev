@@ -1,5 +1,9 @@
 # 持续大队列与有界回传
 
+UTC10:25续记：显示预览现在限32KiB，仍是独立display-only派生，原始PNG字节不变；JS的64KiB逐项预算继续作为保守上界。真实v3窗口352的两次图片调用只执行3次准备边界命令，旧v2同样两项执行5次；[实际采用证据](../data/production-code-deployments/20261024-v3-actual-boundary-adoption.json)证明新执行者已加载去除空重复检查的代码，不能由此推断每小时吞吐已经恢复。跨exec更新store未被旧运行单元采用，原断言与[纠正记录](../data/production-code-deployments/20261024-producer-cache-observation-correction.json)均保留；已在完整窗口351结束、所有返回入库且无calling后[安全交接v3](../data/production-owner-handoffs/20261024-v2-v3-verified-producer.json)，没有重放图片。
+
+本地命令runner现累计所有stdout轮询片段，避免首段JSON在后续空轮询中丢失。v1曾因空next结果解析退出；真实坏stdout未保留，不能把该修复倒记为当时已被证实的唯一原因。[异常对账](../data/production-owner-failures/20261024-v1-empty-next-receipt-reconciliation.json)核对最后完整窗口、游标、prepared和实际台账后才续接，停顿保留在墙钟统计。自动检查点另增加同机器最近实际本地commit的30分钟协调门禁，避免显式与自动定时器重复跑完整归档和审计；明确force只越过调度去重，不跳过验证。idle348已实际留下deferred回执，没有声称新构建或新推送。UTC10:14已通过79项相关Python检查，UTC10:08通过14项Node检查；模拟验证与真实回图分别记账。
+
 2026-10-24本机 bf-202609141645-5434332d4d 实际修复。旧窗口每次最多8张后退出，外层再由模型启动下一窗口；这仍会将主会话停顿放大成断供。当前 `tools/rolling_builtin_queue.js` 是一个持续执行者，持有 `runtime/rolling-production/owner.json`；每个小窗口完成入库后，自动递增持久化游标，立即领取已有 prepared 或实际审图拒绝并准备下一窗口。队列空时保留同一所有者并自动醒来，不把空队列冒充完成，也不重放结果不明的调用。
 
 图片服务始终单路内置工具，每个来源实际完整prompt、输入顺序/字节、调用占用、返回SHA和人工决定沿用原门禁。新图调用与审图/输入观察并行；共享请求日志的准备、导入和审图应用仍由唯一执行者在安全边界完成。服务拒绝及同人物阻挡保留，8小时与累计额度不清零。

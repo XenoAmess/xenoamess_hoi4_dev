@@ -9,7 +9,7 @@ from PIL import Image
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,file_sha256
 
-MAX_PREVIEW_BYTES=65536
+MAX_PREVIEW_BYTES=32768
 
 def preview(path):
     digest=file_sha256(path)
