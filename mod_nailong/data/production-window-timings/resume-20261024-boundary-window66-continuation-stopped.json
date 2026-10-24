@@ -1,0 +1,55 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window66",
+  "after_window": "resume-20261024-boundary-window65",
+  "created_at_utc": "2026-10-24T03:58:14.268Z",
+  "prepare_commands": [
+    "python mod_nailong\\tools\\prepare_ready_art_reviews.py resume-20261024-ready-reviews308 308 --inbox resumed-20261024-fine-c3-agent-c-review.json resumed-20261024-fine-c4-agent-c-review.json resumed-20261024-fine-d3-agent-d-review.json resumed-20261024-fine-d4-agent-d-review.json"
+  ],
+  "events": [
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T03:58:18.956Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window65 --wait-seconds 900"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T03:59:35.136Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window65 --wait-seconds 900",
+      "exit_code": 0
+    },
+    {
+      "phase": "durable_gate_released",
+      "observed_at_utc": "2026-10-24T03:59:35.121102+00:00",
+      "ready": true,
+      "window_id": "resume-20261024-boundary-window65",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "receipt": "mod_nailong/data/production-window-timings/resume-20261024-boundary-window65-completed.json"
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T03:59:35.136Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T03:59:35.375Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T03:59:35.375Z",
+      "command": "python mod_nailong\\tools\\prepare_ready_art_reviews.py resume-20261024-ready-reviews308 308 --inbox resumed-20261024-fine-c3-agent-c-review.json resumed-20261024-fine-c4-agent-c-review.json resumed-20261024-fine-d3-agent-d-review.json resumed-20261024-fine-d4-agent-d-review.json"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T04:14:37.322Z",
+      "command": "python mod_nailong\\tools\\prepare_ready_art_reviews.py resume-20261024-ready-reviews308 308 --inbox resumed-20261024-fine-c3-agent-c-review.json resumed-20261024-fine-c4-agent-c-review.json resumed-20261024-fine-d3-agent-d-review.json resumed-20261024-fine-d4-agent-d-review.json",
+      "exit_code": 1
+    }
+  ],
+  "scope": "Disk receipt gates the next sole executor; cross-exec in-memory store values are not used to release a handover. Preparation occurs only after the exact preceding window has completed imports.",
+  "status": "stopped_requires_reconciliation",
+  "error": "Error: {\"chunk_id\":\"00e07e\",\"wall_time_seconds\":1.0922129,\"exit_code\":1,\"original_token_count\":177,\"output\":\"Traceback (most recent call last):\\r\\n  File \\\"C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\mod_nailong\\\\tools\\\\prepare_ready_art_reviews.py\\\", line 76, in <module>\\r\\n    if __name__=='__main__':main()\\r\\n                            ~~~~^^\\r\\n  File \\\"C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\mod_nailong\\\\tools\\\\prepare_ready_art_reviews.py\\\", line 41, in main\\r\\n    if time.monotonic()>deadline:raise TimeoutError('No actual current eligible rejection in known reports; no image or retry dispatched')\\r\\n                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\r\\nTimeoutError: No actual current eligible rejection in known reports; no image or retry dispatched\\r\\n\"}"
+}

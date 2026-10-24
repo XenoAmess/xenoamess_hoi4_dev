@@ -76,7 +76,8 @@ def main():
     result.update(machine_id=benchmark['machine_id'], observed_at_utc=utc_now(),
                   requested_minutes=args.minutes, complete=now >= target,
                   comparison_png_per_wall_hour=benchmark['comparison_png_per_wall_hour'],
-                  scope='Actual returns in a fixed prospective wall interval; includes queue/preparation/checkpoint gaps. Client timestamps include transport/orchestration. PNG return is not art approval; partial intervals are explicitly marked.')
+                  registration_kind='retrospective' if benchmark.get('registered_before_start') is False else 'prospective',
+                  scope='Actual returns in a fixed wall interval; registration kind is explicit. Includes queue/preparation/checkpoint gaps. Client timestamps include transport/orchestration. PNG return is not art approval; partial intervals are explicitly marked.')
     result['difference_percent'] = round((result['png_per_wall_hour'] / result['comparison_png_per_wall_hour'] - 1) * 100, 2)
     if args.output:
         out = ROOT / args.output

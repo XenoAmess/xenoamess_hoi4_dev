@@ -1,0 +1,25 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window67",
+  "after_window": "resume-20261024-boundary-window66",
+  "created_at_utc": "2026-10-24T04:10:02.461Z",
+  "prepare_commands": [
+    "python mod_nailong\\tools\\prepare_ready_art_reviews.py resume-20261024-ready-reviews309 309 --inbox"
+  ],
+  "events": [
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T04:10:04.597Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window66 --wait-seconds 900"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T04:14:42.235Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window66 --wait-seconds 900",
+      "exit_code": 1
+    }
+  ],
+  "scope": "Disk receipt gates the next sole executor; cross-exec in-memory store values are not used to release a handover. Preparation occurs only after the exact preceding window has completed imports.",
+  "status": "stopped_requires_reconciliation",
+  "error": "Error: {\"chunk_id\":\"594902\",\"wall_time_seconds\":0.8461359,\"exit_code\":1,\"original_token_count\":150,\"output\":\"Traceback (most recent call last):\\r\\n  File \\\"C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\tools\\\\production_window_gate.py\\\", line 52, in <module>\\r\\n    raise SystemExit(main())\\r\\n                     ~~~~^^\\r\\n  File \\\"C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\tools\\\\production_window_gate.py\\\", line 44, in main\\r\\n    result = inspect_window(ROOT, args.window_id, machine_id())\\r\\n  File \\\"C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\tools\\\\production_window_gate.py\\\", line 17, in inspect_window\\r\\n    raise ValueError('Previous window stopped; reconcile before continuation')\\r\\nValueError: Previous window stopped; reconcile before continuation\\r\\n\"}"
+}
