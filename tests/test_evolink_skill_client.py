@@ -64,7 +64,7 @@ class EvoLinkSkillTests(unittest.TestCase):
         self.assertNotIn(self.key, archived); self.assertNotIn('temporary=fixture', archived)
 
     def test_existing_task_resume_never_creates_another_paid_task(self):
-        args = type('Args', (), {'prompt_file': self.prompt, 'model': 'gpt-image-2', 'size': '2:3', 'resolution': '2K', 'quality': 'high', 'image_url': []})()
+        args = type('Args', (), {'prompt_file': self.prompt, 'model': 'gpt-image-2', 'size': '2:3', 'resolution': '2K', 'quality': 'high', 'background': 'transparent', 'image_url': []})()
         prompt, payload = client.build_request(args)
         client.write_generation_record(self.output, prompt, payload)
         client.write_or_validate_task_record(self.output, 'fixture-task')
@@ -77,12 +77,17 @@ class EvoLinkSkillTests(unittest.TestCase):
     def test_gpt_image_25_models_use_native_transparent_fields(self):
         for model in ('gpt-image-2.5-sunburst', 'gpt-image-2.5-flare'):
             with self.subTest(model=model):
-                args = type('Args', (), {'prompt_file': self.prompt, 'model': model, 'size': '3:4', 'resolution': '2K', 'quality': 'high', 'image_url': ['https://example.org/source.png']})()
+                args = type('Args', (), {'prompt_file': self.prompt, 'model': model, 'size': '3:4', 'resolution': '2K', 'quality': 'high', 'background': 'transparent', 'image_url': ['https://example.org/source.png']})()
                 prompt, payload = client.build_request(args)
                 self.assertEqual(payload, {'model': model, 'prompt': prompt, 'size': '3:4', 'image_urls': ['https://example.org/source.png'], 'resolution': '2K', 'quality': 'high', 'background': 'transparent', 'n': 1})
 
+    def test_gpt_opaque_background_is_forwarded(self):
+        args = type('Args', (), {'prompt_file': self.prompt, 'model': 'gpt-image-2.5-flare', 'size': '3:4', 'resolution': '2K', 'quality': 'high', 'background': 'opaque', 'image_url': []})()
+        _, payload = client.build_request(args)
+        self.assertEqual(payload['background'], 'opaque')
+
     def test_nano_banana_uses_documented_request_fields(self):
-        args = type('Args', (), {'prompt_file': self.prompt, 'model': 'gemini-nano-banana-2.1', 'size': '3:4', 'resolution': '2K', 'quality': 'high', 'image_url': ['https://example.org/source.png']})()
+        args = type('Args', (), {'prompt_file': self.prompt, 'model': 'gemini-nano-banana-2.1', 'size': '3:4', 'resolution': '2K', 'quality': 'high', 'background': 'transparent', 'image_url': ['https://example.org/source.png']})()
         prompt, payload = client.build_request(args)
         self.assertEqual(prompt.encode('utf-8'), self.prompt_bytes)
         self.assertEqual(payload, {'model': 'gemini-nano-banana-2.1', 'prompt': prompt, 'size': '3:4', 'image_urls': ['https://example.org/source.png'], 'quality': '2K'})

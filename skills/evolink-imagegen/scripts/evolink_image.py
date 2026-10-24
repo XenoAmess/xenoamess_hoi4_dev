@@ -54,6 +54,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--size", default="2:3")
     parser.add_argument("--resolution", choices=("1K", "2K", "4K"), default="2K")
     parser.add_argument("--quality", choices=("low", "medium", "high"), default="high")
+    parser.add_argument("--background", choices=("transparent", "opaque"), default="transparent")
     parser.add_argument("--poll-seconds", type=float, default=5.0)
     parser.add_argument("--timeout-seconds", type=float, default=600.0)
     return parser.parse_args()
@@ -180,8 +181,8 @@ def require_resume_record(output: Path, task_id: str) -> None:
         raise RuntimeError(f"Archived request record has invalid 'endpoint': {request_path}")
     model = request_record.get("model")
     if model in ("gpt-image-2", "gpt-image-2.5-sunburst", "gpt-image-2.5-flare"):
-        expected = {"background": "transparent", "n": 1}
-        required_fields = ("size", "resolution", "quality", "image_urls")
+        expected = {"n": 1}
+        required_fields = ("size", "resolution", "quality", "background", "image_urls")
     elif model == "gemini-nano-banana-2.1":
         expected = {}
         required_fields = ("size", "quality", "image_urls")
@@ -197,6 +198,8 @@ def require_resume_record(output: Path, task_id: str) -> None:
             raise RuntimeError(
                 f"Archived request record is missing {field!r}: {request_path}"
             )
+    if model in ("gpt-image-2", "gpt-image-2.5-sunburst", "gpt-image-2.5-flare") and request_record["background"] not in ("transparent", "opaque"):
+        raise RuntimeError(f"Archived request record has invalid 'background': {request_path}")
     if "output_format" in request_record or "response_format" in request_record:
         raise RuntimeError(
             f"Archived request uses an unsupported output-format field: {request_path}"
@@ -273,7 +276,7 @@ def build_request(args: argparse.Namespace) -> tuple[str, dict[str, Any]]:
     if args.model in ("gpt-image-2", "gpt-image-2.5-sunburst", "gpt-image-2.5-flare"):
         payload.update({
             "resolution": args.resolution, "quality": args.quality,
-            "background": "transparent", "n": 1,
+            "background": args.background, "n": 1,
         })
     else:
         payload["quality"] = args.resolution

@@ -8,7 +8,7 @@
 | 查同一任务 | `GET https://api.evolink.ai/v1/tasks/{task_id}` |
 | 下载 | GET 首个结果 URL；不向 CDN 发送 API 鉴权头 |
 
-创建和查询使用 Bearer 鉴权。GPT Image 2 与 2.5 Sunburst/Flare 创建体使用对应 model、`background=transparent`、`n=1`。Nano Banana 2.1 创建体使用 `model=gemini-nano-banana-2.1`，将 CLI 的 `--resolution` 映射为 `quality=1K/2K/4K`，不发送 `background`、`n` 或 GPT 的 `resolution` 字段。
+创建和查询使用 Bearer 鉴权。GPT Image 2 与 2.5 Sunburst/Flare 创建体使用对应 model、`background=transparent`（可用 `--background opaque` 改为 opaque）、`n=1`。Nano Banana 2.1 创建体使用 `model=gemini-nano-banana-2.1`，将 CLI 的 `--resolution` 映射为 `quality=1K/2K/4K`，不发送 `background`、`n` 或 GPT 的 `resolution` 字段。
 
 | CLI | 请求字段或用途 | 默认 |
 | --- | --- | --- |
@@ -19,6 +19,7 @@
 | `--size` | `size`，例如 `2:3`、`1:1` | `2:3` |
 | `--resolution` | 1K、2K、4K | `2K` |
 | `--quality` | low、medium、high | `high` |
+| `--background` | GPT 路线输出 transparent 或 opaque | `transparent` |
 | `--poll-seconds` | 正数查询间隔 | 5 秒 |
 | `--timeout-seconds` | 正数轮询墙钟上限 | 600 秒 |
 | `--task-id` | 恢复，只查询和下载 | 无 |
