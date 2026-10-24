@@ -63,7 +63,7 @@ def record_fullsize_origin(key, image_path, root=None):
     write_json(root/"runtime/generated-origins"/(key+".json"), receipt)
     return local.relative_to(root).as_posix()
 
-def ingest(key, image_path, prompt_file, replace_reason=None):
+def ingest(key, image_path, prompt_file, replace_reason=None, method="built-in imagegen; original portrait + user reference"):
     catalog=read_json(CATALOG)
     assets=[a for a in catalog["assets"] if a["source_sha256"]==key]
     if not assets:raise SystemExit("Unknown source SHA; inventory must precede generation")
@@ -80,7 +80,7 @@ def ingest(key, image_path, prompt_file, replace_reason=None):
         # Technical normalization only: no collage, retouching, face substitution or drawing.
         image.convert("RGBA").resize(next(iter(sizes)),Image.Resampling.LANCZOS).save(out,optimize=True)
     prompt=Path(prompt_file).read_text(encoding="utf-8")
-    record["portraits"][key]={"source_sha256":key,"reference_sha256":file_sha256(MOD/"assets/reference/naiwa.png"),"method":"built-in imagegen; original portrait + user reference","prompt":prompt,"generated_fullsize_sha256":file_sha256(image_path),"generated_fullsize_size":original_size,"image":out.relative_to(ROOT).as_posix(),"image_sha256":file_sha256(out),"size":list(next(iter(sizes))),"review":"pending","art_direction":"hair-features-v1","machine_id":machine_id(),"imported_at_utc":utc_now()}
+    record["portraits"][key]={"source_sha256":key,"reference_sha256":file_sha256(MOD/"assets/reference/naiwa.png"),"method":method,"prompt":prompt,"generated_fullsize_sha256":file_sha256(image_path),"generated_fullsize_size":original_size,"image":out.relative_to(ROOT).as_posix(),"image_sha256":file_sha256(out),"size":list(next(iter(sizes))),"review":"pending","art_direction":"hair-features-v1","machine_id":machine_id(),"imported_at_utc":utc_now()}
     if previous:
         history=list(previous.get("revision_history",[]))
         history.append({"result":"replaced after visual review","reason":replace_reason,"previous_image_sha256":previous["image_sha256"],"previous_fullsize_sha256":previous["generated_fullsize_sha256"],"previous_prompt":previous["prompt"],"replaced_at_utc":utc_now()})
@@ -176,6 +176,7 @@ def main():
     add.add_argument("--key",required=True)
     add.add_argument("--image",required=True)
     add.add_argument("--prompt-file",default=str(MOD/"assets/portrait-prompt.txt"))
+    add.add_argument("--method",default="built-in imagegen; original portrait + user reference")
     add.add_argument("--replace-reason",help="Explicit correction of an already imported image; preserves previous provenance")
     review=sub.add_parser("approve")
     review.add_argument("keys",nargs="+")
@@ -183,7 +184,7 @@ def main():
     rejection.add_argument("keys",nargs="+")
     rejection.add_argument("--reason",required=True)
     args=parser.parse_args()
-    if args.command=="import":ingest(args.key,args.image,args.prompt_file,args.replace_reason)
+    if args.command=="import":ingest(args.key,args.image,args.prompt_file,args.replace_reason,args.method)
     elif args.command=="coverage":coverage(args.public)
     elif args.command=="sheet":contact_sheet(args.all)
     elif args.command=="approve":approve(args.keys)

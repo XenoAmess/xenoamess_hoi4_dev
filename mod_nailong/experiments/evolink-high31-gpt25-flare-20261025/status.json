@@ -1,10 +1,10 @@
 {
   "schema": "naiwa-evolink-two-high-experiment-status-v1",
   "machine_id": "bf-202609141645-5434332d4d",
-  "recorded_at_utc": "2026-10-24T19:55:16.964000+00:00",
+  "recorded_at_utc": "2026-10-24T21:00:03.611765+00:00",
   "model": "gpt-image-2.5-flare",
   "user_instruction": "试试这个 model=gpt-image-2.5-flare",
-  "status": "five_rounds_ten_raw_outputs_retained_none_approved_for_production",
+  "status": "five_model_rounds_plus_authorized_alpha_repairs_two_sources_approved",
   "public_input_release": "https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/tag/evolink-source-20261025",
   "public_input_record": "mod_nailong/experiments/evolink-high31-gemini-20261025/release.json",
   "previous_experiment": "mod_nailong/experiments/evolink-high31-gpt25-20261025/status.json",
@@ -171,6 +171,32 @@
     "review_record": "mod_nailong/experiments/evolink-high31-gpt25-flare-20261025/review-05.json",
     "final_generation_round": true
   },
+  "authorized_alpha_repairs": [
+    {
+      "attempt": "06",
+      "method": "source-alpha-resize-lanczos-rgb-unchanged-v1",
+      "generated_fullsize_sha256": [
+        "c86e2f7ed2f28f450f823406e12a70bee07ac5b3a224640c3087d28834ec854b",
+        "921361423d6804b5baeff3435562f22c0650f8f8cd8f901fa1fe1e4c1e9707b8"
+      ],
+      "review_record": "mod_nailong/experiments/evolink-high31-gpt25-flare-20261025/review-06-alpha-repaired.json",
+      "decision": "superseded_not_for_production"
+    },
+    {
+      "attempt": "07",
+      "method": "source-alpha-resize-bilinear-rgb-unchanged-v1",
+      "generated_fullsize_sha256": [
+        "c92d579ee79dea9e48ec7b3d9d6174a28b7d042c5532f837b29a592cff187f7e",
+        "df1e98fecb30c050061a83e538b3503a429d4d45e53072ddbc102ae20dc7bfd7"
+      ],
+      "review_record": "mod_nailong/experiments/evolink-high31-gpt25-flare-20261025/review-07-alpha-repaired-bilinear.json",
+      "decision": "approved_for_production",
+      "journal_attempt": 11,
+      "production_imported": true,
+      "retry_states": "approved_external_alpha_repair",
+      "retries_used_preserved": 9
+    }
+  ],
   "new_api_requests": 10,
   "new_task_ids": [
     "task-unified-1792867593-ondaerms",
@@ -184,23 +210,26 @@
     "task-unified-1792871437-560irhsq",
     "task-unified-1792871512-s0rc19kx"
   ],
-  "new_images": 10,
+  "new_images": 12,
   "failed_tasks": 0,
   "builtin_retry_quota_consumed": 0,
-  "original_frozen_request_journals_changed": false,
+  "original_frozen_request_journals_changed": "attempts_1_to_10_unchanged; attempt_11_external_alpha_repair_appended",
   "art_review": {
     "baseline_record": "mod_nailong/experiments/evolink-high31-gpt25-flare-20261025/review.json",
     "optimized_record": "mod_nailong/experiments/evolink-high31-gpt25-flare-20261025/review-02.json",
     "background_lock_record": "mod_nailong/experiments/evolink-high31-gpt25-flare-20261025/review-03.json",
     "opaque_record": "mod_nailong/experiments/evolink-high31-gpt25-flare-20261025/review-04.json",
     "final_transparent_record": "mod_nailong/experiments/evolink-high31-gpt25-flare-20261025/review-05.json",
-    "approved_for_production": 0,
+    "lanczos_record": "mod_nailong/experiments/evolink-high31-gpt25-flare-20261025/review-06-alpha-repaired.json",
+    "bilinear_record": "mod_nailong/experiments/evolink-high31-gpt25-flare-20261025/review-07-alpha-repaired-bilinear.json",
+    "approved_for_production": 2,
     "rejected_for_production": 10,
-    "production_imported": false
+    "superseded_not_for_production": 2,
+    "production_imported": true
   },
   "offline_tests": {
-    "command": "python -m unittest discover -s tests -p test_evolink_skill_client.py",
-    "tests": 10,
-    "passed": 10
+    "command": "python -m unittest discover -s tests -p test_evolink_skill_client.py; python -m unittest discover -s tests -p test_repair_outer_alpha.py",
+    "tests": 12,
+    "passed": 12
   }
 }
