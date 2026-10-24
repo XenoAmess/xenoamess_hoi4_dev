@@ -1,5 +1,7 @@
 """Consume one SHA-bound art-preparation intent at the sole producer's safe boundary."""
 import argparse
+from contextlib import redirect_stdout
+import io
 import json
 import subprocess
 import sys
@@ -63,9 +65,13 @@ def run_boundary(root, expected_machine, *, apply_reviews=None, runner=None):
         if read_json(path).get('status') == 'calling':
             return {'prepared': False, 'reason': 'actual_call_in_progress',
                     'reviews_applied': False}
-    review_result = apply_reviews()
+    review_stdout = io.StringIO()
+    with redirect_stdout(review_stdout):
+        review_result = apply_reviews()
     result = consume(root, expected_machine, runner)
     result['review_application'] = review_result
+    if review_stdout.getvalue():
+        result['review_application_stdout'] = review_stdout.getvalue()
     return result
 
 

@@ -1,4 +1,6 @@
 import tempfile
+import io
+from contextlib import redirect_stdout
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -62,6 +64,19 @@ class PreparationBoundaryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'keep staged review'):
             run_boundary(self.root, 'test', apply_reviews=fail, runner=self.good_runner)
         self.assertTrue(self.pending.exists())
+
+    def test_actual_review_console_messages_are_kept_inside_json_result(self):
+        def apply():
+            print('Rejected 1 actual image')
+            print('Approved 2 actual images')
+            return {'applied': 3}
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            result = run_boundary(self.root, 'test', apply_reviews=apply)
+        self.assertEqual(stdout.getvalue(), '')
+        self.assertEqual(result['review_application_stdout'],
+                         'Rejected 1 actual image\nApproved 2 actual images\n')
+        self.assertEqual(result['review_application'], {'applied': 3})
 
     def test_active_actual_call_blocks_preparation_without_claim(self):
         self.queue()

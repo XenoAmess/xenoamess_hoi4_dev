@@ -1,0 +1,55 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window75",
+  "after_window": "resume-20261024-boundary-window74",
+  "created_at_utc": "2026-10-24T04:54:37.186Z",
+  "prepare_commands": [
+    "python mod_nailong\\tools\\prepare_ready_art_reviews.py resume-20261024-ready-reviews314 314 --inbox"
+  ],
+  "events": [
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T04:54:53.728Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window74 --wait-seconds 900"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T04:56:07.100Z",
+      "command": "python tools\\production_window_gate.py resume-20261024-boundary-window74 --wait-seconds 900",
+      "exit_code": 0
+    },
+    {
+      "phase": "durable_gate_released",
+      "observed_at_utc": "2026-10-24T04:56:07.083890+00:00",
+      "ready": true,
+      "window_id": "resume-20261024-boundary-window74",
+      "machine_id": "bf-202609141645-5434332d4d",
+      "receipt": "mod_nailong/data/production-window-timings/resume-20261024-boundary-window74-completed.json"
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T04:56:07.100Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T04:56:07.459Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "exit_code": 0
+    },
+    {
+      "phase": "command_started",
+      "observed_at_utc": "2026-10-24T04:56:07.459Z",
+      "command": "python mod_nailong\\tools\\prepare_ready_art_reviews.py resume-20261024-ready-reviews314 314 --inbox"
+    },
+    {
+      "phase": "command_finished",
+      "observed_at_utc": "2026-10-24T04:56:10.830Z",
+      "command": "python mod_nailong\\tools\\prepare_ready_art_reviews.py resume-20261024-ready-reviews314 314 --inbox",
+      "exit_code": 1
+    }
+  ],
+  "scope": "Disk receipt gates the next sole executor; cross-exec in-memory store values are not used to release a handover. Preparation occurs only after the exact preceding window has completed imports.",
+  "status": "stopped_requires_reconciliation",
+  "error": "Error: {\"chunk_id\":\"b8e62b\",\"wall_time_seconds\":3.1998265,\"exit_code\":1,\"original_token_count\":553,\"output\":\"Traceback (most recent call last):\\r\\n  File \\\"C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\tools\\\\prepare_reviewed_art_repairs.py\\\", line 51, in <module>\\r\\n    boundary=validate_art_boundary(history,key,r['generated_fullsize_sha256'],ROOT/'runtime/production-queue/dispatch',read_json(ROOT/'mod_nailong/data/generation-failures.json')['attempts'],family_histories)\\r\\n  File \\\"C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\mod_nailong\\\\tools\\\\art_preparation_guard.py\\\", line 33, in validate_art_boundary\\r\\n    raise ValueError('Original deferred service family is unresolved or lacks evidence')\\r\\nValueError: Original deferred service family is unresolved or lacks evidence\\r\\nTraceback (most recent call last):\\r\\n  File \\\"C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\mod_nailong\\\\tools\\\\prepare_ready_art_reviews.py\\\", line 76, in <module>\\r\\n    if __name__=='__main__':main()\\r\\n                            ~~~~^^\\r\\n  File \\\"C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\mod_nailong\\\\tools\\\\prepare_ready_art_reviews.py\\\", line 73, in main\\r\\n    subprocess.run([sys.executable,'tools/prepare_reviewed_art_repairs.py',batch,','.join(p.name for p in used),str(len(keys)),index,canvas.relative_to(ROOT).as_posix(),selection.relative_to(ROOT).as_posix()],cwd=ROOT,check=True)\\r\\n    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\r\\n  File \\\"C:\\\\Users\\\\Administrator\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\Lib\\\\subprocess.py\\\", line 577, in run\\r\\n    raise CalledProcessError(retcode, process.args,\\r\\n                             output=stdout, stderr=stderr)\\r\\nsubprocess.CalledProcessError: Command '['C:\\\\\\\\Users\\\\\\\\Administrator\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Programs\\\\\\\\Python\\\\\\\\Python313\\\\\\\\python.exe', 'tools/prepare_reviewed_art_repairs.py', 'resume-20261024-ready-reviews314', 'resumed-20261024-mix308309-agent-h-review.json,resumed-20261024-root308-agent-g-review.json,resumed-20261024-newi-agent-i-review.json,resumed-20261024-newj-agent-j-review.json', '5', '314', 'runtime/ready-art-resume-20261024-ready-reviews314-canvas.json', 'runtime/ready-art-resume-20261024-ready-reviews314-selection.json']' returned non-zero exit status 1.\\r\\n\"}"
+}

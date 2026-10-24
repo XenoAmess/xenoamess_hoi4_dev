@@ -10,20 +10,27 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now
 from mod_nailong.tools.ready_art_reports import reports as inbox_reports
+from tools.portrait_dispatch_guard import same_service_family
 
 
-def eligible_entries(reports,rows,latest):
+def eligible_entries(reports,rows,latest,held_keys=()):
     selected=[];seen=set()
     for report,body in reports:
         for entry in body.get('decisions',[]):
             key=entry.get('source_sha256');row=rows.get(key,{})
-            if (entry.get('decision')!='rejected' or key in seen
+            if (entry.get('decision')!='rejected' or key in seen or key in held_keys
                     or entry.get('generated_fullsize_sha256')!=row.get('generated_fullsize_sha256')
                     or row.get('review') not in {'pending','rejected'}
                     or latest.get(key,{}).get('status') not in {'generated_pending_visual_review','generated_rejected_visual_review','cancelled_before_generation'}):continue
             selected.append((report,entry));seen.add(key)
             if len(selected)==8:return selected
     return selected
+
+
+def service_held_keys(keys,priority,failures):
+    blocked={f['source_sha256'] for f in failures if f.get('status')=='blocked' and not f.get('resolved_by_retry')}
+    return {key for key in keys if key in priority and any(
+        same_service_family(key,other,priority[key],priority[other]) for other in blocked)}
 
 
 def main():
@@ -61,7 +68,10 @@ def main():
                 key=entry.get('source_sha256')
                 if entry.get('decision')=='rejected' and key in rows:
                     latest[key]=read_json(ROOT/rows[key]['request_journal'])['attempts'][-1]
-        chosen=eligible_entries(reports,rows,latest)
+        priority=read_json(ROOT/'mod_nailong/data/production-priority.json')['sources']
+        failures=read_json(ROOT/'mod_nailong/data/generation-failures.json')['attempts']
+        held=service_held_keys(latest,priority,failures)
+        chosen=eligible_entries(reports,rows,latest,held)
         if chosen:break
         time.sleep(1)
     subprocess.run([sys.executable,'mod_nailong/tools/production_queue.py','apply-reviews'],cwd=ROOT,check=True)
