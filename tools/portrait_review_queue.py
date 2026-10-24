@@ -50,6 +50,8 @@ def reserve_candidates(root,rows,priority,seen,slot,limit=4,deferred=None):
 
 def claim(slot):
     assert slot in {'a','b'}
+    if not (ROOT/'mod_nailong/data/alpha-acceptance-policy.json').is_file():
+        return {'ready':False,'reason':'acceptance_policy_record_not_available','slot':slot,'allocation_claimed':False}
     folder=ROOT/'runtime/rolling-review-queue';folder.mkdir(parents=True,exist_ok=True)
     lock=folder/'allocation.lock';fd=os.open(lock,os.O_WRONLY|os.O_CREAT|os.O_EXCL)
     try:

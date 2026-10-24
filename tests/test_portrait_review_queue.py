@@ -1,7 +1,9 @@
 import tempfile,unittest
+from unittest.mock import patch
 from pathlib import Path
 from tools.common import write_json
 from tools.portrait_review_queue import reserve_candidates,wait_for_claim,reviewed_outputs,ALPHA_POLICY
+from tools import portrait_review_queue
 
 class ReviewSlotTests(unittest.TestCase):
  def setUp(self):
@@ -62,5 +64,9 @@ class ReviewSlotTests(unittest.TestCase):
   write_json(self.root/'runtime/rolling-review-queue/reservations'/(key+'-'+digest+'.json'),{'slot':'a'})
   first=reserve_candidates(self.root,self.rows,self.priority,set(),'a');second=reserve_candidates(self.root,self.rows,self.priority,set(),'b')
   self.assertIn(key,{j['key'] for j in first});self.assertFalse({j['key'] for j in first}&{j['key'] for j in second})
+ def test_temporarily_missing_policy_waits_without_killing_slot_or_allocating(self):
+  with patch.object(portrait_review_queue,'ROOT',self.root):result=portrait_review_queue.claim('a')
+  self.assertFalse(result['ready']);self.assertFalse(result['allocation_claimed']);self.assertEqual(result['reason'],'acceptance_policy_record_not_available')
+  self.assertFalse((self.root/'runtime/rolling-review-queue/allocation.lock').exists())
 
 if __name__=='__main__':unittest.main()
