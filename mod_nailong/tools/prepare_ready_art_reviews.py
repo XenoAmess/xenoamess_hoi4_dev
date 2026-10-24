@@ -39,7 +39,9 @@ def main():
     last_reports=None
     while True:
         if time.monotonic()>deadline:raise TimeoutError('No actual current eligible rejection in known reports; no image or retry dispatched')
-        inbox=inbox_reports(batch) if use_inbox else []
+        # Explicitly queued shared reports remain available to later batches;
+        # current output SHA/latest-attempt checks prevent replay after use.
+        inbox=(inbox_reports(batch)+inbox_reports('global')) if use_inbox else []
         paths=list(dict.fromkeys(fixed_paths+[path for path,proof in inbox]))
         # Only the sole producer may mutate canonical state at this boundary.
         # Wake on report content changes; do not repeatedly parse the large

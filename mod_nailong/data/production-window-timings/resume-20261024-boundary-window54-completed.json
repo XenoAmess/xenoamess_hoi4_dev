@@ -1,0 +1,640 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-boundary-window54",
+  "started_at_utc": "2026-10-24T01:22:39.489Z",
+  "planned_requests": 4,
+  "batches": [
+    {
+      "batch": "resume-20261024-ready-reviews298",
+      "jobs": "runtime\\production-resume-20261024-ready-reviews298-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-24T01:22:39.611Z",
+      "batch": "resume-20261024-ready-reviews298"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:39.611Z",
+      "jobs_file": "runtime\\production-resume-20261024-ready-reviews298-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:39.611Z",
+      "command": "python runtime\\batch-keys.py runtime\\production-resume-20261024-ready-reviews298-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:39.783Z",
+      "command": "python runtime\\batch-keys.py runtime\\production-resume-20261024-ready-reviews298-jobs.json",
+      "elapsed_ms": 172,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:39.783Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:39.988Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 205,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:39.988Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:40.195Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 207,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:40.195Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-ready-reviews298-jobs.json --key 4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:40.405Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-ready-reviews298-jobs.json --key 4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6",
+      "elapsed_ms": 210,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:40.405Z",
+      "command": "python runtime\\guard-dispatch-family.py 4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:40.711Z",
+      "command": "python runtime\\guard-dispatch-family.py 4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6",
+      "elapsed_ms": 306,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:40.835Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-ready-reviews298-4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6.json --key 4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:41.931Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-ready-reviews298-4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6.json --key 4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6",
+      "elapsed_ms": 1096,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:22:41.931Z",
+      "key": "4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:23:59.370Z",
+      "key": "4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6",
+      "elapsed_ms": 77439,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:23:59.497Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-3672f9a1-2b27-43b1-bf80-63a45700744a.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:23:59.784Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-3672f9a1-2b27-43b1-bf80-63a45700744a.png",
+      "elapsed_ms": 287,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:23:59.785Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-3672f9a1-2b27-43b1-bf80-63a45700744a.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:02.883Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 4ed71abe824871c2d72833b907d3d746b5cfcff92c4f63906e4bfe46b57090e6 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-3672f9a1-2b27-43b1-bf80-63a45700744a.png",
+      "elapsed_ms": 3098,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:02.883Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:03.073Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 190,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:03.073Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:03.276Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 203,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:03.276Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:03.483Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 207,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:03.483Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:03.681Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 198,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:03.681Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-ready-reviews298-jobs.json --key 3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:03.875Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-ready-reviews298-jobs.json --key 3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b",
+      "elapsed_ms": 194,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:03.875Z",
+      "command": "python runtime\\guard-dispatch-family.py 3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:04.226Z",
+      "command": "python runtime\\guard-dispatch-family.py 3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b",
+      "elapsed_ms": 351,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:04.349Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-ready-reviews298-3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b.json --key 3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:05.530Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-ready-reviews298-3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b.json --key 3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b",
+      "elapsed_ms": 1181,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:05.530Z",
+      "key": "3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:47.921Z",
+      "key": "3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b",
+      "elapsed_ms": 42391,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:48.104Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-de3013d5-1214-4d23-9a87-21a7bda6ac5d.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:48.388Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-de3013d5-1214-4d23-9a87-21a7bda6ac5d.png",
+      "elapsed_ms": 284,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:48.390Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-de3013d5-1214-4d23-9a87-21a7bda6ac5d.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:51.449Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 3d7e50369b7faf83d3729c74e8ce6859ffb43a365ecf560707c2ff638711629b --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-de3013d5-1214-4d23-9a87-21a7bda6ac5d.png",
+      "elapsed_ms": 3059,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:51.449Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:51.642Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 193,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:51.642Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:51.867Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 225,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:51.867Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:52.083Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 216,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:52.083Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:52.284Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 201,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:52.284Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-ready-reviews298-jobs.json --key 5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:52.491Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-ready-reviews298-jobs.json --key 5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9",
+      "elapsed_ms": 207,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:52.492Z",
+      "command": "python runtime\\guard-dispatch-family.py 5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:52.770Z",
+      "command": "python runtime\\guard-dispatch-family.py 5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9",
+      "elapsed_ms": 278,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:52.894Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-ready-reviews298-5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9.json --key 5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:54.069Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-ready-reviews298-5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9.json --key 5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9",
+      "elapsed_ms": 1175,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:24:54.069Z",
+      "key": "5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:51.572Z",
+      "key": "5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9",
+      "elapsed_ms": 57503,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:51.687Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-5af1ce73-efe9-497b-aaad-75bb0fda3d13.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:51.958Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-5af1ce73-efe9-497b-aaad-75bb0fda3d13.png",
+      "elapsed_ms": 271,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:51.959Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-5af1ce73-efe9-497b-aaad-75bb0fda3d13.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:54.998Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 5767517ff26cd66e11ba8933d974496ed526257ca6a35b1862c7eac58d953fa9 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-5af1ce73-efe9-497b-aaad-75bb0fda3d13.png",
+      "elapsed_ms": 3039,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:54.998Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:55.381Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 383,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:55.381Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:55.600Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 219,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:55.600Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:55.815Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 215,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:55.815Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:56.017Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 202,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:56.017Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-ready-reviews298-jobs.json --key 990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:56.260Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-ready-reviews298-jobs.json --key 990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22",
+      "elapsed_ms": 243,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:56.260Z",
+      "command": "python runtime\\guard-dispatch-family.py 990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:56.567Z",
+      "command": "python runtime\\guard-dispatch-family.py 990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22",
+      "elapsed_ms": 307,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:56.683Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-ready-reviews298-990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22.json --key 990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:57.837Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-ready-reviews298-990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22.json --key 990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22",
+      "elapsed_ms": 1154,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:25:57.837Z",
+      "key": "990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:40.037Z",
+      "key": "990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22",
+      "elapsed_ms": 42200,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:45.155Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-6f7893c2-95fd-43dd-a2d8-0d4215bea8b1.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:45.433Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-6f7893c2-95fd-43dd-a2d8-0d4215bea8b1.png",
+      "elapsed_ms": 278,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:45.435Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-6f7893c2-95fd-43dd-a2d8-0d4215bea8b1.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:48.497Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 990ab97b7f147e41eb72ccfe01778f016648b74d497458a50052d09db0e4ff22 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-6f7893c2-95fd-43dd-a2d8-0d4215bea8b1.png",
+      "elapsed_ms": 3062,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:48.497Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:48.722Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 225,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:48.722Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:48.956Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 234,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:48.956Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:49.157Z",
+      "command": "python mod_nailong\\tools\\production_queue.py apply-reviews",
+      "elapsed_ms": 201,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:49.158Z",
+      "command": "python tools\\production_prepare_boundary.py"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:49.374Z",
+      "command": "python tools\\production_prepare_boundary.py",
+      "elapsed_ms": 216,
+      "exit_code": 0
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "resume-20261024-ready-reviews298",
+      "observed_at_utc": "2026-10-24T01:26:49.374Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-24T01:26:49.374Z",
+      "batch": "resume-20261024-ready-reviews298"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-24T01:26:49.374Z"
+}
