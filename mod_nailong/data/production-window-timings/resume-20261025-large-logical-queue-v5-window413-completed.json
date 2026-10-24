@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261025-large-logical-queue-v5-window413",
+  "started_at_utc": "2026-10-24T21:01:34.506Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "jobs": "runtime/production-resume-fresh-observed-20261024T155910-a-102f9661-low2-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-24T21:01:35.180Z",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:01:35.180Z",
+      "jobs_file": "runtime/production-resume-fresh-observed-20261024T155910-a-102f9661-low2-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:01:35.180Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-fresh-observed-20261024T155910-a-102f9661-low2-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:01:35.456Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-fresh-observed-20261024T155910-a-102f9661-low2-jobs.json",
+      "elapsed_ms": 276,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:01:35.456Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:01:42.914Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 7458,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:01:42.914Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/production-resume-fresh-observed-20261024T155910-a-102f9661-low2-jobs.json --key a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:01:43.250Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/production-resume-fresh-observed-20261024T155910-a-102f9661-low2-jobs.json --key a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68",
+      "elapsed_ms": 336,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:01:43.250Z",
+      "command": "python runtime\\guard-dispatch-family.py a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:01:43.691Z",
+      "command": "python runtime\\guard-dispatch-family.py a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68",
+      "elapsed_ms": 441,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:01:43.705Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-fresh-observed-20261024T155910-a-102f9661-low2-a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68.json --key a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:01:46.580Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-fresh-observed-20261024T155910-a-102f9661-low2-a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68.json --key a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68",
+      "elapsed_ms": 2875,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:01:46.580Z",
+      "key": "a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:02:07.512Z",
+      "key": "a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68",
+      "elapsed_ms": 20932,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:02:07.635Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-7ad8de72-cc6a-4b4c-9ca5-d72695a902c4.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:02:09.749Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-7ad8de72-cc6a-4b4c-9ca5-d72695a902c4.png",
+      "elapsed_ms": 2114,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:02:11.174Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-7ad8de72-cc6a-4b4c-9ca5-d72695a902c4.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:02:25.888Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key a5a232365370c28c27e3b4e07c7bf1ebe2138b2614ad4b46355867db6c755f68 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-7ad8de72-cc6a-4b4c-9ca5-d72695a902c4.png",
+      "elapsed_ms": 14714,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:02:25.888Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:02:31.213Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 5325,
+      "exit_code": 0
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2",
+      "observed_at_utc": "2026-10-24T21:02:31.213Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-24T21:02:31.213Z",
+      "batch": "resume-fresh-observed-20261024T155910-a-102f9661-low2"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-24T21:02:31.213Z"
+}
