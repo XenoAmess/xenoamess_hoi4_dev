@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-large-logical-queue-v4-window396",
+  "started_at_utc": "2026-10-24T15:49:36.592Z",
+  "planned_requests": 2,
+  "batches": [
+    {
+      "batch": "cooldown-103",
+      "jobs": "runtime/cooldown-103-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-24T15:49:36.602Z",
+      "batch": "cooldown-103"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:49:36.602Z",
+      "jobs_file": "runtime/cooldown-103-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:49:36.602Z",
+      "command": "python runtime\\batch-keys.py runtime/cooldown-103-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:49:36.890Z",
+      "command": "python runtime\\batch-keys.py runtime/cooldown-103-jobs.json",
+      "elapsed_ms": 288,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:49:36.890Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:49:41.443Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 4553,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:49:41.443Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/cooldown-103-jobs.json --key cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:49:41.752Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/cooldown-103-jobs.json --key cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc",
+      "elapsed_ms": 309,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:49:41.752Z",
+      "command": "python runtime\\guard-dispatch-family.py cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:49:42.099Z",
+      "command": "python runtime\\guard-dispatch-family.py cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc",
+      "elapsed_ms": 347,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:49:42.116Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\cooldown-103-cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc.json --key cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:49:43.873Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\cooldown-103-cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc.json --key cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc",
+      "elapsed_ms": 1757,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:49:43.873Z",
+      "key": "cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:49:43.873Z",
+      "command": "python tools\\production_checkpoint.py cooldown-103"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:50:17.382Z",
+      "key": "cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc",
+      "elapsed_ms": 33509,
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 39f36249-a245-4581-9b6c-e88cbf69b1ed.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:50:27.572Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc --error-file runtime\\cooldown-103-error-cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:50:27.809Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc --error-file runtime\\cooldown-103-error-cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc.txt",
+      "elapsed_ms": 237,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:50:27.809Z",
+      "command": "python runtime\\deferred-service-family-20261020.py bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5 cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:50:28.102Z",
+      "command": "python runtime\\deferred-service-family-20261020.py bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5 cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc",
+      "elapsed_ms": 293,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:50:28.102Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/cooldown-103-jobs.json --key bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:50:28.385Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/cooldown-103-jobs.json --key bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5",
+      "elapsed_ms": 283,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:50:28.385Z",
+      "command": "python runtime\\guard-dispatch-family.py bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:50:28.711Z",
+      "command": "python runtime\\guard-dispatch-family.py bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5",
+      "elapsed_ms": 326,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:50:32.585Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\cooldown-103-bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5.json --key bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:50:33.874Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\cooldown-103-bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5.json --key bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5",
+      "elapsed_ms": 1289,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:50:33.874Z",
+      "key": "bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:51:20.260Z",
+      "key": "bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5",
+      "elapsed_ms": 46386,
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID db8ae32c-baff-4872-9753-e3fb57dc52cf. safety_violations=[abuse].\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:51:20.277Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5 --error-file runtime\\cooldown-103-error-bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:51:20.596Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5 --error-file runtime\\cooldown-103-error-bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5.txt",
+      "elapsed_ms": 319,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:54:27.017Z",
+      "command": "python tools\\production_checkpoint.py cooldown-103",
+      "elapsed_ms": 283144,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:54:27.017Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc --message-file runtime\\cooldown-103-error-cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:54:31.778Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc --message-file runtime\\cooldown-103-error-cd4eecb5863a93790cdb8fc7da3d5c6989da9acedddd7037d2f427a76dd440fc.txt",
+      "elapsed_ms": 4761,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:54:31.778Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5 --message-file runtime\\cooldown-103-error-bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:54:35.599Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5 --message-file runtime\\cooldown-103-error-bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5.txt",
+      "elapsed_ms": 3821,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:54:35.599Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:54:47.077Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 11478,
+      "exit_code": 0
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "cooldown-103",
+      "observed_at_utc": "2026-10-24T15:54:47.077Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-24T15:54:47.077Z",
+      "batch": "cooldown-103"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-24T15:54:47.077Z"
+}
