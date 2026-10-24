@@ -35,14 +35,16 @@ def prepare_replacements(root,batch,index,config,preparer=None):
         checked.append((c,boundary))
     jobs=[];proof=[];preparer=preparer or prepare
     for c,boundary in checked:
-        job=preparer(c['source_sha256'],c['prompt'],False,replacement_reason=c['replacement_reason'],opaque_canvas_reason=c.get('opaque_canvas_reason'));jobs.append(job)
+        job=preparer(c['source_sha256'],c['prompt'],False,replacement_reason=c['replacement_reason'],opaque_canvas_reason=c.get('opaque_canvas_reason'),supporting_original_context=c.get('supporting_original_context'));jobs.append(job)
         attempt=read_json(root/job['journal'])['attempts'][-1]
-        assert not attempt['edit_existing'] and [i['role'] for i in attempt['inputs']]==['original source portrait','user mascot reference']
-        assert len(job['references'])==2
+        expected_roles=['original source portrait','user mascot reference']
+        if c.get('supporting_original_context'):expected_roles.append('composition-matched original context; primary source and independent generation remain distinct')
+        assert not attempt['edit_existing'] and [i['role'] for i in attempt['inputs']]==expected_roles
+        assert len(job['references'])==len(expected_roles)
         proof.append({'source_sha256':c['source_sha256'],'rejected_fullsize_sha256':c['rejected_fullsize_sha256'],'manual_review_report':c['manual_review_report'],'manual_review_report_sha256':c['manual_review_report_sha256'],'replacement_reason':c['replacement_reason'],'prepared_attempt':attempt['number'],'prompt_sha256':attempt['prompt_sha256'],'preparation_boundary':boundary})
     write_json(output,jobs);plan['batches'].append({'batch':batch,'jobs':output.relative_to(root).as_posix()});write_json(plan_path,plan)
     receipt=root/f'mod_nailong/data/production-original-replacements/{batch}.json';assert not receipt.exists()
-    write_json(receipt,{'machine_id':machine_id(),'prepared_at_utc':utc_now(),'followups':proof,'scope':'Explicit different art method after actual PNG success and current-SHA rejection: exact original plus user reference, no rejected edit target. Same builtin lane; no refused payload modified, no cooldown quota reset. All attempts and original PNG bytes retained.'})
+    write_json(receipt,{'machine_id':machine_id(),'prepared_at_utc':utc_now(),'followups':proof,'scope':'Explicit different art method after actual PNG success and current-SHA rejection: exact original plus user reference, no rejected edit target. Optional actually viewed composition-matched original context is separately bound in the full inputs; it never merges sources or reuses a generated output across different originals. Same builtin lane; no refused payload modified, no cooldown quota reset. All attempts and original PNG bytes retained.'})
     return {'prepared':len(jobs),'batch':batch,'index':index,'receipt':receipt.relative_to(root).as_posix()}
 
 if __name__=='__main__':

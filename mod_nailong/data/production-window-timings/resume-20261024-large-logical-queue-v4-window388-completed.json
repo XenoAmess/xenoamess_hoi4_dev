@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-large-logical-queue-v4-window388",
+  "started_at_utc": "2026-10-24T13:26:39.158Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "independent-painted-bust-original-20261024",
+      "jobs": "runtime/production-independent-painted-bust-original-20261024-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-24T13:26:39.170Z",
+      "batch": "independent-painted-bust-original-20261024"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:26:39.170Z",
+      "jobs_file": "runtime/production-independent-painted-bust-original-20261024-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:26:39.170Z",
+      "command": "python runtime\\batch-keys.py runtime/production-independent-painted-bust-original-20261024-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:26:39.385Z",
+      "command": "python runtime\\batch-keys.py runtime/production-independent-painted-bust-original-20261024-jobs.json",
+      "elapsed_ms": 215,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:26:39.385Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:26:43.813Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 4428,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:26:43.813Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/production-independent-painted-bust-original-20261024-jobs.json --key 1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:26:44.098Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/production-independent-painted-bust-original-20261024-jobs.json --key 1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a",
+      "elapsed_ms": 285,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:26:44.098Z",
+      "command": "python runtime\\guard-dispatch-family.py 1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:26:44.488Z",
+      "command": "python runtime\\guard-dispatch-family.py 1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a",
+      "elapsed_ms": 390,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:26:44.502Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\independent-painted-bust-original-20261024-1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a.json --key 1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:26:46.209Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\independent-painted-bust-original-20261024-1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a.json --key 1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a",
+      "elapsed_ms": 1707,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:26:46.209Z",
+      "key": "1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:27:20.628Z",
+      "key": "1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a",
+      "elapsed_ms": 34419,
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 2c37faf5-cbf5-4c98-969b-c2dc60a70b04.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:27:20.811Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a --error-file runtime\\independent-painted-bust-original-20261024-error-1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:27:21.106Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a --error-file runtime\\independent-painted-bust-original-20261024-error-1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a.txt",
+      "elapsed_ms": 295,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:27:21.106Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key 1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a --message-file runtime\\independent-painted-bust-original-20261024-error-1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:27:22.019Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key 1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a --message-file runtime\\independent-painted-bust-original-20261024-error-1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a.txt",
+      "elapsed_ms": 913,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:27:22.019Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:27:26.497Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 4478,
+      "exit_code": 0
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "independent-painted-bust-original-20261024",
+      "observed_at_utc": "2026-10-24T13:27:26.497Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-24T13:27:26.497Z",
+      "batch": "independent-painted-bust-original-20261024"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-24T13:27:26.497Z"
+}

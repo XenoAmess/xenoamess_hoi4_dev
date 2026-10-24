@@ -110,7 +110,59 @@ def original(asset):
     with Image.open(io.BytesIO(raw)) as im:im.convert("RGBA").save(out)
     return out
 
-def prepare(key, prompt, edit_existing=False, *, replacement_reason=None, opaque_canvas_reason=None):
+def supporting_crop_inputs(record, crops, edit_existing):
+    """Validate unchanged native target crops used only to locate a small edit."""
+    if not crops:return []
+    if not edit_existing or not record or not record.get('generated_fullsize_image'):
+        raise ValueError('Supporting crops require a current fullsize edit target')
+    parent=ROOT/record['generated_fullsize_image']
+    if file_sha256(parent)!=record['generated_fullsize_sha256']:
+        raise ValueError('Supporting crop parent master changed')
+    result=[]
+    with Image.open(parent) as image:
+        full=image.convert('RGBA')
+        for item in crops:
+            path=(ROOT/item['path']).resolve()
+            if not path.is_relative_to((MOD/'assets/request_context').resolve()):
+                raise ValueError('Supporting crop must be a retained request-context file')
+            box=item['crop_box']
+            if (len(box)!=4 or any(type(n) is not int for n in box)
+                    or not 0<=box[0]<box[2]<=full.width or not 0<=box[1]<box[3]<=full.height):
+                raise ValueError('Invalid native target crop bounds')
+            if item['parent_fullsize_sha256']!=record['generated_fullsize_sha256'] or file_sha256(path)!=item['sha256']:
+                raise ValueError('Supporting crop provenance changed')
+            with Image.open(path) as cropped:
+                actual=cropped.convert('RGBA');expected=full.crop(box)
+                if actual.size!=expected.size or actual.tobytes()!=expected.tobytes():
+                    raise ValueError('Supporting context must be unmodified native target pixels')
+            result.append({'role':'unmodified native crop of current fullsize edit target; localization only',
+                           'path':path.relative_to(ROOT.resolve()).as_posix(),'sha256':item['sha256'],
+                           'parent_fullsize_sha256':item['parent_fullsize_sha256'],'crop_box':box})
+    return result
+
+
+def supporting_original_input(key, context, record, edit_existing, replacement_reason):
+    """Bind a manually matched larger original as context for an independent call."""
+    if context is None:return None
+    if edit_existing or not record or record.get('review')!='rejected' or not replacement_reason:
+        raise ValueError('Matched original context requires an independent replacement of rejected art')
+    if context.get('actually_viewed_same_composition') is not True or not context.get('visual_match_reason','').strip():
+        raise ValueError('Matched source context needs actual visual composition evidence')
+    other=context['source_sha256']
+    if other==key:
+        raise ValueError('The primary original is already a required input')
+    assets=read_json(MOD/'data/catalog.json')['assets']
+    matches=[a for a in assets if a['source_sha256']==other]
+    if not matches:raise ValueError('Supporting original is not in the actual catalog')
+    path=original(matches[0])
+    if file_sha256(path)!=context['converted_png_sha256']:
+        raise ValueError('Observed supporting original PNG changed')
+    return {'role':'composition-matched original context; primary source and independent generation remain distinct',
+            'path':path.relative_to(ROOT).as_posix(),'sha256':context['converted_png_sha256'],
+            'raw_sha256':other,'actually_viewed_same_composition':True,'visual_match_reason':context['visual_match_reason']}
+
+
+def prepare(key, prompt, edit_existing=False, *, replacement_reason=None, opaque_canvas_reason=None, supporting_crops=None, supporting_original_context=None):
     asset=next(a for a in read_json(MOD/"data/catalog.json")["assets"] if a["source_sha256"]==key)
     source=original(asset)
     with Image.open(source) as image:alpha_policy=source_alpha_policy(image,opaque_canvas_reason=opaque_canvas_reason)
@@ -130,6 +182,8 @@ def prepare(key, prompt, edit_existing=False, *, replacement_reason=None, opaque
         raise ValueError('Replacement reason must be explicit and nonempty')
     if record and not edit_existing and not replacement_reason:
         raise ValueError('Original-based replacement requires an explicit replacement_reason before generation')
+    extra_inputs=supporting_crop_inputs(record,supporting_crops,edit_existing)
+    original_context=supporting_original_input(key,supporting_original_context,record,edit_existing,replacement_reason)
     from mod_nailong.tools.image_retries import require_editable_service_state
     require_editable_service_state(key,record,journal['attempts'][-1] if journal['attempts'] else None,edit_existing)
     paths=[];inputs=[]
@@ -157,6 +211,10 @@ def prepare(key, prompt, edit_existing=False, *, replacement_reason=None, opaque
     paths.extend([str(source),str(MOD/"assets/reference/naiwa.png")])
     inputs.extend([{"role":"original source portrait","raw_sha256":key,"converted_png_sha256":file_sha256(source)},
         {"role":"user mascot reference","path":"mod_nailong/assets/reference/naiwa.png","sha256":file_sha256(MOD/"assets/reference/naiwa.png")}])
+    for item in extra_inputs:
+        paths.append(str(ROOT/item['path']));inputs.append(item)
+    if original_context:
+        paths.append(str(ROOT/original_context['path']));inputs.append(original_context)
     n=len(journal["attempts"])+1
     promptfile=MOD/"assets/prompts"/f"{key}-{n:03}.txt"
     promptfile.parent.mkdir(parents=True,exist_ok=True);promptfile.write_text(prompt,encoding="utf-8",newline="\n")

@@ -107,6 +107,8 @@ execute(*git,'add','--','tools/accepted_retry_art.py','tests/test_accepted_retry
 execute(*git,'add','--','tests/test_exact_art_review_selection.py')
 execute(*git,'add','--','tools/prepare_reviewed_transport_retry.py','tests/test_reviewed_transport_retry.py','docs/handoffs/2026-10-24-resume-preflight.json','docs/handoffs/2026-10-24-resume-activation.json')
 execute(*git,'add','--','tools/invocation_file_verifier.py','tests/test_invocation_file_verifier.py')
+execute(*git,'add','--','tests/test_supporting_target_crops.py')
+execute(*git,'add','--','tests/test_matched_original_context.py')
 message=ROOT/'runtime/production-checkpoint-message.txt'
 message.write_text('Preserve reviewed HIGH portraits and original fullsize PNGs\n\nContinue the full portrait task across storage and validation checkpoints.\nKeep remote original verification bound to immutable Git metadata.\n',encoding='utf-8',newline='\n')
 if execute('git','diff','--cached','--name-only'):
