@@ -57,7 +57,7 @@ def consume(root, expected_machine, runner=None):
             'receipt': output.relative_to(root).as_posix()}
 
 
-def run_boundary(root, expected_machine, *, apply_reviews=None, runner=None):
+def run_boundary(root, expected_machine, *, apply_reviews=None, runner=None, refill=None):
     """Apply staged reviews, then consume an intent in one sole-writer process."""
     if apply_reviews is None:
         return consume(root, expected_machine, runner)
@@ -69,6 +69,12 @@ def run_boundary(root, expected_machine, *, apply_reviews=None, runner=None):
     with redirect_stdout(review_stdout):
         review_result = apply_reviews()
     result = consume(root, expected_machine, runner)
+    if result.get('status') != 'preparation_requires_reconciliation':
+        if refill is None and root == ROOT:
+            from tools.rolling_production_queue import refill_reviewed_backlog
+            refill = refill_reviewed_backlog
+        if refill is not None:
+            result['backlog_refill'] = refill(root, expected_machine)
     result['review_application'] = review_result
     if review_stdout.getvalue():
         result['review_application_stdout'] = review_stdout.getvalue()

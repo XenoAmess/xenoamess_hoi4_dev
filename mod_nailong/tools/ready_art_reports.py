@@ -35,6 +35,16 @@ def reports(batch,root=ROOT):
         result.append((path,{'path':ticket.relative_to(root).as_posix(),'sha256':file_sha256(ticket),'report':body['report'],'report_sha256':body['sha256']}))
     return result
 
+def independent_art_holds(root=ROOT):
+    """Explicit per-source art investigation; no service cooldown is changed."""
+    held=set()
+    for path in (root/'mod_nailong/data/independent-art-tasks').glob('*.json'):
+        body=read_json(path)
+        if body.get('schema')=='naiwa-independent-art-hold-v1' and body.get('status')=='pending_independent_method':
+            assert body['machine_id']==machine_id() and len(body['source_sha256'])==64
+            held.add(body['source_sha256'])
+    return held
+
 if __name__=='__main__':
     batch,name=sys.argv[1:]
     print(enqueue(batch,name))

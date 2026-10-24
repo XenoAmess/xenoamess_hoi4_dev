@@ -57,6 +57,16 @@ class PreparationBoundaryTests(unittest.TestCase):
         self.assertFalse(result['reviews_applied'])
         self.assertTrue(self.pending.exists())
 
+    def test_background_refill_follows_review_application_at_same_safe_boundary(self):
+        order = []
+        def apply():order.append('review');return {'applied':1}
+        def refill(root, machine):
+            self.assertEqual(order,['review']);order.append('future preparation')
+            return {'prepared':True,'index':8}
+        result=run_boundary(self.root,'test',apply_reviews=apply,refill=refill)
+        self.assertEqual(order,['review','future preparation'])
+        self.assertEqual(result['backlog_refill']['index'],8)
+
     def test_failed_review_application_does_not_claim_preparation(self):
         self.queue()
         def fail():

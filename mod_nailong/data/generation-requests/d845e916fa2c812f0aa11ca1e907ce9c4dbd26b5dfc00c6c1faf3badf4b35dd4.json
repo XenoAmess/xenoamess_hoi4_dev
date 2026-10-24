@@ -364,6 +364,63 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 9ff9002b-6116-4cbe-a918-55945197c337.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-23T19:56:37.058070+00:00"
+    },
+    {
+      "number": 8,
+      "status": "failed",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image1 is the actual raw-HD mascot edit target. Image2 is the exact original game portrait/card and sole authority for visible features. Image3 is the user mascot identity reference.\nActual observed correction: Lower-face beard still remains a central grey chin patch with bare lateral lower jaw. Extend the actual short grey beard laterally from the central chin patch along BOTH lower-jaw curves as one connected beard contour; preserve separate grey upper-lip moustache and actual deep source side shadow. Keep down-left gaze, spectacles, hair, dark garment and exact opaque card/note.\nKeep all unrelated source-visible hairstyle and hair colour, eyebrows and exact fine facial-hair state, glasses, headgear when actually present, clothes/neckwear, badges/buttons/straps, expression, gaze, pose, crop and lighting. Smooth golden-yellow compact round mascot head with green-ringed black eyes and a small mouth adapted to the actual source expression. No human skin/nose/ears, broad invented facial-hair band or hat replacing real hair.\nOnly when the original actually has a photograph frame/note, retain that entire tilted frame and overlapping paper with indistinct markings, opaque photographic backing and true exterior alpha outside the complete original card. A standalone full portrait retains its entire original painted backdrop and must not acquire a new photo frame or note. Preserve genuine original transparency only where it really exists. Dark cloth stays fully opaque. Short broad fitted neck with rounded chin immediately meeting actual garment, preserve its open/closed state and do not add a neck column, separate roll, cream bib or floating collar. Keep full raw-HD detail, resolution and original aspect ratio; no invented text, watermark, new symbols, people or panels.\nOutput alpha: genuine transparent RGBA ONLY OUTSIDE the complete original photograph FRAME AND NOTE silhouette. The photographic BACKING INSIDE the frame is a required OPAQUE surface: preserve its original background color and texture behind the character all the way to the inner frame rim. Never turn the gaps between frame and character into transparent holes or a window. Keep the actual tilted photo rectangle, frame rim and overlapping note intact. Do not invent a new backdrop outside the whole card. Retain source clothing, hair, headgear, lighting and crop at full generated resolution. All originally OPAQUE subject surfaces must remain FULLY OPAQUE (alpha 255): yellow head/body, hair, beard, dark or black clothing, coat lapels, collar, tie, buttons and decorations. Dark cloth is colored material, not transparent background. Never fade garment interiors into semi-transparent patches, holes, white haze or see-through fabric. Keep any genuine source outer-edge alpha falloff only at that actual exterior boundary; preserve actual source transparency rather than making the subject itself translucent.",
+      "prompt_file": "mod_nailong/assets/prompts/d845e916fa2c812f0aa11ca1e907ce9c4dbd26b5dfc00c6c1faf3badf4b35dd4-008.txt",
+      "prompt_sha256": "1a8f343dd920b13599a1600d106712a1156996b0eefa7d9812801008371f70db",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/3eec0a48ecf564596c99aed8a22f013001d2706c150ab83cb4b7d4b66d9f42fc.png",
+          "sha256": "3eec0a48ecf564596c99aed8a22f013001d2706c150ab83cb4b7d4b66d9f42fc",
+          "derived_game_image_sha256": "9175b59ffc396e9e5dc7fb31e2cb8f72840464476583176ae13ab8a9ed115696"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "d845e916fa2c812f0aa11ca1e907ce9c4dbd26b5dfc00c6c1faf3badf4b35dd4",
+          "converted_png_sha256": "fee5684d39f62e32b2769e3587fcc3d098a5f5a306033b5db565ab0c2e5a6851"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-24T08:02:35.437498+00:00",
+      "original_alpha_extrema": [
+        0,
+        255
+      ],
+      "transparent_background": true,
+      "alpha_prompt_policy": "source-content-v3-opaque-body",
+      "retry_of_attempt": 7,
+      "retry_root_attempt": 7,
+      "cooldown_retry_number": 2,
+      "cooldown_not_before_utc": "2026-10-24T03:56:37.058070+00:00",
+      "cooldown_retry_tool_transparent_background": true,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-24T08:02:43.775817+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "2424202f65006c76bee8f7faadfa6ab7e0e189d5cecd7d6321667df973e43351",
+        "prompt_sha256": "1a8f343dd920b13599a1600d106712a1156996b0eefa7d9812801008371f70db",
+        "input_sha256": [
+          "3eec0a48ecf564596c99aed8a22f013001d2706c150ab83cb4b7d4b66d9f42fc",
+          "fee5684d39f62e32b2769e3587fcc3d098a5f5a306033b5db565ab0c2e5a6851",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": true
+      },
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 0004486c-04f6-4742-9034-8b0fe1804291.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
+      "observed_at_utc": "2026-10-24T08:03:51.743457+00:00"
     }
   ]
 }

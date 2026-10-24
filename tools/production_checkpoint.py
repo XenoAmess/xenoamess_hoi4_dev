@@ -82,6 +82,7 @@ execute(*git,'add','--','tools/bounded_builtin_window.js','tools/production_gap_
 execute(*git,'add','--','tools/production_window_gate.py','tests/test_production_window_gate.py')
 execute(*git,'add','--','tools/builtin_window_continuation.js')
 execute(*git,'add','--','tools/production_benchmark.py')
+execute(*git,'add','--','tools/production_benchmark_observer.py')
 execute(*git,'add','--','tests/test_production_benchmark.py')
 execute(*git,'add','--','tools/prepare_reviewed_art_repairs.py','tools/production_prepare_boundary.py','tests/test_production_prepare_boundary.py')
 message=ROOT/'runtime/production-checkpoint-message.txt'

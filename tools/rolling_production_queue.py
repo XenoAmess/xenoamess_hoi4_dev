@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,machine_id,utc_now,file_sha256
 from tools.production_window_gate import inspect_window
-from mod_nailong.tools.ready_art_reports import reports as inbox_reports
+from mod_nailong.tools.ready_art_reports import reports as inbox_reports,independent_art_holds
 from mod_nailong.tools.prepare_ready_art_reviews import eligible_entries,service_held_keys
 
 def no_calling(root):
@@ -43,6 +43,41 @@ def run_checked(root,command,runner=None):
     result=(runner(command) if runner else subprocess.run(command,cwd=root,capture_output=True,text=True,encoding='utf-8',errors='replace'))
     assert result.returncode==0,{'error':'Boundary stopped; preserve partial claims and never automatically replay','stdout':result.stdout,'stderr':result.stderr}
     return result
+
+def merge_reviewed_retries(root,expected_machine,runner=None):
+    """Consume explicit immutable review pointers without another model turn."""
+    folder=root/'runtime/retry-review-inbox';pending=sorted((folder/'pending').glob('*.json'))
+    if not pending:return {'merged':False,'reason':'no_queued_exact_policy_review'}
+    scheduler=root/'runtime/retry-scheduler/state.json'
+    if scheduler.exists() and read_json(scheduler)['pending'] is not None:
+        return {'merged':False,'reason':'retry_batch_still_owned'}
+    no_calling(root)
+    pointer=pending[0];body=read_json(pointer)
+    assert body['machine_id']==expected_machine
+    source=(root/body['path']).resolve()
+    assert source.is_relative_to((root/'mod_nailong/data').resolve()) and source.suffix=='.json'
+    assert file_sha256(source)==body['sha256'],'Queued manual review changed'
+    claimed=folder/'claimed'/pointer.name;claimed.parent.mkdir(parents=True,exist_ok=True)
+    assert not claimed.exists(),'Prior approval merge requires reconciliation, never replay'
+    pointer.rename(claimed)
+    outcome=run_checked(root,[sys.executable,'tools/retry_scheduler_merge.py',body['path']],runner)
+    receipt=root/'mod_nailong/data/production-retry-approval-merges'/pointer.name
+    assert not receipt.exists()
+    write_json(receipt,{'machine_id':expected_machine,'completed_at_utc':utc_now(),'pointer':body,'status':'merged_at_sole_producer_boundary','stdout':outcome.stdout,'quota_claims':0,'image_calls':0})
+    return {'merged':True,'receipt':receipt.relative_to(root).as_posix()}
+
+def checkpoint_when_idle(root,state,runner=None):
+    request=root/'runtime/rolling-production'/(state['run_id']+'-checkpoint-requested.json')
+    if not request.exists():return None
+    body=read_json(request)
+    assert body['machine_id']==state['machine_id'] and body['run_id']==state['run_id']
+    if not body.get('allow_idle'):return None
+    no_calling(root)
+    assert state['next_index']==len(read_json(root/'runtime/after128-continuous-plan.json')['batches']),'Prepared work must continue before idle checkpoint'
+    batch=state['run_id']+'-idle'+str(state['next_index'])
+    request.rename(request.with_name(state['run_id']+'-checkpoint-claimed-idle-'+str(state['next_index'])+'.json'))
+    result=run_checked(root,[sys.executable,'tools/production_checkpoint.py',batch],runner)
+    return {'batch':batch,'stdout_tail':result.stdout[-2500:],'scope':'Same sole owner, no unresolved call and no prepared/eligible work. Validation uses otherwise idle supply time; remote publisher remains separate.'}
 
 def allocate_exact_retry(root,state,runner=None):
     """Only the persistent producer selects and claims unchanged, reviewed retries."""
@@ -80,10 +115,42 @@ def finish_exact_retry(root,state,runner=None):
     run_checked(root,[sys.executable,'tools/retry_scheduler_complete.py',item['batch']],runner)
     assert read_json(root/'runtime/retry-scheduler/state.json')['pending'] is None
 
+def ready_art(root,expected_machine):
+    reports=[(p,read_json(p)) for p,_ in inbox_reports('global')]
+    rows=read_json(root/'mod_nailong/data/generated.json')['portraits'];latest={}
+    for _,body in reports:
+        assert body.get('machine_id')==expected_machine and body.get('decisions_staged')
+        for e in body.get('decisions',[]):
+            key=e.get('source_sha256')
+            if e.get('decision')=='rejected' and key in rows:latest[key]=read_json(root/rows[key]['request_journal'])['attempts'][-1]
+    priority=read_json(root/'mod_nailong/data/production-priority.json')['sources']
+    failures=read_json(root/'mod_nailong/data/generation-failures.json')['attempts']
+    return eligible_entries(reports,rows,latest,service_held_keys(latest,priority,failures)|independent_art_holds(root))
+
+def refill_reviewed_backlog(root,expected_machine,runner=None,selector=None):
+    """Prepare future windows between imports while the current window continues."""
+    owner_path=root/'runtime/rolling-production/owner.json'
+    if not owner_path.exists():return {'prepared':False,'reason':'no_logical_owner'}
+    owner=read_json(owner_path);assert owner['machine_id']==expected_machine
+    state=read_json(owner_path.with_name(owner['run_id']+'.json'))
+    assert state['status']=='running' and state['machine_id']==expected_machine
+    no_calling(root)
+    plan=read_json(root/'runtime/after128-continuous-plan.json')['batches']
+    assert state['next_index']<=len(plan)
+    queued=sum(len(read_json(root/item['jobs'])) for item in plan[state['next_index']:])
+    if queued>=24:return {'prepared':False,'reason':'prepared_backlog_at_target','queued_requests':queued}
+    if not (selector or ready_art)(root,expected_machine):return {'prepared':False,'reason':'no_current_allowed_manual_rejection','queued_requests':queued}
+    index=len(plan);batch=owner['run_id']+'-batch'+str(index)
+    run_checked(root,[sys.executable,'mod_nailong/tools/prepare_ready_art_reviews.py',batch,str(index),'--inbox'],runner)
+    item=read_json(root/'runtime/after128-continuous-plan.json')['batches'][index]
+    count=validate_prepared(root,item)
+    return {'prepared':True,'batch':batch,'index':index,'requests':count,'queued_before':queued,'scope':'Prepared by sole producer between imports; current window has not ended and reviewers continue independently.'}
+
 def next_item(root,state,runner=None):
     no_calling(root)
     if (root/'runtime/rolling-production'/(state['run_id']+'-stop-requested.json')).exists():
         return {'ready':False,'stop_requested':True,'next_index':state['next_index']}
+    merge_reviewed_retries(root,state['machine_id'],runner)
     if root==ROOT:
         from tools.production_prepare_boundary import run_boundary
         from mod_nailong.tools.production_queue import apply_reviews
@@ -92,20 +159,11 @@ def next_item(root,state,runner=None):
     plan=read_json(root/'runtime/after128-continuous-plan.json')['batches'];index=state['next_index']
     assert index<=len(plan),'Logical cursor exceeds durable plan'
     if index==len(plan):
-        inbox=inbox_reports('global');reports=[(p,read_json(p)) for p,_ in inbox]
-        rows=read_json(root/'mod_nailong/data/generated.json')['portraits'];latest={}
-        for _,body in reports:
-            assert body.get('machine_id')==state['machine_id'] and body.get('decisions_staged')
-            for e in body.get('decisions',[]):
-                key=e.get('source_sha256')
-                if e.get('decision')=='rejected' and key in rows:latest[key]=read_json(root/rows[key]['request_journal'])['attempts'][-1]
-        priority=read_json(root/'mod_nailong/data/production-priority.json')['sources']
-        failures=read_json(root/'mod_nailong/data/generation-failures.json')['attempts']
-        held=service_held_keys(latest,priority,failures)
-        ready=eligible_entries(reports,rows,latest,held)
+        ready=ready_art(root,state['machine_id'])
         if not ready:
             if allocate_exact_retry(root,state,runner) is None:
-                return {'ready':False,'reason':'no_current_allowed_manual_rejection_prepared_job_or_exact_due_retry','next_index':index}
+                checkpoint=checkpoint_when_idle(root,state,runner)
+                return {'ready':False,'reason':'no_current_allowed_manual_rejection_prepared_job_or_exact_due_retry','next_index':index,'idle_checkpoint':checkpoint}
         else:
             batch=state['run_id']+'-batch'+str(index)
             command=[sys.executable,'mod_nailong/tools/prepare_ready_art_reviews.py',batch,str(index),'--inbox']
@@ -115,8 +173,10 @@ def next_item(root,state,runner=None):
     request=root/'runtime/rolling-production'/(state['run_id']+'-checkpoint-requested.json')
     if request.exists():
         body=read_json(request);assert body['machine_id']==state['machine_id'] and body['run_id']==state['run_id']
-        item['checkpointCommand']='python tools\\production_checkpoint.py '+item['batch']
-        request.rename(request.with_name(state['run_id']+'-checkpoint-claimed-'+str(index)+'.json'))
+        minimum=body.get('min_requests',1);assert isinstance(minimum,int) and 1<=minimum<=8
+        if count>=minimum:
+            item['checkpointCommand']='python tools\\production_checkpoint.py '+item['batch']
+            request.rename(request.with_name(state['run_id']+'-checkpoint-claimed-'+str(index)+'.json'))
     return {'ready':True,'index':index,'window_id':state['run_id']+'-window'+str(index),'plan':[item],'requests':count}
 
 def main():

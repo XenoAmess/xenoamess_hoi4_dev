@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now
-from mod_nailong.tools.ready_art_reports import reports as inbox_reports
+from mod_nailong.tools.ready_art_reports import reports as inbox_reports,independent_art_holds
 from tools.portrait_dispatch_guard import same_service_family
 
 
@@ -70,7 +70,7 @@ def main():
                     latest[key]=read_json(ROOT/rows[key]['request_journal'])['attempts'][-1]
         priority=read_json(ROOT/'mod_nailong/data/production-priority.json')['sources']
         failures=read_json(ROOT/'mod_nailong/data/generation-failures.json')['attempts']
-        held=service_held_keys(latest,priority,failures)
+        held=service_held_keys(latest,priority,failures)|independent_art_holds()
         chosen=eligible_entries(reports,rows,latest,held)
         if chosen:break
         time.sleep(1)

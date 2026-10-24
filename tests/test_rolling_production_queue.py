@@ -2,7 +2,7 @@ import tempfile,unittest,json
 from types import SimpleNamespace
 from pathlib import Path
 from tools.common import write_json,read_json,file_sha256
-from tools.rolling_production_queue import claim,validate_prepared,next_item,allocate_exact_retry,finish_exact_retry
+from tools.rolling_production_queue import claim,validate_prepared,next_item,allocate_exact_retry,finish_exact_retry,refill_reviewed_backlog,merge_reviewed_retries,checkpoint_when_idle
 
 class LogicalQueueTests(unittest.TestCase):
  def setUp(self):
@@ -34,6 +34,10 @@ class LogicalQueueTests(unittest.TestCase):
   next=next_item(self.root,state)
   self.assertEqual(next['plan'][0]['checkpointCommand'],'python tools\\production_checkpoint.py b1')
   self.assertFalse(request.exists());self.assertTrue(request.with_name('run-checkpoint-claimed-0.json').exists())
+ def test_checkpoint_can_wait_for_enough_real_prepared_work(self):
+  item=self.job(1);write_json(self.root/'runtime/after128-continuous-plan.json',{'batches':[item]});state=claim(self.root,'run',0,'prior','m')
+  request=self.root/'runtime/rolling-production/run-checkpoint-requested.json';write_json(request,{'machine_id':'m','run_id':'run','min_requests':4})
+  self.assertNotIn('checkpointCommand',next_item(self.root,state)['plan'][0]);self.assertTrue(request.exists())
  def test_no_eligible_exact_retry_does_not_claim_allowance(self):
   write_json(self.root/'runtime/retry-scheduler/state.json',{'machine_id':'m','pending':None})
   commands=[]
@@ -69,5 +73,43 @@ class LogicalQueueTests(unittest.TestCase):
   def runner(command):self.fail('Pending claim must never be selected again')
   with self.assertRaisesRegex(AssertionError,'explicit reconciliation'):
    allocate_exact_retry(self.root,{'machine_id':'m','run_id':'run','next_index':0},runner)
+ def test_future_preparation_occurs_before_current_window_ends(self):
+  item=self.job(1);write_json(self.root/'runtime/after128-continuous-plan.json',{'batches':[item]})
+  state=claim(self.root,'run',0,'prior','m')
+  def runner(command):
+   self.assertEqual(command[3],'1')
+   plan=read_json(self.root/'runtime/after128-continuous-plan.json');plan['batches'].append(self.job(2));write_json(self.root/'runtime/after128-continuous-plan.json',plan)
+   return SimpleNamespace(returncode=0,stdout='',stderr='')
+  result=refill_reviewed_backlog(self.root,'m',runner,lambda *_:[True])
+  self.assertTrue(result['prepared']);self.assertEqual(state['next_index'],0)
+  self.assertEqual(read_json(self.root/'runtime/rolling-production/run.json')['completed_windows'],0)
+  self.assertEqual(len(read_json(self.root/'runtime/after128-continuous-plan.json')['batches']),2)
+ def test_manual_retry_review_is_merged_once_only_after_pending_batch_finishes(self):
+  source=self.root/'mod_nailong/data/manual-policy-reviewed.json';write_json(source,[{'policy_reviewed':True}])
+  pointer=self.root/'runtime/retry-review-inbox/pending/one.json';write_json(pointer,{'machine_id':'m','path':source.relative_to(self.root).as_posix(),'sha256':file_sha256(source)})
+  scheduler=self.root/'runtime/retry-scheduler/state.json';write_json(scheduler,{'pending':{'batch':'cooldown-087'}})
+  def runner(command):
+   self.assertTrue((self.root/'runtime/retry-review-inbox/claimed/one.json').exists());self.assertFalse(pointer.exists())
+   return SimpleNamespace(returncode=0,stdout='merged exact reviewed bytes',stderr='')
+  self.assertFalse(merge_reviewed_retries(self.root,'m',lambda _:self.fail('pending batch'))['merged'])
+  write_json(scheduler,{'pending':None})
+  self.assertTrue(merge_reviewed_retries(self.root,'m',runner)['merged'])
+  self.assertFalse(merge_reviewed_retries(self.root,'m',lambda _:self.fail('replayed'))['merged'])
+ def test_changed_queued_manual_policy_review_never_merges_or_claims(self):
+  source=self.root/'mod_nailong/data/manual-policy-reviewed.json';write_json(source,[])
+  pointer=self.root/'runtime/retry-review-inbox/pending/one.json';write_json(pointer,{'machine_id':'m','path':source.relative_to(self.root).as_posix(),'sha256':'0'*64})
+  with self.assertRaisesRegex(AssertionError,'changed'):
+   merge_reviewed_retries(self.root,'m',lambda _:self.fail('changed source'))
+  self.assertTrue(pointer.exists())
+ def test_idle_checkpoint_requires_empty_prepared_queue_and_runs_once(self):
+  write_json(self.root/'runtime/after128-continuous-plan.json',{'batches':[self.job(1)]})
+  state=claim(self.root,'run',0,'prior','m');request=self.root/'runtime/rolling-production/run-checkpoint-requested.json';write_json(request,{'machine_id':'m','run_id':'run','allow_idle':True})
+  with self.assertRaisesRegex(AssertionError,'Prepared work'):
+   checkpoint_when_idle(self.root,state,lambda _:self.fail('would block prepared job'))
+  state['next_index']=1;commands=[]
+  def runner(command):commands.append(command);return SimpleNamespace(returncode=0,stdout='committed; remote publish still pending',stderr='')
+  result=checkpoint_when_idle(self.root,state,runner)
+  self.assertEqual(result['batch'],'run-idle1');self.assertFalse(request.exists());self.assertEqual(len(commands),1)
+  self.assertIsNone(checkpoint_when_idle(self.root,state,lambda _:self.fail('replayed checkpoint')))
 
 if __name__=='__main__':unittest.main()

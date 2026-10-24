@@ -10,12 +10,18 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now
 
-def reserve_candidates(root,rows,priority,seen,slot,limit=4):
+def reserve_candidates(root,rows,priority,seen,slot,limit=4,deferred=None):
     folder=root/'runtime/rolling-review-queue';reservations=folder/'reservations';reservations.mkdir(parents=True,exist_ok=True)
     assets={a['source_sha256']:a for a in read_json(root/'mod_nailong/data/catalog.json')['assets']};jobs=[]
     for key,row in rows.items():
         digest=row.get('generated_fullsize_sha256')
         if row.get('review')!='pending' or not priority[key]['high_priority'] or not digest or (key,digest) in seen:continue
+        missing=[field for field in ('request_journal','prompt') if not isinstance(row.get(field),str) or not row[field]]
+        if missing:
+            # Import publishes portrait pixels before attaching all request metadata.
+            # Do not reserve the incomplete snapshot or stop unrelated review work.
+            if deferred is not None:deferred.append({'source_sha256':key,'generated_fullsize_sha256':digest,'missing':missing})
+            continue
         history=read_json(root/row['request_journal']);latest=history['attempts'][-1]
         if latest['status']!='generated_pending_visual_review' or latest.get('fullsize_sha256')!=digest:continue
         reservation=reservations/(key+'-'+digest+'.json')
@@ -42,8 +48,8 @@ def claim(slot):
                 if 'agent-' in p.name or e.get('decision')!='pending':seen.add((key,digest))
         for p in (ROOT/'runtime/production-queue/reviews/pending').glob('*.json'):
             e=read_json(p);seen.add((e.get('source_sha256'),e.get('generated_fullsize_sha256')))
-        jobs=reserve_candidates(ROOT,rows,priority,seen,slot)
-        if not jobs:return {'ready':False,'reason':'no_unassigned_current_HIGH_output','slot':slot}
+        deferred=[];jobs=reserve_candidates(ROOT,rows,priority,seen,slot,deferred=deferred)
+        if not jobs:return {'ready':False,'reason':'current_output_metadata_not_yet_complete' if deferred else 'no_unassigned_current_HIGH_output','slot':slot,'metadata_deferred':deferred}
         sequence=state['sequence']+1;tag='rolling'+slot+str(sequence);jobpath=ROOT/f'runtime/fine-review4-{tag}-20261024-jobs.json';assert not jobpath.exists();write_json(jobpath,jobs)
         out=ROOT/f'runtime/resumed-20261024-fine-{tag}-alpha'
         result=subprocess.run([sys.executable,'mod_nailong/tools/review_alpha_sheet.py',jobpath.relative_to(ROOT).as_posix(),out.relative_to(ROOT).as_posix()],cwd=ROOT,capture_output=True,text=True,encoding='utf-8',errors='replace')
@@ -63,16 +69,20 @@ def complete(slot,report):
     write_json(path,{'slot':slot,'sequence':state['sequence'],'status':'available','last_report':report,'completed_at_utc':utc_now()})
     return {'completed':True,'slot':slot,'next_sequence':state['sequence']+1}
 
+def wait_for_claim(slot,wait_seconds,allocator=None,clock=None,sleeper=None):
+    allocator=allocator or claim;clock=clock or time.monotonic;sleeper=sleeper or time.sleep
+    deadline=clock()+wait_seconds
+    while True:
+        try:result=allocator(slot)
+        except FileExistsError:
+            if clock()>=deadline:return {'ready':False,'reason':'another_review_allocation_owns_lock','slot':slot,'allocation_claimed':False}
+            sleeper(1);continue
+        if result.get('ready',True) or clock()>=deadline:return result
+        sleeper(5)
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('action',choices=['claim','complete']);parser.add_argument('slot',choices=['a','b']);parser.add_argument('--report');parser.add_argument('--wait-seconds',type=int,default=0);args=parser.parse_args();assert 0<=args.wait_seconds<=50
-    deadline=time.monotonic()+args.wait_seconds
-    while True:
-        try:result=claim(args.slot) if args.action=='claim' else complete(args.slot,args.report)
-        except FileExistsError:
-            if time.monotonic()>=deadline:raise
-            time.sleep(1);continue
-        if result.get('ready',True) or time.monotonic()>=deadline:break
-        time.sleep(5)
+    result=wait_for_claim(args.slot,args.wait_seconds) if args.action=='claim' else complete(args.slot,args.report)
     print(json.dumps(result,ensure_ascii=True))
 
 if __name__=='__main__':main()

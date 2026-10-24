@@ -1,7 +1,7 @@
 import tempfile,unittest
 from pathlib import Path
 from tools.common import write_json
-from tools.portrait_review_queue import reserve_candidates
+from tools.portrait_review_queue import reserve_candidates,wait_for_claim
 
 class ReviewSlotTests(unittest.TestCase):
  def setUp(self):
@@ -27,5 +27,27 @@ class ReviewSlotTests(unittest.TestCase):
   key='0'*64;self.rows[key]['generated_fullsize_sha256']='f'*64
   write_json(self.root/self.rows[key]['request_journal'],{'attempts':[{'status':'generated_pending_visual_review','fullsize_sha256':'f'*64}]})
   self.assertIn(key,{j['key'] for j in reserve_candidates(self.root,self.rows,self.priority,set(),'b')})
+ def test_incomplete_import_snapshot_does_not_stop_or_reserve_review_slot(self):
+  key='0'*64;journal=self.rows[key].pop('request_journal');deferred=[]
+  jobs=reserve_candidates(self.root,self.rows,self.priority,set(),'a',deferred=deferred)
+  self.assertNotIn(key,{j['key'] for j in jobs});self.assertEqual(deferred[0]['missing'],['request_journal'])
+  reservation=self.root/'runtime/rolling-review-queue/reservations'/(key+'-'+self.rows[key]['generated_fullsize_sha256']+'.json')
+  self.assertFalse(reservation.exists())
+  self.rows[key]['request_journal']=journal
+  self.assertIn(key,{j['key'] for j in reserve_candidates(self.root,self.rows,self.priority,set(),'b')})
+ def test_occupied_allocation_lock_times_out_without_crashing_or_stealing(self):
+  now=[0];calls=[]
+  def occupied(slot):calls.append(slot);raise FileExistsError('other reviewer owns allocation')
+  def sleep(seconds):now[0]+=seconds
+  result=wait_for_claim('b',2,occupied,lambda:now[0],sleep)
+  self.assertFalse(result['ready']);self.assertFalse(result['allocation_claimed']);self.assertEqual(result['reason'],'another_review_allocation_owns_lock')
+  self.assertEqual(calls,['b','b','b'])
+ def test_waiting_slot_claims_only_after_other_allocator_releases(self):
+  now=[0]
+  def allocate(slot):
+   if now[0]<2:raise FileExistsError('occupied')
+   return {'ready':True,'slot':slot}
+  result=wait_for_claim('b',5,allocate,lambda:now[0],lambda seconds:now.__setitem__(0,now[0]+seconds))
+  self.assertTrue(result['ready']);self.assertEqual(now[0],2)
 
 if __name__=='__main__':unittest.main()

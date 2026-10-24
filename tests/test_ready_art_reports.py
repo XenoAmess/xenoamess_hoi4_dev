@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from tools.common import write_json,machine_id
-from mod_nailong.tools.ready_art_reports import enqueue,reports,report_path
+from mod_nailong.tools.ready_art_reports import enqueue,reports,report_path,independent_art_holds
 
 class ReadyReportBindingTests(unittest.TestCase):
     def fixture(self,root):
@@ -28,5 +28,19 @@ class ReadyReportBindingTests(unittest.TestCase):
     def test_parent_and_absolute_report_paths_are_rejected(self):
         for name in ['../review.json','..\\review.json','C:\\review.json','/review.json']:
             with self.assertRaises(ValueError):report_path(name)
+
+    def test_independent_method_hold_is_isolated_from_other_sources_and_resolved_tasks(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);base=root/'mod_nailong/data/independent-art-tasks'
+            write_json(base/'held.json',{'schema':'naiwa-independent-art-hold-v1','machine_id':machine_id(),'status':'pending_independent_method','source_sha256':'a'*64})
+            write_json(base/'resolved.json',{'schema':'naiwa-independent-art-hold-v1','machine_id':machine_id(),'status':'resolved','source_sha256':'b'*64})
+            write_json(base/'other-evidence.json',{'purpose':'independent observations only'})
+            self.assertEqual(independent_art_holds(root),{'a'*64})
+
+    def test_independent_art_hold_from_another_machine_is_not_silently_applied(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            write_json(root/'mod_nailong/data/independent-art-tasks/held.json',{'schema':'naiwa-independent-art-hold-v1','machine_id':'another-machine','status':'pending_independent_method','source_sha256':'a'*64})
+            with self.assertRaises(AssertionError):independent_art_holds(root)
 
 if __name__=='__main__':unittest.main()

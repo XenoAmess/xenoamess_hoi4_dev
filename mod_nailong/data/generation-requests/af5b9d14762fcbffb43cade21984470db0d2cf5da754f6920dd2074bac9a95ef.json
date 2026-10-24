@@ -196,6 +196,68 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID b0678679-a427-4339-a536-52e33468ef32.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-23T21:15:48.507785+00:00"
+    },
+    {
+      "number": 5,
+      "status": "approved",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image 1 is the exact unchanged full-resolution returned yellow mascot portrait EDIT TARGET. Image 2 is the exact original game portrait and sole authority for the background and composition. Image 3 is the user mascot reference.\nRequired actual art correction: RESTORE THE COMPLETE ORIGINAL PAINTED BACKDROP behind the mascot over the entire original rectangular canvas. This target incorrectly removes that required backdrop into a transparent figure cutout. Image 2 has a near-opaque cream/beige/grey painted background everywhere; retain its exact visible colour, texture, vignette, lighting and shadow. Return an opaque full rectangular portrait with that original backdrop; no figure cutout, blank white canvas, new studio setting, frame or note. Do not move, resize, crop or replace the existing figure in this targeted background repair.\nPreserve every unrelated source-visible feature: original hairstyle/baldness, eyebrows and actual facial-hair state/extent/colour; original cap, crown, helmet, glasses or other headgear/accessory; exact garment/uniform design and fastening; source decoration shapes, visible number and arrangement; pose, gaze, expression, lighting and crop. Do not infer symbols or clothes from identity or filename. Maintain the recognizable near-round yellow mascot head with green-ringed eyes and small source-shaped mouth, a curved chin and short broad fitted neck at the existing garment. No long yellow stalk, pinched/floating collar, cream neck bib, new beard or medal. Keep the target raw-HD resolution, detail and aspect ratio. One independent exact-source background correction. No readable new text, watermark, comparison panel or extra figure.\nOutput background: this exact original has a COMPLETE near-opaque canvas, with every source alpha value at least 249/255. Its existing backdrop is required image content. Preserve the original backdrop color, texture, illumination and full rectangular extent behind the mascot. Return an opaque full-canvas portrait, not a transparent figure cutout. Do not remove or replace the original background. Keep the source clothing, hair, facial hair, accessories, pose and crop unchanged apart from the requested mascot conversion or targeted art repair.",
+      "prompt_file": "mod_nailong/assets/prompts/af5b9d14762fcbffb43cade21984470db0d2cf5da754f6920dd2074bac9a95ef-005.txt",
+      "prompt_sha256": "b37e4f00b839e38e4530331b9b9d1763734b7bc7f6a42bd1bae2e4a98defccad",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/82b29388fad8a23da26376602b814f54a77ee9b0ae819fabc62fb4bb1bfdf361.png",
+          "sha256": "82b29388fad8a23da26376602b814f54a77ee9b0ae819fabc62fb4bb1bfdf361",
+          "derived_game_image_sha256": "c70e64a9753fce0d41e1af041284b642430d870c6af8ce893fcab0e4f98d7f8f"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "af5b9d14762fcbffb43cade21984470db0d2cf5da754f6920dd2074bac9a95ef",
+          "converted_png_sha256": "9a0e4d819f4a42ad39de106b300c58e6f8b5da226bc3f65c71cf94c1e0e608fb"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-24T07:50:18.723626+00:00",
+      "original_alpha_extrema": [
+        249,
+        255
+      ],
+      "transparent_background": false,
+      "alpha_prompt_policy": "source-near-opaque-backdrop-v1",
+      "retry_of_attempt": 4,
+      "retry_root_attempt": 3,
+      "cooldown_retry_number": 3,
+      "cooldown_not_before_utc": "2026-10-24T05:15:48.507785+00:00",
+      "cooldown_retry_tool_transparent_background": false,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-24T07:53:56.553453+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "b5bc32c091967ea44099f366302df77f62b774a769a658ce13001b1e2542633a",
+        "prompt_sha256": "b37e4f00b839e38e4530331b9b9d1763734b7bc7f6a42bd1bae2e4a98defccad",
+        "input_sha256": [
+          "82b29388fad8a23da26376602b814f54a77ee9b0ae819fabc62fb4bb1bfdf361",
+          "9a0e4d819f4a42ad39de106b300c58e6f8b5da226bc3f65c71cf94c1e0e608fb",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": false
+      },
+      "generated_at_utc": "2026-10-24T07:54:25.766480+00:00",
+      "fullsize_sha256": "cd489b0df923e3cafe45454993da672ec0bf747a35ba402e8f393b749f89898e",
+      "fullsize_image": "mod_nailong/assets/generated_fullsize/cd489b0df923e3cafe45454993da672ec0bf747a35ba402e8f393b749f89898e.png",
+      "output": "mod_nailong/assets/portraits/af5b9d14762fcbffb43cade21984470db0d2cf5da754f6920dd2074bac9a95ef.png",
+      "output_sha256": "eafec3b6edc4fc7d0732adeffc6afae3f50f4223d1593d691f895c5d21eb7af7",
+      "reviewed_at_utc": "2026-10-24T07:56:09.593216+00:00",
+      "review": "approved"
     }
   ]
 }
