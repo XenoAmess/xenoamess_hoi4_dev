@@ -352,7 +352,7 @@
       "time_basis": "Recorded refusal receipt UTC",
       "not_before_utc": "2026-10-17T04:46:47.542493+00:00",
       "retries_used": 2,
-      "state": "generated_pending_visual_review",
+      "state": "service_retry_succeeded_art_correction_pending",
       "request_id": "9603d047-06da-4834-9909-45949dec6849",
       "machine_id": "bf-202609141645-5434332d4d",
       "recorded_at_utc": "2026-10-16T12:15:48.126189+00:00",
@@ -360,8 +360,8 @@
       "claimed_at_utc": "2026-10-24T10:50:37.196570+00:00",
       "output_sha256": "f44e4e674799178c8af335c05a45808f3a556c225690030612da21cef7ddbeb7",
       "generated_at_utc": "2026-10-24T10:52:18.544905+00:00",
-      "accepted_retry_output_sha256": "72107025479f8ca84e1fe93ba8f4845ea3c1916b3120cb499a9dee26dc0ee78c",
-      "art_correction_started_at_utc": "2026-10-16T20:44:05.015338+00:00",
+      "accepted_retry_output_sha256": "f44e4e674799178c8af335c05a45808f3a556c225690030612da21cef7ddbeb7",
+      "art_correction_started_at_utc": "2026-10-24T12:37:34.462630+00:00",
       "latest_refusal_at_utc": "2026-10-16T20:46:47.793759+00:00",
       "latest_refused_prompt_sha256": "157f3e6120c5087e15ed5c331b89e207fc4e0d852c027456f1138875d16c80e8",
       "max_cooldown_retries": 8,
@@ -409,9 +409,9 @@
     "85e7118cda394b05b1c7353ed054bfc79cdd96aef549837f2a44e2af8440b91f": {
       "first_refusal_receipt_utc": "2026-10-16T12:24:40.691686+00:00",
       "time_basis": "Recorded refusal receipt UTC",
-      "not_before_utc": "2026-10-17T04:37:57.366857+00:00",
+      "not_before_utc": "2026-10-24T20:50:37.249515+00:00",
       "retries_used": 2,
-      "state": "generated_pending_visual_review",
+      "state": "cooling_down",
       "request_id": "0b840423-f021-4f55-aa83-f996af8d6472",
       "machine_id": "bf-202609141645-5434332d4d",
       "recorded_at_utc": "2026-10-16T12:24:40.709062+00:00",
@@ -430,10 +430,12 @@
           "reason": "User raised the cumulative source allowance to four; preserve old failures and consumed calls."
         }
       ],
-      "last_refusal_receipt_utc": "2026-10-16T20:37:57.366857+00:00",
-      "cooldown_origin_attempt": 2,
+      "last_refusal_receipt_utc": "2026-10-24T12:50:37.249515+00:00",
+      "cooldown_origin_attempt": 4,
       "output_sha256": "50d8d49d1eabacc55ce7ff45ad502957479c38bbed53b1c484aa94363fcbff09",
-      "generated_at_utc": "2026-10-24T09:27:28.021803+00:00"
+      "generated_at_utc": "2026-10-24T09:27:28.021803+00:00",
+      "accepted_retry_output_sha256": "50d8d49d1eabacc55ce7ff45ad502957479c38bbed53b1c484aa94363fcbff09",
+      "art_correction_started_at_utc": "2026-10-24T12:37:35.355135+00:00"
     },
     "b3ba713347dc9620fee391ab93275dc036d6d6067ee25b73564497926f8fbac8": {
       "first_refusal_receipt_utc": "2026-10-16T18:02:07.825763+00:00",
@@ -5708,7 +5710,7 @@
       "time_basis": "Recorded refusal receipt UTC",
       "not_before_utc": "2026-10-24T03:38:40.306858+00:00",
       "retries_used": 2,
-      "state": "generated_pending_visual_review",
+      "state": "approved_after_cooldown_retry_and_art_correction",
       "request_id": "0426b13c-10b1-4268-8d5a-eb3374f98717",
       "machine_id": "bf-202609141645-5434332d4d",
       "recorded_at_utc": "2026-10-20T00:13:42.931415+00:00",
@@ -5719,8 +5721,10 @@
       "claimed_at_utc": "2026-10-24T08:06:05.213393+00:00",
       "output_sha256": "3f0633e6229b6bcdb19409e778adec0a52305981fd5f49b3ca5e7201dc65c189",
       "generated_at_utc": "2026-10-24T08:08:00.812706+00:00",
-      "accepted_retry_output_sha256": "1c0d630b3b2e725c8b2f7d183f76dab2802fe520145fd2be4b0c9fc1c9505184",
-      "art_correction_started_at_utc": "2026-10-23T06:56:38.679047+00:00"
+      "accepted_retry_output_sha256": "3f0633e6229b6bcdb19409e778adec0a52305981fd5f49b3ca5e7201dc65c189",
+      "art_correction_started_at_utc": "2026-10-24T12:37:21.510885+00:00",
+      "approved_at_utc": "2026-10-24T12:49:53.415581+00:00",
+      "approved_image_sha256": "7e4e43b069ac4e9d76a2bd3284dc5563b67d2f6747034bd287e48e42641d365f"
     },
     "a56055566c82e443e12a927b018301eb0666c841e841e990c66b869e7a9ef292": {
       "first_refusal_receipt_utc": "2026-10-20T03:52:18.749042+00:00",
@@ -5999,19 +6003,21 @@
     "75a27d6f75b2c13b41236a67e617181ab1bed11c6940af3e6b73798eb5ed1353": {
       "first_refusal_receipt_utc": "2026-10-20T13:36:01.920425+00:00",
       "time_basis": "Recorded refusal receipt UTC",
-      "not_before_utc": "2026-10-20T21:36:01.920425+00:00",
+      "not_before_utc": "2026-10-24T20:40:29.680040+00:00",
       "retries_used": 1,
-      "state": "generated_pending_visual_review",
+      "state": "cooling_down",
       "request_id": "03404671-35be-4a72-b6c8-f36de7d3026a",
       "machine_id": "bf-202609141645-5434332d4d",
       "recorded_at_utc": "2026-10-20T13:36:02.023921+00:00",
       "eligibility": "Must confirm underlying request is allowed and tool permits retry; keep exact original prompt and inputs",
       "max_cooldown_retries": 8,
-      "last_refusal_receipt_utc": "2026-10-20T13:36:01.749920+00:00",
-      "cooldown_origin_attempt": 1,
+      "last_refusal_receipt_utc": "2026-10-24T12:40:29.680040+00:00",
+      "cooldown_origin_attempt": 3,
       "claimed_at_utc": "2026-10-23T06:29:56.760707+00:00",
       "output_sha256": "7ae4f956116dffe8930470837ab566cb677ee1473424dba069c6c37f940935ee",
-      "generated_at_utc": "2026-10-23T06:44:40.467491+00:00"
+      "generated_at_utc": "2026-10-23T06:44:40.467491+00:00",
+      "accepted_retry_output_sha256": "7ae4f956116dffe8930470837ab566cb677ee1473424dba069c6c37f940935ee",
+      "art_correction_started_at_utc": "2026-10-24T12:37:18.482555+00:00"
     },
     "d7725f680e18c079a84378f5371754e0e4585167f902a022ff67167d4f39cfdf": {
       "first_refusal_receipt_utc": "2026-10-20T14:34:26.412093+00:00",
@@ -6094,7 +6100,7 @@
       "time_basis": "Recorded refusal receipt UTC",
       "not_before_utc": "2026-10-21T04:20:03.901791+00:00",
       "retries_used": 1,
-      "state": "generated_pending_visual_review",
+      "state": "service_retry_succeeded_art_correction_pending",
       "request_id": "9715c407-dd73-4757-a16c-f4c7e9071b55",
       "machine_id": "bf-202609141645-5434332d4d",
       "recorded_at_utc": "2026-10-20T20:20:04.053086+00:00",
@@ -6104,7 +6110,9 @@
       "cooldown_origin_attempt": 1,
       "claimed_at_utc": "2026-10-23T07:12:17.673024+00:00",
       "output_sha256": "78099be4fdf482bb3b5e8b7e51dbcdd7efd153cbb9f658ff62f81db87d63b2ba",
-      "generated_at_utc": "2026-10-23T07:20:08.878904+00:00"
+      "generated_at_utc": "2026-10-23T07:20:08.878904+00:00",
+      "accepted_retry_output_sha256": "78099be4fdf482bb3b5e8b7e51dbcdd7efd153cbb9f658ff62f81db87d63b2ba",
+      "art_correction_started_at_utc": "2026-10-24T12:37:19.218419+00:00"
     },
     "61a7fb75c29110fe89ecdb76f23f85cf55fb0406b8b2f5352e4d76bc6b6e98a1": {
       "first_refusal_receipt_utc": "2026-10-20T20:34:28.317261+00:00",
@@ -6168,7 +6176,7 @@
       "time_basis": "Recorded refusal receipt UTC",
       "not_before_utc": "2026-10-21T07:10:12.357595+00:00",
       "retries_used": 1,
-      "state": "generated_pending_visual_review",
+      "state": "service_retry_succeeded_art_correction_pending",
       "request_id": "54b357a5-7202-4786-b6c3-3656d2458305",
       "machine_id": "bf-202609141645-5434332d4d",
       "recorded_at_utc": "2026-10-20T23:10:12.434994+00:00",
@@ -6178,7 +6186,9 @@
       "cooldown_origin_attempt": 4,
       "claimed_at_utc": "2026-10-23T07:12:18.689902+00:00",
       "output_sha256": "4395421157a369ff531c4a252b65adfbf95b50ef180c1d57e9045ba61cd3e8c7",
-      "generated_at_utc": "2026-10-23T07:20:21.628528+00:00"
+      "generated_at_utc": "2026-10-23T07:20:21.628528+00:00",
+      "accepted_retry_output_sha256": "4395421157a369ff531c4a252b65adfbf95b50ef180c1d57e9045ba61cd3e8c7",
+      "art_correction_started_at_utc": "2026-10-24T12:37:19.961836+00:00"
     },
     "0e5fd383181cdbd2b74de7e9c1f6e31cb9bdf6e13cfce48c048e2c603fd6d54b": {
       "first_refusal_receipt_utc": "2026-10-20T23:18:12.973928+00:00",
@@ -6204,7 +6214,7 @@
       "time_basis": "Recorded refusal receipt UTC",
       "not_before_utc": "2026-10-21T08:21:49.207060+00:00",
       "retries_used": 1,
-      "state": "generated_pending_visual_review",
+      "state": "approved_after_cooldown_retry_and_art_correction",
       "request_id": "abd41093-89de-4339-8fbb-ab26623c8207",
       "machine_id": "bf-202609141645-5434332d4d",
       "recorded_at_utc": "2026-10-21T00:21:49.313350+00:00",
@@ -6214,7 +6224,11 @@
       "cooldown_origin_attempt": 1,
       "claimed_at_utc": "2026-10-23T07:12:19.168977+00:00",
       "output_sha256": "cc6061eb3e6309547096826edf16b421ca798fff01d5f4f112f7a2e0d4dd4b87",
-      "generated_at_utc": "2026-10-23T07:20:28.294560+00:00"
+      "generated_at_utc": "2026-10-23T07:20:28.294560+00:00",
+      "accepted_retry_output_sha256": "cc6061eb3e6309547096826edf16b421ca798fff01d5f4f112f7a2e0d4dd4b87",
+      "art_correction_started_at_utc": "2026-10-24T12:37:20.771856+00:00",
+      "approved_at_utc": "2026-10-24T12:47:42.181236+00:00",
+      "approved_image_sha256": "fab51c8e9a2645d7f67ac64fa5df6eb2f19b25f48d145e7744cabd624dc03ae8"
     },
     "bf75e088f389fb1e2cc89f3822a4e52523fc651b155558a4394918ab8c4d70b4": {
       "first_refusal_receipt_utc": "2026-10-21T00:28:38.193402+00:00",
@@ -6280,7 +6294,7 @@
       "time_basis": "Recorded refusal receipt UTC",
       "not_before_utc": "2026-10-21T10:07:37.659314+00:00",
       "retries_used": 1,
-      "state": "generated_pending_visual_review",
+      "state": "service_retry_succeeded_art_correction_pending",
       "request_id": "19537538-e04d-4080-9089-6545aa0b49b2",
       "machine_id": "bf-202609141645-5434332d4d",
       "recorded_at_utc": "2026-10-21T02:07:37.730040+00:00",
@@ -6290,7 +6304,9 @@
       "cooldown_origin_attempt": 2,
       "claimed_at_utc": "2026-10-23T07:26:08.713210+00:00",
       "output_sha256": "b83e65bd7e6da5e4b9bf6848dcd17df16cbaebbd042cec52ceff82eaf37e8247",
-      "generated_at_utc": "2026-10-23T07:35:10.846521+00:00"
+      "generated_at_utc": "2026-10-23T07:35:10.846521+00:00",
+      "accepted_retry_output_sha256": "b83e65bd7e6da5e4b9bf6848dcd17df16cbaebbd042cec52ceff82eaf37e8247",
+      "art_correction_started_at_utc": "2026-10-24T12:37:36.193793+00:00"
     },
     "ea68b6d009002ba6d312d5b8770300d90639915a841e9df23749ccb64b0efac3": {
       "first_refusal_receipt_utc": "2026-10-21T02:39:55.283850+00:00",
@@ -6335,7 +6351,7 @@
       "time_basis": "Recorded refusal receipt UTC",
       "not_before_utc": "2026-10-21T12:05:22.042193+00:00",
       "retries_used": 1,
-      "state": "generated_pending_visual_review",
+      "state": "approved_after_cooldown_retry_and_art_correction",
       "request_id": "49717082-3fbf-44ea-a826-0a2c0d6b71ec",
       "machine_id": "bf-202609141645-5434332d4d",
       "recorded_at_utc": "2026-10-21T04:05:22.131231+00:00",
@@ -6345,7 +6361,11 @@
       "cooldown_origin_attempt": 1,
       "claimed_at_utc": "2026-10-23T07:26:09.455805+00:00",
       "output_sha256": "e4fca4d869712bb6a0a14d7ab377d79e7d0e7337dfba198246dcf0283227db11",
-      "generated_at_utc": "2026-10-23T07:35:19.998277+00:00"
+      "generated_at_utc": "2026-10-23T07:35:19.998277+00:00",
+      "accepted_retry_output_sha256": "e4fca4d869712bb6a0a14d7ab377d79e7d0e7337dfba198246dcf0283227db11",
+      "art_correction_started_at_utc": "2026-10-24T12:37:17.764129+00:00",
+      "approved_at_utc": "2026-10-24T12:42:19.185713+00:00",
+      "approved_image_sha256": "a9d7e3f7a6fefcebafb9d528cb8b80d2958b622e0a61559147f4867f12df3ed4"
     },
     "2adfe41ecb72cd98ae414014ae24152dac98befc7708c0cf473bb2fd87aa300d": {
       "first_refusal_receipt_utc": "2026-10-21T05:37:24.661357+00:00",
@@ -6705,26 +6725,28 @@
     "0c50b52126e86af765d8829cbda7ccd28b8f68c68ff533d1619aed4f15f22f5b": {
       "first_refusal_receipt_utc": "2026-10-21T11:56:14.016152+00:00",
       "time_basis": "Recorded refusal receipt UTC",
-      "not_before_utc": "2026-10-24T01:02:53.572967+00:00",
+      "not_before_utc": "2026-10-24T20:46:18.837259+00:00",
       "retries_used": 3,
-      "state": "generated_pending_visual_review",
+      "state": "cooling_down",
       "request_id": "f013fb4d-623a-4948-8c3a-b23f4b752ae7",
       "machine_id": "bf-202609141645-5434332d4d",
       "recorded_at_utc": "2026-10-21T11:56:14.153711+00:00",
       "eligibility": "Must confirm underlying request is allowed and tool permits retry; keep exact original prompt and inputs",
       "max_cooldown_retries": 8,
-      "last_refusal_receipt_utc": "2026-10-23T17:02:53.572967+00:00",
-      "cooldown_origin_attempt": 3,
+      "last_refusal_receipt_utc": "2026-10-24T12:46:18.837259+00:00",
+      "cooldown_origin_attempt": 5,
       "claimed_at_utc": "2026-10-24T07:50:15.263014+00:00",
       "output_sha256": "1d65ff45eee4341bf0dea0d1b8260ce21f90079ca3206519d28fddab7ac37e44",
-      "generated_at_utc": "2026-10-24T07:52:07.017501+00:00"
+      "generated_at_utc": "2026-10-24T07:52:07.017501+00:00",
+      "accepted_retry_output_sha256": "1d65ff45eee4341bf0dea0d1b8260ce21f90079ca3206519d28fddab7ac37e44",
+      "art_correction_started_at_utc": "2026-10-24T12:37:22.229288+00:00"
     },
     "e79d3a475a16858965ab2bcb2218ac228a2546ffd8b4676f68f2618958ed3257": {
       "first_refusal_receipt_utc": "2026-10-21T12:09:10.474638+00:00",
       "time_basis": "Recorded refusal receipt UTC",
       "not_before_utc": "2026-10-21T20:09:10.474638+00:00",
       "retries_used": 1,
-      "state": "generated_pending_visual_review",
+      "state": "approved_after_cooldown_retry_and_art_correction",
       "request_id": "7db9b84b-a75e-477a-b59d-d69342bd85e2",
       "machine_id": "bf-202609141645-5434332d4d",
       "recorded_at_utc": "2026-10-21T12:09:10.554694+00:00",
@@ -6734,7 +6756,11 @@
       "cooldown_origin_attempt": 1,
       "claimed_at_utc": "2026-10-23T08:45:18.178318+00:00",
       "output_sha256": "99092e033a720ab606b59b1847f2bac36e1175719c920af50cb8bcdd450e7023",
-      "generated_at_utc": "2026-10-23T08:51:49.014092+00:00"
+      "generated_at_utc": "2026-10-23T08:51:49.014092+00:00",
+      "accepted_retry_output_sha256": "99092e033a720ab606b59b1847f2bac36e1175719c920af50cb8bcdd450e7023",
+      "art_correction_started_at_utc": "2026-10-24T12:37:23.058001+00:00",
+      "approved_at_utc": "2026-10-24T12:49:53.422253+00:00",
+      "approved_image_sha256": "f9a7d4132cb952b6c8c2908645b92b5f94a5bbbb06a38858ba5c39f3fb9fe379"
     },
     "5f0f5a4020da50ee5fe1ffc6323d466602d8cf1e18d0b875df0fa33e765402c1": {
       "first_refusal_receipt_utc": "2026-10-21T12:11:35.234792+00:00",

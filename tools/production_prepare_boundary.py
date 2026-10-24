@@ -23,7 +23,8 @@ def consume(root, expected_machine, runner=None):
     intent = read_json(path)
     scripts={'reviewed_art_repairs':'tools/prepare_reviewed_art_repairs.py',
              'reviewed_original_replacements':'tools/prepare_reviewed_original_replacements.py',
-             'reviewed_fresh_sources':'tools/prepare_reviewed_fresh_sources.py'}
+             'reviewed_fresh_sources':'tools/prepare_reviewed_fresh_sources.py',
+             'reviewed_transport_retry':'tools/prepare_reviewed_transport_retry.py'}
     script = root / scripts.get(intent.get('kind'),'tools/invalid-preparation-kind')
     claimed = folder / 'claimed' / path.name
     claimed.parent.mkdir(parents=True, exist_ok=True)

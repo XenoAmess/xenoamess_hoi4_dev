@@ -27,7 +27,8 @@ def prepare_replacements(root,batch,index,config,preparer=None):
         assert report['machine_id']==machine_id() and report['decisions_staged']
         assert any(e['source_sha256']==key and e['decision']=='rejected' and e['generated_fullsize_sha256']==c['rejected_fullsize_sha256'] for e in report['decisions'])
         assert c['replacement_reason'].strip() and c['prompt'].strip()
-        history=read_json(root/row['request_journal'])['attempts'];assert history[-1]['status']=='generated_rejected_visual_review'
+        history=read_json(root/row['request_journal'])['attempts']
+        assert history[-1]['status'] in {'generated_rejected_visual_review','cancelled_before_generation'}
         families={f['source_sha256'] for a in history for f in a.get('deferred_service_families',[])}
         family_histories={other:read_json(root/f'mod_nailong/data/generation-requests/{other}.json')['attempts'] for other in families}
         boundary=validate_art_boundary(history,key,c['rejected_fullsize_sha256'],root/'runtime/production-queue/dispatch',failures,family_histories)

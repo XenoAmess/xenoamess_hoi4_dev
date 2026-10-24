@@ -14,7 +14,7 @@ class OriginalReplacementPreparationTests(unittest.TestCase):
   write_json(self.root/'mod_nailong/data/production-priority.json',{'sources':{self.key:{'high_priority':True}}});write_json(self.root/'mod_nailong/data/generation-failures.json',{'attempts':[]})
  def fake_prepare(self,key,prompt,edit_existing,**options):
   self.assertEqual(key,self.key);self.assertFalse(edit_existing);self.assertEqual(prompt,self.config['sources'][0]['prompt']);self.assertTrue(options['replacement_reason'])
-  history=read_json(self.root/self.journal);history['attempts'].append({'number':2,'status':'prepared','edit_existing':False,'inputs':[{'role':'original source portrait'},{'role':'user mascot reference'}],'prompt_sha256':'f'*64});write_json(self.root/self.journal,history)
+  history=read_json(self.root/self.journal);history['attempts'].append({'number':len(history['attempts'])+1,'status':'prepared','edit_existing':False,'inputs':[{'role':'original source portrait'},{'role':'user mascot reference'}],'prompt_sha256':'f'*64});write_json(self.root/self.journal,history)
   return {'key':key,'journal':self.journal,'references':['exact original','user reference']}
  def test_actual_rejected_master_yields_two_original_inputs_and_one_plan_append(self):
   result=prepare_replacements(self.root,'replacement',0,self.config,self.fake_prepare)
@@ -31,5 +31,24 @@ class OriginalReplacementPreparationTests(unittest.TestCase):
   with self.assertRaises(OSError):prepare_replacements(self.root,'replacement',0,self.config,interrupted)
   self.assertEqual(read_json(self.root/self.journal)['attempts'][-1]['status'],'prepared')
   with self.assertRaises(AssertionError):prepare_replacements(self.root,'replacement',0,self.config,lambda *_a,**_k:self.fail('partial replay'))
+ def test_uncalled_cancelled_draft_after_actual_rejection_allows_original_method(self):
+  history=read_json(self.root/self.journal)
+  history['attempts'].append({'number':2,'status':'cancelled_before_generation'})
+  write_json(self.root/self.journal,history)
+  result=prepare_replacements(self.root,'replacement',0,self.config,self.fake_prepare)
+  receipt=read_json(self.root/result['receipt'])
+  boundary=receipt['followups'][0]['preparation_boundary']
+  self.assertEqual(boundary['boundary'],'uncalled_cancelled_drafts_after_actual_rejected_png')
+  self.assertEqual(boundary['actual_rejected_attempt'],1)
+  self.assertEqual(boundary['cancelled_attempts'],[2])
+ def test_cancelled_draft_with_dispatch_evidence_blocks_replacement(self):
+  history=read_json(self.root/self.journal)
+  history['attempts'].append({'number':2,'status':'cancelled_before_generation'})
+  write_json(self.root/self.journal,history)
+  write_json(self.root/f'runtime/production-queue/dispatch/{self.key}-002.json',{'status':'interrupted_outcome_unknown'})
+  with self.assertRaises(ValueError):prepare_replacements(self.root,'replacement',0,self.config,lambda *_a,**_k:self.fail('possible call replay'))
+ def test_cancelled_draft_without_actual_rejected_png_blocks_replacement(self):
+  write_json(self.root/self.journal,{'attempts':[{'number':1,'status':'cancelled_before_generation'}]})
+  with self.assertRaises(ValueError):prepare_replacements(self.root,'replacement',0,self.config,lambda *_a,**_k:self.fail('no rejected PNG'))
 
 if __name__=='__main__':unittest.main()
