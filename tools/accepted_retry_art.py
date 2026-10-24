@@ -3,12 +3,13 @@ import hashlib
 from pathlib import Path
 from tools.common import read_json,file_sha256,machine_id
 from tools.retry_actual_proof import load_actual_request
+from mod_nailong.tools.retry_limits import retry_limit
 
 
 def accepted_retry_art_proofs(root,rows,latest):
     root=Path(root)
     queue=read_json(root/'mod_nailong/data/image-retry-queue.json')['sources']
-    limit=read_json(root/'mod_nailong/data/image-retry-policy.json')['max_cooldown_retries_per_source']
+    settings=read_json(root/'mod_nailong/data/image-retry-policy.json')
     proofs={};unavailable={}
     for key,a in latest.items():
         row=rows.get(key,{})
@@ -16,7 +17,7 @@ def accepted_retry_art_proofs(root,rows,latest):
         try:
             entry=queue[key]
             assert entry['state']=='generated_pending_visual_review','No current successful retry awaiting art'
-            assert 1<=entry['retries_used']<=limit and a['cooldown_retry_number']==entry['retries_used']
+            assert 1<=entry['retries_used']<=retry_limit(settings,key) and a['cooldown_retry_number']==entry['retries_used']
             assert entry['output_sha256']==row['image_sha256']==a['output_sha256']
             assert a['fullsize_sha256']==row['generated_fullsize_sha256']
             assert file_sha256(root/row['image'])==row['image_sha256']

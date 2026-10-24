@@ -6,6 +6,7 @@ from PIL import Image,ImageDraw
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now
 from mod_nailong.tools.image_retries import policy
+from mod_nailong.tools.retry_limits import retry_limit
 batch,version=sys.argv[1:3]
 base=ROOT/f'runtime/cooldown-{batch}-verified-transport-proof-{version}'
 assert not base.with_suffix('.json').exists()
@@ -14,7 +15,7 @@ queue=read_json(ROOT/'mod_nailong/data/image-retry-queue.json')['sources']
 priority=read_json(ROOT/'mod_nailong/data/production-priority.json')['sources']
 jobs=[];unqualified=[];provenance=[]
 for key,q in queue.items():
- if q['retries_used']>=policy()['max_cooldown_retries_per_source'] or q['state']!='cooling_down' or not priority[key]['high_priority'] or datetime.fromisoformat(q['not_before_utc'])>now:continue
+ if q['retries_used']>=retry_limit(policy(),key) or q['state']!='cooling_down' or not priority[key]['high_priority'] or datetime.fromisoformat(q['not_before_utc'])>now:continue
  try:
   assert datetime.fromisoformat(q['not_before_utc'])-datetime.fromisoformat(q.get('last_refusal_receipt_utc',q['first_refusal_receipt_utc']))>=timedelta(hours=8)
   a=read_json(ROOT/f'mod_nailong/data/generation-requests/{key}.json')['attempts'][-1]

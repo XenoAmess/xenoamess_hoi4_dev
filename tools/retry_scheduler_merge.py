@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now
 from mod_nailong.tools.image_retries import policy
+from mod_nailong.tools.retry_limits import retry_limit
 from tools.retry_actual_proof import load_actual_request
 
 def entry_digest(entry):
@@ -70,7 +71,7 @@ def merge_candidates(source,root=None):
  for c in candidates:
   key=c['key'];assert c['original_actual_prompt_verified'] and c.get('policy_reviewed') is True
   assert c['manual_policy_review']['machine_id']==machine
-  if queue[key]['retries_used']>=policy()['max_cooldown_retries_per_source'] or queue[key]['state']!='cooling_down':
+  if queue[key]['retries_used']>=retry_limit(policy(),key) or queue[key]['state']!='cooling_down':
    skipped.append(key);continue
   attempts=read_json(root/f'mod_nailong/data/generation-requests/{key}.json')['attempts'];a=attempts[-1]
   assert a['status']=='failed' and 'moderation_blocked' in a['error'] and a['machine_id']==machine

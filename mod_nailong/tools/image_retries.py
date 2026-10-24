@@ -6,17 +6,29 @@ import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from tools.common import ROOT,read_json,write_json,utc_now,machine_id,file_sha256
 from PIL import Image
+from mod_nailong.tools.retry_limits import retry_limit,extra_retry_authorization
 MOD=ROOT/'mod_nailong';QUEUE=MOD/'data/image-retry-queue.json'
 
 def policy():
     settings=read_json(MOD/'data/image-retry-policy.json')
     assert settings['cooldown_hours']==8
     assert settings['max_cooldown_retries_per_source']==8
+    for grant in settings.get('source_scoped_extra_retry_rounds',[]):
+        extra_retry_authorization(settings,grant['source_keys'][0])
+        path=(ROOT/grant['authorization_manifest']).resolve()
+        assert path.is_relative_to((MOD/'data/extra-retry-rounds').resolve())
+        assert file_sha256(path)==grant['authorization_manifest_sha256'],'Extra-round authorization changed'
+        frozen=read_json(path)
+        assert frozen['authorization_id']==grant['authorization_id']
+        assert frozen['source_count']==len(frozen['sources'])==len(grant['source_keys'])==31
+        assert frozen['additional_retries_per_selected_source']==1 and frozen['preserve_consumed_counts'] is True
+        assert {e['source_sha256'] for e in frozen['sources']}==set(grant['source_keys'])
+        assert all(e['retries_used_at_authorization']==8 and e['additional_authorized_cooldown_retries']==1 and e['max_cooldown_retries_after_authorization']==9 for e in frozen['sources'])
     return settings
 
-def refresh_refusal(entry, latest, settings):
+def refresh_refusal(entry, latest, settings, *, source_key=None):
     """Migrate an exhausted old allowance without resetting consumed calls."""
-    limit=settings['max_cooldown_retries_per_source']
+    limit=retry_limit(settings,source_key)
     entry['max_cooldown_retries']=limit
     if not latest or latest['status']!='failed':return
     if 'moderation_blocked' not in latest.get('error',''):return
@@ -27,6 +39,9 @@ def refresh_refusal(entry, latest, settings):
     if datetime.fromisoformat(entry['not_before_utc'])>datetime.fromisoformat(deadline):deadline=entry['not_before_utc']
     old_state=entry['state']
     new_state='cooling_down' if entry['retries_used']<limit else 'retry_limit_reached'
+    if old_state=='retry_limit_reached' and new_state=='cooling_down':
+        grant=extra_retry_authorization(settings,source_key);assert grant
+        entry.setdefault('policy_migrations',[]).append({'machine_id':machine_id(),'observed_at_utc':utc_now(),'previous_state':old_state,'previous_retries_used':entry['retries_used'],'new_max_cooldown_retries':limit,'authorization_id':grant['authorization_id'],'authorization_manifest_sha256':grant['authorization_manifest_sha256'],'reason':'User explicitly authorized one additional retry for this frozen exhausted HIGH source; preserve all consumed calls and latest8h deadline.'})
     if old_state in ('retry_failed_no_more_automatic_retries','new_art_request_refused_retry_quota_exhausted'):
         entry.setdefault('policy_migrations',[]).append({'machine_id':machine_id(),'observed_at_utc':utc_now(),
             'previous_state':old_state,'previous_retries_used':entry['retries_used'],
@@ -41,7 +56,7 @@ def require_editable_service_state(key,record,latest,edit_existing):
     held=[f for f in failures.get('attempts',[]) if f['source_sha256']==key and f.get('status')=='blocked' and not f.get('resolved_by_retry')]
     if not held:return
     queue=read_json(QUEUE);entry=queue.get('sources',{}).get(key,{})
-    proof=(edit_existing and record and latest and 1<=entry.get('retries_used',0)<=policy()['max_cooldown_retries_per_source']
+    proof=(edit_existing and record and latest and 1<=entry.get('retries_used',0)<=retry_limit(policy(),key)
            and entry.get('state')=='generated_pending_visual_review'
            and latest.get('retry_of_attempt')
            and latest.get('status') in ('generated_pending_visual_review','generated_rejected_visual_review')
@@ -73,16 +88,18 @@ def sync():
     for key,entry in queue['sources'].items():
         path=MOD/'data/generation-requests'/(key+'.json')
         attempts=read_json(path)['attempts'] if path.exists() else []
-        refresh_refusal(entry,attempts[-1] if attempts else None,settings)
+        refresh_refusal(entry,attempts[-1] if attempts else None,settings,source_key=key)
     queue['policy']={'user_instruction_date':settings['user_instruction_date'],
                      'cooldown_hours':settings['cooldown_hours'],'max_cooldown_retries_per_source':settings['max_cooldown_retries_per_source']}
+    if settings.get('source_scoped_extra_retry_rounds'):
+        queue['policy']['source_scoped_extra_retry_rounds']=settings['source_scoped_extra_retry_rounds']
     write_json(QUEUE,queue)
     return queue
 
 def claim(key):
     queue=sync();entry=queue['sources'][key]
-    limit=policy()['max_cooldown_retries_per_source']
-    if entry['retries_used']>=limit:raise SystemExit('Retry limit reached; eight cumulative cooldown retries already consumed')
+    settings=policy();limit=retry_limit(settings,key)
+    if entry['retries_used']>=limit:raise SystemExit('Retry limit reached; cumulative source allowance already consumed')
     if datetime.now(timezone.utc)<datetime.fromisoformat(entry['not_before_utc']):raise SystemExit('Eight-hour cooldown has not elapsed')
     journal_path=MOD/'data/generation-requests'/(key+'.json')
     if not journal_path.exists():raise SystemExit('Original full prompt/inputs need recovery before retry')
@@ -129,6 +146,9 @@ def claim(key):
         'retry_root_attempt':root['number'],'cooldown_retry_number':retry_number,
         'cooldown_not_before_utc':entry['not_before_utc'],'cooldown_retry_tool_transparent_background':transparent,
         'eligibility_confirmed_by':'Codex reviewed allowed request and tool conditions before --confirm-eligible'}
+    if retry_number>settings['max_cooldown_retries_per_source']:
+        grant=extra_retry_authorization(settings,key);assert grant
+        attempt['source_scoped_extra_retry_authorization']={k:grant[k] for k in ['authorization_id','authorization_manifest','authorization_manifest_sha256','additional_retries_per_selected_source']}
     for field in ['error','observed_at_utc','output','output_sha256','fullsize_sha256','fullsize_image','generated_at_utc','review','reviewed_at_utc','rejection_reason','prompt_transport_correction','intended_prompt','intended_prompt_file','intended_prompt_sha256','actual_request_verification']:attempt.pop(field,None)
     entry.update(retries_used=retry_number,state='claimed_before_call',claimed_at_utc=utc_now())
     write_json(QUEUE,queue)
@@ -146,6 +166,6 @@ def main():
     queue=sync();now=datetime.now(timezone.utc)
     for key,e in queue['sources'].items():
         due=now>=datetime.fromisoformat(e['not_before_utc'])
-        if a.command=='sync' or due and e['state']=='cooling_down' and e['retries_used']<policy()['max_cooldown_retries_per_source']:print(key[:12],e['not_before_utc'],e['state'],f"used={e['retries_used']}")
+        if a.command=='sync' or due and e['state']=='cooling_down' and e['retries_used']<retry_limit(policy(),key):print(key[:12],e['not_before_utc'],e['state'],f"used={e['retries_used']}")
 
 if __name__=='__main__':main()

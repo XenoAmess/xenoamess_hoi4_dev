@@ -34,7 +34,11 @@ def main():
  queue=read_json(mod/'data/image-retry-queue.json')['sources']
  if latest.get('retry_of_attempt'):
   from mod_nailong.tools.image_retries import policy
-  used=queue[key]['retries_used'];assert 1<=used<=policy()['max_cooldown_retries_per_source'] and queue[key]['state']=='claimed_before_call'
+  from mod_nailong.tools.retry_limits import retry_limit,extra_retry_authorization
+  settings=policy();used=queue[key]['retries_used'];assert 1<=used<=retry_limit(settings,key) and queue[key]['state']=='claimed_before_call'
+  if used>settings['max_cooldown_retries_per_source']:
+   grant=extra_retry_authorization(settings,key);assert grant
+   assert latest['source_scoped_extra_retry_authorization']=={k:grant[k] for k in ['authorization_id','authorization_manifest','authorization_manifest_sha256','additional_retries_per_selected_source']}
   assert latest.get('cooldown_retry_number',1)==used
   print(json.dumps({'eligible':True,'reason':'Exact unchanged cooldown retry already claimed','retry_number':used}));return
  priority=read_json(mod/'data/production-priority.json')['sources'];entry=priority[key]

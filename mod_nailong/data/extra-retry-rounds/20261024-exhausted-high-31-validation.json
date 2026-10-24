@@ -1,0 +1,36 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "recorded_after_actual_success_at_utc": "2026-10-24T14:53:54.556020+00:00",
+  "actual_validations": [
+    {
+      "command": "python -m unittest tests.test_source_scoped_retry_round tests.test_image_retries tests.test_retry_scheduler_merge tests.test_retry_actual_proof tests.test_portrait_dispatch_guard tests.test_accepted_retry_art",
+      "tests_run": 57,
+      "exit_code": 0,
+      "result": "OK"
+    },
+    {
+      "command": "python -m unittest tests.test_retry_allowance_boundary tests.test_rolling_production_queue tests.test_source_scoped_retry_round",
+      "tests_run": 23,
+      "exit_code": 0,
+      "result": "OK"
+    },
+    {
+      "command": "python -m unittest tests.test_source_scoped_retry_round tests.test_retry_allowance_boundary tests.test_rolling_production_queue tests.test_image_retries tests.test_retry_scheduler_merge tests.test_retry_actual_proof tests.test_portrait_dispatch_guard tests.test_accepted_retry_art",
+      "tests_run": 75,
+      "exit_code": 0,
+      "result": "OK"
+    },
+    {
+      "command": "python -m unittest tests.test_source_scoped_retry_round tests.test_retry_allowance_boundary tests.test_image_retries",
+      "tests_run": 20,
+      "exit_code": 0,
+      "result": "OK",
+      "scope": "Later focused check after adding explicit scoped-authorization metadata to queue policy."
+    }
+  ],
+  "compile_checks": {
+    "command": "python -m py_compile tools/retry_scheduler_next.py tools/retry_transport_proof.py tools/retry_scheduler_complete.py",
+    "exit_code": 0
+  },
+  "scope": "Tests use isolated fixtures and do not consume actual image quota. Tests cover selected9/default8, unchanged prompt/inputs/flag, no counter reset, exact8h deadline, stop after ninth failure or actual image, authorization integrity/duplicate rejection, source-bound dispatch proof and one-time sole-owner migration before read-only due inspection. Actual31-source calls and their results require separate ledger audit."
+}

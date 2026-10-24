@@ -12,6 +12,7 @@ from tools.production_window_gate import inspect_window
 from mod_nailong.tools.ready_art_reports import reports as inbox_reports,independent_art_holds
 from mod_nailong.tools.prepare_ready_art_reviews import eligible_entries,service_held_keys
 from tools.accepted_retry_art import accepted_retry_art_proofs
+from mod_nailong.tools.retry_limits import retry_limit
 
 def no_calling(root):
     assert not any(read_json(p).get('status')=='calling' for p in (root/'runtime/production-queue/dispatch').glob('*.json')),'Unresolved actual call: reconcile, never replay'
@@ -82,12 +83,33 @@ def checkpoint_when_idle(root,state,runner=None):
     result=run_checked(root,[sys.executable,'tools/production_checkpoint.py',batch]+(['--force'] if body.get('force') else []),runner)
     return {'batch':batch,'stdout_tail':result.stdout[-2500:],'scope':'Same sole owner, no unresolved call and no prepared/eligible work. Validation uses otherwise idle supply time; remote publisher remains separate.'}
 
+def synchronize_retry_allowances(root,runner=None):
+    """Migrate changed source limits once, at the sole owner's idle boundary."""
+    settings_path=root/'mod_nailong/data/image-retry-policy.json'
+    if not settings_path.exists():return {'synchronized':False}
+    settings=read_json(settings_path)
+    grants=settings.get('source_scoped_extra_retry_rounds',[])
+    if not grants:return {'synchronized':False}
+    queue_path=root/'mod_nailong/data/image-retry-queue.json'
+    before=read_json(queue_path)['sources']
+    keys={key for grant in grants for key in grant['source_keys']}
+    assert keys<=set(before),'Extra-round sources need their original consumed counters'
+    if all(before[key].get('max_cooldown_retries')==retry_limit(settings,key) for key in keys):
+        return {'synchronized':False,'reason':'source_limits_already_current'}
+    no_calling(root)
+    run_checked(root,[sys.executable,'mod_nailong/tools/image_retries.py','sync'],runner)
+    after=read_json(queue_path)['sources']
+    assert all(after[key]['retries_used']==entry['retries_used'] for key,entry in before.items()),'Policy migration changed consumed counters'
+    assert all(after[key]['max_cooldown_retries']==retry_limit(settings,key) for key in keys)
+    return {'synchronized':True,'selected_sources':len(keys),'quota_claims':0}
+
 def allocate_exact_retry(root,state,runner=None):
     """Only the persistent producer selects and claims unchanged, reviewed retries."""
     scheduler=root/'runtime/retry-scheduler/state.json'
     if not scheduler.exists():return None
     before=read_json(scheduler)
     assert before['machine_id']==state['machine_id'] and before['pending'] is None,'Pending retry batch requires explicit reconciliation'
+    synchronize_retry_allowances(root,runner)
     command=[sys.executable,'tools/retry_scheduler_next.py','--limit','8']
     inspected=json.loads(run_checked(root,command+['--inspect-only'],runner).stdout)
     assert not inspected.get('pending_requires_reconciliation'),inspected

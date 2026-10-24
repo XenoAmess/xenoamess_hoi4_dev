@@ -6,6 +6,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,machine_id,utc_now,file_sha256
 from mod_nailong.tools.image_retries import policy,sync
 from tools.retry_actual_proof import load_actual_request
+from mod_nailong.tools.retry_limits import retry_limit
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--inspect-only',action='store_true')
 parser.add_argument('--limit',type=int,choices=range(1,13),default=12)
@@ -18,15 +19,17 @@ if state['pending']:
  raise RuntimeError('A selected retry batch is already pending. Inspect exact jobs and returned records; never claim it twice.')
 pool=read_json(directory/'approved-pool.json');assert pool['machine_id']==machine_id()
 queue=(read_json(ROOT/'mod_nailong/data/image-retry-queue.json') if inspect else sync())['sources'];priority=read_json(ROOT/'mod_nailong/data/production-priority.json')['sources']
-limit=policy()['max_cooldown_retries_per_source']
+settings=policy()
 now=datetime.now(timezone.utc);ready=[];unavailable=[]
 for key,c in pool['requests'].items():
  q=queue[key]
- if q['retries_used']>=limit or q['state']!='cooling_down' or not priority[key]['high_priority'] or datetime.fromisoformat(q['not_before_utc'])>now:continue
+ if q['retries_used']>=retry_limit(settings,key) or q['state']!='cooling_down' or not priority[key]['high_priority'] or datetime.fromisoformat(q['not_before_utc'])>now:continue
  try:
   a=read_json(ROOT/f'mod_nailong/data/generation-requests/{key}.json')['attempts'][-1]
   assert a['status']=='failed' and 'moderation_blocked' in a['error']
   assert c['original_actual_prompt_verified'] and c['policy_reviewed'] is True
+  assert c.get('requires_manual_policy_review') is True,'Exact current request needs a retained manual-review requirement'
+  assert file_sha256(ROOT/c['manual_review_source'])==c['manual_review_source_sha256'],'Manual-review evidence changed'
   actual,v=load_actual_request(ROOT,key,a,c)
   assert a['prompt']==c['prompt']==actual['prompt'] and c['references']==actual['references'],'approval_payload_outdated: manually reconcile the latest failed frozen prompt and ordered inputs; no quota claimed'
   assert actual['transparent']==c['transparent']==v['transparent_background'],'approval_tool_flags_outdated: manually reconcile the latest frozen tool flag; no quota claimed'
