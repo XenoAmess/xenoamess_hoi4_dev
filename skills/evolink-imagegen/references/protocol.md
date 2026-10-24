@@ -1,6 +1,6 @@
 # 协议与回执
 
-此 skill 的客户端支持 `gpt-image-2` 原生透明路线和 `gemini-nano-banana-2.1` 官方路线，不是任意模型 SDK。新调用的路线或服务条件有变化时，核对 [官方文档](https://docs.evolink.ai/)。
+此 skill 的客户端支持 `gpt-image-2`、`gpt-image-2.5-sunburst` 原生透明路线和 `gemini-nano-banana-2.1` 官方路线，不是任意模型 SDK。新调用的路线或服务条件有变化时，核对 [官方文档](https://docs.evolink.ai/)。
 
 | 用途 | 方法与地址 |
 | --- | --- |
@@ -8,12 +8,12 @@
 | 查同一任务 | `GET https://api.evolink.ai/v1/tasks/{task_id}` |
 | 下载 | GET 首个结果 URL；不向 CDN 发送 API 鉴权头 |
 
-创建和查询使用 Bearer 鉴权。GPT Image 2 创建体使用 `model=gpt-image-2`、`background=transparent`、`n=1`。Nano Banana 2.1 创建体使用 `model=gemini-nano-banana-2.1`，将 CLI 的 `--resolution` 映射为 `quality=1K/2K/4K`，不发送 `background`、`n` 或 GPT 的 `resolution` 字段。
+创建和查询使用 Bearer 鉴权。GPT Image 2 与 2.5 Sunburst 创建体使用对应 model、`background=transparent`、`n=1`。Nano Banana 2.1 创建体使用 `model=gemini-nano-banana-2.1`，将 CLI 的 `--resolution` 映射为 `quality=1K/2K/4K`，不发送 `background`、`n` 或 GPT 的 `resolution` 字段。
 
 | CLI | 请求字段或用途 | 默认 |
 | --- | --- | --- |
 | `--prompt-file` | UTF-8 完整 prompt，保留首尾空白 | 新建必填 |
-| `--model` | `gpt-image-2` 或 `gemini-nano-banana-2.1` | `gpt-image-2` |
+| `--model` | `gpt-image-2`、`gpt-image-2.5-sunburst` 或 `gemini-nano-banana-2.1` | `gpt-image-2` |
 | `--output` | 用户授权目录中的新 `.png` 路径 | 必填 |
 | `--image-url`，可重复 | 有序 `image_urls` | 空数组 |
 | `--size` | `size`，例如 `2:3`、`1:1` | `2:3` |
