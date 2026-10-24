@@ -11,6 +11,7 @@ from tools.common import ROOT,read_json,write_json,machine_id,utc_now,file_sha25
 from tools.production_window_gate import inspect_window
 from mod_nailong.tools.ready_art_reports import reports as inbox_reports,independent_art_holds
 from mod_nailong.tools.prepare_ready_art_reviews import eligible_entries,service_held_keys
+from tools.accepted_retry_art import accepted_retry_art_proofs
 
 def no_calling(root):
     assert not any(read_json(p).get('status')=='calling' for p in (root/'runtime/production-queue/dispatch').glob('*.json')),'Unresolved actual call: reconcile, never replay'
@@ -127,7 +128,8 @@ def ready_art(root,expected_machine):
             if e.get('decision')=='rejected' and key in rows:latest[key]=read_json(root/rows[key]['request_journal'])['attempts'][-1]
     priority=read_json(root/'mod_nailong/data/production-priority.json')['sources']
     failures=read_json(root/'mod_nailong/data/generation-failures.json')['attempts']
-    return eligible_entries(reports,rows,latest,service_held_keys(latest,priority,failures)|independent_art_holds(root))
+    accepted=accepted_retry_art_proofs(root,rows,latest)
+    return eligible_entries(reports,rows,latest,service_held_keys(latest,priority,failures,accepted['proofs'])|independent_art_holds(root))
 
 def refill_reviewed_backlog(root,expected_machine,runner=None,selector=None):
     """Prepare future windows between imports while the current window continues."""

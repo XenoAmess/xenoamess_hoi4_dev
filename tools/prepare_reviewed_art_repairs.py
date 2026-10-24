@@ -4,7 +4,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,machine_id,utc_now
 from mod_nailong.tools.generation_requests import prepare,alpha_instruction,near_opaque_backdrop_instruction,verified_opaque_canvas_instruction
 from tools.common import file_sha256
-from mod_nailong.tools.art_preparation_guard import validate_art_boundary
+from mod_nailong.tools.art_preparation_guard import validate_art_boundary,select_review_cases
 rows=read_json(ROOT/'mod_nailong/data/generated.json')['portraits'];priority=read_json(ROOT/'mod_nailong/data/production-priority.json')['sources'];jobs=[];proof=[]
 batch=sys.argv[1] if len(sys.argv)>1 else 'resume-20261023-small-repairs3'
 reports=['mod_nailong/data/'+name for name in (sys.argv[2] if len(sys.argv)>2 else 'resumed-20261023-small-finer-v3-review.json').split(',')]
@@ -15,8 +15,7 @@ custom_prompts=read_json(ROOT/sys.argv[7]) if len(sys.argv)>7 else {}
 assert not any(read_json(p).get('status')=='calling' for p in (ROOT/'runtime/production-queue/dispatch').glob('*.json'))
 cases=[(e,report) for report in reports for e in read_json(ROOT/report)['decisions']]
 if len(sys.argv)>6:
- selected_keys=set(read_json(ROOT/sys.argv[6]));cases=[(e,report) for e,report in cases if e['source_sha256'] in selected_keys]
- assert {e['source_sha256'] for e,report in cases if e['decision']=='rejected'}==selected_keys
+ cases=select_review_cases(cases,read_json(ROOT/sys.argv[6]),ROOT,file_sha256)
 assert len({e['source_sha256'] for e,report in cases if e['decision']=='rejected'})==sum(e['decision']=='rejected' for e,report in cases)
 for e,report in cases:
  if e['decision']!='rejected':continue

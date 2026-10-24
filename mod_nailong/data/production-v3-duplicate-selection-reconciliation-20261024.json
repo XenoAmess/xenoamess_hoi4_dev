@@ -1,0 +1,81 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-24T12:12:20.978465+00:00",
+  "status": "failed_execution_reconciled_before_new_owner",
+  "run_id": "resume-20261024-large-logical-queue-v3",
+  "owner_before_stop": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261024-large-logical-queue-v3",
+    "next_index": 368,
+    "after_window": "resume-20261024-large-logical-queue-v3-window367",
+    "status": "running",
+    "created_at_utc": "2026-10-24T10:20:30.446750+00:00",
+    "completed_windows": 16,
+    "completed_source_requests": 22,
+    "updated_at_utc": "2026-10-24T11:58:46.501653+00:00"
+  },
+  "failed_window_receipt": "mod_nailong/data/production-window-timings/resume-20261024-large-logical-queue-v3-window368-stopped.json",
+  "failed_window_receipt_sha256": "cc6c348476a4c0d66cbed00ce06af334e852b55840f6df637f382840b8756900",
+  "failed_future_preparation_receipt": "mod_nailong/data/production-ready-refills/resume-20261024-large-logical-queue-v3-batch369.json",
+  "failed_future_preparation_receipt_sha256": "cc59078d119f0114445abcc5becfd598171a1979d47d4ca1491b8554716faeeb",
+  "actual_failed_window_image_calls": 0,
+  "existing_uncalled_prepared_batch": {
+    "batch": "resume-20261024-large-logical-queue-v3-batch368",
+    "jobs": "runtime\\production-resume-20261024-large-logical-queue-v3-batch368-jobs.json"
+  },
+  "existing_prepared_requests": 1,
+  "failed_preparation_unchanged_attempt_checks": [
+    {
+      "source_sha256": "ab58d854c1fc923a6037aa3b36495a6318088e45c34e4683f7bfd87e28d6b982",
+      "latest_attempt": 2,
+      "status": "generated_rejected_visual_review",
+      "next_attempt_dispatch_exists": false
+    },
+    {
+      "source_sha256": "5ba900357a2eff90059766e65ab768ed3ef4e9084b4e28f227f13477afb3b8c4",
+      "latest_attempt": 8,
+      "status": "generated_rejected_visual_review",
+      "next_attempt_dispatch_exists": false
+    },
+    {
+      "source_sha256": "0c50b52126e86af765d8829cbda7ccd28b8f68c68ff533d1619aed4f15f22f5b",
+      "latest_attempt": 4,
+      "status": "generated_rejected_visual_review",
+      "next_attempt_dispatch_exists": false
+    },
+    {
+      "source_sha256": "e79d3a475a16858965ab2bcb2218ac228a2546ffd8b4676f68f2618958ed3257",
+      "latest_attempt": 2,
+      "status": "generated_rejected_visual_review",
+      "next_attempt_dispatch_exists": false
+    },
+    {
+      "source_sha256": "75a27d6f75b2c13b41236a67e617181ab1bed11c6940af3e6b73798eb5ed1353",
+      "latest_attempt": 2,
+      "status": "generated_rejected_visual_review",
+      "next_attempt_dispatch_exists": false
+    },
+    {
+      "source_sha256": "56633e05ad8fd5c54b84784e69b6b2793457018cd8d22f5b5783dca8ea7e0fa7",
+      "latest_attempt": 2,
+      "status": "generated_rejected_visual_review",
+      "next_attempt_dispatch_exists": false
+    },
+    {
+      "source_sha256": "c6355e5ee98b2a76873229965d45e8f51761ac64b64067b240699278bfc7cdf4",
+      "latest_attempt": 5,
+      "status": "generated_rejected_visual_review",
+      "next_attempt_dispatch_exists": false
+    },
+    {
+      "source_sha256": "c17414a532ae94df75a26177634d0c127c753a564641ba109a97d4d84d7d7cfc",
+      "latest_attempt": 2,
+      "status": "generated_rejected_visual_review",
+      "next_attempt_dispatch_exists": false
+    }
+  ],
+  "problem": "Batch369 selected8 unique keys across5 reports; reading every rejected entry from all5 reports duplicated some selected keys and failed before preparing any of those journals. Window368 was interrupted in its INITIAL boundary flush before any image dispatch.",
+  "fix": "New selections bind each source to one exact immutable report SHA and current output SHA. Legacy unique-key selections remain supported; ambiguous key-only selections remain blocked. Old failed receipts and selection remain unchanged.",
+  "continuation": "Release failed v3 owner only after this proof; new v4 resumes index368 after actual completed v3window367, retaining its one uncalled prepared request. New source intent and future art preparations are claimed by that one owner at boundaries; no image replay or retry quota reset.",
+  "tests": "69 actual selection, accepted-retry, service-hold, preparation, request, retry and rolling-queue tests passed."
+}

@@ -2,6 +2,29 @@
 from pathlib import Path
 
 
+def select_review_cases(cases,selection,root,hasher):
+    """Bind each selected source to one immutable report/current output finding."""
+    if isinstance(selection,list):
+        keys=set(selection)
+        chosen=[(e,p) for e,p in cases if e['source_sha256'] in keys]
+    else:
+        assert selection['schema']=='naiwa-exact-art-review-selection-v1'
+        selected=selection['entries'];keys={v['source_sha256'] for v in selected}
+        assert len(keys)==len(selected),'Duplicate source selection'
+        chosen=[]
+        for item in selected:
+            path=(Path(root)/item['report']).resolve()
+            assert path.is_relative_to((Path(root)/'mod_nailong/data').resolve())
+            assert hasher(path)==item['report_sha256'],'Selected report changed'
+            matching=[(e,p) for e,p in cases if e['source_sha256']==item['source_sha256'] and p==item['report'] and e.get('decision')=='rejected' and e.get('generated_fullsize_sha256')==item['generated_fullsize_sha256']]
+            assert len(matching)==1,'Selection must bind exactly one rejected current output in its report'
+            chosen.extend(matching)
+    rejected=[(e,p) for e,p in chosen if e['decision']=='rejected']
+    assert {e['source_sha256'] for e,p in rejected}==keys
+    assert len(rejected)==len(keys),'Ambiguous historical key-only selection; freeze an exact report selection'
+    return chosen
+
+
 def validate_art_boundary(history, key, current_sha, dispatch_dir, failures, family_histories):
     latest = history[-1]
     if latest['status'] == 'generated_rejected_visual_review':

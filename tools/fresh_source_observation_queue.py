@@ -33,6 +33,7 @@ def candidates(root):
 
 def claim(root,slot):
  assert slot in {'a','b'}
+ if (root/'runtime/rolling-review-queue/handoff-stop.json').exists():return {'ready':False,'stop_requested':True,'reason':'user_requested_handoff','slot':slot,'next_step':'Stop polling and do not create a successor; user requested vacation handoff.'}
  folder=root/'runtime/fresh-source-observations';reserved=folder/'reservations';reserved.mkdir(parents=True,exist_ok=True)
  # Resuming observation is read-only with respect to production. Never reserve
  # a second group for a slot whose original observations are unfinished.

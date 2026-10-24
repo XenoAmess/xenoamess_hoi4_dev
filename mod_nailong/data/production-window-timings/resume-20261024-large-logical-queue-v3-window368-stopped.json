@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-large-logical-queue-v3-window368",
+  "started_at_utc": "2026-10-24T12:06:46.796Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "resume-20261024-large-logical-queue-v3-batch368",
+      "jobs": "runtime\\production-resume-20261024-large-logical-queue-v3-batch368-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-24T12:06:46.805Z",
+      "batch": "resume-20261024-large-logical-queue-v3-batch368"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-20261024-large-logical-queue-v3-batch368",
+      "observed_at_utc": "2026-10-24T12:06:46.805Z",
+      "jobs_file": "runtime\\production-resume-20261024-large-logical-queue-v3-batch368-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-large-logical-queue-v3-batch368",
+      "observed_at_utc": "2026-10-24T12:06:46.805Z",
+      "command": "python runtime\\batch-keys.py runtime\\production-resume-20261024-large-logical-queue-v3-batch368-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-large-logical-queue-v3-batch368",
+      "observed_at_utc": "2026-10-24T12:06:47.023Z",
+      "command": "python runtime\\batch-keys.py runtime\\production-resume-20261024-large-logical-queue-v3-batch368-jobs.json",
+      "elapsed_ms": 218,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-large-logical-queue-v3-batch368",
+      "observed_at_utc": "2026-10-24T12:06:47.023Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-large-logical-queue-v3-batch368",
+      "observed_at_utc": "2026-10-24T12:06:59.251Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 12228,
+      "exit_code": 1
+    }
+  ],
+  "status": "stopped_requires_reconciliation",
+  "error": "Error: {\"chunk_id\":\"6a6edd\",\"wall_time_seconds\":2.0609305,\"exit_code\":1,\"original_token_count\":880,\"output\":\"Traceback (most recent call last):\\r\\n  File \\\"C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\tools\\\\production_prepare_boundary.py\\\", line 95, in <module>\\r\\n    print(json.dumps(run_boundary(ROOT, machine_id(), apply_reviews=applier), ensure_ascii=True))\\r\\n                     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\r\\n  File \\\"C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\tools\\\\production_prepare_boundary.py\\\", line 80, in run_boundary\\r\\n    result['backlog_refill'] = refill(root, expected_machine)\\r\\n                               ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\\r\\n  File \\\"C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\tools\\\\rolling_production_queue.py\\\", line 148, in refill_reviewed_backlog\\r\\n    run_checked(root,[sys.executable,'mod_nailong/tools/prepare_ready_art_reviews.py',batch,str(index),'--inbox'],runner)\\r\\n    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\r\\n  File \\\"C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\tools\\\\rolling_production_queue.py\\\", line 45, in run_checked\\r\\n    assert result.returncode==0,{'error':'Boundary stopped; preserve partial claims and never automatically replay','stdout':result.stdout,'stderr':result.stderr}\\r\\n           ^^^^^^^^^^^^^^^^^^^^\\r\\nAssertionError: {'error': 'Boundary stopped; preserve partial claims and never automatically replay', 'stdout': '', 'stderr': 'Traceback (most recent call last):\\\\n  File \\\"C:\\\\\\\\workspace\\\\\\\\xenoamess_hoi4_dev\\\\\\\\tools\\\\\\\\prepare_reviewed_art_repairs.py\\\", line 20, in <module>\\\\n    assert len({e[\\\\'source_sha256\\\\'] for e,report in cases if e[\\\\'decision\\\\']==\\\\'rejected\\\\'})==sum(e[\\\\'decision\\\\']==\\\\'rejected\\\\' for e,report in cases)\\\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\\\nAssertionError\\\\nTraceback (most recent call last):\\\\n  File \\\"C:\\\\\\\\workspace\\\\\\\\xenoamess_hoi4_dev\\\\\\\\mod_nailong\\\\\\\\tools\\\\\\\\prepare_ready_art_reviews.py\\\", line 89, in <module>\\\\n    if __name__==\\\\'__main__\\\\':main()\\\\n                            ~~~~^^\\\\n  File \\\"C:\\\\\\\\workspace\\\\\\\\xenoamess_hoi4_dev\\\\\\\\mod_nailong\\\\\\\\tools\\\\\\\\prepare_ready_art_reviews.py\\\", line 86, in main\\\\n    subprocess.run([sys.executable,\\\\'tools/prepare_reviewed_art_repairs.py\\\\',batch,\\\\',\\\\'.join(p.name for p in used),str(len(keys)),index,canvas.relative_to(ROOT).as_posix(),selection.relative_to(ROOT).as_posix()],cwd=ROOT,check=True)\\\\n    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\\\n  File \\\"C:\\\\\\\\Users\\\\\\\\Administrator\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Programs\\\\\\\\Python\\\\\\\\Python313\\\\\\\\Lib\\\\\\\\subprocess.py\\\", line 577, in run\\\\n    raise CalledProcessError(retcode, process.args,\\\\n                             output=stdout, stderr=stderr)\\\\nsubprocess.CalledProcessError: Command \\\\'[\\\\'C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\Administrator\\\\\\\\\\\\\\\\AppData\\\\\\\\\\\\\\\\Local\\\\\\\\\\\\\\\\Programs\\\\\\\\\\\\\\\\Python\\\\\\\\\\\\\\\\Python313\\\\\\\\\\\\\\\\python.exe\\\\', \\\\'tools/prepare_reviewed_art_repairs.py\\\\', \\\\'resume-20261024-large-logical-queue-v3-batch369\\\\', \\\\'resumed-20261024-rollingb7-agent-review.json,resumed-20261024-rollingb14-agent-review.json,resumed-20261024-rollinga42-agent-review.json,resumed-20261024-rollingb34-agent-review.json,resumed-20261024-rollingb38-agent-review.json\\\\', \\\\'8\\\\', \\\\'369\\\\', \\\\'runtime/ready-art-resume-20261024-large-logical-queue-v3-batch369-canvas.json\\\\', \\\\'runtime/ready-art-resume-20261024-large-logical-queue-v3-batch369-selection.json\\\\']\\\\' returned non-zero exit status 1.\\\\n'}\\r\\n\"}",
+  "stopped_at_utc": "2026-10-24T12:06:59.251Z"
+}

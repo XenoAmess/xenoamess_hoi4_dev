@@ -10,6 +10,7 @@ from datetime import datetime
 import json
 import os
 from pathlib import Path
+import shutil
 import sys
 import time
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
@@ -133,6 +134,21 @@ def _review_matches(row,a,decision):
         valid=(row.get('generated_fullsize_sha256')==fullsize and a.get('fullsize_sha256')==fullsize and bool(row.get('generated_fullsize_image')) and file_sha256(ROOT/row['generated_fullsize_image'])==fullsize)
     return valid
 
+def _finish_review(path,completed,decision):
+    target=completed/path.name
+    if target.exists():
+        # A later policy may legitimately re-review the same unchanged output.
+        # Keep the exact earlier application bytes before advancing its pointer.
+        old_sha=file_sha256(target)
+        archive=mod()/'data/production-review-application-history'/(old_sha+'.json')
+        archive.parent.mkdir(parents=True,exist_ok=True)
+        if archive.exists():
+            assert file_sha256(archive)==old_sha,'Review application archive changed'
+        else:
+            shutil.copyfile(target,archive)
+            assert file_sha256(archive)==old_sha
+    write_json(target,decision);path.unlink()
+
 def _apply_reviews_in_order():
     # Only the generation worker calls this between import and the next call.
     pending=control()/'reviews/pending';completed=control()/'reviews/completed';completed.mkdir(parents=True,exist_ok=True)
@@ -152,7 +168,7 @@ def _apply_reviews_in_order():
                     portraits.reject([key],decision['reason'])
                 decision['application']='applied';applied+=1
             decision['applied_or_rejected_at_utc']=utc_now()
-            write_json(completed/path.name,decision);path.unlink()
+            _finish_review(path,completed,decision)
     return {'applied':applied,'stale_not_applied':stale}
 
 def apply_reviews():
@@ -181,7 +197,7 @@ def apply_reviews():
                 decision['application']='applied';applied+=1
             else:decision['application']='stale_not_applied';stale+=1
             decision['applied_or_rejected_at_utc']=utc_now()
-            write_json(completed/path.name,decision);path.unlink()
+            _finish_review(path,completed,decision)
     return {'applied':applied,'stale_not_applied':stale}
 
 def main():

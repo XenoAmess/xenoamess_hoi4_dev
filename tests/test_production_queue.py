@@ -73,6 +73,20 @@ class ProductionQueueTests(unittest.TestCase):
             self.assertEqual(result['new-import']['sentinel'], 'imported while reviewer worked')
             self.assertEqual(result[job['key']]['collar_fit']['image_sha256'], digest)
 
+    def test_same_output_re_review_preserves_exact_previous_application_bytes(self):
+        with tempfile.TemporaryDirectory() as temp, ExitStack() as stack:
+            root=Path(temp);mod,image,digest,evidence,job=self.fixture(root,stack)
+            queue.stage_review(job['key'],digest,'rejected',evidence,'Old strict alpha rule')
+            self.assertEqual(queue.apply_reviews(),{'applied':1,'stale_not_applied':0})
+            target=queue.control()/f'reviews/completed/{job["key"]}-{digest}.json'
+            previous=target.read_bytes();old_sha=file_sha256(target)
+            queue.stage_review(job['key'],digest,'approved',evidence,'Actually reviewed under visible-alpha-v1')
+            self.assertEqual(queue.apply_reviews(),{'applied':1,'stale_not_applied':0})
+            archive=mod/'data/production-review-application-history'/(old_sha+'.json')
+            self.assertEqual(archive.read_bytes(),previous)
+            self.assertEqual(read_json(target)['decision'],'approved')
+            self.assertEqual(read_json(mod/'data/generated.json')['portraits'][job['key']]['review'],'approved')
+
     def test_approval_for_old_attempt_does_not_approve_new_attempt(self):
         with tempfile.TemporaryDirectory() as temp, ExitStack() as stack:
             mod, image, digest, evidence, job = self.fixture(Path(temp), stack)

@@ -11,11 +11,12 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now
 from mod_nailong.tools.ready_art_reports import reports as inbox_reports,independent_art_holds
 from tools.portrait_dispatch_guard import same_service_family
+from tools.accepted_retry_art import accepted_retry_art_proofs
 
 
 def eligible_entries(reports,rows,latest,held_keys=()):
     selected=[];seen=set()
-    for report,body in reports:
+    for report,body in sorted(reports,key=lambda item:item[1].get('reviewed_at_utc',''),reverse=True):
         for entry in body.get('decisions',[]):
             key=entry.get('source_sha256');row=rows.get(key,{})
             if (entry.get('decision')!='rejected' or key in seen or key in held_keys
@@ -27,10 +28,11 @@ def eligible_entries(reports,rows,latest,held_keys=()):
     return selected
 
 
-def service_held_keys(keys,priority,failures):
+def service_held_keys(keys,priority,failures,accepted_retry_keys=()):
     blocked={f['source_sha256'] for f in failures if f.get('status')=='blocked' and not f.get('resolved_by_retry')}
     return {key for key in keys if key in priority and any(
-        same_service_family(key,other,priority[key],priority[other]) for other in blocked)}
+        same_service_family(key,other,priority[key],priority[other])
+        and not (key==other and key in accepted_retry_keys) for other in blocked)}
 
 
 def main():
@@ -70,16 +72,18 @@ def main():
                     latest[key]=read_json(ROOT/rows[key]['request_journal'])['attempts'][-1]
         priority=read_json(ROOT/'mod_nailong/data/production-priority.json')['sources']
         failures=read_json(ROOT/'mod_nailong/data/generation-failures.json')['attempts']
-        held=service_held_keys(latest,priority,failures)|independent_art_holds()
+        accepted=accepted_retry_art_proofs(ROOT,rows,latest)
+        held=service_held_keys(latest,priority,failures,accepted['proofs'])|independent_art_holds()
         chosen=eligible_entries(reports,rows,latest,held)
         if chosen:break
         time.sleep(1)
     subprocess.run([sys.executable,'mod_nailong/tools/production_queue.py','apply-reviews'],cwd=ROOT,check=True)
-    keys=[e['source_sha256'] for p,e in chosen];write_json(selection,keys)
+    keys=[e['source_sha256'] for p,e in chosen]
+    write_json(selection,{'schema':'naiwa-exact-art-review-selection-v1','entries':[{'source_sha256':e['source_sha256'],'generated_fullsize_sha256':e['generated_fullsize_sha256'],'report':p.relative_to(ROOT).as_posix(),'report_sha256':file_sha256(p)} for p,e in chosen]})
     canvas=ROOT/f'runtime/ready-art-{batch}-canvas.json';assert not canvas.exists();write_json(canvas,{'sources':{}})
     used=list(dict.fromkeys(p for p,e in chosen))
     receipt=ROOT/f'mod_nailong/data/production-ready-refills/{batch}.json';assert not receipt.exists()
-    write_json(receipt,{'machine_id':machine_id(),'claimed_at_utc':utc_now(),'source_keys':keys,'report_evidence':[{'path':p.relative_to(ROOT).as_posix(),'sha256':file_sha256(p)} for p in used],'inbox_evidence':[proof for path,proof in inbox if path in used],'scope':'Sole executor selects existing actual SHA-bound rejections immediately when a known or explicitly queued manual report is ready. Does not wait for other reports, infer art approval or change failed requests. Full canonical/raw/boundary checks remain in the preparer.'})
+    write_json(receipt,{'machine_id':machine_id(),'claimed_at_utc':utc_now(),'source_keys':keys,'report_evidence':[{'path':p.relative_to(ROOT).as_posix(),'sha256':file_sha256(p)} for p in used],'inbox_evidence':[proof for path,proof in inbox if path in used],'accepted_exact_retry_art_proofs':{k:accepted['proofs'][k] for k in keys if k in accepted['proofs']},'scope':'Sole executor selects existing actual SHA-bound rejections immediately when a known or explicitly queued manual report is ready. Does not wait for other reports, infer art approval or change failed requests. Exact retries which actually returned the current rejected PNG may reach the existing editable-service proof; other unresolved family failures remain blocking. Full canonical/raw/boundary checks remain in the preparer.'})
     subprocess.run([sys.executable,'tools/prepare_reviewed_art_repairs.py',batch,','.join(p.name for p in used),str(len(keys)),index,canvas.relative_to(ROOT).as_posix(),selection.relative_to(ROOT).as_posix()],cwd=ROOT,check=True)
 
 
