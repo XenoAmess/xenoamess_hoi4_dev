@@ -59,7 +59,9 @@ async function produce(jobFile,batch,checkpointCommand="",options={}) {
    if(!path){store(batch+"_unparsed_"+key,outcome.r);throw Error("Actual result retained; inspect without another call");}
    await tools.apply_patch("*** Begin Patch\n*** Add File: "+root+"\\runtime\\"+batch+"-result-"+key+".json\n+"+JSON.stringify({path,output_hint:outcome.r.output_hint},null,2).replaceAll("\n","\n+")+"\n*** End Patch");
    await run("python mod_nailong\\tools\\production_queue.py returned --key "+key+" --image "+path);
-   pending.push({key,path});generatedImage(outcome.r);
+   pending.push({key,path});
+   if(options.renderResult)await options.renderResult({result:outcome.r,path,key,batch});
+   else generatedImage(outcome.r);
   }
   await flush();
  }

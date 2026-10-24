@@ -32,7 +32,7 @@ async function produceWindow(plan, options={}) {
   const produce=options.producer||eval("("+load("bounded_produce_source")+")");
   for(const item of plan){
    emit("batch_dispatch_started",{batch:item.batch});
-   await produce(item.jobs,item.batch,item.checkpointCommand||"",{onEvent:e=>events.push(e)});
+   await produce(item.jobs,item.batch,item.checkpointCommand||"",{onEvent:e=>events.push(e),renderResult:options.renderResult});
    emit("batch_imports_completed",{batch:item.batch});
    // The same executor advances immediately; no model/review/documentation turn here.
   }
