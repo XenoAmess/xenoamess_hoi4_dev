@@ -36,6 +36,14 @@ def _git(*args, cwd=None):
     return result.stdout.strip()
 
 
+def _is_ancestor(older, newer):
+    result = subprocess.run(['git', 'merge-base', '--is-ancestor', older, newer],
+                            cwd=ROOT, capture_output=True, text=True, timeout=30)
+    if result.returncode not in (0, 1):
+        raise RuntimeError(result.stdout + '\n' + result.stderr)
+    return result.returncode == 0
+
+
 def rebase_validated_commit(commit, batch):
     if not re.fullmatch(r'[0-9a-f]{40}', commit):
         raise ValueError('Expected the full immutable validated commit SHA')
@@ -66,6 +74,13 @@ def rebase_validated_commit(commit, batch):
     try:
         _git('fetch', 'origin')
         receipt['origin_master'] = _git('rev-parse', 'origin/master')
+        if receipt['origin_master'] != commit and _is_ancestor(commit, receipt['origin_master']):
+            receipt.update(status='validated_commit_already_contained_by_remote',
+                           synchronized_commit=commit, isolated_worktree_created=False,
+                           completed_at_utc=utc_now(),
+                           scope='Fresh fetch and Git ancestry prove this exact pinned commit is already public through a newer master. No checkout, rebase, history rewrite or older-head push is needed; preserve the fixed commit for raw-byte verification.')
+            write_json(receipt_path, receipt)
+            return dict(receipt, receipt_file=receipt_path.relative_to(ROOT).as_posix())
         _git('worktree', 'add', '--detach', '--no-checkout', str(path), commit)
         _git('sparse-checkout', 'set', '--no-cone', '--no-sparse-index',
              '/AGENTS.md', '/README.md', '/.gitignore', cwd=path)
