@@ -18,23 +18,29 @@ def digest_text(value):return hashlib.sha256(value.encode('utf-8')).hexdigest()
 def event_time(event):return datetime.fromisoformat(event['timestamp'].replace('Z','+00:00'))
 
 def validate_legacy_archive(root,key,attempt,archive):
- assert archive['schema']=='naiwa-recovered-actual-request-v1'
+ assert archive['schema'] in {'naiwa-recovered-actual-request-v1','naiwa-recovered-cached-actual-request-v1'}
+ cached=archive['schema']=='naiwa-recovered-cached-actual-request-v1'
  assert archive['machine_id']==attempt['machine_id']==machine_id()
  assert archive['source_sha256']==key and archive['failed_attempt']==attempt['number']
  assert archive['actual_recorded_before_call'] is False,'Recovery must not impersonate pre-call recording'
  assert archive['validated_from_retained_historical_tool_events'] is True
  events={}
- for name in ('dispatch','pre_call_job','failed_extension','refusal_receipt'):
+ for name in ('dispatch','pre_call_job','failed_extension','refusal_receipt')+(('cache_loader',) if cached else ()):
   record=archive['events'][name];raw=record['raw_utf8']
   assert digest_text(raw)==record['raw_line_sha256'],'Retained tool event bytes changed'
   events[name]=json.loads(raw)
  dispatch=events['dispatch'];caller=dispatch['payload']
  assert dispatch['type']=='response_item' and caller['type']=='custom_tool_call' and caller['name']=='exec'
- assert digest_text(caller['input']) in LEGACY_DIRECT_FORWARDERS,'Unreviewed dispatcher contract'
  exported=events['pre_call_job'];item=exported['payload']['item']
  assert exported['payload']['type']=='item_completed' and item['type']=='CommandExecution' and item['status']=='completed'
- assert item['exit_code']==0 and item['command'][-1]=='type runtime\\cooldown-retry-job.json'
- job=json.loads(item['stdout']);assert job['key']==key and isinstance(job['transparent'],bool)
+ if cached:
+  from tools.legacy_cached_request import validate_cached_job
+  job=validate_cached_job(key,archive,events)
+ else:
+  assert digest_text(caller['input']) in LEGACY_DIRECT_FORWARDERS,'Unreviewed dispatcher contract'
+  assert item['exit_code']==0 and item['command'][-1]=='type runtime\\cooldown-retry-job.json'
+  job=json.loads(item['stdout'])
+ assert job['key']==key and isinstance(job['transparent'],bool)
  assert job['journal']==f'mod_nailong/data/generation-requests/{key}.json'
  ext_event=events['failed_extension'];ext=ext_event['payload']['item']
  assert ext['type']=='Extension' and ext['kind']=='image_gen.generation' and ext['status']=='failed'
@@ -47,7 +53,8 @@ def validate_legacy_archive(root,key,attempt,archive):
  assert len(errors)==1 and 'moderation_blocked' in errors[0]
  request_ids=re.findall(r'request ID ([0-9a-f-]{36})',attempt['error'])
  assert len(request_ids)==1 and request_ids[0] in errors[0],'Refusal receipt belongs to another call'
- assert event_time(dispatch)<event_time(exported)<event_time(ext_event)<=event_time(refusal_event)
+ assert event_time(exported)<event_time(ext_event)<=event_time(refusal_event) and event_time(dispatch)<event_time(ext_event)
+ if not cached:assert event_time(dispatch)<event_time(exported)
  assert event_time(refusal_event)<=datetime.fromisoformat(attempt['observed_at_utc'].replace('Z','+00:00'))
  expected=[];references=[]
  for source in attempt['inputs']:

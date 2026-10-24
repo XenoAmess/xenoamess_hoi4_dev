@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-large-logical-queue-v3-window364",
+  "started_at_utc": "2026-10-24T11:00:11.865Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "resume-20261024-dark-card-original1",
+      "jobs": "runtime/production-resume-20261024-dark-card-original1-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-24T11:00:11.877Z",
+      "batch": "resume-20261024-dark-card-original1"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:11.877Z",
+      "jobs_file": "runtime/production-resume-20261024-dark-card-original1-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:11.877Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-20261024-dark-card-original1-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:12.092Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-20261024-dark-card-original1-jobs.json",
+      "elapsed_ms": 215,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:12.092Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:16.056Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 3964,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:16.056Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/production-resume-20261024-dark-card-original1-jobs.json --key 189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:16.356Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/production-resume-20261024-dark-card-original1-jobs.json --key 189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e",
+      "elapsed_ms": 300,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:16.356Z",
+      "command": "python runtime\\guard-dispatch-family.py 189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:16.742Z",
+      "command": "python runtime\\guard-dispatch-family.py 189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e",
+      "elapsed_ms": 386,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:16.775Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-dark-card-original1-189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e.json --key 189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:18.727Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-dark-card-original1-189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e.json --key 189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e",
+      "elapsed_ms": 1952,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:18.727Z",
+      "key": "189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:58.756Z",
+      "key": "189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e",
+      "elapsed_ms": 40029,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:58.772Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-855b7237-82eb-4aa5-8508-09a89743fa8b.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:59.047Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-855b7237-82eb-4aa5-8508-09a89743fa8b.png",
+      "elapsed_ms": 275,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:00:59.731Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-855b7237-82eb-4aa5-8508-09a89743fa8b.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:01:03.473Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 189bf2a42b5b801ebc15421e96014d8227cb5bf9663c6fdd5e0352730b0e5c3e --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16506-59d7-7a51-a626-e31fba10a63f\\exec-855b7237-82eb-4aa5-8508-09a89743fa8b.png",
+      "elapsed_ms": 3742,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:01:03.473Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:01:10.962Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 7489,
+      "exit_code": 0
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "resume-20261024-dark-card-original1",
+      "observed_at_utc": "2026-10-24T11:01:10.962Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-24T11:01:10.962Z",
+      "batch": "resume-20261024-dark-card-original1"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-24T11:01:10.962Z"
+}

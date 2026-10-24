@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261024-large-logical-queue-v3-window363",
+  "started_at_utc": "2026-10-24T10:59:10.282Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "resume-20261024-after-cache-fresh1",
+      "jobs": "runtime\\production-resume-20261024-after-cache-fresh1-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-24T10:59:10.291Z",
+      "batch": "resume-20261024-after-cache-fresh1"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T10:59:10.291Z",
+      "jobs_file": "runtime\\production-resume-20261024-after-cache-fresh1-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T10:59:10.291Z",
+      "command": "python runtime\\batch-keys.py runtime\\production-resume-20261024-after-cache-fresh1-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T10:59:10.522Z",
+      "command": "python runtime\\batch-keys.py runtime\\production-resume-20261024-after-cache-fresh1-jobs.json",
+      "elapsed_ms": 231,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T10:59:10.522Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T10:59:19.411Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 8889,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T10:59:19.411Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-cache-fresh1-jobs.json --key fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T10:59:19.682Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime\\production-resume-20261024-after-cache-fresh1-jobs.json --key fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55",
+      "elapsed_ms": 271,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T10:59:19.682Z",
+      "command": "python runtime\\guard-dispatch-family.py fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T10:59:20.100Z",
+      "command": "python runtime\\guard-dispatch-family.py fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55",
+      "elapsed_ms": 418,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T10:59:20.114Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-cache-fresh1-fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55.json --key fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T10:59:21.757Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261024-after-cache-fresh1-fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55.json --key fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55",
+      "elapsed_ms": 1643,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T10:59:21.757Z",
+      "key": "fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T11:00:00.801Z",
+      "key": "fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55",
+      "elapsed_ms": 39044,
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 66c93571-900a-40e8-9408-83f0076a9d02. safety_violations=[abuse].\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T11:00:00.815Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55 --error-file runtime\\resume-20261024-after-cache-fresh1-error-fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T11:00:01.112Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55 --error-file runtime\\resume-20261024-after-cache-fresh1-error-fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55.txt",
+      "elapsed_ms": 297,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T11:00:01.112Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55 --message-file runtime\\resume-20261024-after-cache-fresh1-error-fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T11:00:01.894Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55 --message-file runtime\\resume-20261024-after-cache-fresh1-error-fe54cb5d0fc9376d00d8b7d7f7dd178e99210a446563092306258d43d89c3e55.txt",
+      "elapsed_ms": 782,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T11:00:01.894Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T11:00:05.104Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 3210,
+      "exit_code": 0
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "resume-20261024-after-cache-fresh1",
+      "observed_at_utc": "2026-10-24T11:00:05.104Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-24T11:00:05.104Z",
+      "batch": "resume-20261024-after-cache-fresh1"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-24T11:00:05.104Z"
+}

@@ -93,6 +93,62 @@
       "prepared_at_utc": "2026-10-16T20:44:05.116733+00:00",
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 6673f2da-67fd-43b0-8265-5e75f3a27ad6.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-16T20:46:47.542493+00:00"
+    },
+    {
+      "number": 4,
+      "status": "generated_rejected_visual_review",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit.\nAsset type: one HOI4 mascot portrait correction for coherent neck and clothing fit.\nImage 1 is the current generated yellow mascot portrait to edit. Image 2 is the original game portrait, specifying the original garment style, hair, facial hair, hat, accessories, pose, expression and fastening state. Image 3 is the user's exact mascot anatomy reference: a compact rounded golden-yellow creature with green-ringed black eyes and a small horizontal mouth.\nCorrect only the head-neck-collar-shoulder fit. Replace the overlong yellow cylinder or tapered neck stalk with a compact round head sitting LOW and close to broad shoulders, with almost no exposed neck. Do not squeeze a thick creature into a narrow human collar ring. Widen and retailor the original collar opening around the creature's actual neck base, so the whole base sits INSIDE it. The front collar cloth occludes the lower neck, and the rear collar sits behind it; show coherent fabric tension, contact shadow, seams and perspective. Preserve original fabric, collar style, tabs, piping, badges and existing decorations, adjusting their size/placement to the wider fitted collar. Do not add symbols, awards, accessories or a different outfit.\nCRITICAL fastening rule: if Image 2 has a closed, buttoned standing military collar, it must remain fully CLOSED and buttoned. Both front ends meet at the same level at the center seam; no deep V-shaped opening, unbuttoned tunic or exposed yellow chest wedge. Widen the whole collar circumference instead of opening its front. For an originally open shirt or lapel collar, preserve that open style and tie/scarf with correctly fitted overlapping layers. A white shirt collar or scarf stays textured fabric; it is not a cream belly patch.\nThe mascot keeps its yellow anatomy, green-ringed black eyes and small horizontal mouth. Preserve the original visible hairstyle, hairline, color, eyebrows, moustache and beard where actually present in Image 2; preserve a clean-shaven chin where appropriate. Do not invent facial hair, human skin, nose or ears. Preserve headgear, glasses, pipe, facial mood, head turn, shoulders/body orientation, painted background or genuine transparency, and source portrait aspect ratio. Preserve photo frames and note cards exactly where present. The cream belly stays under the clothes: no white/cream neck bib, skin-colored collar gap, detached ring, pinched fabric, clipped neck, floating collar or long giraffe/sausage neck. One final portrait, no comparison layout or new text.\n\nPRIMARY CORRECTION: Remove the enormous cream bib from the lower face/neck and remove the long yellow neck cylinder. Keep the original swept brown hair and stern brows, totally CLEAN-SHAVEN upper lip and chin. A SHORT ROUND head sits LOW directly on broad shoulders, chin immediately above the CLOSED olive standing collar. Widen and retailor the collar so the entire short neck base is inside the garment. Preserve original shoulder badges, brass buttons and uniform seams. The cream belly is entirely under opaque clothing. Keep true transparent RGBA outside the bust.\nOutput alpha: keep a genuine fully transparent RGBA background outside the portrait silhouette. No painted gray backdrop, halo, studio gradient or rectangular plate. Retain the source's clothing, hair, headgear and portrait crop.",
+      "prompt_file": "mod_nailong/assets/prompts/1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a-004.txt",
+      "prompt_sha256": "157f3e6120c5087e15ed5c331b89e207fc4e0d852c027456f1138875d16c80e8",
+      "inputs": [
+        {
+          "role": "previous generated edit target",
+          "path": "mod_nailong/assets/legacy-before-hair/1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a-72107025479f8ca8.png",
+          "sha256": "72107025479f8ca84e1fe93ba8f4845ea3c1916b3120cb499a9dee26dc0ee78c"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a",
+          "converted_png_sha256": "3943f41c136ba3f504ae8055c28d353dea23ecbf8b074dd4c5c44717de8b6e32"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-24T10:50:37.196541+00:00",
+      "retry_of_attempt": 3,
+      "retry_root_attempt": 3,
+      "cooldown_retry_number": 2,
+      "cooldown_not_before_utc": "2026-10-17T04:46:47.542493+00:00",
+      "cooldown_retry_tool_transparent_background": true,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-24T10:51:39.372775+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "0e67ecdb9693a55e10347b28ad495160b3db090ae35d48d84664afb3b6423038",
+        "prompt_sha256": "157f3e6120c5087e15ed5c331b89e207fc4e0d852c027456f1138875d16c80e8",
+        "input_sha256": [
+          "72107025479f8ca84e1fe93ba8f4845ea3c1916b3120cb499a9dee26dc0ee78c",
+          "3943f41c136ba3f504ae8055c28d353dea23ecbf8b074dd4c5c44717de8b6e32",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": true
+      },
+      "generated_at_utc": "2026-10-24T10:52:18.533821+00:00",
+      "fullsize_sha256": "032e0f33c54f20f919d7589b90770e2a0b203d7534e46b8ce5927cd44755ed3f",
+      "fullsize_image": "mod_nailong/assets/generated_fullsize/032e0f33c54f20f919d7589b90770e2a0b203d7534e46b8ce5927cd44755ed3f.png",
+      "output": "mod_nailong/assets/portraits/1b735cd1a32794c23be04dcdca90385d4ef3e1fb971a3f6bfca7985cd142430a.png",
+      "output_sha256": "f44e4e674799178c8af335c05a45808f3a556c225690030612da21cef7ddbeb7",
+      "review": "rejected",
+      "rejection_reason": "Actual manual review under visible-alpha-v1, slot a / rollinga39. Reliable UTC interval 2026-10-24T10:55:49+00:00 through 2026-10-24T10:58:35.712503+00:00; machine bf-202609141645-5434332d4d. Actually viewed all four exact unchanged original PNGs and all four complete unchanged raw masters at original detail, full source/white/cyan/alpha comparison sheet and both nearest-neighbor source-detail sheets. Actually viewed exact small originals2 and4 enlarged24x nearest-neighbor and unique mascot reference. Actually viewed auxiliary larger original f7ba606a636e5b47c498fca16fd15124d5e72506f093c63a16661cd9b1311bee complete and on detail sheet: its grey suit does not match exact small4 dark suit, so it is excluded as supporting source authority. Exact small4 alone governs its actual outfit/features/note marks. Targeted inventory search found no same-name larger original for2. Source PNG/raw SHA identities verified against manifest. Checked mascot identity/green eyes, actual source hair/brows/facial hair, eyewear/headgear, single mouth/expression, outfit/accessories/pose/crop/light, short broad collar transition/cloth overlap/contact shadow, photographic backing/frame and note-mark groups. Full raw/white/cyan/alpha views show1 has visible lost original grey-beige photographic backing, which now exposes white/cyan outside figure; this is an actual visible defect. No visible interior garment holes in1. Full raw/white/cyan/alpha views of2/3/4 show no visible interior holes, transparent garments or lost original backing;2 exterior alpha follows cutout,3 retains solid full rectangular backing,4 retains solid photographic card and paper. Actual raw alpha252/253/254/255 counts:1 255318/779958/335/74;2 180443/823199/2760/150;3 0/0/0/1572855;4 482703/529409/405/93. Raw1/2/4 extrema[0,255];raw3[255,255]. Actual sampled1 hair/face252, cloth253, removed backing0;2 cap/face/cloth253;3 hair/face/cloth/backing255;4 hair/face/cloth/backing/paper253. Full actual source/raw alpha histograms preserve every measured value with coordinate/RGBA samples in measurement evidence; no near-opacity relabelled255. Neither near-opacity nor exterior alpha caused pending/rejection. Viewed/measurement evidence: runtime/resumed-20261024-fine-rollinga39-alpha/page-01.png SHA 968e5829974c4c59e97f637f90f0b159aa265351701a64cd832dab83951cd5ca; runtime/small-details-expanded-20261023-rollinga39/page-01.png SHA 476b36f8337bf7562efe0c6bf4b39ff5e44af4c9f63fc3005460296e3047e2f0; runtime/small-details-expanded-20261023-rollinga39/page-02.png SHA 3c077d7a53caee5435bcc3b3280e0bc15fd8fc4540903760a77dc4f3f5561964; runtime/small-details-expanded-20261023-rollinga39/manifest.json SHA e47e50560f3603f03db8d99fe738c0766b90d024b6b3ea2dff5024a2c93250d6; runtime/rollinga39-source2-nearest.png SHA e0f701de6615891c7e908fc24f51f581a8f68035b8efd2c160f25857454de01e; runtime/rollinga39-source4-nearest.png SHA 39b83e004b9a90682dc676e588c5ac99509b61768d3cedf2b2fc1dc9c1926bb2; runtime/review-rollinga39-measure.json SHA 91cbf33d0c95b0d7ee3dd14932db222cae581a7ba492ae8f3de42a0db16cb431; mod_nailong/assets/reference/naiwa.png SHA 766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976; runtime/references/f7ba606a636e5b47c498fca16fd15124d5e72506f093c63a16661cd9b1311bee.png SHA ad35a0722fd11f71a7986728a0a5e1dec54eb1daa5317ae0aea17470acca4b18; runtime/rollinga39-task-close-storage.json SHA c6f065e3cfff7750954244aa30bdcee5d5fedc0b741cf6e329b52771ee30b02f. Storage policy1.0.0 read. Capacity observed 2026-10-24T10:57:42.073173+00:00 total1023892852736/free509891657728 bytes; close 2026-10-24T10:58:35.712503+00:00 total1023892852736/free509847494656 bytes. No deletion, production-image mutation, generation or heavy write. Review previews are not game payload. Raw032e0f33c54f20f919d7589b90770e2a0b203d7534e46b8ce5927cd44755ed3 deletes the exact source solid grey-beige rectangular photographic background and returns a transparent figure cutout. The missing backing is visibly replaced by white/cyan mattes in full comparison; raw backing sample(50,100) is RGBA(0,0,0,0), while exact source full rectangle is near-opaque with original extrema[242,255]. Regenerate the current raw restoring complete original photographic backing without changing source outfit/features. Brown swept hair/brows, clean-shaven face, single restrained mouth, dark olive stand-collar uniform, gold epaulettes/button and short broad collar overlap/contact otherwise checked; no visible interior clothing holes. Actual hair/face samples252 and cloth253 retained. Rejected for actual lost backing under visible-alpha-v1, never numerical near-opacity.",
+      "reviewed_at_utc": "2026-10-24T10:59:01.302315+00:00"
     }
   ]
 }

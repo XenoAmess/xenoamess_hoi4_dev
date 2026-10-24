@@ -63,7 +63,7 @@ def claim(slot):
         assert state['status']=='available','Prior assignment must be finalized, not silently repeated'
         rows=read_json(ROOT/'mod_nailong/data/generated.json')['portraits'];priority=read_json(ROOT/'mod_nailong/data/production-priority.json')['sources'];seen=reviewed_outputs(ROOT)
         deferred=[];jobs=reserve_candidates(ROOT,rows,priority,seen,slot,deferred=deferred)
-        if not jobs:return {'ready':False,'reason':'current_output_metadata_not_yet_complete' if deferred else 'no_unassigned_current_HIGH_output','slot':slot,'metadata_deferred':deferred}
+        if not jobs:return {'ready':False,'reason':'current_output_metadata_not_yet_complete' if deferred else 'no_unassigned_current_HIGH_output','slot':slot,'metadata_deferred':deferred,'next_step':'Read the updated tools/portrait_review_worker.md before waiting again; it now checks fresh_source_observation_queue.py claim SLOT before each portrait claim, including idle loops. Resume an existing fresh allocation if returned. Keep exactly the same two slots.'}
         sequence=state['sequence']+1;tag='rolling'+slot+str(sequence);jobpath=ROOT/f'runtime/fine-review4-{tag}-20261024-jobs.json';assert not jobpath.exists();write_json(jobpath,jobs)
         out=ROOT/f'runtime/resumed-20261024-fine-{tag}-alpha'
         result=subprocess.run([sys.executable,'mod_nailong/tools/review_alpha_sheet.py',jobpath.relative_to(ROOT).as_posix(),out.relative_to(ROOT).as_posix()],cwd=ROOT,capture_output=True,text=True,encoding='utf-8',errors='replace')

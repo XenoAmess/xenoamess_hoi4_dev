@@ -45,5 +45,6 @@ def prepare_replacements(root,batch,index,config,preparer=None):
     return {'prepared':len(jobs),'batch':batch,'index':index,'receipt':receipt.relative_to(root).as_posix()}
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('batch');parser.add_argument('index',type=int);parser.add_argument('config');args=parser.parse_args()
-    print(prepare_replacements(ROOT,args.batch,args.index,read_json(ROOT/args.config)))
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('batch');parser.add_argument('index',help='Exact plan index, or auto inside the sole preparation owner');parser.add_argument('config');args=parser.parse_args()
+    index=len(read_json(ROOT/'runtime/after128-continuous-plan.json')['batches']) if args.index=='auto' else int(args.index)
+    print(prepare_replacements(ROOT,args.batch,index,read_json(ROOT/args.config)))
