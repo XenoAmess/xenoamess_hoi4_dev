@@ -20,7 +20,8 @@ def prepare_replacements(root,batch,index,config,preparer=None):
     assert not service_held_keys(keys,priority,failures),'Unresolved service family; no alternative request'
     checked=[]
     for c in config['sources']:
-        key=c['source_sha256'];row=rows[key];assert priority[key]['high_priority'] and row['review']=='rejected'
+        from tools.production_priority_gate import tier_allowed
+        key=c['source_sha256'];row=rows[key];assert tier_allowed(root,priority[key]) and row['review']=='rejected'
         assert row['generated_fullsize_sha256']==c['rejected_fullsize_sha256'] and file_sha256(root/row['generated_fullsize_image'])==c['rejected_fullsize_sha256']
         report_path=(root/c['manual_review_report']).resolve();assert report_path.is_relative_to((root/'mod_nailong/data').resolve())
         assert file_sha256(report_path)==c['manual_review_report_sha256'];report=read_json(report_path)

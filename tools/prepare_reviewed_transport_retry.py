@@ -27,7 +27,8 @@ def prepare_transport_retry(root,batch,index,config):
     assert not last.get('retry_of_attempt'),'Service-refused request chains retain their cooldown path'
     priority=read_json(root/'mod_nailong/data/production-priority.json')['sources']
     failures=read_json(root/'mod_nailong/data/generation-failures.json')['attempts']
-    assert priority[key]['high_priority'] and not service_held_keys([key],priority,failures)
+    from tools.production_priority_gate import tier_allowed
+    assert tier_allowed(root,priority[key]) and not service_held_keys([key],priority,failures)
     dispatch=directory/f'{key}-{last["number"]:03}.json'
     assert file_sha256(dispatch)==config['failed_dispatch_sha256']
     ledger=read_json(dispatch)

@@ -110,10 +110,11 @@ def classify(catalog, roles):
                         'resource_instances':len(assets), 'featured_match':featured}
     return entries
 
-def gate_lower_priority(eligible, entries, generated):
+def gate_lower_priority(eligible, entries, generated, *, idle_low_authorized=False, immediate_high=False):
     approved={k for k,r in generated.items() if portrait_ready(r)}
     incomplete={k for k,e in entries.items() if e['high_priority'] and k not in approved}
-    return ([a for a in eligible if entries[a['source_sha256']]['high_priority']] if incomplete else eligible), incomplete
+    locked=bool(incomplete) and (not idle_low_authorized or immediate_high)
+    return ([a for a in eligible if entries[a['source_sha256']]['high_priority']] if locked else eligible), incomplete
 
 def build(catalog=None, install=None):
     catalog = catalog or read_json(MOD/'data/catalog.json')

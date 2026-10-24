@@ -207,7 +207,10 @@ def prepare(catalog, limit=16, offset=0, match=None):
     held_paths=(held_paths-resolved_paths)|active_paths
     eligible=[asset for asset in pending if asset["source_sha256"] not in blocked_keys and asset["path"].lower() not in held_paths]
     held_count=len(pending)-len(eligible)
-    eligible,incomplete_high=gate_lower_priority(eligible,priorities["sources"],generated)
+    from tools.production_priority_gate import low_enabled,immediate_high_work
+    idle_low=low_enabled(ROOT)
+    immediate_high=immediate_high_work(ROOT,machine_id())['available'] if idle_low else False
+    eligible,incomplete_high=gate_lower_priority(eligible,priorities["sources"],generated,idle_low_authorized=idle_low,immediate_high=immediate_high)
     if match:eligible=[asset for asset in eligible if match.lower() in asset["path"].lower()]
     selected = eligible[offset:offset+limit]
     jobs = []
@@ -241,7 +244,7 @@ def prepare(catalog, limit=16, offset=0, match=None):
                 draw.text((x,y+212), f"{index+1} {job['key'][:8]}", fill="black")
                 draw.text((x,y+228), Path(job["source"]).stem[-22:], fill="black")
         sheet.save(ROOT / "runtime/input-contact-sheet.png")
-    print({"pending_unique_images": len(pending),"held_after_service_refusal":held_count,"incomplete_high_priority":len(incomplete_high),"lower_priority_locked":bool(incomplete_high),"matching_eligible_images":len(eligible), "prepared": len(jobs), "contact_sheet": "runtime/input-contact-sheet.png"})
+    print({"pending_unique_images": len(pending),"held_after_service_refusal":held_count,"incomplete_high_priority":len(incomplete_high),"lower_priority_locked":bool(incomplete_high) and (not idle_low or immediate_high),"low_priority_idle_only":idle_low,"matching_eligible_images":len(eligible), "prepared": len(jobs), "contact_sheet": "runtime/input-contact-sheet.png"})
     return jobs
 
 def main():

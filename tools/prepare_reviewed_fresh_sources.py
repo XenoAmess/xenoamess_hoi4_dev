@@ -5,6 +5,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now
 from tools.portrait_dispatch_guard import same_service_family
 from mod_nailong.tools.generation_requests import prepare
+from tools.production_priority_gate import tier_allowed
 selected=ROOT/sys.argv[1];config=read_json(selected)
 assert config['machine_id']==machine_id() and config['actually_observed'] is True
 tag=config['tag'];batch=config['batch'];sources=config['sources'];details={str(n):s['description'] for n,s in enumerate(sources,1)}
@@ -20,7 +21,7 @@ resolved={a['path'].lower() for a in assets for f in failures['attempts'] if a['
 held=(set(p.lower() for p in failures.get('held_source_paths',[]))-resolved)|{a['path'].lower() for a in assets if a['source_sha256'] in blocked}
 assert len({s['key'] for s in sources})==len(sources)
 for s in sources:
- key=s['key'];assert key not in rows and key not in nonperson and s['source'].lower() not in held and priority[key]['high_priority']
+ key=s['key'];assert key not in rows and key not in nonperson and s['source'].lower() not in held and tier_allowed(ROOT,priority[key])
  assert isinstance(s['description'],str) and s['description'].strip()
  journal=mod/f'data/generation-requests/{key}.json'
  if s.get('cancelled_request_history'):
@@ -45,6 +46,7 @@ for n,s in enumerate(sources,1):
  'Standalone source retains its COMPLETE original painted rectangular backdrop and all original subject/clothing through every edge, fully opaque. Only an original framed card retains that exact tilted frame, wholly opaque backing, cream overlapping note and genuine alpha outside the complete card silhouette. Keep original upper-note multirow markings in their actual position/footprint/contrast as indistinct dark strokes; never erase them into blank parchment, add extra writing or invent readable words/numbers. All original solid surfaces stay fully opaque. Keep full painterly detail and tool output resolution. One asset, no comparison board, new label, text or watermark.')
  j=prepare(key,prompt,False,opaque_canvas_reason=reason);jobs.append(j);a=read_json(ROOT/j['journal'])['attempts'][-1]
  proof.append({'source_sha256':key,'source':s['source'],'original_png_sha256':s['original_png_sha256'],'actual_source_features':desc,'source_canvas_manual_reason':reason,'cancelled_request_history':s.get('cancelled_request_history'),'prepared_attempt':a['number'],'prompt_sha256':a['prompt_sha256'],'transparent_background':a['transparent_background']})
-write_json(out,jobs);plan['batches'].append({'batch':batch,'jobs':out.relative_to(ROOT).as_posix().replace('/','\\')});write_json(planpath,plan)
+from tools.production_priority_gate import append_prepared_windows
+append_prepared_windows(ROOT,plan,batch,jobs,out);write_json(planpath,plan)
 write_json(mod/f'data/{batch.replace("resume-","resumed-",1)}-prepared.json',{'machine_id':machine_id(),'prepared_at_utc':utc_now(),'scope':f'{len(sources)} actually viewed uncalled HIGH exact originals. No unresolved same-person service family at preparation. Sources either have no prior journal or explicit SHA-bound all-cancelled history with zero dispatch ledgers; prior unsubmitted records remain unchanged. Known four static nonperson sources excluded without removing their denominator. Actual animal characters, if present, remain characters; no imaginary human occupant.','source_selection_sha256':file_sha256(selected),'sources':proof})
 print('Prepared',len(sources),'fresh HIGH original requests at plan',index)

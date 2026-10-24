@@ -30,7 +30,9 @@ def coverage(publish=False):
         entries=read_json(priority_path)['sources']
         high={k for k,e in entries.items() if e['high_priority']}
         high_done={k for k in high if k in generated and portrait_ready(generated[k])}
-        result.update(high_priority_total=len(high),high_priority_reviewed=len(high_done),high_priority_remaining=len(high-high_done),lower_priority_locked=bool(high-high_done))
+        from tools.production_priority_gate import low_enabled
+        idle_low=low_enabled(ROOT);low=set(entries)-high
+        result.update(high_priority_total=len(high),high_priority_reviewed=len(high_done),high_priority_remaining=len(high-high_done),lower_priority_locked=bool(high-high_done) and not idle_low,low_priority_idle_only=idle_low,low_priority_total=len(low),low_priority_reviewed=sum(k in generated and portrait_ready(generated[k]) for k in low))
     write_json(ROOT/"runtime/coverage.json",result)
     if publish:write_json(MOD/"data/progress.json",result)
     print(__import__('json').dumps(result,ensure_ascii=False,indent=2))

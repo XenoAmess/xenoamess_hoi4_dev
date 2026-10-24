@@ -13,6 +13,10 @@ from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now, writ
 def consume(root, expected_machine, runner=None):
     folder = root / 'runtime/production-queue/preparation'
     pending = sorted((folder / 'pending').glob('*.json'))
+    from tools.production_priority_gate import low_enabled
+    if pending and low_enabled(root):
+        priority=read_json(root/'mod_nailong/data/production-priority.json')['sources']
+        pending.sort(key=lambda p:not any(priority[k]['high_priority'] for k in read_json(p)['expected_source_keys']))
     if not pending:
         return {'prepared': False, 'reason': 'no_pending_intent'}
     for path in (root / 'runtime/production-queue/dispatch').glob('*.json'):

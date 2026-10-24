@@ -42,7 +42,8 @@ def main():
   assert latest.get('cooldown_retry_number',1)==used
   print(json.dumps({'eligible':True,'reason':'Exact unchanged cooldown retry already claimed','retry_number':used}));return
  priority=read_json(mod/'data/production-priority.json')['sources'];entry=priority[key]
- assert entry['high_priority'],'New non-HIGH sources remain locked'
+ from tools.production_priority_gate import tier_allowed
+ assert tier_allowed(ROOT,entry),'LOW work requires the explicit idle-supply authorization'
  conflicts=[]
  for failure in read_json(mod/'data/generation-failures.json')['attempts']:
   if failure.get('status')!='blocked' or failure.get('resolved_by_retry'):continue

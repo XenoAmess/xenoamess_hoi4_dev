@@ -24,6 +24,13 @@ class ReviewSlotTests(unittest.TestCase):
   key='0'*64;seen={(key,self.rows[key]['generated_fullsize_sha256'])};self.priority['1'*64]['high_priority']=False
   jobs=reserve_candidates(self.root,self.rows,self.priority,seen,'a')
   self.assertNotIn(key,{j['key'] for j in jobs});self.assertNotIn('1'*64,{j['key'] for j in jobs})
+ def test_authorized_low_outputs_receive_same_sha_reserved_review_after_high(self):
+  from tools.production_priority_gate import POLICY
+  write_json(self.root/'mod_nailong/data/production-scheduling-policy.json',{'id':POLICY,'user_authorization_quote':'fixture','allow_low_when_no_immediate_high':True})
+  self.priority['5'*64]['high_priority']=False
+  first=reserve_candidates(self.root,self.rows,self.priority,set(),'a',limit=6)
+  self.assertEqual(first[-1]['key'],'5'*64)
+  self.assertEqual(reserve_candidates(self.root,self.rows,self.priority,set(),'b'),[])
  def test_changed_current_sha_can_be_reserved_after_old_output(self):
   reserve_candidates(self.root,self.rows,self.priority,set(),'a')
   key='0'*64;self.rows[key]['generated_fullsize_sha256']='f'*64

@@ -14,7 +14,7 @@ from tools.portrait_dispatch_guard import same_service_family
 from tools.accepted_retry_art import accepted_retry_art_proofs
 
 
-def eligible_entries(reports,rows,latest,held_keys=()):
+def eligible_entries(reports,rows,latest,held_keys=(),priority=None):
     selected=[];seen=set()
     for report,body in sorted(reports,key=lambda item:item[1].get('reviewed_at_utc',''),reverse=True):
         for entry in body.get('decisions',[]):
@@ -24,8 +24,9 @@ def eligible_entries(reports,rows,latest,held_keys=()):
                     or row.get('review') not in {'pending','rejected'}
                     or latest.get(key,{}).get('status') not in {'generated_pending_visual_review','generated_rejected_visual_review','cancelled_before_generation'}):continue
             selected.append((report,entry));seen.add(key)
-            if len(selected)==8:return selected
-    return selected
+            if len(selected)==8 and priority is None:return selected
+    if priority is not None:selected.sort(key=lambda item:not priority[item[1]['source_sha256']]['high_priority'])
+    return selected[:8]
 
 
 def service_held_keys(keys,priority,failures,accepted_retry_keys=()):
@@ -74,7 +75,7 @@ def main():
         failures=read_json(ROOT/'mod_nailong/data/generation-failures.json')['attempts']
         accepted=accepted_retry_art_proofs(ROOT,rows,latest)
         held=service_held_keys(latest,priority,failures,accepted['proofs'])|independent_art_holds()
-        chosen=eligible_entries(reports,rows,latest,held)
+        chosen=eligible_entries(reports,rows,latest,held,priority)
         if chosen:break
         time.sleep(1)
     subprocess.run([sys.executable,'mod_nailong/tools/production_queue.py','apply-reviews'],cwd=ROOT,check=True)

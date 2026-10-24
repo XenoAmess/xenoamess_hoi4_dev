@@ -19,7 +19,8 @@ if len(sys.argv)>6:
 assert len({e['source_sha256'] for e,report in cases if e['decision']=='rejected'})==sum(e['decision']=='rejected' for e,report in cases)
 for e,report in cases:
  if e['decision']!='rejected':continue
- key=e['source_sha256'];r=rows[key];boundary=None;assert priority[key]['high_priority'] and r['review']=='rejected' and r['generated_fullsize_sha256']==e['generated_fullsize_sha256']
+ from tools.production_priority_gate import tier_allowed
+ key=e['source_sha256'];r=rows[key];boundary=None;assert tier_allowed(ROOT,priority[key]) and r['review']=='rejected' and r['generated_fullsize_sha256']==e['generated_fullsize_sha256']
  opaque_reason=canvas_reviews.get(key,{}).get('opaque_canvas_reason')
  prompt=('Use case: precise-object-edit. Image1 is the actual raw-HD mascot edit target. Image2 is the exact original game portrait/card and sole authority for visible features. Image3 is the user mascot identity reference.\nActual observed correction: '+e['reason']+'\n'
  'Keep all unrelated source-visible hairstyle and hair colour, eyebrows and exact fine facial-hair state, glasses, headgear when actually present, clothes/neckwear, badges/buttons/straps, expression, gaze, pose, crop and lighting. Source-visible eyebrows remain distinct independent brows; never erase them to copy the identity reference smooth forehead or merge them into head hair. Smooth golden-yellow compact round mascot head with green-ringed black eyes and exactly ONE small mouth at the actual original mouth position. If a moustache is present, that one mouth is below it: never add a second grey slit, beak, nose or default mascot lip above the moustache. No human skin/nose/ears, broad invented facial-hair band or hat replacing real hair.\n'
@@ -59,8 +60,9 @@ for e,report in cases:
   boundary=validate_art_boundary(history,key,r['generated_fullsize_sha256'],ROOT/'runtime/production-queue/dispatch',read_json(ROOT/'mod_nailong/data/generation-failures.json')['attempts'],family_histories)
   j=prepare(key,prompt,True,opaque_canvas_reason=opaque_reason,supporting_crops=supporting_crops)
  jobs.append(j);a=read_json(ROOT/j['journal'])['attempts'][-1];proof.append({'source_sha256':key,'rejected_fullsize_sha256':e['generated_fullsize_sha256'],'manual_review_report':report,'prepared_attempt':a['number'],'prompt_sha256':a['prompt_sha256'],'individual_canvas_reason_inherited_from_attempt':inherited_canvas_attempt,'preparation_boundary':boundary})
-assert len(jobs)==expected;out=ROOT/f'runtime/production-{batch}-jobs.json';assert not out.exists();write_json(out,jobs)
+assert len(jobs)==expected;out=ROOT/f'runtime/production-{batch}-jobs.json';assert not out.exists()
 p=ROOT/'runtime/after128-continuous-plan.json';plan=read_json(p);assert len(plan['batches'])==plan_index
-plan['batches'].append({'batch':batch,'jobs':out.relative_to(ROOT).as_posix().replace('/','\\')});write_json(p,plan)
+from tools.production_priority_gate import append_prepared_windows
+append_prepared_windows(ROOT,plan,batch,jobs,out);write_json(p,plan)
 receipt=ROOT/f'mod_nailong/data/{batch.replace("resume-","resumed-",1)}-prepared.json';assert not receipt.exists()
 write_json(receipt,{'machine_id':machine_id(),'prepared_at_utc':utc_now(),'scope':'Independently observed HIGH corrections. Only exact original/current raw master/user reference inputs; auxiliary larger preview is not a request input.','followups':proof});print('Prepared',expected,'repairs at plan',plan_index)

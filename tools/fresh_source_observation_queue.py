@@ -1,12 +1,13 @@
-"""Reserve allowed unmade HIGH originals for the two existing visual-review slots."""
+"""Reserve allowed unmade originals, HIGH first, for the existing two slots."""
 import argparse,json,os,re,sys,uuid
 from datetime import datetime,timezone
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now
 from tools.portrait_dispatch_guard import same_service_family
+from tools.production_priority_gate import low_enabled
 
-def candidates(root):
+def candidates(root,high_only=False):
  rows=read_json(root/'mod_nailong/data/generated.json')['portraits']
  assets=read_json(root/'mod_nailong/data/catalog.json')['assets']
  priority=read_json(root/'mod_nailong/data/production-priority.json')['sources']
@@ -17,7 +18,7 @@ def candidates(root):
  held=(set(p.lower() for p in failures.get('held_source_paths',[]))-resolved)|{a['path'].lower() for a in assets if a['source_sha256'] in blocked}
  unique={a['source_sha256']:a for a in assets};out=[]
  for key,a in unique.items():
-  if key in rows or key in nonperson or not priority[key]['high_priority'] or key in blocked or a['path'].lower() in held:continue
+  if key in rows or key in nonperson or (not priority[key]['high_priority'] and (high_only or not low_enabled(root))) or key in blocked or a['path'].lower() in held:continue
   if any(same_service_family(key,b,priority[key],priority[b]) for b in blocked):continue
   original=root/f'runtime/references/{key}.png'
   if not original.is_file() or not original.resolve().is_relative_to((root/'runtime/references').resolve()):continue
@@ -29,7 +30,9 @@ def candidates(root):
   item={'key':key,'source':a['path'],'original':str(original),'original_png_sha256':file_sha256(original)}
   if history:item['cancelled_request_history']=history
   out.append(item)
- return out
+ out.sort(key=lambda item:(not priority[item['key']]['high_priority'],priority[item['key']].get('sort_key',[])))
+ high=[item for item in out if priority[item['key']]['high_priority']]
+ return high or out
 
 def claim(root,slot):
  assert slot in {'a','b'}
@@ -55,7 +58,7 @@ def claim(root,slot):
   with os.fdopen(fd,'w',encoding='utf-8') as stream:json.dump({'machine_id':machine_id(),'slot':slot,'tag':tag,'reserved_at_utc':utc_now(),'source':item},stream,ensure_ascii=True)
   selected.append(item)
   if len(selected)==4:break
- if not selected:return {'ready':False,'reason':'no_unreserved_allowed_unmade_HIGH_originals','slot':slot}
+ if not selected:return {'ready':False,'reason':'no_unreserved_allowed_unmade_originals','slot':slot}
  allocation=folder/'allocations'/(tag+'.json');assert not allocation.exists()
  body={'machine_id':machine_id(),'slot':slot,'tag':tag,'created_at_utc':utc_now(),'sources':selected,'scope':'Actual original observation required, not art approval or permission to invent a character. No journal preparation, retry claim or image call. Reservations remain after failure for explicit reconciliation.'}
  write_json(allocation,body)

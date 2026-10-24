@@ -13,6 +13,7 @@ from mod_nailong.tools.ready_art_reports import reports as inbox_reports,indepen
 from mod_nailong.tools.prepare_ready_art_reviews import eligible_entries,service_held_keys
 from tools.accepted_retry_art import accepted_retry_art_proofs
 from mod_nailong.tools.retry_limits import retry_limit
+from tools.production_priority_gate import low_enabled,high_in_item,immediate_high_work
 
 def no_calling(root):
     assert not any(read_json(p).get('status')=='calling' for p in (root/'runtime/production-queue/dispatch').glob('*.json')),'Unresolved actual call: reconcile, never replay'
@@ -103,7 +104,7 @@ def synchronize_retry_allowances(root,runner=None):
     assert all(after[key]['max_cooldown_retries']==retry_limit(settings,key) for key in keys)
     return {'synchronized':True,'selected_sources':len(keys),'quota_claims':0}
 
-def allocate_exact_retry(root,state,runner=None):
+def allocate_exact_retry(root,state,runner=None,high_only=False):
     """Only the persistent producer selects and claims unchanged, reviewed retries."""
     scheduler=root/'runtime/retry-scheduler/state.json'
     if not scheduler.exists():return None
@@ -111,6 +112,7 @@ def allocate_exact_retry(root,state,runner=None):
     assert before['machine_id']==state['machine_id'] and before['pending'] is None,'Pending retry batch requires explicit reconciliation'
     synchronize_retry_allowances(root,runner)
     command=[sys.executable,'tools/retry_scheduler_next.py','--limit','8']
+    if high_only:command.append('--high-only')
     inspected=json.loads(run_checked(root,command+['--inspect-only'],runner).stdout)
     assert not inspected.get('pending_requires_reconciliation'),inspected
     if not inspected['count']:return None
@@ -125,7 +127,7 @@ def allocate_exact_retry(root,state,runner=None):
     item={'batch':pending['batch'],'jobs':pending['jobs']}
     validate_prepared(root,item)
     path=root/'runtime/after128-continuous-plan.json';plan=read_json(path)
-    assert len(plan['batches'])==state['next_index'],'Queue changed during sole-owner retry claim'
+    assert len(plan['batches'])==state['next_index'] or (low_enabled(root) and all(not high_in_item(root,item,read_json(root/'mod_nailong/data/production-priority.json')['sources']) for item in plan['batches'][state['next_index']:])),'Only uncalled LOW windows may precede a newly due HIGH retry'
     plan['batches'].append(item);write_json(path,plan)
     evidence=root/f"mod_nailong/data/production-retry-refills/{state['run_id']}-{state['next_index']}.json"
     assert not evidence.exists()
@@ -151,7 +153,28 @@ def ready_art(root,expected_machine):
     priority=read_json(root/'mod_nailong/data/production-priority.json')['sources']
     failures=read_json(root/'mod_nailong/data/generation-failures.json')['attempts']
     accepted=accepted_retry_art_proofs(root,rows,latest)
-    return eligible_entries(reports,rows,latest,service_held_keys(latest,priority,failures,accepted['proofs'])|independent_art_holds(root))
+    return eligible_entries(reports,rows,latest,service_held_keys(latest,priority,failures,accepted['proofs'])|independent_art_holds(root),priority)
+
+def prioritize_high(root,state,runner=None):
+    """Move uncalled HIGH ahead of LOW without changing frozen jobs or completed windows."""
+    if not low_enabled(root):return
+    path=root/'runtime/after128-continuous-plan.json';plan=read_json(path);index=state['next_index']
+    priority=read_json(root/'mod_nailong/data/production-priority.json')['sources']
+    if index==len(plan['batches']) or high_in_item(root,plan['batches'][index],priority):return
+    assert len(read_json(root/plan['batches'][index]['jobs']))==1,'LOW windows must recheck HIGH before each call'
+    high=next((i for i in range(index+1,len(plan['batches'])) if high_in_item(root,plan['batches'][i],priority)),None)
+    if high is None:
+        ready=ready_art(root,state['machine_id'])
+        if any(priority[e['source_sha256']]['high_priority'] for _,e in ready):
+            batch=state['run_id']+'-batch'+str(len(plan['batches']))
+            run_checked(root,[sys.executable,'mod_nailong/tools/prepare_ready_art_reviews.py',batch,str(len(plan['batches'])),'--inbox'],runner)
+        else:allocate_exact_retry(root,state,runner,high_only=True)
+        plan=read_json(path)
+        high=next((i for i in range(index+1,len(plan['batches'])) if high_in_item(root,plan['batches'][i],priority)),None)
+    if high is not None:
+        item=plan['batches'].pop(high);plan['batches'].insert(index,item);write_json(path,plan)
+        folder=root/'mod_nailong/data/production-priority-dispatches';receipt=folder/(state['run_id']+'-'+str(index)+'.json');assert not receipt.exists()
+        write_json(receipt,{'machine_id':state['machine_id'],'observed_at_utc':utc_now(),'window_index':index,'prior_plan_index':high,'prioritized_HIGH':item,'scope':'Same owner, no active call. Only the uncalled plan suffix reordered; job bytes, attempts, consumed retry counters and completed windows unchanged.'})
 
 def refill_reviewed_backlog(root,expected_machine,runner=None,selector=None):
     """Prepare future windows between imports while the current window continues."""
@@ -169,7 +192,7 @@ def refill_reviewed_backlog(root,expected_machine,runner=None,selector=None):
     index=len(plan);batch=owner['run_id']+'-batch'+str(index)
     run_checked(root,[sys.executable,'mod_nailong/tools/prepare_ready_art_reviews.py',batch,str(index),'--inbox'],runner)
     item=read_json(root/'runtime/after128-continuous-plan.json')['batches'][index]
-    count=validate_prepared(root,item)
+    count=sum(validate_prepared(root,v) for v in read_json(root/'runtime/after128-continuous-plan.json')['batches'][index:])
     return {'prepared':True,'batch':batch,'index':index,'requests':count,'queued_before':queued,'scope':'Prepared by sole producer between imports; current window has not ended and reviewers continue independently.'}
 
 def next_item(root,state,runner=None):
@@ -182,15 +205,23 @@ def next_item(root,state,runner=None):
         from mod_nailong.tools.production_queue import apply_reviews
         boundary=run_boundary(root,state['machine_id'],apply_reviews=apply_reviews)
         assert boundary.get('status')!='preparation_requires_reconciliation',boundary
+    prioritize_high(root,state,runner)
     plan=read_json(root/'runtime/after128-continuous-plan.json')['batches'];index=state['next_index']
     assert index<=len(plan),'Logical cursor exceeds durable plan'
+    if index<len(plan) and low_enabled(root):
+        priority=read_json(root/'mod_nailong/data/production-priority.json')['sources']
+        if not high_in_item(root,plan[index],priority):
+            high=immediate_high_work(root,state['machine_id'])
+            if high['available']:return {'ready':False,'reason':'awaiting_available_HIGH_supply','HIGH':high,'next_index':index}
     if index==len(plan):
         ready=ready_art(root,state['machine_id'])
-        if not ready:
-            if allocate_exact_retry(root,state,runner) is None:
+        priority=read_json(root/'mod_nailong/data/production-priority.json')['sources'] if low_enabled(root) else None
+        high_art=ready and (priority is None or any(priority[e['source_sha256']]['high_priority'] for _,e in ready))
+        retry=None if high_art else allocate_exact_retry(root,state,runner)
+        if not high_art and retry is None and not ready:
                 checkpoint=checkpoint_when_idle(root,state,runner)
                 return {'ready':False,'reason':'no_current_allowed_manual_rejection_prepared_job_or_exact_due_retry','next_index':index,'idle_checkpoint':checkpoint}
-        else:
+        if high_art or (retry is None and ready):
             batch=state['run_id']+'-batch'+str(index)
             command=[sys.executable,'mod_nailong/tools/prepare_ready_art_reviews.py',batch,str(index),'--inbox']
             run_checked(root,command,runner)

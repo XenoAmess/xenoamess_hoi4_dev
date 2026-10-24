@@ -7,8 +7,10 @@ from tools.common import ROOT,read_json,write_json,machine_id,utc_now,file_sha25
 from mod_nailong.tools.image_retries import policy,sync
 from tools.retry_actual_proof import load_actual_request
 from mod_nailong.tools.retry_limits import retry_limit
+from tools.production_priority_gate import low_enabled
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--inspect-only',action='store_true')
+parser.add_argument('--high-only',action='store_true')
 parser.add_argument('--limit',type=int,choices=range(1,13),default=12)
 args=parser.parse_args()
 inspect=args.inspect_only
@@ -23,7 +25,7 @@ settings=policy()
 now=datetime.now(timezone.utc);ready=[];unavailable=[]
 for key,c in pool['requests'].items():
  q=queue[key]
- if q['retries_used']>=retry_limit(settings,key) or q['state']!='cooling_down' or not priority[key]['high_priority'] or datetime.fromisoformat(q['not_before_utc'])>now:continue
+ if q['retries_used']>=retry_limit(settings,key) or q['state']!='cooling_down' or (not priority[key]['high_priority'] and (args.high_only or not low_enabled(ROOT))) or datetime.fromisoformat(q['not_before_utc'])>now:continue
  try:
   a=read_json(ROOT/f'mod_nailong/data/generation-requests/{key}.json')['attempts'][-1]
   assert a['status']=='failed' and 'moderation_blocked' in a['error']
@@ -38,7 +40,9 @@ for key,c in pool['requests'].items():
   # Previous manual content review remains valid only for identical prompt/input bytes.
   ready.append(dict(c,not_before_utc=q['not_before_utc'],verified_failed_attempt=a['number'],verified_actual_snapshot_sha256=v['actual_request_snapshot_sha256'],retries_used_before_claim=q['retries_used'],next_retry_number=q['retries_used']+1))
  except (AssertionError,KeyError,FileNotFoundError) as error:unavailable.append({'source_sha256':key,'reason':type(error).__name__+': '+str(error)})
-ready.sort(key=lambda c:(c['not_before_utc'],c['key']));ready=ready[:args.limit]
+ready.sort(key=lambda c:(not priority[c['key']]['high_priority'],c['not_before_utc'],c['key']));ready=ready[:args.limit]
+if ready and priority[ready[0]['key']]['high_priority']:ready=[c for c in ready if priority[c['key']]['high_priority']]
+elif ready:ready=ready[:1]
 if inspect or not ready:
  print(json.dumps({'count':len(ready),'source_keys':[c['key'] for c in ready],'unavailable':unavailable,'inspect_only':inspect},ensure_ascii=True));raise SystemExit(0)
 # This process is invoked by the same producer only after its previous batch ended.

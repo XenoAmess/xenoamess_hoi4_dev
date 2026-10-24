@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now
+from tools.production_priority_gate import tier_allowed
 
 ALPHA_POLICY='visible-alpha-v1'
 SOURCE_POLICY='visible-source-differences-v1'
@@ -45,9 +46,10 @@ def reserve_candidates(root,rows,priority,seen,slot,limit=4,deferred=None):
     # One slot returns new production feedback promptly; the other drains older
     # pending work. Both still reserve exact current SHAs under the same lock.
     ordered=sorted(rows.items(),key=lambda item:item[1].get('imported_at_utc',''),reverse=slot=='a')
+    ordered.sort(key=lambda item:not priority[item[0]]['high_priority'])
     for key,row in ordered:
         digest=row.get('generated_fullsize_sha256')
-        if row.get('review') not in {'pending','rejected'} or not priority[key]['high_priority'] or not digest or (key,digest) in seen:continue
+        if row.get('review') not in {'pending','rejected'} or not tier_allowed(root,priority[key]) or not digest or (key,digest) in seen:continue
         missing=[field for field in ('request_journal','prompt') if not isinstance(row.get(field),str) or not row[field]]
         if missing:
             # Import publishes portrait pixels before attaching all request metadata.

@@ -26,6 +26,14 @@ class FreshObservationTests(unittest.TestCase):
   a,b=self.claim('a'),self.claim('b');self.assertEqual(len(a['sources']),4);self.assertEqual(len(b['sources']),4)
   self.assertFalse({s['key'] for s in a['sources']}&{s['key'] for s in b['sources']});resumed=self.claim();self.assertTrue(resumed['resume_existing_observation']);self.assertEqual(resumed['allocation'],a['allocation'])
   self.assertFalse((self.data/'generation-requests').exists())
+ def test_authorized_low_observation_waits_until_high_fresh_supply_is_empty(self):
+  from tools.production_priority_gate import POLICY
+  write_json(self.data/'production-scheduling-policy.json',{'id':POLICY,'user_authorization_quote':'fixture','allow_low_when_no_immediate_high':True})
+  p=read_json(self.data/'production-priority.json');p['sources'][self.keys[0]]['high_priority']=False;write_json(self.data/'production-priority.json',p)
+  self.assertNotIn(self.keys[0],{s['key'] for s in queue.candidates(self.root)})
+  write_json(self.data/'generated.json',{'portraits':{k:{} for k in self.keys[1:]}})
+  self.assertEqual([s['key'] for s in queue.candidates(self.root)],[self.keys[0]])
+  self.assertEqual(queue.candidates(self.root,high_only=True),[])
  def test_high_nonperson_generated_and_unresolved_families_are_enforced(self):
   p=read_json(self.data/'production-priority.json');p['sources'][self.keys[0]]['high_priority']=False
   p['sources'][self.keys[3]]['family']=p['sources'][self.keys[4]]['family']='same';write_json(self.data/'production-priority.json',p)
