@@ -178,6 +178,18 @@ def prepare(key, prompt, edit_existing=False, *, replacement_reason=None, opaque
     journal=read_json(file) if file.exists() else {"schema":"naiwa-generation-requests-v1","source_sha256":key,"attempts":[]}
     if journal["attempts"] and journal["attempts"][-1]["status"]=="prepared":
         raise SystemExit("Unresolved prepared request; inspect before resubmitting")
+    feature_policy = None
+    priority_path = MOD/'data/production-priority.json'
+    if not edit_existing and not record and not journal['attempts'] and priority_path.exists():
+        tier = read_json(priority_path)['sources'].get(key, {})
+        if tier.get('high_priority') is False:
+            feature_policy = 'fresh-low-visible-features-v1'
+            prompt = ('Source-feature priority: Image 1 controls the actual visible hair, eyebrow HAIR, facial hair and clothing. '
+                      'Image 2 controls mascot anatomy and identity only; its bare scalp or lack of eyebrows must not erase source-visible hair. '
+                      'Retain every clearly visible source eyebrow as colored HAIR in its actual shape, extent and color, not a yellow ridge, socket shadow or cap shadow. '
+                      'Keep the source hairstyle and any visible temple/side hair and beard extent. Features actually covered or absent in the source stay covered or absent. '
+                      'The rounded chin meets a VERY SHORT BROAD neck transition. Refit the existing neckline and lapels around the compact head while preserving their open/closed style; do not fill an open V with a long narrow yellow funnel.\n'
+                      + prompt)
     if replacement_reason is not None and not replacement_reason.strip():
         raise ValueError('Replacement reason must be explicit and nonempty')
     if record and not edit_existing and not replacement_reason:
@@ -224,6 +236,8 @@ def prepare(key, prompt, edit_existing=False, *, replacement_reason=None, opaque
         **alpha_policy}
     if replacement_reason:
         attempt['replacement_reason']=replacement_reason
+    if feature_policy:
+        attempt['feature_preservation_prompt_policy']=feature_policy
     journal["attempts"].append(attempt);write_json(file,journal)
     return {"key":key,"source":asset["path"],"references":paths,"original":str(source),
         "size":asset["size"],"transparent":transparent,"prompt":prompt,

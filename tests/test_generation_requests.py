@@ -137,6 +137,29 @@ class RequestImportTests(unittest.TestCase):
             self.assertEqual(target['derived_game_image_sha256'],file_sha256(game))
             self.assertEqual(file_sha256(game),row['image_sha256'])
 
+    def test_fresh_low_feature_hint_is_frozen_with_unchanged_input_bytes(self):
+        for high in (False, True):
+            with self.subTest(high=high),tempfile.TemporaryDirectory() as temp:
+                root=Path(temp);mod,key,source,game,master,row=self.edit_fixture(root)
+                write_json(mod/'data/generated.json',{'portraits':{}})
+                write_json(mod/'data/production-priority.json',{'sources':{key:{'high_priority':high}}})
+                inputs=[file_sha256(source),file_sha256(mod/'assets/reference/naiwa.png')]
+                base='Use the actually viewed source features and user anatomy reference.'
+                with patch.object(requests,'ROOT',root),patch.object(requests,'MOD',mod),patch.object(requests,'REQUESTS',mod/'data/generation-requests'),patch.object(requests,'original',return_value=source),patch('mod_nailong.tools.image_retries.require_editable_service_state'):
+                    job=requests.prepare(key,base,False)
+                    path=mod/f'data/generation-requests/{key}.json';before=file_sha256(path)
+                    with self.assertRaisesRegex(SystemExit,'Unresolved prepared request'):
+                        requests.prepare(key,'Another prompt',False)
+                    self.assertEqual(file_sha256(path),before)
+                a=read_json(path)['attempts'][0]
+                self.assertEqual(a['prompt'],job['prompt'])
+                self.assertEqual((root/a['prompt_file']).read_text(encoding='utf-8'),job['prompt'])
+                self.assertEqual(file_sha256(root/a['prompt_file']),a['prompt_sha256'])
+                self.assertEqual([file_sha256(Path(p)) for p in job['references']],inputs)
+                self.assertEqual('feature_preservation_prompt_policy' in a,not high)
+                if high:self.assertEqual(job['prompt'],base)
+                else:self.assertTrue(job['prompt'].endswith(base));self.assertNotEqual(job['prompt'],base)
+
     def test_original_based_replacement_requires_reason_before_journaling(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);mod,key,source,game,master,row=self.edit_fixture(root)
