@@ -1,5 +1,9 @@
 # 钢奶龙心：LOW 已恢复生产
 
+v6首个素材快照 `848a9e2a2afb312080ea6b709c1ed1cfe4dc0c10` 新增16张原始PNG、30,700,239 bytes，索引6184项；已于UTC03:35:37.566250普通推送。UTC03:36:49读取时其原件核验仍在进行，不能提前计为核验通过，后续以 `runtime/checkpoint-resumed-low-v6-auto-1-20261025.json` 为准。图片生成继续，UTC03:35实际17次v6返回后，本轮共178张PNG，LOW109/703合格、30待审；这些是对应时间点的记录。
+
+root原图观察已实际完成11组44张。第11组的分配命令超过首次10秒返回窗口后，root误把尚无exit_code的session结果当作失败，且未保存该次session ID/stdout；命令实际已完成分配。只读取并接管它已写出的同一allocation，再逐张观察和完成，未重跑claim或图片。当前观察完成函数改为等待已有session真实退出，完整当前源码另存 [输入辅助后续源码](2026-10-25-low-v6-input-followup-sources.json)，此前归档保持旧字节；真实恢复边界见 `mod_nailong/data/production-owner-failures/20261025-v6-local-input-wrapper-reconciliation.json`。该记录另保留UTC03:26观察到的a107已领取/b98已完成状态，以及随后对既有a/b turn的中断接续，不虚构个别动作UTC或延迟原因，不新增agent、重置截止或自动审图。
+
 UTC03:13后，v5提交器已实际完成最后的 `baa4147d77d34d611826995b7b69d38270547102` 原件字节核验并释放唯一锁，前161张本轮PNG全部交付。v6的Git-only接续进程 **17696** 随后启动并独立核实了自己的唯一锁/状态；每16次v6完成请求或本阶段安全停点快照，截止从v6实际创建时间计算为UTC09:33:54，不倒改v5预算。实际启动记录见 `mod_nailong/data/production-resumptions/20261025-low-v6-publisher-started.json`，其中保留执行的启动器源码、归档源码SHA和旧提交器完成事实。此时新提交器仍在等待首次快照，不能将后续PNG提前称为已推送或核验。
 
 UTC2026-10-25T03:03:20Z，v5实际完成最后一个在途窗口582后，在原时间预算的安全边界停止并释放owner：171次实际调用、161张PNG、9次内容拒绝和1次认证错误。没有重放窗口，也没有重置旧截止。原内容拒绝继续各自冷却，HIGH服务拒绝继续跳过。
