@@ -1,5 +1,7 @@
 # 钢奶龙心：LOW 已恢复生产
 
+UTC2026-10-25T05:18:26.825718+00:00：v6已实际在安全边界结束，50次调用/47张PNG/3次内容拒绝，无认证错误，next633、v6-window632；旧截止与所有回执不变。唯一内置执行已由 **exec cell654** 实际领取v7（created 2026-10-25T05:11:51.649293+00:00），最多64计划请求或7200秒，从真实游标接续，非图片重放。此前累计208张本轮PNG；完整远端核验在UTC04:51实际为191张，之后批次须看真实回执，不能提前算作通过。root旧b阶段已完成8组（4组返图、4组原图），共8张输出通过/8张返修及16张原图描述，b agent仍停；原a110已分配组继续完成。root新b阶段独立最多16组，截止2026-10-25T07:11:51.649293+00:00，旧计数不重置。[v7源码与审查辅助归档](2026-10-25-low-v7-helper-sources.json)和 `mod_nailong/data/production-resumptions/20261025-low-v7-started.json` 保存精确绑定、阶段和容量。v6 Git-only进程17696仍负责自己最后快照核验，v7提交器尚未启动，不并发抢锁。
+
 UTC04:22:36实际状态：v6已完成34次调用，本轮累计193张PNG、11次内容拒绝和1次认证错误；LOW117/703合格、33待审、5美术拒绝。第二个v6快照 `e64939d667f9054bb472cf73b7f9afc6f2c16722` 新增14张原始PNG，提交器17696仍在推送/原件核验阶段，不能提前算作核验通过；前177张的真实原件核验仍有效。
 
 为清待审积压，原b agent已确认b99没有config/report/stage/global/complete写入或未决工具，并结束本turn。root亲自接管**同一个b槽**，a agent继续，只保留a/root两个输出审查执行者，没有第三槽或新agent。root已独立查看b99四张native/nearest、完整母版、全白青alpha和参考图，并重新核验完整实际prompt、有序输入、flag、dispatch与保留缓存字节，未把b的文字当作自己看过。首组b99完成2通过/2返修；旧72a8adc2的完整背板已实际恢复并通过，另两张分别是双嘴和长柱形下脸/颈部缺陷。交接与完成审计为 `mod_nailong/data/production-review-handovers/20261025-b-root.json`、`20261025-b99-root-completed.json`，含实际辅助源码/完整绑定证据与观察时间。第一次complete因报告路径反斜线与分配器POSIX路径精确比较失败，发生在写完成回执之前；仅以原分配的正斜线路径补做complete成功，没有重做stage/global或图片。root b阶段最多8组/截止仍UTC05:03:54Z，状态 `runtime/root-b-review-v6-phase.json`，旧b计数与截止保留；不得唤醒b agent并与root同时审b。
