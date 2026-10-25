@@ -1,0 +1,73 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "recorded_at_utc": "2026-10-25T04:17:05Z",
+  "run_id": "resume-20261025-large-logical-queue-v6",
+  "slot": "b",
+  "allocated_tag": "rollingb99",
+  "operator": "Codex root",
+  "prior_agent": "/root/review_slot_b",
+  "prior_agent_final_handover": "b99 source/nearest/raw/white-cyan-alpha/reference viewed; binding saved, no config/report/stage/global/complete writes, no unresolved exec/asynchronous writes, v6 completion count0; stopped further review/claim.",
+  "independent_root_views": {
+    "started_at_utc": "2026-10-25T04:05:35Z",
+    "ended_at_utc": "2026-10-25T04:17:05Z",
+    "all_required_views_actually_returned": true,
+    "own_nearest4_views_actually_returned": true,
+    "raw_image_sha256s": [
+      "1ee6fbd8b0ecdbed1f43773f67a9e866906dc1716ee1018f56eccfc03005d594",
+      "24f062fc684df281eb561392ea4e1fc40ce6eb58687225fa6f3ec247201bb383",
+      "9169363f2d6c297428e31b6ae6289e76dae2337bd8b51e261bd9679946e8b6d8",
+      "b6918753e871dd012c983a6d58c4385f0a95cb77fe1545daf11e750a56bfc508"
+    ],
+    "matte_manifest": "runtime/resumed-20261024-fine-rollingb99-alpha/manifest.json",
+    "matte_manifest_sha256": "d918d6ef6c7c63246f24b1965a92571f7d0542dea0b53cd2dd71cba7c1db2d2e"
+  },
+  "independent_root_binding": {
+    "proof": "runtime/root-review-slot-b/rollingb99/verified-binding.json",
+    "proof_sha256": "e9cda3eec775216880ef00f44354fd951a34ec52b669b259a734028b7f06a11d",
+    "entries": 4,
+    "all_ordered_builtin_bindings_verified": true,
+    "raw_alpha_extrema": [
+      [
+        255,
+        255
+      ],
+      [
+        255,
+        255
+      ],
+      [
+        255,
+        255
+      ],
+      [
+        255,
+        255
+      ]
+    ]
+  },
+  "scope": "Root takes the existing b queue slot while a agent continues. Prior b agent stopped; only two output-review executors a/root, no new agent or third slot. Sole builtin producer remains cell532 and applies staged decisions at import boundaries. This is not a pause of the user task. Root current finite b scope <=8 groups or UTC05:03:54Z, preserving old b deadlines/counts. Role handover audit is recorded after the interruption/agent acknowledgement; exact individual message/interruption UTC was not captured.",
+  "root_finite_scope": {
+    "max_groups": 8,
+    "completed_groups": 0,
+    "deadline_utc": "2026-10-25T05:03:54Z"
+  },
+  "initial_local_verifier_error": "Unavailable prompt_sha256 import failed before any output directory/evidence; corrected to hashlib SHA256; actual independent verification subsequently passed. No image call or canonical write.",
+  "verification_helper_source": {
+    "path": "runtime/root-review-slot-b-verify-20261025.py",
+    "source": "\"\"\"Independent current source/raw/ordered builtin request verification, no approval.\"\"\"\nimport hashlib,json,re,sys\nfrom pathlib import Path\nfrom PIL import Image\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\ntag=sys.argv[1];assert re.fullmatch(r'rollingb[0-9]+',tag)\nslot=read_json(ROOT/'runtime/rolling-review-queue/slot-b.json');assert slot['status']=='assigned' and slot['tag']==tag and slot['machine_id']==machine_id()\nowner=read_json(ROOT/'runtime/rolling-production/owner.json');assert owner=={'run_id':'resume-20261025-large-logical-queue-v6','machine_id':machine_id()}\nassert read_json(ROOT/f'runtime/rolling-production/{owner[\"run_id\"]}.json')['status']=='running'\nassert not (ROOT/'runtime/rolling-review-queue/handoff-stop.json').exists() and not (ROOT/f'runtime/rolling-production/{owner[\"run_id\"]}-stop-requested.json').exists()\nmanifest=ROOT/slot['manifest'];assert file_sha256(manifest)==slot['manifest_sha256']\nout=ROOT/f'runtime/root-review-slot-b/{tag}';out.mkdir(parents=True,exist_ok=False)\nentries=[];reference=ROOT/'mod_nailong/assets/reference/naiwa.png';reference_sha=file_sha256(reference)\nrows=read_json(ROOT/'mod_nailong/data/generated.json')['portraits']\nfor page in read_json(manifest)['pages']:\n assert file_sha256(Path(page['path']))==page['sha256']\n for e in page['entries']:\n  key=e['source_sha256'];source=ROOT/f'runtime/references/{key}.png';raw=ROOT/e['generated_fullsize_image'];row=rows[key]\n  assert file_sha256(source)==e['original_png_sha256'] and file_sha256(raw)==e['generated_fullsize_sha256']==row['generated_fullsize_sha256']\n  assert file_sha256(ROOT/row['image'])==e['image_sha256']==row['image_sha256']\n  journal=ROOT/row['request_journal'];a=next(v for v in read_json(journal)['attempts'] if v['number']==e['attempt_number'])\n  assert a['method']=='built-in imagegen' and a['fullsize_sha256']==e['generated_fullsize_sha256']\n  dispatch=ROOT/f'runtime/production-queue/dispatch/{key}-{a[\"number\"]:03}.json';d=read_json(dispatch)\n  assert d['status']=='returned_image' and d['returned_image_sha256']==e['generated_fullsize_sha256']\n  snapshot=Path(d['actual_request_snapshot_file']);assert file_sha256(snapshot)==d['actual_request_snapshot_sha256']==a['actual_request_verification']['actual_request_snapshot_sha256']\n  s=read_json(snapshot);assert s['key']==key and s['prompt']==a['prompt'] and hashlib.sha256(s['prompt'].encode('utf-8')).hexdigest()==d['prompt_sha256']==a['prompt_sha256']\n  assert s['transparent']==a['transparent_background'] and a['actual_request_verification']['actual_recorded_before_call'] is True\n  paths=s.get('references',s.get('referenced_image_paths',[]));ordered=[file_sha256(Path(p)) for p in paths]\n  assert ordered==d['input_sha256'] and ordered[-1]==reference_sha and e['original_png_sha256'] in ordered\n  assert file_sha256(Path(d['returned_image']))==e['generated_fullsize_sha256']\n  with Image.open(source) as im:si=im.convert('RGBA')\n  with Image.open(raw) as im:ri=im.convert('RGBA')\n  nearest=out/f'{e[\"index\"]}-source-nearest4.png';si.resize((si.width*4,si.height*4),Image.Resampling.NEAREST).save(nearest)\n  def stats(im):\n   alpha=im.getchannel('A');hist=alpha.histogram()\n   return {'size':list(im.size),'alpha_extrema':list(alpha.getextrema()),'alpha_counts_252_255':{str(k):hist[k] for k in [252,253,254,255]}}\n  entries.append({**e,'source_image':source.relative_to(ROOT).as_posix(),'source_stats':stats(si),'raw_stats':stats(ri),'source_nearest4':nearest.relative_to(ROOT).as_posix(),'source_nearest4_sha256':file_sha256(nearest),'journal_sha256':file_sha256(journal),'dispatch_sha256':file_sha256(dispatch),'actual_snapshot_sha256':file_sha256(snapshot),'exact_prompt_sha256':a['prompt_sha256'],'ordered_input_sha256':ordered,'transparent':s['transparent'],'retained_builtin_cache_sha256':file_sha256(Path(d['returned_image'])),'binding_verified':True})\ntarget=out/'verified-binding.json'\nwrite_json(target,{'machine_id':machine_id(),'verified_at_utc':utc_now(),'observer':'Codex root, existing b slot takeover; no new reviewer slot','manifest':slot['manifest'],'manifest_sha256':file_sha256(manifest),'reference_sha256':reference_sha,'entries':entries,'scope':'Fresh independent byte/request verification only, no visual decision or canonical write. Root must actually view required original/raw/matte evidence independently.'})\nprint(json.dumps({'proof':target.relative_to(ROOT).as_posix(),'proof_sha256':file_sha256(target),'entries':len(entries),'all_ordered_builtin_bindings_verified':True,'raw_alpha_extrema':[e['raw_stats']['alpha_extrema'] for e in entries]},ensure_ascii=True))\n"
+  },
+  "initial_review_config": {
+    "manifest": "runtime/resumed-20261024-fine-rollingb99-alpha/manifest.json",
+    "report": "mod_nailong/data/resumed-20261024-rollingb99-agent-review.json",
+    "scope": "Codex root personally reviews existing slot b / rollingb99 after prior b agent explicitly confirmed no config/report/stage/global/complete or unresolved tool and stopped. No new review slot/agent. Actual root visual interval 2026-10-25T04:05:35Z to 2026-10-25T04:17:05Z includes interleaved production/source preparation, not continuous active review time. Independently viewed every exact native original, nearest4, complete unchanged raw, the entire white/cyan/alpha sheet and user reference; additional source3 upper-face pixels viewed. Independent current ordered builtin prompt/input/flag/dispatch/retained-cache proof runtime/root-review-slot-b/rollingb99/verified-binding.json SHA256 e9cda3eec775216880ef00f44354fd951a34ec52b669b259a734028b7f06a11d. Policies visible-alpha-v1, visible-source-differences-v1, hair-features-v1 and collar-fit-v1. Actual raw alpha255 throughout all four; first source243..255, others255; visible evidence, not numeric-only or flag-based decisions. ",
+    "approved": {
+      "1": "Current attempt3/raw1ee6fbd8 actually restores the complete smoky gray painted rectangle to all four edges, above/beside hair and shoulders; former attempt2 top/side backing-loss finding is absent in this exact new output. Whole white/cyan/alpha and full raw show no visible hole, transparency or halo/backing loss. Brown swept curled updo, sunglasses on crown, distinct brown eyebrows, large single tooth-showing smile, gold/pink drop earrings, pink checked blouse/buttons and open pale pointed collar retain source-visible groups, pose/crop/light. Broad short neck fits the preserved open collar with solid contact, no narrow stalk, clipping, floating cloth or white bib. Golden compact mascot face/green eyes, no human nose/ears or new facial hair. Exact tooth count, tiny earring relief and cloth weave remain unresolved micro-detail limits, not asserted matched under visible-source-differences-v1.",
+      "4": "Full raw and native/nearest source preserve cream fedora with broad dark-teal band, actual short brown temple hair, distinct hairy brows, ONE gold-rim monocle over screen-left eye with hanging curved chain, two visible screen-right cheek scar strokes, bare upper lip/chin and one firm closed mouth. Cream suit/white closed collar/dark-teal tie, source pose/crop/light and full gray painted backing preserved; compact chin meets widened collar through a short broad transition without stalk, clipping or bib. Full white/cyan/alpha show no visible holes, transparency or lost backing; actual raw255. Exact chain links, tiny scar-edge pixels and fabric weave cannot be proven from the small source; visible groups are checked, no invented microscopic match."
+    },
+    "rejected": {
+      "2": "Visible duplicate mouth: raw24f062fc has a distinct gray raised/slit-shaped mascot reference lip ABOVE the moustache AND a separate red/orange closed mouth below it. Exact source has a single mouth below the upper-lip moustache. Remove the upper gray slit/ridge and restore continuous smooth golden-yellow face there; retain exactly one stern closed/downturned mouth BELOW the original moustache. Preserve matching short brown hair/brows, close beard/moustache extent, navy suit/white shirt/red tie, crop/light/backing and sound compact collar. Full white/cyan/alpha show no visible holes or backing loss; actual raw255. Fine beard strands/tie weave remain micro-detail limits, not grounds for rejection.",
+      "3": "Visible tall straight-sided yellow lower-face/neck column descends into the white shirt instead of a compact rounded chin meeting a very short broad transition. Shorten that exposed yellow extension and raise/widen the existing collar naturally around the compact head; keep source screen-left pose, side-parted brown hair/sideburns and brows, smooth bare upper lip/chin, one stern mouth, white shirt/dark blue-gray tie and brown knitted V-neck sleeveless vest with white sleeve edges. Do not add a jacket, beard or white belly bib. Full raw/white/cyan/alpha preserve solid clothes and full gray backing with actual255, so rejection is collar/anatomy, not alpha. Tiny forehead highlight shape cannot securely be classified as a scar and no additional scar requirement is asserted; knit threads/hair strands remain source evidence limits."
+    },
+    "pending": {}
+  }
+}

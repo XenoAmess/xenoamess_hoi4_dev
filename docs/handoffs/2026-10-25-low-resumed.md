@@ -1,5 +1,9 @@
 # 钢奶龙心：LOW 已恢复生产
 
+UTC04:22:36实际状态：v6已完成34次调用，本轮累计193张PNG、11次内容拒绝和1次认证错误；LOW117/703合格、33待审、5美术拒绝。第二个v6快照 `e64939d667f9054bb472cf73b7f9afc6f2c16722` 新增14张原始PNG，提交器17696仍在推送/原件核验阶段，不能提前算作核验通过；前177张的真实原件核验仍有效。
+
+为清待审积压，原b agent已确认b99没有config/report/stage/global/complete写入或未决工具，并结束本turn。root亲自接管**同一个b槽**，a agent继续，只保留a/root两个输出审查执行者，没有第三槽或新agent。root已独立查看b99四张native/nearest、完整母版、全白青alpha和参考图，并重新核验完整实际prompt、有序输入、flag、dispatch与保留缓存字节，未把b的文字当作自己看过。首组b99完成2通过/2返修；旧72a8adc2的完整背板已实际恢复并通过，另两张分别是双嘴和长柱形下脸/颈部缺陷。交接与完成审计为 `mod_nailong/data/production-review-handovers/20261025-b-root.json`、`20261025-b99-root-completed.json`，含实际辅助源码/完整绑定证据与观察时间。第一次complete因报告路径反斜线与分配器POSIX路径精确比较失败，发生在写完成回执之前；仅以原分配的正斜线路径补做complete成功，没有重做stage/global或图片。root b阶段最多8组/截止仍UTC05:03:54Z，状态 `runtime/root-b-review-v6-phase.json`，旧b计数与截止保留；不得唤醒b agent并与root同时审b。
+
 UTC03:55:54.448634实际确认，`848a9e2a2afb312080ea6b709c1ed1cfe4dc0c10` 的16张新原始PNG已完成固定提交远端字节核验，累计177张本轮原始PNG已核验交付；Git-only进程17696已回到等待下一16次请求边界，last_checkpoint_requests=16。v6图片执行仍是cell532。UTC03:51:13本机LOW112/703合格；新增两个内容拒绝分别是78ba44b5（回执UTC03:46:05.646Z）和7fda8475（UTC03:49:58.551Z），原请求已保存并冷却，没有改词/改图或即时重试。root原图观察至UTC03:55:34已完成12组48张；a107已完成3通过/1返修，原v5历史计数48组保留，既有a槽开始独立v6阶段；b槽已实际领取b99。旧段落均保留各自时间边界，不能当作新的实时状态。
 
 v6首个素材快照 `848a9e2a2afb312080ea6b709c1ed1cfe4dc0c10` 新增16张原始PNG、30,700,239 bytes，索引6184项；已于UTC03:35:37.566250普通推送。UTC03:36:49读取时其原件核验仍在进行，不能提前计为核验通过，后续以 `runtime/checkpoint-resumed-low-v6-auto-1-20261025.json` 为准。图片生成继续，UTC03:35实际17次v6返回后，本轮共178张PNG，LOW109/703合格、30待审；这些是对应时间点的记录。
