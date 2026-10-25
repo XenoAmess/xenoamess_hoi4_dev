@@ -1,0 +1,38 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-25T03:03:50.166154+00:00",
+  "previous_run": "resume-20261025-large-logical-queue-v5",
+  "previous_state": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v5",
+    "next_index": 583,
+    "after_window": "resume-20261025-large-logical-queue-v5-window582",
+    "status": "stopped_at_safe_boundary",
+    "created_at_utc": "2026-10-24T20:59:30.009145+00:00",
+    "completed_windows": 171,
+    "completed_source_requests": 171,
+    "updated_at_utc": "2026-10-25T03:03:17.044580+00:00",
+    "last_local_reconciliation": "mod_nailong/data/production-owner-failures/20261025-v5-window553-preview-import-reconciliation.json",
+    "reason": "bounded_transport_or_run_duration",
+    "stopped_at_utc": "2026-10-25T03:03:20.482399+00:00"
+  },
+  "previous_state_sha256": "ade922f2298fe502d52510b8b5be32d00fa14a8bdc38b0d78c716d64a6fad021",
+  "previous_actual_invocations": 171,
+  "previous_actual_PNG_returns": 161,
+  "previous_content_refusals": 9,
+  "previous_authentication_errors": 1,
+  "following_run": "resume-20261025-large-logical-queue-v6",
+  "following_spec": {
+    "runId": "resume-20261025-large-logical-queue-v6",
+    "startIndex": 583,
+    "afterWindow": "resume-20261025-large-logical-queue-v5-window582",
+    "maxCalls": 64,
+    "maxPreviewBytes": 6553600,
+    "maxRunSeconds": 7200
+  },
+  "following_spec_sha256": "38fe0078c0ddcafa6f77f181f5f3d260be18acd518a35bdb8cdf17fbdd56bec3",
+  "status": "following_finite_run_prepared_owner_not_yet_claimed",
+  "user_scope": "Continue user-authorized LOW production with builtin imagegen and HIGH refusal skip. This follows an actual completed transport/duration boundary, not a user pause or credential failure.",
+  "scope": "New finite transport run, up to64 planned requests or2h. Prior v5 counts/deadline/receipts remain unchanged. Resume from actual cursor/after-window, never replay a completed or stopped request. Existing a/b reviewers only. Previous unique Git-only publisher must finish/read back and release its lock before the next publisher can start; generation does not await publication.",
+  "source_code": "\"\"\"Prepare a following finite run only AFTER v5 actually ends safely.\"\"\"\nimport json,sys\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom tools.rolling_production_queue import no_calling\nfrom tools.production_window_gate import inspect_window\nprevious='resume-20261025-large-logical-queue-v5';following='resume-20261025-large-logical-queue-v6'\nfolder=ROOT/'runtime/rolling-production';old_path=folder/(previous+'.json')\nold=read_json(old_path)\nassert old['machine_id']==machine_id() and old['status']=='stopped_at_safe_boundary'\nassert old['reason']=='bounded_transport_or_run_duration','User/auth/reconciliation stop is not an automatic phase continuation'\nassert not (folder/'owner.json').exists()\nassert read_json(folder/(previous+'-released-owner.json'))=={'run_id':previous,'machine_id':machine_id()}\nassert not (folder/(following+'.json')).exists()\nassert not (ROOT/'runtime/rolling-review-queue/handoff-stop.json').exists()\nno_calling(ROOT)\nassert read_json(ROOT/'runtime/retry-scheduler/state.json')['pending'] is None\nassert inspect_window(ROOT,old['after_window'],machine_id())['ready']\nplan=read_json(ROOT/'runtime/after128-continuous-plan.json')['batches']\nassert 0<=old['next_index']<=len(plan)\ncount=png=content=auth=0\nfor path in (ROOT/'mod_nailong/data/production-window-timings').glob(previous+'-window*-completed.json'):\n    receipt=read_json(path);assert receipt['status']=='completed'\n    resolved=[e for e in receipt['events'] if e['phase']=='image_resolved']\n    count+=len(resolved)\n    png+=sum(e['error'] is None for e in resolved)\n    content+=sum('moderation_blocked' in (e['error'] or '') for e in resolved)\n    auth+=sum('token_expired' in (e['error'] or '') for e in resolved)\nassert count==old['completed_source_requests'] and count==png+content+auth\nspec={'runId':following,'startIndex':old['next_index'],'afterWindow':old['after_window'],'maxCalls':64,'maxPreviewBytes':6553600,'maxRunSeconds':7200}\nspec_path=ROOT/'runtime/resume-low-v6-spec-20261025.json';assert not spec_path.exists()\naudit_path=ROOT/'mod_nailong/data/production-resumptions/20261025-low-v6.json';assert not audit_path.exists()\nwrite_json(spec_path,spec)\nwrite_json(audit_path,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'previous_run':previous,'previous_state':old,'previous_state_sha256':file_sha256(old_path),'previous_actual_invocations':count,'previous_actual_PNG_returns':png,'previous_content_refusals':content,'previous_authentication_errors':auth,'following_run':following,'following_spec':spec,'following_spec_sha256':file_sha256(spec_path),'status':'following_finite_run_prepared_owner_not_yet_claimed','user_scope':'Continue user-authorized LOW production with builtin imagegen and HIGH refusal skip. This follows an actual completed transport/duration boundary, not a user pause or credential failure.','scope':'New finite transport run, up to64 planned requests or2h. Prior v5 counts/deadline/receipts remain unchanged. Resume from actual cursor/after-window, never replay a completed or stopped request. Existing a/b reviewers only. Previous unique Git-only publisher must finish/read back and release its lock before the next publisher can start; generation does not await publication.','source_code':Path(__file__).read_text(encoding='utf-8')})\nprint(json.dumps({'prepared':True,'spec':spec,'previous_actual_invocations':count,'previous_PNGs':png,'previous_content_refusals':content,'previous_authentication_errors':auth,'new_image_calls':0,'owner_claimed':False},ensure_ascii=True))\n"
+}
