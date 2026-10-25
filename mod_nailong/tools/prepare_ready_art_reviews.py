@@ -36,6 +36,31 @@ def service_held_keys(keys,priority,failures,accepted_retry_keys=()):
         and not (key==other and key in accepted_retry_keys) for other in blocked)}
 
 
+def reviewed_canvas_reasons(root, chosen):
+    """Reuse explicit SHA-bound source observations for NEW art preparations."""
+    path=root/'mod_nailong/data/reviewed-source-canvas.json'
+    if not path.exists():return {}
+    registry=read_json(path)
+    assert registry['machine_id']==machine_id()
+    result={}
+    for _,entry in chosen:
+        key=entry['source_sha256'];proof=registry['sources'].get(key)
+        if proof is None:continue
+        assert proof['actually_viewed'] is True and proof['complete_painted_rectangle'] is True
+        assert isinstance(proof['opaque_canvas_reason'],str) and proof['opaque_canvas_reason'].strip()
+        source=root/f'runtime/references/{key}.png'
+        assert file_sha256(source)==proof['original_png_sha256']==entry['original_png_sha256']
+        from PIL import Image
+        with Image.open(source) as opened:extrema=list(opened.convert('RGBA').getchannel('A').getextrema())
+        assert extrema==proof['original_alpha_extrema'] and extrema[0]>0
+        assert proof['evidence'],'An explicit manual source observation is required'
+        for evidence in proof['evidence']:
+            target=(root/evidence['path']).resolve()
+            assert target.is_relative_to(root.resolve()) and file_sha256(target)==evidence['sha256']
+        result[key]={'opaque_canvas_reason':proof['opaque_canvas_reason']}
+    return result
+
+
 def main():
     batch,index,*names=sys.argv[1:]
     use_inbox='--inbox' in names;names=[name for name in names if name!='--inbox']
@@ -81,7 +106,7 @@ def main():
     subprocess.run([sys.executable,'mod_nailong/tools/production_queue.py','apply-reviews'],cwd=ROOT,check=True)
     keys=[e['source_sha256'] for p,e in chosen]
     write_json(selection,{'schema':'naiwa-exact-art-review-selection-v1','entries':[{'source_sha256':e['source_sha256'],'generated_fullsize_sha256':e['generated_fullsize_sha256'],'report':p.relative_to(ROOT).as_posix(),'report_sha256':file_sha256(p)} for p,e in chosen]})
-    canvas=ROOT/f'runtime/ready-art-{batch}-canvas.json';assert not canvas.exists();write_json(canvas,{'sources':{}})
+    canvas=ROOT/f'runtime/ready-art-{batch}-canvas.json';assert not canvas.exists();write_json(canvas,{'sources':reviewed_canvas_reasons(ROOT,chosen)})
     used=list(dict.fromkeys(p for p,e in chosen))
     receipt=ROOT/f'mod_nailong/data/production-ready-refills/{batch}.json';assert not receipt.exists()
     write_json(receipt,{'machine_id':machine_id(),'claimed_at_utc':utc_now(),'source_keys':keys,'report_evidence':[{'path':p.relative_to(ROOT).as_posix(),'sha256':file_sha256(p)} for p in used],'inbox_evidence':[proof for path,proof in inbox if path in used],'accepted_exact_retry_art_proofs':{k:accepted['proofs'][k] for k in keys if k in accepted['proofs']},'scope':'Sole executor selects existing actual SHA-bound rejections immediately when a known or explicitly queued manual report is ready. Does not wait for other reports, infer art approval or change failed requests. Exact retries which actually returned the current rejected PNG may reach the existing editable-service proof; other unresolved family failures remain blocking. Full canonical/raw/boundary checks remain in the preparer.'})
