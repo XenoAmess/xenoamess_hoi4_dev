@@ -1,9 +1,13 @@
 """Defer known same-person variants after a service refusal, retaining distinct people."""
 import sys,json
+from functools import lru_cache
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,utc_now,machine_id
 
+# This parses only the supplied path text, never a file or current service state.
+# Repeated family checks keep their live identities/refusals and exact rules.
+@lru_cache(maxsize=16384)
 def surname(path):
  stem=Path(path).stem.lower()
  if 'generic' in stem:return None
