@@ -1,0 +1,37 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-25T10:02:42.628324+00:00",
+  "previous_run": "resume-20261025-large-logical-queue-v8",
+  "previous_state": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v8",
+    "next_index": 686,
+    "after_window": "resume-20261025-large-logical-queue-v8-window685",
+    "status": "stopped_at_safe_boundary",
+    "created_at_utc": "2026-10-25T07:47:50.498851+00:00",
+    "completed_windows": 17,
+    "completed_source_requests": 17,
+    "updated_at_utc": "2026-10-25T09:59:55.118462+00:00",
+    "reason": "bounded_transport_or_run_duration",
+    "stopped_at_utc": "2026-10-25T09:59:56.962489+00:00"
+  },
+  "previous_state_sha256": "ba9ab5abbcc1d3d9e2ed58bee2324016b1a3add0af395606e6dd1eb924e3d378",
+  "previous_actual_invocations": 17,
+  "previous_actual_PNG_returns": 17,
+  "previous_content_refusals": 0,
+  "previous_authentication_errors": 0,
+  "following_run": "resume-20261025-large-logical-queue-v9",
+  "following_spec": {
+    "runId": "resume-20261025-large-logical-queue-v9",
+    "startIndex": 686,
+    "afterWindow": "resume-20261025-large-logical-queue-v8-window685",
+    "maxCalls": 64,
+    "maxPreviewBytes": 6553600,
+    "maxRunSeconds": 7200
+  },
+  "following_spec_sha256": "f35bb7380683196a03e95691e39e56901c4fc5aaa7d1bcbc78f7ea0173e61ee2",
+  "status": "following_finite_run_prepared_owner_not_yet_claimed",
+  "user_scope": "Continue explicitly authorized LOW production using built-in imagegen; skip service-refused HIGH without clearing incomplete counts or retry consumption.",
+  "scope": "New finite transport phase only after cell711 actually finished, up to64 planned requests or2h. Prior v8 counts/deadline/receipts remain unchanged; resume actual cursor/after-window without replay. Existing a/root output reviewers only, b agent stopped. In-flight old review groups may finish; no old deadline reset. Prior unique Git-only publisher must actually finish/read back/release its lock before any new publisher starts; generation continues independently.",
+  "source_code": "\"\"\"Prepare a fresh finite phase only after the actual safe end of v8.\"\"\"\nimport json,sys\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom tools.rolling_production_queue import no_calling\nfrom tools.production_window_gate import inspect_window\nprevious='resume-20261025-large-logical-queue-v8';following='resume-20261025-large-logical-queue-v9'\nfolder=ROOT/'runtime/rolling-production';old_path=folder/(previous+'.json');old=read_json(old_path)\nassert old['machine_id']==machine_id() and old['status']=='stopped_at_safe_boundary'\nassert old['reason']=='bounded_transport_or_run_duration','No automatic continuation after user/auth/uncertain stop'\nassert not (folder/'owner.json').exists()\nassert read_json(folder/(previous+'-released-owner.json'))=={'run_id':previous,'machine_id':machine_id()}\nassert not (folder/(following+'.json')).exists()\nassert not (ROOT/'runtime/rolling-review-queue/handoff-stop.json').exists()\nno_calling(ROOT)\nassert read_json(ROOT/'runtime/retry-scheduler/state.json')['pending'] is None\nassert inspect_window(ROOT,old['after_window'],machine_id())['ready']\nplan=read_json(ROOT/'runtime/after128-continuous-plan.json')['batches'];assert 0<=old['next_index']<=len(plan)\ncount=png=content=auth=0\nfor path in (ROOT/'mod_nailong/data/production-window-timings').glob(previous+'-window*-completed.json'):\n receipt=read_json(path);assert receipt['status']=='completed'\n resolved=[e for e in receipt['events'] if e['phase']=='image_resolved'];count+=len(resolved)\n png+=sum(e['error'] is None for e in resolved)\n content+=sum('moderation_blocked' in (e['error'] or '') for e in resolved)\n auth+=sum('token_expired' in (e['error'] or '') for e in resolved)\nassert count==old['completed_source_requests'] and count==png+content+auth\nspec={'runId':following,'startIndex':old['next_index'],'afterWindow':old['after_window'],'maxCalls':64,'maxPreviewBytes':6553600,'maxRunSeconds':7200}\nspec_path=ROOT/'runtime/resume-low-v9-spec-20261025.json';assert not spec_path.exists()\naudit_path=ROOT/'mod_nailong/data/production-resumptions/20261025-low-v9.json';assert not audit_path.exists()\nwrite_json(spec_path,spec)\nwrite_json(audit_path,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'previous_run':previous,'previous_state':old,'previous_state_sha256':file_sha256(old_path),'previous_actual_invocations':count,'previous_actual_PNG_returns':png,'previous_content_refusals':content,'previous_authentication_errors':auth,'following_run':following,'following_spec':spec,'following_spec_sha256':file_sha256(spec_path),'status':'following_finite_run_prepared_owner_not_yet_claimed','user_scope':'Continue explicitly authorized LOW production using built-in imagegen; skip service-refused HIGH without clearing incomplete counts or retry consumption.','scope':'New finite transport phase only after cell711 actually finished, up to64 planned requests or2h. Prior v8 counts/deadline/receipts remain unchanged; resume actual cursor/after-window without replay. Existing a/root output reviewers only, b agent stopped. In-flight old review groups may finish; no old deadline reset. Prior unique Git-only publisher must actually finish/read back/release its lock before any new publisher starts; generation continues independently.','source_code':Path(__file__).read_text(encoding='utf-8')})\nprint(json.dumps({'prepared':True,'spec':spec,'previous_actual_invocations':count,'previous_PNGs':png,'previous_content_refusals':content,'previous_authentication_errors':auth,'new_image_calls':0,'owner_claimed':False},ensure_ascii=True))\n"
+}

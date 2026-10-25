@@ -1,0 +1,122 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-25T10:27:04.099542+00:00",
+  "run_id": "resume-20261025-large-logical-queue-v9",
+  "actual_current_production": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v9",
+    "next_index": 698,
+    "after_window": "resume-20261025-large-logical-queue-v9-window697",
+    "status": "running",
+    "created_at_utc": "2026-10-25T10:04:47.951076+00:00",
+    "completed_windows": 12,
+    "completed_source_requests": 12,
+    "updated_at_utc": "2026-10-25T10:26:52.247306+00:00"
+  },
+  "actual_current_phase_counts": {
+    "actual_calls": 12,
+    "PNG_returns": 11,
+    "errors": [
+      {
+        "key": "e8db4f53bf2aa4f6f4d72600aa9fb760ccd79ff75174d26562feb1e174443a93",
+        "batch": "resume-fresh-observed-20261025T094019-b-0d9850a4-low3",
+        "observed_at_utc": "2026-10-25T10:11:07.066Z",
+        "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID f8212b39-8e3d-4ad1-b26c-365a99540694.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")"
+      }
+    ]
+  },
+  "own_raw_PNGs_delivered_and_verified_before_v9": 260,
+  "last_tail_publication_commit": "cb7915be8b009c6bc8c85b4ba55024c3f59a0e59",
+  "last_tail_completed_at_utc": "2026-10-25T10:07:49.718731+00:00",
+  "old_publisher_tail_reconciled": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "pid": 5372,
+    "run_id": "resume-20261025-large-logical-queue-v7",
+    "started_at_utc": "2026-10-25T05:31:34.540176+00:00",
+    "production_created_at_utc": "2026-10-25T05:11:51.649293+00:00",
+    "original_deadline_utc": "2026-10-25T11:41:51.649293+00:00",
+    "checkpoints": [
+      {
+        "batch": "resumed-low-v7-auto-1-20261025",
+        "commit": "d2bd73ef48ecad7cf491326c6e366aa09c2a89b9",
+        "completed_requests_at_snapshot": 16,
+        "new_original_PNGs": 16
+      },
+      {
+        "batch": "resumed-low-v7-auto-2-20261025",
+        "commit": "e59a09b9f939afae28e718f2cca3d53728ffd45b",
+        "completed_requests_at_snapshot": 32,
+        "new_original_PNGs": 15
+      }
+    ],
+    "scope": "Finite Git-only successor after the prior publisher actually finished/released its unique lock. No generation, output approval, canonical writes or image request replay. Normal LOW snapshots, fast-forward pushes and exact pinned original-byte verification.",
+    "status": "finished_at_owner_boundary_or_original_deadline",
+    "last_checkpoint_requests": 36,
+    "observed_at_utc": "2026-10-25T07:03:25.757640+00:00",
+    "last_completed_requests": 36,
+    "last_commit": "cb7915be8b009c6bc8c85b4ba55024c3f59a0e59",
+    "error": "Traceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\low-scoped-publisher-following-run-20261025.py\", line 52, in <module>\n    checked([sys.executable,str(ROOT/'tools/production_checkpoint_publish.py'),receipt['commit'],batch])\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\low-scoped-publisher-following-run-20261025.py\", line 27, in checked\n    if r.returncode:raise RuntimeError(r.stdout+'\\n'+r.stderr)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: \nTraceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\production_checkpoint_publish.py\", line 40, in <module>\n    synchronization=rebase_validated_commit(commit,label)\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\isolated_production_sync.py\", line 96, in rebase_validated_commit\n    raise RuntimeError('Remote changes produced a different commit; validate that result before publishing. The live primary worktree is unchanged.')\nRuntimeError: Remote changes produced a different commit; validate that result before publishing. The live primary worktree is unchanged.\n\n",
+    "finished_at_utc": "2026-10-25T10:07:51.629134+00:00",
+    "reconciled_at_utc": "2026-10-25T10:07:51.629150+00:00",
+    "reconciliation": "mod_nailong/data/production-resumptions/20261025-low-v7-tail-reconciled.json",
+    "original_error_preserved": true,
+    "reconciled_checkpoints": [
+      {
+        "batch": "resumed-low-v7-auto-2-rebased-20261025",
+        "commit": "ab128f0719e20b986280308bf6b89af59cb43b63",
+        "recovery_of": "e59a09b9f939afae28e718f2cca3d53728ffd45b",
+        "new_original_PNGs": 15
+      },
+      {
+        "batch": "resumed-low-v7-recovery-tail-20261025",
+        "commit": "cb7915be8b009c6bc8c85b4ba55024c3f59a0e59",
+        "new_original_PNGs": 21,
+        "scope": "Includes actual cross-phase LOW tail snapshot, not claimed all v7-only."
+      }
+    ]
+  },
+  "current_single_Git_only_publisher": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "pid": 17656,
+    "run_id": "resume-20261025-large-logical-queue-v9",
+    "started_at_utc": "2026-10-25T10:16:27.322720+00:00",
+    "production_created_at_utc": "2026-10-25T10:04:47.951076+00:00",
+    "original_deadline_utc": "2026-10-25T16:34:47.951076+00:00",
+    "checkpoints": [],
+    "scope": "Finite Git-only successor after the prior publisher actually finished/released its unique lock. No generation, output approval, canonical writes or image request replay. Normal LOW snapshots, fast-forward pushes and exact pinned original-byte verification.",
+    "status": "waiting_for_next_16_completed_requests",
+    "last_checkpoint_requests": 0,
+    "observed_at_utc": "2026-10-25T10:26:47.440880+00:00",
+    "last_completed_requests": 11
+  },
+  "actual_v8_evidence_commit_after_stat_recovery": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "completed_at_utc": "2026-10-25T09:59:29.149320+00:00",
+    "commit": "cff75837438d7bce729d1eb62ad19aad2fa83464",
+    "file_count": 24,
+    "remote_master_observed": "cff75837438d7bce729d1eb62ad19aad2fa83464",
+    "synchronization": {
+      "machine_id": "bf-202609141645-5434332d4d",
+      "started_at_utc": "2026-10-25T09:59:06.781407+00:00",
+      "validated_commit": "cff75837438d7bce729d1eb62ad19aad2fa83464",
+      "batch": "low-v8-review-recovery-evidence-after-stat-fix-20261025",
+      "primary_worktree_untouched": true,
+      "isolated_worktree": "C:\\workspace\\xenoamess_hoi4_dev\\runtime\\production-sync\\low-v8-review-recovery-evidence-after-stat-fix-20261025-cff75837438d",
+      "sparse_checkout_paths": [
+        "/AGENTS.md",
+        "/README.md",
+        "/.gitignore"
+      ],
+      "scope": "Bounded root-file checkout; raw PNGs remain in shared Git objects and are not materialized here. No stash, reset, force push or public history rewrite.",
+      "origin_master": "ab128f0719e20b986280308bf6b89af59cb43b63",
+      "rebase_output": "HEAD is up to date.",
+      "synchronized_commit": "cff75837438d7bce729d1eb62ad19aad2fa83464",
+      "status": "validated_commit_rebased_unchanged_fast_forward_eligible",
+      "completed_at_utc": "2026-10-25T09:59:12.808947+00:00",
+      "receipt_file": "runtime/production-sync/low-v8-review-recovery-evidence-after-stat-fix-20261025-cff75837438d-receipt.json"
+    },
+    "scope": "Own static review/source/recovery evidence only. JSON validation/diff check passed; normal FF push and fresh remote presence. Previously generated raw PNGs retain their separate fixed-commit readback evidence."
+  },
+  "actual_static_commit_resume_helper_source": "\"\"\"Finish the already validated staged evidence after exact stat-cache recovery.\"\"\"\nimport json,subprocess,sys\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom tools.isolated_production_sync import rebase_validated_commit\ndef git(*args):\n r=subprocess.run(['git','-c','gc.auto=0',*args],cwd=ROOT,capture_output=True,timeout=300)\n assert r.returncode==0,(args,r.stdout.decode('utf-8','replace'),r.stderr.decode('utf-8','replace'))\n return r.stdout\ncache_path=ROOT/'mod_nailong/data/production-checkpoint-failures/20261025-v8-index-stat-cache-recovery.json';cache=read_json(cache_path)\nassert cache['status']=='stat_cache_recovered_staged_tree_unchanged'\nassert git('rev-parse','HEAD').decode().strip()==cache['primary_HEAD']\nassert git('write-tree').decode().strip()==cache['staged_tree']\nexisting=set(git('diff','--cached','--name-only').decode().splitlines());assert existing==set(cache['staged_paths'])\nfailure=ROOT/'mod_nailong/data/production-checkpoint-failures/20261025-v8-local-evidence-save-errors.json';assert not failure.exists()\nwrite_json(failure,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'errors':[{'step':'First local documentation write before staging','actual_error':'OSError: [Errno22] Invalid argument opening docs/handoffs/2026-10-25-low-resumed.md for write','boundary':'Original existing documentation retained (git diff showed only earlier4 inserted lines). Recovery delivery JSON had been saved. Next execution guarded that immutable record and used atomic text replacement.'},{'step':'Second execution after successful atomic documentation write and21-path stage','actual_error':'subprocess.TimeoutExpired: git -c gc.auto=0 commit -F runtime/low-v8-recovery-evidence-commit-message.txt timed out after240 seconds','boundary':'Windows actual child Git17804 continued holding stdout and empty index lock after the launcher timeout. Exact command/create-time/workspace verified before terminating it; staged tree and all working files retained. Cache recovery audit preserves the actual process evidence.'}],'actual_cache_recovery':cache_path.relative_to(ROOT).as_posix(),'actual_cache_recovery_sha256':file_sha256(cache_path),'revised_original_helper_source':(ROOT/'runtime/commit-low-v8-review-and-recovery-evidence-20261025.py').read_text(encoding='utf-8'),'scope':'Local file/Git errors and real recovery only. No image call, retry, art decision, public rewrite or invented delivery.'})\nextra=[cache_path.relative_to(ROOT).as_posix(),failure.relative_to(ROOT).as_posix(),'mod_nailong/data/production-review-handovers/20261025-root-fresh-observed-20261025T094019-b-0d9850a4.json']\nfor p in existing|set(extra):\n if p.endswith('.json'):read_json(ROOT/p)\ndoc=ROOT/'docs/handoffs/2026-10-25-low-resumed.md';old=doc.read_text(encoding='utf-8')\ntext='Git stat-cache correction observed '+utc_now()+': the metadata-only primary rebase had dropped cached stat fields, causing concurrent background whole-worktree refreshes. The exact own stalled commit and94 whitelisted read-only scans were stopped after staged-tree backup;28509 unchanged-entry stat records were restored with native index-only two-tree merge. The21 staged paths/modes/blobs and all working files stayed unchanged. Original errors and exact executed recovery are preserved under production-checkpoint-failures. Never rebuild the full live primary index with a bare read-tree for a private rebase; preserve unchanged cached entries. No PNG or image-request replay.\\n\\n'\ntemp=doc.with_name(doc.name+'.stat-recovery.tmp');temp.write_text(text+old,encoding='utf-8');temp.replace(doc)\ngit('add','--',*extra,'docs/handoffs/2026-10-25-low-resumed.md')\ngit('diff','--cached','--check');paths=set(git('diff','--cached','--name-only').decode().splitlines());assert paths==existing|set(extra)\nmsg=ROOT/'runtime/low-v8-recovery-evidence-commit-message.txt'\ngit('commit','--no-status','-F',str(msg));commit=git('rev-parse','HEAD').decode().strip()\nassert git('rev-parse',commit+'^').decode().strip()==cache['primary_HEAD']\nsync=rebase_validated_commit(commit,'low-v8-review-recovery-evidence-after-stat-fix-20261025')\nassert sync['synchronized_commit']==commit\ngit('-c','http.version=HTTP/1.1','push','origin',commit+':refs/heads/master')\nremote=git('ls-remote','origin','refs/heads/master').decode().split()[0]\nif remote!=commit:git('merge-base','--is-ancestor',commit,remote)\nproof={'machine_id':machine_id(),'completed_at_utc':utc_now(),'commit':commit,'file_count':len(paths),'remote_master_observed':remote,'synchronization':sync,'scope':'Own static review/source/recovery evidence only. JSON validation/diff check passed; normal FF push and fresh remote presence. Previously generated raw PNGs retain their separate fixed-commit readback evidence.'}\nwrite_json(ROOT/'runtime/low-v8-review-recovery-evidence-pushed-20261025.json',proof)\nprint(json.dumps({k:v for k,v in proof.items() if k!='synchronization'},ensure_ascii=True))\n",
+  "scope": "Current actual same-machine state, no art approval or remote verification claim for v9 pending PNGs. v8 original deadline not reset;17 actual returns all delivered. v9 new fixed deadline derived from owner creation remains unchanged. The new LOW refusal stays frozen at actual UTC with >=8h cooldown, no immediate retry/evasion. Source descriptions are actual observed inputs, never generated outputs or approvals."
+}

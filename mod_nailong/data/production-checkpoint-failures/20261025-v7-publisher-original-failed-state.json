@@ -1,0 +1,35 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "preserved_at_utc": "2026-10-25T10:00:29.014903+00:00",
+  "original_failed_state": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "pid": 5372,
+    "run_id": "resume-20261025-large-logical-queue-v7",
+    "started_at_utc": "2026-10-25T05:31:34.540176+00:00",
+    "production_created_at_utc": "2026-10-25T05:11:51.649293+00:00",
+    "original_deadline_utc": "2026-10-25T11:41:51.649293+00:00",
+    "checkpoints": [
+      {
+        "batch": "resumed-low-v7-auto-1-20261025",
+        "commit": "d2bd73ef48ecad7cf491326c6e366aa09c2a89b9",
+        "completed_requests_at_snapshot": 16,
+        "new_original_PNGs": 16
+      },
+      {
+        "batch": "resumed-low-v7-auto-2-20261025",
+        "commit": "e59a09b9f939afae28e718f2cca3d53728ffd45b",
+        "completed_requests_at_snapshot": 32,
+        "new_original_PNGs": 15
+      }
+    ],
+    "scope": "Finite Git-only successor after the prior publisher actually finished/released its unique lock. No generation, output approval, canonical writes or image request replay. Normal LOW snapshots, fast-forward pushes and exact pinned original-byte verification.",
+    "status": "stopped_requires_reconciliation_no_image_replay",
+    "last_checkpoint_requests": 16,
+    "observed_at_utc": "2026-10-25T07:03:25.757640+00:00",
+    "last_completed_requests": 32,
+    "last_commit": "d2bd73ef48ecad7cf491326c6e366aa09c2a89b9",
+    "error": "Traceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\low-scoped-publisher-following-run-20261025.py\", line 52, in <module>\n    checked([sys.executable,str(ROOT/'tools/production_checkpoint_publish.py'),receipt['commit'],batch])\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\low-scoped-publisher-following-run-20261025.py\", line 27, in checked\n    if r.returncode:raise RuntimeError(r.stdout+'\\n'+r.stderr)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: \nTraceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\production_checkpoint_publish.py\", line 40, in <module>\n    synchronization=rebase_validated_commit(commit,label)\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\isolated_production_sync.py\", line 96, in rebase_validated_commit\n    raise RuntimeError('Remote changes produced a different commit; validate that result before publishing. The live primary worktree is unchanged.')\nRuntimeError: Remote changes produced a different commit; validate that result before publishing. The live primary worktree is unchanged.\n\n"
+  },
+  "original_failed_state_sha256": "66c59c934b22424f6f2076251f84f71eebc8c46c3ba5c33d6da683c0d6eaf5ca",
+  "scope": "Original finite Git publisher failure retained before tail reconciliation. Original image deadline/counters/errors remain unchanged; no image replay."
+}
