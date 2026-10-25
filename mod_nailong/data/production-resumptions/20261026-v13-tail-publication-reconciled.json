@@ -1,0 +1,41 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-25T22:27:45.672154+00:00",
+  "status": "all_v13_tail_originals_and_tested_code_delivered_verified",
+  "publication_commit": "8b625e5b7cd016cc23751af9c252cbe0eea69544",
+  "publication_status": "committed_pushed_and_originals_verified",
+  "readback_status": "verified",
+  "original_publisher_session_exit": {
+    "session_id": 53670,
+    "exit_code": 1
+  },
+  "first_fixed_publication_exit": {
+    "session_id": 65720,
+    "exit_code": 1
+  },
+  "retry_wrapper_process_id": 17052,
+  "actual_retry_publisher_exit_code": 0,
+  "original_network_failure": "mod_nailong/data/production-checkpoint-failures/20261026-v13-tail-network-failure.json",
+  "original_network_failure_sha256": "354294738a5181267f4a1f76c1bd557fd8ab7fefddda295e805c6546cee964dc",
+  "exact_union_reconciliation": "mod_nailong/data/production-checkpoint-failures/20261026-v13-static-tail-index-union.json",
+  "tail_actual_full_readback": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "commit": "8b625e5b7cd016cc23751af9c252cbe0eea69544",
+    "started_at_utc": "2026-10-25T22:12:07.766843+00:00",
+    "process_id": 13380,
+    "status": "verified",
+    "distinct_outputs": 6436,
+    "original_png_bytes": 12540122855,
+    "completed_at_utc": "2026-10-25T22:27:45.442531+00:00"
+  },
+  "tail_actual_full_readback_sha256": "01449c5afbe6faadaca73c95e7d90d3d2393ea1db4a3462576987926c061d4c0",
+  "v13_actual_calls": 27,
+  "v13_actual_original_PNGs": 26,
+  "v13_actual_refusals": 1,
+  "own_execution_originals_verified": 411,
+  "new_image_calls": 0,
+  "source_code": "import json, os, subprocess, sys\nfrom pathlib import Path\nsys.path.insert(0, str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT, read_json, write_json, file_sha256, machine_id, utc_now\n\nrun = 'resume-20261025-large-logical-queue-v13'\nbatch = 'resumed-low-v13-auto-2-20261025'\ncommit = '8b625e5b7cd016cc23751af9c252cbe0eea69544'\nstate_path = ROOT / f'runtime/resume-low-20261025/publisher-{run}.json'\npublication = ROOT / f'runtime/checkpoint-{batch}.json'\nrecord_path = ROOT / 'mod_nailong/data/production-resumptions/20261026-v13-tail-publication-reconciled.json'\nstate, prior = read_json(state_path), read_json(publication)\nassert prior['commit'] == commit and prior['status'] == 'push_pending_inspection_required'\nassert state['original_deadline_utc'] == '2026-10-26T01:56:55.339093+00:00'\nassert state['last_completed_requests'] == 27 and state['last_checkpoint_requests'] == 16\nassert not (ROOT / 'runtime/production-publish.lock').exists()\nassert not (state_path.parent / 'publisher.lock').exists()\nremote = subprocess.run(['git', 'ls-remote', 'origin', 'refs/heads/master'], cwd=ROOT, capture_output=True, text=True, timeout=120, check=True).stdout.split()[0]\nfailures = ROOT / 'mod_nailong/data/production-checkpoint-failures'\nsaved = []\nfor source, suffix in [(publication, 'publication'), (state_path, 'publisher-state'), (record_path, 'prior-reconciliation-observation')]:\n    target = failures / f'20261026-v13-tail-network-failure-original-{suffix}.json'\n    with target.open('xb') as f:\n        f.write(source.read_bytes())\n    assert file_sha256(source) == file_sha256(target)\n    saved.append({'path': target.relative_to(ROOT).as_posix(), 'sha256': file_sha256(target), 'source_path': source.relative_to(ROOT).as_posix()})\naudit_path = failures / '20261026-v13-tail-network-failure.json'\nassert not audit_path.exists()\naudit = {'machine_id': machine_id(), 'observed_at_utc': utc_now(), 'actual_failed_unified_session_id': 65720, 'actual_failed_exit_code': 1, 'fixed_commit': commit, 'batch': batch, 'fresh_remote_master': remote, 'preserved_original_bytes': saved, 'retry_wrapper_process_id': os.getpid(), 'status': 'same_fixed_commit_git_only_retry_starting', 'scope': 'Actual push failed with connection reset, then localhost proxy connection failed. Fresh ordinary Git remote probe now succeeds. Retry the same immutable commit only. No image replay, checkpoint reconstruction, proxy/TLS/account change, force push, or deadline reset. Prior in-progress observation is preserved and superseded by actual exit 1.', 'source_code': Path(__file__).read_text(encoding='utf-8')}\nwrite_json(audit_path, audit)\nstate.update(status='fixed_tail_network_retry_running', observed_at_utc=utc_now(), network_failure_audit=audit_path.relative_to(ROOT).as_posix())\nwrite_json(state_path, state)\nprint(json.dumps({'same_fixed_commit_retry_started': commit, 'fresh_remote_master': remote, 'process_id': os.getpid(), 'new_image_calls': 0}), flush=True)\nresult = subprocess.run([sys.executable, '-u', str(ROOT / 'tools/production_checkpoint_publish.py'), commit, batch], cwd=ROOT, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=2400)\naudit.update(actual_retry_publisher_exit_code=result.returncode, completed_at_utc=utc_now(), actual_stdout=result.stdout, actual_stderr=result.stderr)\nwrite_json(audit_path, audit)\nif result.returncode:\n    state.update(status='fixed_tail_network_retry_failed_requires_inspection', observed_at_utc=utc_now())\n    write_json(state_path, state)\n    print(json.dumps({'retry_exit_code': result.returncode, 'publication_status': read_json(publication).get('status'), 'error_tail': result.stderr[-3000:]}), flush=True)\n    sys.exit(result.returncode)\npub = read_json(publication)\nproof_path = ROOT / pub['remote_original_readback']\nproof = read_json(proof_path)\nassert pub['status'] == 'committed_pushed_and_originals_verified'\nassert proof['status'] == 'verified' and proof['commit'] == commit\nassert read_json(state_path) == state\nrecord = {'machine_id': machine_id(), 'observed_at_utc': utc_now(), 'status': 'all_v13_tail_originals_and_tested_code_delivered_verified', 'publication_commit': commit, 'publication_status': pub['status'], 'readback_status': proof['status'], 'original_publisher_session_exit': {'session_id': 53670, 'exit_code': 1}, 'first_fixed_publication_exit': {'session_id': 65720, 'exit_code': 1}, 'retry_wrapper_process_id': os.getpid(), 'actual_retry_publisher_exit_code': 0, 'original_network_failure': audit_path.relative_to(ROOT).as_posix(), 'original_network_failure_sha256': file_sha256(audit_path), 'exact_union_reconciliation': 'mod_nailong/data/production-checkpoint-failures/20261026-v13-static-tail-index-union.json', 'tail_actual_full_readback': proof, 'tail_actual_full_readback_sha256': file_sha256(proof_path), 'v13_actual_calls': 27, 'v13_actual_original_PNGs': 26, 'v13_actual_refusals': 1, 'own_execution_originals_verified': 411, 'new_image_calls': 0, 'source_code': Path(__file__).read_text(encoding='utf-8')}\nwrite_json(record_path, record)\nstate.update(status='finished_at_owner_boundary_or_original_deadline', last_checkpoint_requests=27, last_commit=commit, finished_at_utc=utc_now(), reconciliation=record_path.relative_to(ROOT).as_posix(), reconciliation_sha256=file_sha256(record_path))\nwrite_json(state_path, state)\nprint(json.dumps({'reconciled': True, 'commit': commit, 'actual_verified_at_utc': proof['completed_at_utc'], 'own_execution_originals_verified': 411, 'original_git_deadline_utc': state['original_deadline_utc']}), flush=True)\n",
+  "actual_retry_unified_session_id": 85947,
+  "actual_retry_wrapper_exit_code": 0,
+  "wrapper_terminal_exit_observed_at_utc": "2026-10-25T22:34:57.534968+00:00"
+}

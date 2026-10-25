@@ -1,0 +1,29 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "pid": 20612,
+  "run_id": "resume-20261025-large-logical-queue-v13",
+  "started_at_utc": "2026-10-25T19:49:04.753174+00:00",
+  "production_created_at_utc": "2026-10-25T19:26:55.339093+00:00",
+  "original_deadline_utc": "2026-10-26T01:56:55.339093+00:00",
+  "checkpoints": [
+    {
+      "batch": "resumed-low-v13-auto-1-20261025",
+      "commit": "a149350b09a12546f02e210f2d3fd486c28620b5",
+      "completed_requests_at_snapshot": 16,
+      "new_original_PNGs": 15
+    },
+    {
+      "batch": "resumed-low-v13-auto-2-20261025",
+      "commit": "8b625e5b7cd016cc23751af9c252cbe0eea69544",
+      "completed_requests_at_snapshot": 27,
+      "new_original_PNGs": 11
+    }
+  ],
+  "scope": "Finite Git-only successor after the prior publisher actually finished/released its unique lock. No generation, output approval, canonical writes or image request replay. Normal LOW snapshots, fast-forward pushes and exact pinned original-byte verification.",
+  "status": "reconciled_tail_fixed_union_publication_in_progress",
+  "last_checkpoint_requests": 16,
+  "observed_at_utc": "2026-10-25T21:55:58.971244+00:00",
+  "last_completed_requests": 27,
+  "last_commit": "a149350b09a12546f02e210f2d3fd486c28620b5",
+  "error": "Traceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\low-scoped-publisher-following-run-20261025.py\", line 46, in <module>\n    checked([sys.executable,'-X','utf8',str(ROOT/'runtime/low-scoped-checkpoint-20261025.py'),batch,'--incremental'])\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\low-scoped-publisher-following-run-20261025.py\", line 27, in checked\n    if r.returncode:raise RuntimeError(r.stdout+'\\n'+r.stderr)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: {'masters': 11, 'original_png_bytes': 21863509, 'storage': 'ordinary Git blobs containing original PNG bytes', 'remote_verification': 'not implied by local sync'}\n\nTraceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\low-scoped-checkpoint-20261025.py\", line 141, in <module>\n    assert set(git('diff','--cached','--name-only').decode('utf-8').splitlines())<=paths,'Other staged work appeared; do not commit it'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Other staged work appeared; do not commit it\n\n"
+}

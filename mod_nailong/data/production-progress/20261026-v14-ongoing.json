@@ -1,0 +1,71 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-25T22:35:03.467374+00:00",
+  "status": "ongoing_not_a_stop_or_completion",
+  "actual_snapshot": {
+    "observed_at_utc": "2026-10-25T22:35:03.179552+00:00",
+    "state": {
+      "machine_id": "bf-202609141645-5434332d4d",
+      "run_id": "resume-20261025-large-logical-queue-v14",
+      "next_index": 867,
+      "after_window": "resume-20261025-large-logical-queue-v14-window866",
+      "status": "running",
+      "created_at_utc": "2026-10-25T21:44:59.205420+00:00",
+      "completed_windows": 14,
+      "completed_source_requests": 14,
+      "updated_at_utc": "2026-10-25T22:34:26.853923+00:00"
+    },
+    "prepared_plan_remaining_windows": 20,
+    "counts": {
+      "HIGH": {
+        "ready": 4404,
+        "pending": 0,
+        "rejected": 26
+      },
+      "LOW": {
+        "ready": 262,
+        "pending": 21,
+        "rejected": 16
+      }
+    },
+    "completed_window_calls": 14,
+    "completed_window_PNGs": 14,
+    "completed_window_errors": 0,
+    "same_machine_execution_totals": {
+      "calls": 455,
+      "PNG_returns": 425,
+      "content_refusals": 29,
+      "authentication_errors": 1,
+      "other_tool_errors": 0
+    },
+    "recent_errors": []
+  },
+  "snapshot_stdout_sha256": "85a45f84c2429bc82f43829cea39fce94f6ebd73c69cfaa6c8ca9a4c2eb3562b",
+  "denominators": {
+    "HIGH": 4535,
+    "LOW": 703
+  },
+  "percentages": {
+    "HIGH": 97.1114,
+    "LOW": 37.2688,
+    "ALL": 89.0798
+  },
+  "verified_originals_from_this_execution": 411,
+  "last_verified_commit": "8b625e5b7cd016cc23751af9c252cbe0eea69544",
+  "actual_tail_readback": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "commit": "8b625e5b7cd016cc23751af9c252cbe0eea69544",
+    "started_at_utc": "2026-10-25T22:12:07.766843+00:00",
+    "process_id": 13380,
+    "status": "verified",
+    "distinct_outputs": 6436,
+    "original_png_bytes": 12540122855,
+    "completed_at_utc": "2026-10-25T22:27:45.442531+00:00"
+  },
+  "partial_timing_evidence": "mod_nailong/data/production-performance/20261026-v14-partial-window-profile.json",
+  "partial_timing_evidence_sha256": "c88bef069436a9a823fcbc9476c5fb98f8c2852703f8834860ebff08c78e164d",
+  "free_bytes_observed": 431631982592,
+  "retention_review_unchanged": "2026-10-29T10:30:00Z",
+  "scope": "Actual partial ongoing run. Returned PNGs, art-approved sources, committed/pushed objects and complete fixed-commit original-byte verification are separate. HIGH service refusals remain skipped and incomplete. Builtin only; no EvoLink, external image API, Steam/game interaction or full export. No cleanup or protection renewal.",
+  "source_code": "import hashlib, json, os, shutil, subprocess, sys\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT, read_json, write_json, file_sha256, utc_now, machine_id\n\nrun='resume-20261025-large-logical-queue-v14'\ntail='8b625e5b7cd016cc23751af9c252cbe0eea69544'\nrecord_path=ROOT/'mod_nailong/data/production-resumptions/20261026-v13-tail-publication-reconciled.json'\nrecord=read_json(record_path)\nassert record['status']=='all_v13_tail_originals_and_tested_code_delivered_verified'\nassert record['publication_commit']==tail and record['actual_retry_publisher_exit_code']==0\nassert record['retry_wrapper_process_id']==17052\nrecord.update(actual_retry_unified_session_id=85947, actual_retry_wrapper_exit_code=0, wrapper_terminal_exit_observed_at_utc=utc_now())\nwrite_json(record_path,record)\nstate_path=ROOT/'runtime/resume-low-20261025/publisher-resume-20261025-large-logical-queue-v13.json'\nstate=read_json(state_path)\nassert state['status']=='finished_at_owner_boundary_or_original_deadline' and state['last_commit']==tail\nstate['reconciliation_sha256']=file_sha256(record_path)\nwrite_json(state_path,state)\nprofile=ROOT/'runtime/v14-window-profile-20261026.json'\nprofile_out=ROOT/'mod_nailong/data/production-performance/20261026-v14-partial-window-profile.json'\nassert not profile_out.exists()\nprofile_out.write_bytes(profile.read_bytes())\nassert file_sha256(profile_out)==file_sha256(profile)\nraw=subprocess.run([sys.executable,'-X','utf8','runtime/low-production-status-20261025.py',run],cwd=ROOT,capture_output=True,text=True,encoding='utf-8',check=True).stdout\nsnapshot=json.loads(raw)\nassert snapshot['state']['status']=='running' and snapshot['state']['created_at_utc']=='2026-10-25T21:44:59.205420+00:00'\npriority=read_json(ROOT/'mod_nailong/data/production-priority.json')['sources']\ndenominators={tier:sum(bool(p['high_priority'])==(tier=='HIGH') for p in priority.values()) for tier in ['HIGH','LOW']}\nassert denominators=={'HIGH':4535,'LOW':703}\npercentages={tier:round(100*snapshot['counts'][tier]['ready']/denominators[tier],4) for tier in denominators}\npercentages['ALL']=round(100*sum(snapshot['counts'][tier]['ready'] for tier in denominators)/sum(denominators.values()),4)\nprogress=ROOT/'mod_nailong/data/production-progress/20261026-v14-ongoing.json'\nassert not progress.exists()\nfree=shutil.disk_usage(ROOT).free\nwrite_json(progress,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'status':'ongoing_not_a_stop_or_completion','actual_snapshot':snapshot,'snapshot_stdout_sha256':hashlib.sha256(raw.encode('utf-8')).hexdigest(),'denominators':denominators,'percentages':percentages,'verified_originals_from_this_execution':411,'last_verified_commit':tail,'actual_tail_readback':record['tail_actual_full_readback'],'partial_timing_evidence':profile_out.relative_to(ROOT).as_posix(),'partial_timing_evidence_sha256':file_sha256(profile_out),'free_bytes_observed':free,'retention_review_unchanged':'2026-10-29T10:30:00Z','scope':'Actual partial ongoing run. Returned PNGs, art-approved sources, committed/pushed objects and complete fixed-commit original-byte verification are separate. HIGH service refusals remain skipped and incomplete. Builtin only; no EvoLink, external image API, Steam/game interaction or full export. No cleanup or protection renewal.','source_code':Path(__file__).read_text(encoding='utf-8')})\ndoc=ROOT/'docs/handoffs/2026-10-26-low-v14-progress.md'\nassert not doc.exists()\nlow=snapshot['counts']['LOW']['ready'];high=snapshot['counts']['HIGH']['ready']\ndoc.write_text(f'''# 钢奶龙心：LOW 持续生产进展\n\n机器 `{machine_id()}`，UTC `{snapshot['observed_at_utc']}` 的进行中快照；本文件不暂停生产，也不表示任务完成。\n\nHIGH 合格 {high}/4535（{percentages['HIGH']:.2f}%）；LOW 合格 {low}/703（{percentages['LOW']:.2f}%）；全部 {high+low}/5238（{percentages['ALL']:.2f}%）。[实际状态](../../mod_nailong/data/production-progress/20261026-v14-ongoing.json)保留同机调用数、输出数、准备余量及证据边界。已跳过的 HIGH 服务拒绝仍计入未完成范围。\n\n上一批固定提交 `{tail}` 已普通推送，UTC `{record['tail_actual_full_readback']['completed_at_utc']}` 完成原始 PNG 核验。V13 实际27次调用、26张PNG、1次服务拒绝；初批15张和尾批11张均已核验。本执行链累计411份原始PNG交付并核验；这不是411张新增合格头像。首次网络发布65720实际退出1，随后同一提交的Git专用恢复85947实际退出0。[恢复记录](../../mod_nailong/data/production-resumptions/20261026-v13-tail-publication-reconciled.json)及原失败字节均保留，没有重发图片请求。\n\nV14 唯一内置生成者从索引853接续，实际启动UTC21:44:59.205420，固定截止23:44:59.205420。单路连续调用，两审图槽只排SHA绑定决定，由唯一生成者在边界应用。根审图槽已实际完成b129–b132共16张，7通过、9返修；a槽另有独立报告，不把尚未实际审图的输出计作通过。\n\n[部分耗时记录](../../mod_nailong/data/production-performance/20261026-v14-partial-window-profile.json)反映启动到最近完成窗口约38.5分钟：图片工具237.253秒，本地命令900.723秒，其中准备边界615.512秒。窗口外时间623.633秒包含调度、准备和传输等，未全部归因；窗口内也有未分类时间。不是完整小时或受控对照，不据此宣布速度恢复。当前重复边界调用值得优化，但不能牺牲每次请求的实际词/输入校验、HIGH重查、拒绝冷却或审图。\n\nWindows JSON共享读取/原子替换修复已在上述提交交付，100项相关测试实际通过，保留此前失败试验。不承诺解决所有权限错误。仍仅使用内置图片工具，不使用同事的EvoLink skill；没有新Steam离线/游戏显示证据。原保护复核期限2026-10-29T10:30Z不变，未清理文件或整库导出。\n''',encoding='utf-8',newline='\\n')\npaths=[\n 'docs/handoffs/2026-10-26-low-v14-helper-sources.json',\n 'docs/handoffs/2026-10-26-low-v14-progress.md',\n 'mod_nailong/data/production-resumptions/20261025-low-v14.json',\n 'mod_nailong/data/production-resumptions/20261026-low-v14-started.json',\n 'mod_nailong/data/production-resumptions/20261026-v13-tail-publication-reconciled.json',\n 'mod_nailong/data/production-performance/20261026-v14-partial-window-profile.json',\n 'mod_nailong/data/production-progress/20261026-v14-ongoing.json',\n]\npaths += ['mod_nailong/data/production-checkpoint-failures/20261026-v13-tail-network-failure'+suffix+'.json' for suffix in ['', '-original-publication','-original-publisher-state','-original-prior-reconciliation-observation']]\npaths += [f'mod_nailong/data/production-review-handovers/20261025-root-rollingb{n}.json' for n in range(129,133)]\nfor name in paths:\n    assert (ROOT/name).is_file()\n    if name.endswith('.json'):read_json(ROOT/name)\nassert free>30_000_000_000\ndef git(*args,timeout=180):\n    p=subprocess.run(['git',*args],cwd=ROOT,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=timeout)\n    if p.returncode:raise RuntimeError(p.stdout+'\\n'+p.stderr)\n    return p.stdout.strip()\nlock=ROOT/'runtime/production-publish.lock'\nfd=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY)\nwith os.fdopen(fd,'w',encoding='utf-8') as f:json.dump({'machine_id':machine_id(),'process_id':os.getpid(),'batch':'v14-static-progress-20261026','acquired_at_utc':utc_now()},f)\nreceipt_path=ROOT/'runtime/v14-static-progress-published-20261026.json'\nreceipt={'machine_id':machine_id(),'started_at_utc':utc_now(),'paths':paths,'scope':'Exact static evidence only. No canonical portrait rows, colleague experiments, image generation, force push or working-file replacement.'}\ntry:\n    assert git('branch','--show-current')=='master'\n    assert not git('diff','--cached','--name-only')\n    git('fetch','origin','master')\n    assert git('rev-parse','HEAD')==git('rev-parse','origin/master')==tail,'Inspect advanced remote before staging'\n    git('diff','--check','--',*paths)\n    git('add','--',*paths)\n    assert set(git('diff','--cached','--name-only').splitlines())==set(paths),'Exact static staging scope changed'\n    git('commit','-m','Record verified LOW delivery and ongoing production')\n    commit=git('rev-parse','HEAD')\n    receipt.update(status='committed_push_pending',commit=commit);write_json(receipt_path,receipt)\n    receipt['push_stdout']=git('-c','gc.auto=0','-c','maintenance.auto=false','-c','http.version=HTTP/1.1','push','origin',commit+':refs/heads/master',timeout=900)\n    observed=git('ls-remote','origin','refs/heads/master').split()[0]\n    if observed!=commit:git('merge-base','--is-ancestor',commit,observed)\n    receipt.update(status='committed_and_pushed',remote_master_observed=observed,completed_at_utc=utc_now())\nfinally:\n    write_json(receipt_path,receipt)\n    assert read_json(lock)['process_id']==os.getpid()\n    lock.unlink()\nprint(json.dumps({'status':receipt['status'],'commit':receipt['commit'],'files':len(paths),'LOW_ready':low,'LOW_percent':percentages['LOW'],'ALL_percent':percentages['ALL'],'free_bytes':free}),flush=True)\n"
+}
