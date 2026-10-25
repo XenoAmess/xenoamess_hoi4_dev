@@ -40,6 +40,28 @@ def machine_id() -> str:
     host = re.sub(r"[^a-z0-9]+", "-", platform.node().lower()).strip("-")[:32].rstrip("-")
     return host + "-" + sha256(token.encode())[:10]
 
+def _replace_json(temporary: Path, path: Path) -> None:
+    if os.name != 'nt':
+        temporary.replace(path)
+        return
+    import ctypes
+    from ctypes import wintypes
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    replace = kernel.ReplaceFileW
+    replace.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.LPCWSTR,
+                        wintypes.DWORD, wintypes.LPVOID, wintypes.LPVOID]
+    replace.restype = wintypes.BOOL
+    # MoveFileExW (os.replace) can still deny replacement of an open target
+    # even when its reader shares deletion. ReplaceFileW preserves the old
+    # reader's complete file and atomically publishes the replacement.
+    if replace(str(path), str(temporary), None, 0, None, None):
+        return
+    error = ctypes.get_last_error()
+    if error in (2, 3):  # First write: there is no existing destination.
+        temporary.replace(path)
+        return
+    raise ctypes.WinError(error)
+
 def write_json(path: Path, value) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
@@ -52,12 +74,47 @@ def write_json(path: Path, value) -> None:
     # exhaustion; this never repeats the caller's image request or review.
     for delay in (0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 4, 8, 16, None):
         try:
-            temporary.replace(path)
+            _replace_json(temporary, path)
             break
         except PermissionError:
             if delay is None:
                 raise
             time.sleep(delay)
+
+def _open_json_reader(path: Path):
+    """Keep a consistent old file readable during an atomic Windows replace.
+
+    The Windows CRT reader does not share deletion, so overlapping readers of
+    the large inventory can deny the producer's rename. Share deletion as well
+    as ordinary read/write access; the open handle still reads its original
+    complete file. Every later open resolves the current path, without cache.
+    """
+    if os.name != 'nt':
+        return path.open('rb')
+    import ctypes
+    from ctypes import wintypes
+    import msvcrt
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    create = kernel.CreateFileW
+    create.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                       wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+    create.restype = wintypes.HANDLE
+    close = kernel.CloseHandle
+    close.argtypes = [wintypes.HANDLE]
+    close.restype = wintypes.BOOL
+    handle = create(str(path), 0x80000000, 0x1 | 0x2 | 0x4, None, 3, 0x80, None)
+    if handle == wintypes.HANDLE(-1).value:
+        raise ctypes.WinError(ctypes.get_last_error())
+    try:
+        fd = msvcrt.open_osfhandle(handle, os.O_RDONLY | os.O_BINARY)
+    except BaseException:
+        close(handle)
+        raise
+    try:
+        return os.fdopen(fd, 'rb')
+    except BaseException:
+        os.close(fd)
+        raise
 
 def read_json(path: Path):
     # An atomic replacement can briefly leave the old Windows file in a
@@ -65,7 +122,8 @@ def read_json(path: Path):
     # never substitute cached data or retry malformed/missing JSON.
     for delay in (0.02, 0.05, 0.1, 0.25, 0.5, None):
         try:
-            body = path.read_text(encoding="utf-8")
+            with _open_json_reader(path) as stream:
+                body = stream.read().decode('utf-8')
         except PermissionError:
             if delay is None:
                 raise

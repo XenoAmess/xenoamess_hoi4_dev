@@ -1,0 +1,129 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-25T21:25:55.360213+00:00",
+  "reason": "Repeated live generated.json atomic replacement PermissionError stopped otherwise successful builtin windows821/830/847. Window847 returned and finished its PNG before later grouped approvals failed. Exact current/candidate/failure snapshots retained; generated.json and temporary had Windows attributes32, not readonly.",
+  "exact_recovery_audit": "mod_nailong/data/production-owner-failures/20261026-v13-window847-boundary-reconciled.json",
+  "exact_recovery_audit_sha256": "27484d450e874ddf9d2f3f6bd8c8d58c49d82585fc7c7503eff329c4b7a16d9f",
+  "temporary_file_probe": {
+    "observed_at_utc": "2026-10-25T21:05:14.700375+00:00",
+    "results": [
+      {
+        "reader": "none",
+        "method": "os.replace",
+        "success": true,
+        "error": 0,
+        "current_bytes": "{\"new\":2}",
+        "old_reader_bytes": null
+      },
+      {
+        "reader": "none",
+        "method": "ReplaceFileW",
+        "success": true,
+        "error": 0,
+        "current_bytes": "{\"new\":2}",
+        "old_reader_bytes": null
+      },
+      {
+        "reader": "ordinary",
+        "method": "os.replace",
+        "success": false,
+        "error": 5,
+        "message": "[WinError 5] 拒绝访问。: 'C:\\\\Users\\\\Administrator\\\\AppData\\\\Local\\\\Temp\\\\tmp1plq0msz\\\\candidate.json' -> 'C:\\\\Users\\\\Administrator\\\\AppData\\\\Local\\\\Temp\\\\tmp1plq0msz\\\\inventory.json'"
+      },
+      {
+        "reader": "ordinary",
+        "method": "ReplaceFileW",
+        "success": false,
+        "error": 32,
+        "current_bytes": "{\"old\":1}",
+        "old_reader_bytes": "{\"old\":1}"
+      },
+      {
+        "reader": "share_delete",
+        "method": "os.replace",
+        "success": false,
+        "error": 5,
+        "message": "[WinError 5] 拒绝访问。: 'C:\\\\Users\\\\Administrator\\\\AppData\\\\Local\\\\Temp\\\\tmp1plq0msz\\\\candidate.json' -> 'C:\\\\Users\\\\Administrator\\\\AppData\\\\Local\\\\Temp\\\\tmp1plq0msz\\\\inventory.json'"
+      },
+      {
+        "reader": "share_delete",
+        "method": "ReplaceFileW",
+        "success": true,
+        "error": 0,
+        "current_bytes": "{\"new\":2}",
+        "old_reader_bytes": "{\"old\":1}"
+      }
+    ],
+    "scope": "Actual temporary-file-only Windows I/O experiment. No live metadata mutation or image calls."
+  },
+  "temporary_file_probe_source": "import os,json,sys,ctypes,tempfile\nfrom ctypes import wintypes\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,_open_json_reader,write_json,utc_now\nk=ctypes.WinDLL('kernel32',use_last_error=True);replace=k.ReplaceFileW;replace.argtypes=[wintypes.LPCWSTR,wintypes.LPCWSTR,wintypes.LPCWSTR,wintypes.DWORD,wintypes.LPVOID,wintypes.LPVOID];replace.restype=wintypes.BOOL\nresults=[]\nwith tempfile.TemporaryDirectory() as folder:\n for reader_type in ['none','ordinary','share_delete']:\n  for method in ['os.replace','ReplaceFileW']:\n   path=Path(folder)/'inventory.json';candidate=Path(folder)/'candidate.json';path.write_text('{\"old\":1}',encoding='utf-8');candidate.write_text('{\"new\":2}',encoding='utf-8')\n   reader=None if reader_type=='none' else path.open('rb') if reader_type=='ordinary' else _open_json_reader(path)\n   try:\n    if method=='os.replace':candidate.replace(path);ok=True;error=0\n    else:ctypes.set_last_error(0);ok=bool(replace(str(path),str(candidate),None,0,None,None));error=ctypes.get_last_error()\n    row={'reader':reader_type,'method':method,'success':ok,'error':error,'current_bytes':path.read_bytes().decode('utf-8'),'old_reader_bytes':reader.read().decode('utf-8') if reader else None}\n   except OSError as ex:row={'reader':reader_type,'method':method,'success':False,'error':ex.winerror,'message':str(ex)}\n   finally:\n    if reader:reader.close()\n   results.append(row)\nrecord={'observed_at_utc':utc_now(),'results':results,'scope':'Actual temporary-file-only Windows I/O experiment. No live metadata mutation or image calls.'};target=ROOT/'runtime/windows-json-replacement-probe-20261026.json';target.write_text(json.dumps(record,ensure_ascii=False,indent=2),encoding='utf-8');print(json.dumps(record,ensure_ascii=True),flush=True)\n",
+  "mechanism_and_limit": "Temporary files reproduced ordinary readers blocking replacement. A reader sharing deletion alone still failed os.replace on this machine; combined delete-shared reader plus ReplaceFileW succeeded while old reader returned complete old bytes and a new open saw complete new bytes. This supports mitigation of this mechanism, not identification of which specific process held the live file or a guarantee against all permission failures.",
+  "implementation": "Windows JSON readers use CreateFileW read/write/delete sharing and owned binary descriptor. Windows JSON replacement uses ReplaceFileW with flags0 preserving target metadata; missing destination falls back to normal first-write rename. Existing bounded PermissionError retries remain, invalid/missing JSON still fails, no cache or service request replay. Other platforms use ordinary binary file reads and atomic replace.",
+  "initial_failed_trial": {
+    "actual_exec_result_chunk_id": "6b0eaf",
+    "command": "python -X utf8 -m unittest tests.test_json_windows_sharing tests.test_production_queue tests.test_current_ready_art_journals tests.test_ready_art_service_holds tests.test_idle_low_priority tests.test_ready_art_reports",
+    "tests_run": 39,
+    "errors": 1,
+    "reported_seconds": 33.075,
+    "error": "read-delete-sharing-only trial still failed replacement under held reader; no claim this intermediate version passed"
+  },
+  "actual_final_tests": [
+    {
+      "actual_exec_result_chunk_id": "a9fc17",
+      "command": "python -X utf8 -m unittest tests.test_json_windows_sharing tests.test_production_queue tests.test_current_ready_art_journals tests.test_ready_art_service_holds tests.test_idle_low_priority tests.test_ready_art_reports",
+      "tests_run": 39,
+      "reported_seconds": 4.618,
+      "exit_code": 0,
+      "result": "OK; real Windows concurrent-reader old/new-byte isolation, ordinary-reader denial, missing/malformed no-cache behavior and existing exact art/service/attempt gates"
+    },
+    {
+      "actual_exec_result_chunk_id": "c0e5e2",
+      "command": "python -X utf8 -m unittest tests.test_production_prepare_boundary tests.test_generation_requests tests.test_master_files tests.test_master_archive tests.test_isolated_production_sync tests.test_checkpoint_schedule",
+      "tests_run": 61,
+      "reported_seconds": 22.116,
+      "exit_code": 0,
+      "result": "OK; local fixture production boundary/import/recovery/master byte archives/isolated Git/checkpoint coverage. Printed tiny master readbacks are fixtures, not production delivery."
+    }
+  ],
+  "actual_tests_passed_total": 100,
+  "changed_files": [
+    {
+      "path": "tools/common.py",
+      "sha256": "f605c0e284b4849ab371746707ad55a27f0e003044a548261deaa744377b4b68"
+    },
+    {
+      "path": "tests/test_json_windows_sharing.py",
+      "sha256": "2a763d9a16095e27b419fb6cbec32858abda21133695b5c75ff93a04cc147012"
+    }
+  ],
+  "v13_first_actual_PNGs_delivered_verified": 15,
+  "v13_first_actual_full_corpus_readback": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "commit": "a149350b09a12546f02e210f2d3fd486c28620b5",
+    "started_at_utc": "2026-10-25T20:40:16.601152+00:00",
+    "process_id": 16088,
+    "status": "verified",
+    "distinct_outputs": 6425,
+    "original_png_bytes": 12518259346,
+    "completed_at_utc": "2026-10-25T20:54:26.618304+00:00"
+  },
+  "own_execution_originals_delivered_verified_through_this_receipt": 400,
+  "actual_current_owner_state": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v13",
+    "next_index": 851,
+    "after_window": "resume-20261025-large-logical-queue-v13-window850",
+    "status": "running",
+    "created_at_utc": "2026-10-25T19:26:55.339093+00:00",
+    "completed_windows": 25,
+    "completed_source_requests": 25,
+    "updated_at_utc": "2026-10-25T21:22:06.399539+00:00"
+  },
+  "actual_continuation_cell": "1110",
+  "original_cutoff_utc": "2026-10-25T21:26:55.339093+00:00",
+  "new_image_calls_during_reconciliation": 0,
+  "capacity_free_bytes": 435423395840,
+  "retention_review_at_utc": "2026-10-29T10:30:00Z",
+  "source_code": "import sys,json,subprocess,shutil\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom tools.isolated_production_sync import rebase_validated_commit\ndef git(*args):\n p=subprocess.run(['git','-c','gc.auto=0',*args],cwd=ROOT,capture_output=True,timeout=240);assert p.returncode==0,(args,p.stdout.decode('utf-8','replace'),p.stderr.decode('utf-8','replace'));return p.stdout\nassert not git('diff','--cached','--name-only').strip()\nrun='resume-20261025-large-logical-queue-v13';state=read_json(ROOT/f'runtime/rolling-production/{run}.json');probe=read_json(ROOT/'runtime/windows-json-replacement-probe-20261026.json');assert len(probe['results'])==6\nassert [r['success'] for r in probe['results']]==[True,True,False,False,False,True]\nreadback=read_json(ROOT/'runtime/master-readback-resumed-low-v13-auto-1-20261025.json');assert readback['status']=='verified' and readback['commit']=='a149350b09a12546f02e210f2d3fd486c28620b5'\nrecovery=ROOT/'mod_nailong/data/production-owner-failures/20261026-v13-window847-boundary-reconciled.json';assert read_json(recovery)['status']=='reconciled_same_owner_continuation_ready'\naudit=ROOT/'mod_nailong/data/production-performance/20261026-windows-json-sharing.json';assert not audit.exists()\nwrite_json(audit,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'reason':'Repeated live generated.json atomic replacement PermissionError stopped otherwise successful builtin windows821/830/847. Window847 returned and finished its PNG before later grouped approvals failed. Exact current/candidate/failure snapshots retained; generated.json and temporary had Windows attributes32, not readonly.','exact_recovery_audit':recovery.relative_to(ROOT).as_posix(),'exact_recovery_audit_sha256':file_sha256(recovery),'temporary_file_probe':probe,'temporary_file_probe_source':(ROOT/'runtime/probe-windows-json-replacement-20261026.py').read_text(encoding='utf-8'),'mechanism_and_limit':'Temporary files reproduced ordinary readers blocking replacement. A reader sharing deletion alone still failed os.replace on this machine; combined delete-shared reader plus ReplaceFileW succeeded while old reader returned complete old bytes and a new open saw complete new bytes. This supports mitigation of this mechanism, not identification of which specific process held the live file or a guarantee against all permission failures.','implementation':'Windows JSON readers use CreateFileW read/write/delete sharing and owned binary descriptor. Windows JSON replacement uses ReplaceFileW with flags0 preserving target metadata; missing destination falls back to normal first-write rename. Existing bounded PermissionError retries remain, invalid/missing JSON still fails, no cache or service request replay. Other platforms use ordinary binary file reads and atomic replace.','initial_failed_trial':{'actual_exec_result_chunk_id':'6b0eaf','command':'python -X utf8 -m unittest tests.test_json_windows_sharing tests.test_production_queue tests.test_current_ready_art_journals tests.test_ready_art_service_holds tests.test_idle_low_priority tests.test_ready_art_reports','tests_run':39,'errors':1,'reported_seconds':33.075,'error':'read-delete-sharing-only trial still failed replacement under held reader; no claim this intermediate version passed'},'actual_final_tests':[{'actual_exec_result_chunk_id':'a9fc17','command':'python -X utf8 -m unittest tests.test_json_windows_sharing tests.test_production_queue tests.test_current_ready_art_journals tests.test_ready_art_service_holds tests.test_idle_low_priority tests.test_ready_art_reports','tests_run':39,'reported_seconds':4.618,'exit_code':0,'result':'OK; real Windows concurrent-reader old/new-byte isolation, ordinary-reader denial, missing/malformed no-cache behavior and existing exact art/service/attempt gates'},{'actual_exec_result_chunk_id':'c0e5e2','command':'python -X utf8 -m unittest tests.test_production_prepare_boundary tests.test_generation_requests tests.test_master_files tests.test_master_archive tests.test_isolated_production_sync tests.test_checkpoint_schedule','tests_run':61,'reported_seconds':22.116,'exit_code':0,'result':'OK; local fixture production boundary/import/recovery/master byte archives/isolated Git/checkpoint coverage. Printed tiny master readbacks are fixtures, not production delivery.'}],'actual_tests_passed_total':100,'changed_files':[{'path':p,'sha256':file_sha256(ROOT/p)} for p in ['tools/common.py','tests/test_json_windows_sharing.py']],'v13_first_actual_PNGs_delivered_verified':15,'v13_first_actual_full_corpus_readback':readback,'own_execution_originals_delivered_verified_through_this_receipt':400,'actual_current_owner_state':state,'actual_continuation_cell':'1110','original_cutoff_utc':'2026-10-25T21:26:55.339093+00:00','new_image_calls_during_reconciliation':0,'capacity_free_bytes':shutil.disk_usage(ROOT).free,'retention_review_at_utc':'2026-10-29T10:30:00Z','source_code':Path(__file__).read_text(encoding='utf-8'),'scope':'Development filesystem I/O only. No game/Steam/native client interaction, account/security/Defender/proxy change, new agent, external image service, automatic art approval, lost failed attempt, image or finish replay.'})\npaths=['tools/common.py','tests/test_json_windows_sharing.py',audit.relative_to(ROOT).as_posix(),'docs/handoffs/2026-10-25-low-resumed.md','docs/handoffs/2026-10-26-low-v13-sharing-recovery-sources.json','docs/handoffs/2026-10-26-low-v13-sharing-continuation-sources.json','mod_nailong/data/production-resumptions/20261026-low-v13-same-owner-sharing-continuation.json',recovery.relative_to(ROOT).as_posix(),'mod_nailong/data/production-window-failures/resume-20261025-large-logical-queue-v13-window847-stopped.json']\nfor tag in ['rollingb124','rollingb125','rollingb126','rollingb127','rollingb128']:paths.append(f'mod_nailong/data/production-review-handovers/20261025-root-{tag}.json')\ndoc=ROOT/'docs/handoffs/2026-10-25-low-resumed.md';old=doc.read_text(encoding='utf-8');prefix=f'''## Windows JSON sharing reproduced and mitigated; LOW continues / {utc_now()}\n\nMachine `{machine_id()}`. Actual v13 cell1054 failed after successful window847 image/finish during grouped approval generated.json replacement. Exact old/current/candidate/failure bytes retained: only two already staged approvals differed in candidate; target/temp attributes32, not readonly. Existing local idempotent review boundary recovered, original847 stopped receipt archived unchanged, cursor847→848/calls21→22 once, no image/finish replay. Original owner19:26:55.339093Z/cutoff21:26:55.339093Z unchanged. Cell1110 actually continues same owner after sources frozen and tests passed.\n\nTemporary-file six-case Windows experiment: no-reader os.replace and ReplaceFileW succeed; ordinary-reader os.replace and ReplaceFileW fail; delete-shared-reader os.replace still fails; delete-shared-reader plus ReplaceFileW succeeds, preserving old open-reader bytes and exposing new complete bytes to new open. Initial reader-only trial correctly failed1of39tests and is retained as failure history. Final combined implementation passes39focused tests, then61additional production/import/archive/Git/checkpoint tests:100passed. New Windows read_json opens with read/write/delete sharing; write_json atomically ReplaceFileW(flags0), normal rename for missing destination. Existing32s permission retry budget retained. No persistent data cache, error masking, security/ACL/Defender/account/proxy change. Specific live locking process is not proven and no universal permission-error cure or sustained speedup claimed.\n\nFirst V13 immutable snapshot a149350b09a12546f02e210f2d3fd486c28620b5 delivered15new original PNGs from16calls/1service refusal and actually completed pinned full-corpus original-byte readback20:54:26.618304Z. Own execution original PNGs delivered and remotely verified now400 (385throughv12+15). Later actual V13 returns await later snapshot/readback, not included in400. Latest user-reported fresh art snapshot04:51Beijing: HIGH4404/4535=97.11%, LOW239/703=34.00%, ALL4643/5238=88.64%; later manual decisions remain distinct from this timestamped snapshot. b1243pass/1neck repair;b1253pass/1neck repair with targeted crop disproving initial unsupported nose suspicion;b1262pass/2repairs;b1272pass/2repairs;b1280pass/4repairs, side-ear actual pixel crop and source smile preserved. All current policies retained.\n\nCapacity{shutil.disk_usage(ROOT).free} free bytes; original2026-10-29T10:30Z retention review unchanged. No Steam/game/Workshop/build/release/full export/cleanup/new agents/external image service. Continue allowed LOW builtin production and actual reviews.\n\n''';temp=doc.with_name(doc.name+'.windows-sharing.tmp');temp.write_text(prefix+old,encoding='utf-8');temp.replace(doc)\nfor p in paths:\n assert (ROOT/p).is_file(),p\n if p.endswith('.json'):read_json(ROOT/p)\ngit('add','--',*paths);git('diff','--cached','--check');staged=set(git('diff','--cached','--name-only').decode().splitlines());assert staged and staged<=set(paths)\nmessage=ROOT/'runtime/windows-json-sharing-commit-message.txt';message.write_text('Allow atomic JSON replacement during Windows reads\\n',encoding='utf-8');git('commit','--no-status','-F',str(message));commit=git('rev-parse','HEAD').decode().strip();sync=rebase_validated_commit(commit,'windows-json-sharing-20261026');assert sync['synchronized_commit']==commit\ngit('-c','http.version=HTTP/1.1','push','origin',commit+':refs/heads/master');remote=git('ls-remote','origin','refs/heads/master').decode().split()[0]\nif remote!=commit:git('merge-base','--is-ancestor',commit,remote)\nreceipt={'machine_id':machine_id(),'completed_at_utc':utc_now(),'commit':commit,'remote_master_observed':remote,'files_committed':len(staged),'actual_tests_passed':100,'own_originals_delivered_verified':400,'scope':'Own Windows filesystem code/tests/recovery/manual-review evidence/docs only. Isolated fetch/rebase, ordinary FF push and fresh remote presence. Existing sole generation continues.'};write_json(ROOT/'runtime/windows-json-sharing-pushed-20261026.json',receipt);print(json.dumps(receipt,ensure_ascii=True),flush=True)\n",
+  "scope": "Development filesystem I/O only. No game/Steam/native client interaction, account/security/Defender/proxy change, new agent, external image service, automatic art approval, lost failed attempt, image or finish replay."
+}
