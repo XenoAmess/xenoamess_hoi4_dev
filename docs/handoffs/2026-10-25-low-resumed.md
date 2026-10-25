@@ -1,5 +1,7 @@
 # 钢奶龙心：LOW 已恢复生产
 
+UTC03:55:54.448634实际确认，`848a9e2a2afb312080ea6b709c1ed1cfe4dc0c10` 的16张新原始PNG已完成固定提交远端字节核验，累计177张本轮原始PNG已核验交付；Git-only进程17696已回到等待下一16次请求边界，last_checkpoint_requests=16。v6图片执行仍是cell532。UTC03:51:13本机LOW112/703合格；新增两个内容拒绝分别是78ba44b5（回执UTC03:46:05.646Z）和7fda8475（UTC03:49:58.551Z），原请求已保存并冷却，没有改词/改图或即时重试。root原图观察至UTC03:55:34已完成12组48张；a107已完成3通过/1返修，原v5历史计数48组保留，既有a槽开始独立v6阶段；b槽已实际领取b99。旧段落均保留各自时间边界，不能当作新的实时状态。
+
 v6首个素材快照 `848a9e2a2afb312080ea6b709c1ed1cfe4dc0c10` 新增16张原始PNG、30,700,239 bytes，索引6184项；已于UTC03:35:37.566250普通推送。UTC03:36:49读取时其原件核验仍在进行，不能提前计为核验通过，后续以 `runtime/checkpoint-resumed-low-v6-auto-1-20261025.json` 为准。图片生成继续，UTC03:35实际17次v6返回后，本轮共178张PNG，LOW109/703合格、30待审；这些是对应时间点的记录。
 
 root原图观察已实际完成11组44张。第11组的分配命令超过首次10秒返回窗口后，root误把尚无exit_code的session结果当作失败，且未保存该次session ID/stdout；命令实际已完成分配。只读取并接管它已写出的同一allocation，再逐张观察和完成，未重跑claim或图片。当前观察完成函数改为等待已有session真实退出，完整当前源码另存 [输入辅助后续源码](2026-10-25-low-v6-input-followup-sources.json)，此前归档保持旧字节；真实恢复边界见 `mod_nailong/data/production-owner-failures/20261025-v6-local-input-wrapper-reconciliation.json`。该记录另保留UTC03:26观察到的a107已领取/b98已完成状态，以及随后对既有a/b turn的中断接续，不虚构个别动作UTC或延迟原因，不新增agent、重置截止或自动审图。
