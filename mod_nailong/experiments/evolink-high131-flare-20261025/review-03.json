@@ -1,0 +1,41 @@
+{
+  "schema": "naiwa-evolink-experiment-manual-review-v1",
+  "machine_id": "bf-202609141645-5434332d4d",
+  "model": "gpt-image-2.5-flare + source-alpha-resize-bilinear-rgb-unchanged-v1",
+  "prompt_round": "high131-external-01-and-alpha-derivative",
+  "reviewed_at_utc": "2026-10-25T05:12:12.825091+00:00",
+  "reviewer": "Kimi actual visual comparison of exact source, enlarged source page, complete raw, complete alpha derivative, both full white/cyan/alpha sheets and unchanged mascot reference",
+  "review_evidence": [
+    {"path": "mod_nailong/experiments/evolink-high131-flare-20261025/review-03-evidence.json", "sha256": "b23d9658a1be79aba230c1ea5669d13a4de144469b3b9a178146925679cb0996"},
+    {"path": "mod_nailong/experiments/evolink-high131-flare-20261025/review-03-alpha-repaired-evidence.json", "sha256": "cd3e6bb7227c69855f7bf17a837de3532366f07f2f9eaa093be852b3acb4b7b5"}
+  ],
+  "entries": [
+    {
+      "source_sha256": "da0e0e98f2d33cee8ea616aa6dd2df37f3498ad951b08a1c41f8c1d3bd8ec644",
+      "attempt": "external-01",
+      "task_id": "task-unified-1792904527-e3y7utuj",
+      "prompt_sha256": "770c9aa78cadadcc57ec3bf7273d93b317e38cc94c90ec6e6add1047e227a39e",
+      "parent_output_sha256": "6d6b7cacb37fb989966506f64baf30df40fe6976564670039e57be11df81f2fc",
+      "parent_mode": "RGB",
+      "parent_rgb_art_approved": true,
+      "parent_positive_observation": "Side-parted dark hair, distinct brows, one upper-lip moustache with a visibly bare chin, one closed mouth below the moustache, olive closed collar with two gold tabs, gold shoulder details/buttons and the diagonal strap are retained. The former invented continuous chinstrap beard is absent. The compact rounded chin meets a short broad closed collar without clipping or a white bib. Full raw white/cyan views show solid clothing and no interior holes.",
+      "network_recovery": "The initial poll failed with WinError10054 after task creation. The same task ID was resumed once and returned this exact PNG; no second POST or replacement task was created.",
+      "derivative_output": "mod_nailong/experiments/evolink-high131-flare-20261025/outputs/da0e0e98f2d33cee8ea616aa6dd2df37f3498ad951b08a1c41f8c1d3bd8ec644-01-alpha-repaired-bilinear.png",
+      "derivative_output_sha256": "ff48b89e8bb408db4fbe0d1d775f5aa3b56acb9e4c6e4e53073d488e8c8f4a26",
+      "derivative_mode": "RGBA",
+      "rgb_unchanged": true,
+      "alpha_matches_resized_source": true,
+      "source_corner_alpha_tl_tr_bl_br": [0, 0, 15, 15],
+      "output_corner_alpha_tl_tr_bl_br": [0, 0, 15, 15],
+      "decision": "rejected_for_production",
+      "remaining_reasons": [
+        "The restored source-alpha silhouette is larger than the generated head/hair contour, so the RGB working matte remains visible as a broad pale halo around the head. The full cyan comparison makes this directly visible. This visible backing/halo defect blocks import even though the alpha mapping and RGB preservation checks pass.",
+        "The raw was verified as RGB without an alpha channel; this is not a palette-transparency case. A future attempt must use a genuinely transparent exterior directly or otherwise eliminate the working-matte mismatch, then undergo another complete visual review."
+      ],
+      "visible_limitations": "The exact tiny gold insignia shapes and total button count remain unresolved at 42x46 and are not rejection reasons. Rejection is for the directly visible matte halo, not unreadable details or the approved facial-hair correction.",
+      "production_imported": false,
+      "raw_and_derivative_retained": true
+    }
+  ],
+  "production_imported": false
+}

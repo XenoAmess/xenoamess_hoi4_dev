@@ -1,0 +1,37 @@
+{
+  "schema": "naiwa-evolink-experiment-manual-review-v1",
+  "machine_id": "bf-202609141645-5434332d4d",
+  "model": "gpt-image-2.5-flare + source-alpha-resize-bilinear-rgb-unchanged-v1",
+  "prompt_round": "high131-external-01-alpha-repaired-bilinear",
+  "reviewed_at_utc": "2026-10-25T05:08:08.841438+00:00",
+  "reviewer": "Kimi actual visual comparison of the exact source, unchanged RGB parent, complete alpha-repaired derivative and full white/cyan/alpha review sheet",
+  "review_evidence": "mod_nailong/experiments/evolink-high131-flare-20261025/review-02-alpha-repaired-evidence.json",
+  "review_sheet_sha256": "af356e8112119feba452702d1787730b1d791dfab556fc5f170222837ed337f3",
+  "entries": [
+    {
+      "source_sha256": "5908d18071c97a562efa30140b7a2c3149ec13372b2699d281a49359da71abf5",
+      "attempt": "external-01-alpha-repaired-bilinear",
+      "parent_task_id": "task-unified-1792904337-6i5ne9pe",
+      "parent_output_sha256": "365fd2cf0bef85eb4a7a13438418614bfd62b80882642c68a7e3011d7a1cbc77",
+      "output": "mod_nailong/experiments/evolink-high131-flare-20261025/outputs/5908d18071c97a562efa30140b7a2c3149ec13372b2699d281a49359da71abf5-01-alpha-repaired-bilinear.png",
+      "output_sha256": "62dd773724e16bb08dea67eccd7ac2a49d2e300ef04c28c3c7592cda0545d559",
+      "size": [2048, 2048],
+      "mode": "RGBA",
+      "source_corner_alpha_tl_tr_bl_br": [0, 0, 24, 25],
+      "resized_corner_alpha_tl_tr_bl_br": [0, 0, 24, 25],
+      "output_corner_alpha_tl_tr_bl_br": [0, 0, 24, 25],
+      "rgb_unchanged": true,
+      "alpha_matches_resized_source": true,
+      "decision": "rejected_for_production",
+      "remaining_reasons": [
+        "The RGB parent's invented white working matte remains inside the restored source-alpha silhouette, where it forms a conspicuous white halo around the smaller generated hair, head and shoulders. The cyan comparison makes this backing/halo mismatch directly visible. Exact source-alpha resizing and unchanged RGB do not make that visible matte acceptable.",
+        "Do not import this derivative. For the next art attempt, keep the same original/reference inputs and character requirements but request a genuinely transparent exterior directly, with no white or gray working matte inside the restored silhouette. Review the returned native alpha before deciding whether any deterministic source-alpha mapping is appropriate."
+      ],
+      "positive_observation": "The deterministic operation preserved every RGB pixel and exactly matched the resized source alpha, including all four corner values. The approved mascot, hair, brows, clothing and short broad collar remain unchanged; rejection is specifically the visible white working-matte halo, not a new RGB art regression.",
+      "production_imported": false,
+      "derivative_retained": true,
+      "next_art_attempt": "external-02 with background=transparent and no working matte; original source and mascot reference remain the ordered inputs"
+    }
+  ],
+  "production_imported": false
+}
