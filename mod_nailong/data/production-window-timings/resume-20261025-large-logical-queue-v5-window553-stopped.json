@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261025-large-logical-queue-v5-window553",
+  "started_at_utc": "2026-10-25T01:44:50.017Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "jobs": "runtime/production-resume-low-exact-auth-recovery-20261025-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-25T01:44:50.133Z",
+      "batch": "resume-low-exact-auth-recovery-20261025"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:44:50.133Z",
+      "jobs_file": "runtime/production-resume-low-exact-auth-recovery-20261025-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:44:50.133Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-low-exact-auth-recovery-20261025-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:44:50.466Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-low-exact-auth-recovery-20261025-jobs.json",
+      "elapsed_ms": 333,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:44:50.467Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:45:34.320Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 43853,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:45:34.320Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/production-resume-low-exact-auth-recovery-20261025-jobs.json --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:45:37.201Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/production-resume-low-exact-auth-recovery-20261025-jobs.json --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41",
+      "elapsed_ms": 2881,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:45:37.201Z",
+      "command": "python runtime\\guard-dispatch-family.py 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:45:41.354Z",
+      "command": "python runtime\\guard-dispatch-family.py 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41",
+      "elapsed_ms": 4153,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:45:41.531Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-low-exact-auth-recovery-20261025-6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41.json --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:45:47.898Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-low-exact-auth-recovery-20261025-6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41.json --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41",
+      "elapsed_ms": 6367,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:45:47.898Z",
+      "key": "6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:46:10.535Z",
+      "key": "6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41",
+      "elapsed_ms": 22637,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:46:11.066Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-b800de1d-fbbd-41c3-b2d3-55f7e640c08f.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-exact-auth-recovery-20261025",
+      "observed_at_utc": "2026-10-25T01:46:11.706Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-b800de1d-fbbd-41c3-b2d3-55f7e640c08f.png",
+      "elapsed_ms": 640,
+      "exit_code": 0
+    }
+  ],
+  "status": "stopped_requires_reconciliation",
+  "error": "SyntaxError: Unexpected token 'W', \"Warning: t\"... is not valid JSON",
+  "stopped_at_utc": "2026-10-25T01:46:14.241Z"
+}

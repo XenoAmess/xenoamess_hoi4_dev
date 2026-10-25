@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261025-large-logical-queue-v5-window552-auth-reconciled",
+  "started_at_utc": "2026-10-25T01:32:57.821Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "jobs": "runtime/production-resume-fresh-observed-20261025T012223-b-20ee2c21-low3-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-25T01:32:57.941Z",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:32:57.941Z",
+      "jobs_file": "runtime/production-resume-fresh-observed-20261025T012223-b-20ee2c21-low3-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:32:57.941Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-fresh-observed-20261025T012223-b-20ee2c21-low3-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:32:58.189Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-fresh-observed-20261025T012223-b-20ee2c21-low3-jobs.json",
+      "elapsed_ms": 248,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:32:58.189Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:05.316Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 7127,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:05.316Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/production-resume-fresh-observed-20261025T012223-b-20ee2c21-low3-jobs.json --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:05.587Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/production-resume-fresh-observed-20261025T012223-b-20ee2c21-low3-jobs.json --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41",
+      "elapsed_ms": 271,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:05.587Z",
+      "command": "python runtime\\guard-dispatch-family.py 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:06.499Z",
+      "command": "python runtime\\guard-dispatch-family.py 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41",
+      "elapsed_ms": 912,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:06.596Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-fresh-observed-20261025T012223-b-20ee2c21-low3-6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41.json --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:08.339Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-fresh-observed-20261025T012223-b-20ee2c21-low3-6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41.json --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41",
+      "elapsed_ms": 1743,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:08.339Z",
+      "key": "6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:09.875Z",
+      "key": "6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41",
+      "elapsed_ms": 1536,
+      "error": "image generation failed: http 401 Unauthorized: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Provided authentication token is expired.\\\",\\n    \\\"type\\\": null,\\n    \\\"code\\\": \\\"token_expired\\\",\\n    \\\"param\\\": null\\n  },\\n  \\\"status\\\": 401,\\n  \\\"detail\\\": {\\n    \\\"code\\\": \\\"token_expired\\\",\\n    \\\"message\\\": \\\"Provided authentication token is expired.\\\"\\n  }\\n}\")"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:09.963Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41 --error-file runtime\\resume-fresh-observed-20261025T012223-b-20ee2c21-low3-error-6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:10.252Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41 --error-file runtime\\resume-fresh-observed-20261025T012223-b-20ee2c21-low3-error-6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41.txt",
+      "elapsed_ms": 289,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:10.252Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41 --message-file runtime\\resume-fresh-observed-20261025T012223-b-20ee2c21-low3-error-6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:15.183Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key 6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41 --message-file runtime\\resume-fresh-observed-20261025T012223-b-20ee2c21-low3-error-6c4245f928b296dbec8abb434b769733fc37bf280a47a480726bfc5a091dfd41.txt",
+      "elapsed_ms": 4931,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:15.183Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:33:31.131Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 15948,
+      "exit_code": 0
+    },
+    {
+      "phase": "batch_imports_completed",
+      "batch": "resume-fresh-observed-20261025T012223-b-20ee2c21-low3",
+      "observed_at_utc": "2026-10-25T01:44:10.597821+00:00",
+      "terminal_error_import_only": true
+    }
+  ],
+  "status": "completed",
+  "error": "Error: image generation failed: http 401 Unauthorized: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Provided authentication token is expired.\\\",\\n    \\\"type\\\": null,\\n    \\\"code\\\": \\\"token_expired\\\",\\n    \\\"param\\\": null\\n  },\\n  \\\"status\\\": 401,\\n  \\\"detail\\\": {\\n    \\\"code\\\": \\\"token_expired\\\",\\n    \\\"message\\\": \\\"Provided authentication token is expired.\\\"\\n  }\\n}\")",
+  "stopped_at_utc": "2026-10-25T01:33:31.132Z",
+  "completed_at_utc": "2026-10-25T01:44:10.597821+00:00",
+  "source_stopped_receipt": "mod_nailong/data/production-window-timings/resume-20261025-large-logical-queue-v5-window552-stopped.json",
+  "source_stopped_receipt_sha256": "f78efd0d380fe1d7a33bafe6a7cf9938d8c74e59f033602bf25f7f4ec5a4f2e3",
+  "new_image_calls_during_reconciliation": 0,
+  "result_classification": "terminal_authentication_error_no_image",
+  "scope": "Original failed receipt is unchanged. Completed means the actual error was durably imported, not a returned/approved image or a content refusal. One invocation is counted once; no content retry quota or cooldown is consumed."
+}
