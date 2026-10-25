@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261025-large-logical-queue-v9-window715",
+  "started_at_utc": "2026-10-25T11:14:05.789Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "resume-fresh-observed-20261025T110635-producer-8901e0ca-low4",
+      "jobs": "runtime/production-resume-fresh-observed-20261025T110635-producer-8901e0ca-low4-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-25T11:14:05.950Z",
+      "batch": "resume-fresh-observed-20261025T110635-producer-8901e0ca-low4"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-fresh-observed-20261025T110635-producer-8901e0ca-low4",
+      "observed_at_utc": "2026-10-25T11:14:05.950Z",
+      "jobs_file": "runtime/production-resume-fresh-observed-20261025T110635-producer-8901e0ca-low4-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261025T110635-producer-8901e0ca-low4",
+      "observed_at_utc": "2026-10-25T11:14:05.950Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-fresh-observed-20261025T110635-producer-8901e0ca-low4-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261025T110635-producer-8901e0ca-low4",
+      "observed_at_utc": "2026-10-25T11:14:06.187Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-fresh-observed-20261025T110635-producer-8901e0ca-low4-jobs.json",
+      "elapsed_ms": 237,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261025T110635-producer-8901e0ca-low4",
+      "observed_at_utc": "2026-10-25T11:14:06.187Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261025T110635-producer-8901e0ca-low4",
+      "observed_at_utc": "2026-10-25T11:14:11.280Z",
+      "command": "python tools\\production_prepare_boundary.py --apply-reviews",
+      "elapsed_ms": 5093,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-fresh-observed-20261025T110635-producer-8901e0ca-low4",
+      "observed_at_utc": "2026-10-25T11:14:11.280Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/production-resume-fresh-observed-20261025T110635-producer-8901e0ca-low4-jobs.json --key 19d59ea87ef924640cee8f5c7fcf9bd94808a17f41fe4acc4ad45022a92e65d1"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-fresh-observed-20261025T110635-producer-8901e0ca-low4",
+      "observed_at_utc": "2026-10-25T11:14:11.671Z",
+      "command": "python mod_nailong\\tools\\production_queue.py export-job --jobs-file runtime/production-resume-fresh-observed-20261025T110635-producer-8901e0ca-low4-jobs.json --key 19d59ea87ef924640cee8f5c7fcf9bd94808a17f41fe4acc4ad45022a92e65d1",
+      "elapsed_ms": 391,
+      "exit_code": 0
+    }
+  ],
+  "status": "stopped_requires_reconciliation",
+  "error": "SyntaxError: Unexpected end of JSON input",
+  "stopped_at_utc": "2026-10-25T11:14:11.671Z"
+}
