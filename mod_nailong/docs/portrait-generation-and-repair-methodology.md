@@ -91,6 +91,7 @@ Do not replace it, darken it or cut it out.
 - `background=opaque` 能避免透明抠图倾向，但会直接返回 RGB，prompt 无法在这种模式下可靠“补出 Alpha”。
 - `background=transparent` 能产生 RGBA，但不保证 Alpha 的位置、形状或数值与原图一致。RGBA 本身也可能是错误的全框光晕或烟雾背板。
 - `mask_url` 是后续可试的局部编辑路线：只开放真实外缘，锁死内部。它仍属生成结果，必须重新审图，不能预设逐像素一致。
+- 2026-10-25 的 HIGH131 实测进一步限定第五条通用路线：对真实透明外缘的素材，若先让模型生成中性工作底色，而新人物/相框轮廓又小于来源 Alpha 轮廓，机械覆盖来源 Alpha 会把工作底色留成明显外圈；`rgb_unchanged` 与 Alpha 数值匹配不能使这种派生图合格。此类来源可直接用 `background=transparent` 和对应的透明外缘 prompt 生成原生 RGBA，经完整原图、母版及白底/青底/Alpha 实际审查后接受其原生 Alpha，不再自动替换来源 Alpha。只有轮廓、背板与工作底色相容时才继续做 Alpha-only 修复；全幅不透明房间/背板仍可保留 RGB 并恢复其原 Alpha。
 
 ## 四、本组失败分流得到的关键结论
 
