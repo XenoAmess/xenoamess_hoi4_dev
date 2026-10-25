@@ -146,6 +146,56 @@ class ProductionQueueTests(unittest.TestCase):
                 if entry['source_sha256']==key:entry.update(generated_fullsize_sha256=digest,attempt_number=1)
         write_json(evidence,data);return master
 
+    def test_distinct_rejection_reasons_share_one_inventory_write(self):
+        with tempfile.TemporaryDirectory() as temp,ExitStack() as stack:
+            root=Path(temp);mod,image,digest,evidence,job=self.fixture(root,stack)
+            reasons={'a'*64:'Visible long narrow neck','b'*64:'Visible human ear'}
+            for key,reason in reasons.items():queue.stage_review(key,digest,'rejected',evidence,reason)
+            data=read_json(portraits.RECORD);data['portraits']['later-import']={'sentinel':'keep exact'};write_json(portraits.RECORD,data)
+            with patch.object(portraits,'write_json',wraps=write_json) as writes:
+                self.assertEqual(queue.apply_reviews(),{'applied':2,'stale_not_applied':0})
+                self.assertEqual(sum(call.args[0]==portraits.RECORD for call in writes.call_args_list),1)
+            rows=read_json(portraits.RECORD)['portraits']
+            self.assertEqual(rows['later-import'],{'sentinel':'keep exact'})
+            for key,reason in reasons.items():
+                self.assertEqual(rows[key]['review_reason'],reason)
+                a=read_json(mod/f'data/generation-requests/{key}.json')['attempts'][-1]
+                self.assertEqual((a['review'],a['rejection_reason']),('rejected',reason))
+
+    def test_interrupted_rejection_inventory_write_recovers_without_consuming_queue(self):
+        with tempfile.TemporaryDirectory() as temp,ExitStack() as stack:
+            root=Path(temp);mod,image,digest,evidence,job=self.fixture(root,stack)
+            for key in ['a'*64,'b'*64]:queue.stage_review(key,digest,'rejected',evidence,'Visible defect '+key[0])
+            def interrupted(path,value):
+                if path==portraits.RECORD:raise PermissionError('fixture Windows atomic replace denied')
+                return write_json(path,value)
+            with patch.object(portraits,'write_json',side_effect=interrupted):
+                with self.assertRaises(PermissionError):queue.apply_reviews()
+            self.assertEqual(len(list((queue.control()/'reviews/pending').glob('*.json'))),2)
+            self.assertEqual(len(list((queue.control()/'reviews/completed').glob('*.json'))),0)
+            self.assertEqual(read_json(portraits.RECORD)['portraits'][job['key']]['review'],'pending')
+            self.assertEqual(read_json(mod/f'data/generation-requests/{job["key"]}.json')['attempts'][-1]['review'],'rejected')
+            self.assertEqual(queue.apply_reviews(),{'applied':2,'stale_not_applied':0})
+            self.assertEqual(len(list((queue.control()/'reviews/pending').glob('*.json'))),0)
+
+    def test_stale_attempt_cannot_join_valid_grouped_rejections(self):
+        with tempfile.TemporaryDirectory() as temp,ExitStack() as stack:
+            root=Path(temp);mod,image,digest,evidence,job=self.fixture(root,stack)
+            for key in ['a'*64,'b'*64]:queue.stage_review(key,digest,'rejected',evidence,'Visible defect '+key[0])
+            path=mod/f'data/generation-requests/{job["key"]}.json';history=read_json(path);history['attempts'][-1]['number']=2;write_json(path,history)
+            with patch.object(portraits,'reject_decisions',wraps=portraits.reject_decisions) as reject:
+                self.assertEqual(queue.apply_reviews(),{'applied':1,'stale_not_applied':1})
+                reject.assert_called_once_with([('b'*64,'Visible defect b')])
+            rows=read_json(portraits.RECORD)['portraits'];self.assertEqual(rows['a'*64]['review'],'pending');self.assertEqual(rows['b'*64]['review'],'rejected')
+
+    def test_mixed_approval_and_rejection_preserve_distinct_manual_decisions(self):
+        with tempfile.TemporaryDirectory() as temp,ExitStack() as stack:
+            root=Path(temp);mod,image,digest,evidence,job=self.fixture(root,stack)
+            queue.stage_review('a'*64,digest,'approved',evidence)
+            queue.stage_review('b'*64,digest,'rejected',evidence,'Keep source eyebrows')
+            self.assertEqual(queue.apply_reviews(),{'applied':2,'stale_not_applied':0})
+            rows=read_json(portraits.RECORD)['portraits'];self.assertEqual(rows['a'*64]['review'],'approved');self.assertEqual(rows['b'*64]['review_reason'],'Keep source eyebrows')
+
     def test_hd_review_rejects_a_different_master_with_same_preview(self):
         with tempfile.TemporaryDirectory() as temp,ExitStack() as stack:
             root=Path(temp);mod,image,digest,evidence,job=self.fixture(root,stack)

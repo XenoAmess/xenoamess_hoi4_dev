@@ -151,9 +151,21 @@ def approve(keys):
     if queue_path.exists():write_json(queue_path,queue)
     print(f"Reviewed {len(keys)} image(s)")
 
-def reject(keys,reason):
+def reject_decisions(decisions):
+    """Apply independent manual rejections with one inventory replacement.
+
+    Each source keeps its own reason. The producer has already checked the
+    current source/output/attempt binding; this does not make art decisions.
+    Journals are updated before the shared inventory, so an interrupted final
+    replacement leaves the existing SHA-bound queue available for recovery.
+    """
+    decisions=list(decisions)
+    if not decisions:return
+    keys=[key for key,_ in decisions]
+    if len(set(keys))!=len(keys):raise ValueError('Independent rejections require distinct sources')
     record=read_json(RECORD)
-    for key in keys:
+    if any(key not in record['portraits'] for key in keys):raise KeyError('Rejected source missing from inventory')
+    for key,reason in decisions:
         record["portraits"][key].update(review="rejected",review_reason=reason,reviewed_at_utc=utc_now())
         journal_path=MOD/"data/generation-requests"/(key+".json")
         if journal_path.exists():
@@ -164,6 +176,9 @@ def reject(keys,reason):
                 write_json(journal_path,journal)
     write_json(RECORD,record)
     print(f"Rejected {len(keys)} image(s)")
+
+def reject(keys,reason):
+    return reject_decisions((key,reason) for key in keys)
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)

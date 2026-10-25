@@ -190,10 +190,13 @@ def apply_reviews():
             plans.append((path,decision,row,valid))
             if valid and decision['decision']=='approved' and row.get('review')!='approved':approvals.append(key)
         if approvals:portraits.approve(approvals)
+        rejections=[(decision['source_sha256'],decision['reason'])
+                    for _,decision,row,valid in plans
+                    if valid and decision['decision']=='rejected'
+                    and (row.get('review')!='rejected' or row.get('review_reason')!=decision['reason'])]
+        if rejections:portraits.reject_decisions(rejections)
         for path,decision,row,valid in plans:
             if valid:
-                if decision['decision']=='rejected' and (row.get('review')!='rejected' or row.get('review_reason')!=decision['reason']):
-                    portraits.reject([decision['source_sha256']],decision['reason'])
                 decision['application']='applied';applied+=1
             else:decision['application']='stale_not_applied';stale+=1
             decision['applied_or_rejected_at_utc']=utc_now()
