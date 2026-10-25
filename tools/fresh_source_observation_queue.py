@@ -53,6 +53,34 @@ def extract_original(root,item):
  item['original_png_sha256']=file_sha256(target)
  return item
 
+def low_supply_observation(root,slot):
+ """Let the existing supply slot refill while the other slot reviews outputs."""
+ policy=read_json(root/'mod_nailong/data/production-scheduling-policy.json')
+ if policy.get('protect_low_generation_supply') is not True or slot!=policy.get('low_source_supply_slot'):return None
+ floor=policy.get('low_source_supply_floor',8)
+ assert isinstance(floor,int) and not isinstance(floor,bool) and 0<=floor<=24
+ own=root/f'runtime/rolling-review-queue/slot-{slot}.json'
+ if own.exists() and read_json(own).get('status')=='assigned':return None
+ other='a' if slot=='b' else 'b';review=root/f'runtime/rolling-review-queue/slot-{other}.json'
+ if not review.exists():return None
+ reviewing=read_json(review)
+ if reviewing.get('status')!='assigned' or reviewing.get('machine_id')!=machine_id():return None
+ owner_path=root/'runtime/rolling-production/owner.json'
+ if not owner_path.exists():return None
+ owner=read_json(owner_path);run_id=owner.get('run_id','')
+ assert re.fullmatch(r'[A-Za-z0-9_-]+',run_id)
+ state_path=owner_path.with_name(run_id+'.json')
+ if owner.get('machine_id')!=machine_id() or not state_path.exists():return None
+ state=read_json(state_path)
+ if state.get('status')!='running' or state.get('run_id')!=run_id or state.get('machine_id')!=machine_id():return None
+ if owner_path.with_name(run_id+'-stop-requested.json').exists():return None
+ plan=read_json(root/'runtime/after128-continuous-plan.json')['batches'];index=state['next_index']
+ assert isinstance(index,int) and 0<=index<=len(plan)
+ prepared=sum(len(read_json(root/item['jobs'])) for item in plan[index:])
+ intended=sum(len(read_json(path).get('expected_source_keys',[])) for path in (root/'runtime/production-queue/preparation/pending').glob('*.json'))
+ if prepared+intended>floor:return None
+ return {'run_id':run_id,'machine_id':machine_id(),'next_index':index,'prepared_requests':prepared,'pending_preparation_requests':intended,'supply_floor':floor,'other_review_slot':other,'other_review_tag':reviewing.get('tag'),'scope':'Source observation only by the existing free supply slot while the other existing slot owns output review. No image call, art approval, journal mutation or HIGH dispatch override.'}
+
 def claim(root,slot):
  assert slot in {'a','b'}
  if (root/'runtime/rolling-review-queue/handoff-stop.json').exists():return {'ready':False,'stop_requested':True,'reason':'user_requested_handoff','slot':slot,'next_step':'Stop polling and do not create a successor; user requested vacation handoff.'}
@@ -69,6 +97,7 @@ def claim(root,slot):
   if (root/f'mod_nailong/data/production-fresh-source-observations/{body["tag"]}.json').exists():
    return {'ready':False,'reason':'partial_source_observation_completion_requires_reconciliation','allocation':allocation.relative_to(root).as_posix()}
   return {'ready':True,'kind':'fresh_source_observation','slot':slot,'tag':body['tag'],'resume_existing_observation':True,'allocation':allocation.relative_to(root).as_posix(),'allocation_sha256':file_sha256(allocation),'sources':body['sources'],'config':f'runtime/{body["tag"]}-observations.json'}
+ supply=None
  if low_enabled(root):
   rows=read_json(root/'mod_nailong/data/generated.json')['portraits']
   waiting=[(k,r) for k,r in rows.items() if r.get('review') in {'pending','rejected'} and r.get('generated_fullsize_sha256')]
@@ -79,7 +108,9 @@ def claim(root,slot):
     if (key,row['generated_fullsize_sha256']) in seen or not row.get('request_journal'):continue
     latest=read_json(root/row['request_journal'])['attempts'][-1]
     if latest.get('fullsize_sha256')==row['generated_fullsize_sha256'] and latest['status'] in {'generated_pending_visual_review','generated_rejected_visual_review'}:
-     return {'ready':False,'reason':'review_current_output_before_more_original_observation','slot':slot}
+     supply=low_supply_observation(root,slot)
+     if supply is None:return {'ready':False,'reason':'review_current_output_before_more_original_observation','slot':slot}
+     break
  selected=[];tag='fresh-observed-'+datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')+'-'+slot+'-'+uuid.uuid4().hex[:8]
  for item in candidates(root):
   path=reserved/(item['key']+'.json')
@@ -93,8 +124,9 @@ def claim(root,slot):
  if not selected:return {'ready':False,'reason':'no_unreserved_allowed_unmade_originals','slot':slot}
  allocation=folder/'allocations'/(tag+'.json');assert not allocation.exists()
  body={'machine_id':machine_id(),'slot':slot,'tag':tag,'created_at_utc':utc_now(),'sources':selected,'scope':'Actual original observation required, not art approval or permission to invent a character. No journal preparation, retry claim or image call. Reservations remain after failure for explicit reconciliation.'}
+ if supply is not None:body['low_supply_observation']=supply
  write_json(allocation,body)
- return {'ready':True,'kind':'fresh_source_observation','slot':slot,'tag':tag,'allocation':allocation.relative_to(root).as_posix(),'allocation_sha256':file_sha256(allocation),'sources':selected,'config':f'runtime/{tag}-observations.json'}
+ return {'ready':True,'kind':'fresh_source_observation','slot':slot,'tag':tag,'allocation':allocation.relative_to(root).as_posix(),'allocation_sha256':file_sha256(allocation),'sources':selected,'config':f'runtime/{tag}-observations.json',**({'low_supply_observation':supply} if supply is not None else {})}
 
 def complete(root,config_path):
  config_path=Path(config_path);config_path=config_path if config_path.is_absolute() else root/config_path
