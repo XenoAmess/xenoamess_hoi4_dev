@@ -22,7 +22,7 @@
 
 上图来自 `machine_id: bf-202609141645-5434332d4d`，2026-10-16 02:38 UTC，HOI4 1.19.3.0，首次四头像开发包，使用此前不保留毛发的 A 版。完整来源、原图 SHA 和适用范围见[会话回执](docs/session-2026-10-16.json)。这张历史图不能证明新版或其他图片实机通过。
 
-当前采用的毛发特征规则与迁移说明见[毛发版本生产记录](docs/hair-features-production.md)。原 26 个资源实例的对照实验在 [experiments/hair-features-v1/](experiments/hair-features-v1/)，冻结了 23 张不同原图对应的旧图和完整旧 prompt。所有新生成及返修在请求前保存完整实际 prompt，成功、失败和被弃用的尝试均留记录。
+当前采用的毛发特征规则与迁移说明见[毛发版本生产记录](docs/hair-features-production.md)。原 26 个资源实例的对照实验在 [experiments/hair-features-v1/](experiments/hair-features-v1/)，冻结了 23 张不同原图对应的旧图和完整旧 prompt。所有新生成及返修在请求前保存完整实际 prompt，成功、失败和被弃用的尝试均留记录。跨模型对照、局部修缮与 Alpha 验收的可复用流程见[头像生成、局部修缮与 Alpha 验收方法论](docs/portrait-generation-and-repair-methodology.md)。
 
 用户追加了[粗脖子与衣领衔接检查](docs/collar-fit-production.md)：既有 106 张完成专项复查，发现的 28 张问题图均已重新生成并通过对照审查，后续同样采用紧凑头颈与适配领围。合格数量以当前图片 SHA 对应的毛发与领口双重审图为准，历史进度不抵扣新要求。
 
