@@ -1,0 +1,465 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-25T18:29:27.460691+00:00",
+  "reason": "User requested reflection and faster continued LOW execution. Profile showed obsolete/duplicate rejection history reopening255 journals for no current selectable correction.",
+  "before": {
+    "observed_at_utc": "2026-10-25T18:00:47.871244+00:00",
+    "seconds": 9.853642200003378,
+    "journal_reads": 255,
+    "distinct_journals": 177,
+    "extra_repeat_journal_reads": 78,
+    "direct_json_reads": 530,
+    "direct_json_seconds": 5.050745500542689,
+    "eligible_sources": [],
+    "scope": "Read-only profiling of selector; no image call, approval, preparation, claim or canonical mutation."
+  },
+  "after": {
+    "observed_at_utc": "2026-10-25T18:05:14.910901+00:00",
+    "seconds": 7.733854499994777,
+    "journal_reads": 0,
+    "distinct_journals": 0,
+    "extra_repeat_journal_reads": 0,
+    "direct_json_reads": 275,
+    "direct_json_seconds": 3.7199431998305954,
+    "eligible_sources": [],
+    "scope": "Read-only profiling of selector; no image call, approval, preparation, claim or canonical mutation."
+  },
+  "comparison_limit": "One uncontrolled local observation before/after while producer continued; 9.85s versus7.73s is not a controlled throughput guarantee. Structural elimination255 obsolete/repeated journal reads in these samples is verified.",
+  "implementation": "Read latest journal once for each current pending/rejected raw SHA matching an actual rejection. Every invocation reads current rows and relevant latest journal anew; no cache survives a boundary. Report-byte/machine checks, full current request/input/attempt gates, service family/cooldown/consumption and manual art decisions remain intact.",
+  "changed_files": [
+    {
+      "path": "tools/rolling_production_queue.py",
+      "sha256": "ea4e42f8299ddef368dc628f2a03456f5d0f8b413565532bb43239564f03744e"
+    },
+    {
+      "path": "mod_nailong/tools/prepare_ready_art_reviews.py",
+      "sha256": "9854fe1c0fd699ca9b3fb25a2616fcf9e1229ad801f7c23bc498e17a8dca6cf6"
+    },
+    {
+      "path": "tests/test_current_ready_art_journals.py",
+      "sha256": "eacbdaa6e01d41f3c7a3e530d02934fa3382a178ee0cf7344ae378d56e05af75"
+    }
+  ],
+  "atomic_change_evidence": {
+    "observed_at_utc": "2026-10-25T18:05:04.577328+00:00",
+    "files": [
+      {
+        "path": "mod_nailong/tools/prepare_ready_art_reviews.py",
+        "before_sha256": "d7dc337943c152992dfa7b4d4e070682c07b4c7eb5c9e844d5da1553d243e8d7",
+        "after_sha256": "9854fe1c0fd699ca9b3fb25a2616fcf9e1229ad801f7c23bc498e17a8dca6cf6",
+        "original_backup": "runtime/current-art-journal-optimization-20261026/prepare_ready_art_reviews.py.before"
+      },
+      {
+        "path": "tools/rolling_production_queue.py",
+        "before_sha256": "d9b06e0b7668d9662935afc76a1f9c78f18fa2b90bb09ae27fe81041dd6a8e92",
+        "after_sha256": "ea4e42f8299ddef368dc628f2a03456f5d0f8b413565532bb43239564f03744e",
+        "original_backup": "runtime/current-art-journal-optimization-20261026/rolling_production_queue.py.before"
+      }
+    ],
+    "scope": "Atomic pure-selector optimization. No persisted cache, request mutation, image call, approval, retry/cooldown change or owner reset."
+  },
+  "tests": {
+    "actual_functions_cell_id": "981",
+    "command": "python -X utf8 -m unittest tests.test_current_ready_art_journals tests.test_ready_art_service_holds tests.test_idle_low_priority tests.test_ready_art_reports",
+    "actual_exit_code": 0,
+    "tests_run": 21,
+    "reported_test_seconds": 0.525,
+    "actual_result": "OK",
+    "coverage": "Obsolete/approved output filtering, duplicate current findings, reread new attempt each boundary, missing current evidence blocks, current-SHA precedence, service family holds, HIGH-first LOW scheduling and immutable report binding."
+  },
+  "source_code": "import sys,json,subprocess,shutil\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom tools.isolated_production_sync import rebase_validated_commit\ndef git(*args):\n p=subprocess.run(['git','-c','gc.auto=0',*args],cwd=ROOT,capture_output=True,timeout=240);assert p.returncode==0,(args,p.stdout.decode('utf-8','replace'),p.stderr.decode('utf-8','replace'));return p.stdout\nassert not git('diff','--cached','--name-only').strip()\npublication=read_json(ROOT/'runtime/checkpoint-resumed-low-v12-auto-1-20261025.json')\nassert publication['commit']=='bff7ef44e4c5bedd10dd1754cec7d1bb8ee06461' and publication.get('pushed_at_utc'),'Do not claim recovered publication before actual push'\nbefore=read_json(ROOT/'runtime/ready-art-read-profile-before-20261026.json');after=read_json(ROOT/'runtime/ready-art-read-profile-after-20261026.json')\nassert before['journal_reads']==255 and after['journal_reads']==0 and before['eligible_sources']==after['eligible_sources']==[]\naudit=ROOT/'mod_nailong/data/production-performance/20261026-current-art-journal-selection.json';assert not audit.exists()\nphase=read_json(ROOT/'runtime/root-b-review-v12-phase.json');run=read_json(ROOT/'runtime/rolling-production/resume-20261025-large-logical-queue-v12.json')\nchanged=['tools/rolling_production_queue.py','mod_nailong/tools/prepare_ready_art_reviews.py','tests/test_current_ready_art_journals.py']\nwrite_json(audit,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'reason':'User requested reflection and faster continued LOW execution. Profile showed obsolete/duplicate rejection history reopening255 journals for no current selectable correction.','before':before,'after':after,'comparison_limit':'One uncontrolled local observation before/after while producer continued; 9.85s versus7.73s is not a controlled throughput guarantee. Structural elimination255 obsolete/repeated journal reads in these samples is verified.','implementation':'Read latest journal once for each current pending/rejected raw SHA matching an actual rejection. Every invocation reads current rows and relevant latest journal anew; no cache survives a boundary. Report-byte/machine checks, full current request/input/attempt gates, service family/cooldown/consumption and manual art decisions remain intact.','changed_files':[{'path':p,'sha256':file_sha256(ROOT/p)} for p in changed],'atomic_change_evidence':read_json(ROOT/'runtime/current-art-journal-optimization-20261026/change.json'),'tests':{'actual_functions_cell_id':'981','command':'python -X utf8 -m unittest tests.test_current_ready_art_journals tests.test_ready_art_service_holds tests.test_idle_low_priority tests.test_ready_art_reports','actual_exit_code':0,'tests_run':21,'reported_test_seconds':0.525,'actual_result':'OK','coverage':'Obsolete/approved output filtering, duplicate current findings, reread new attempt each boundary, missing current evidence blocks, current-SHA precedence, service family holds, HIGH-first LOW scheduling and immutable report binding.'},'source_code':Path(__file__).read_text(encoding='utf-8'),'profiler_source':(ROOT/'runtime/profile-ready-art-reads-20261026.py').read_text(encoding='utf-8'),'current_sole_builtin_state':run,'current_root_phase':phase,'network_reconciliation_scope':'First v12 publisher network failure preserved byte-for-byte. Same fixed16-PNG commit now actually pushed; full raw readback may still be in progress. This performance checkpoint does not claim v12 readback completion.','fixed_snapshot_publication_status_observed':publication['status'],'capacity_free_bytes':shutil.disk_usage(ROOT).free,'retention_review_at_utc':'2026-10-29T10:30:00Z','scope':'No image concurrency/channel change, no automatic visual approval, no failed image replay, no new agent/slot, no game/Steam/build/export/release or cleanup.'})\npaths=[*changed,audit.relative_to(ROOT).as_posix(),'docs/handoffs/2026-10-25-low-resumed.md','mod_nailong/data/production-checkpoint-failures/20261026-v12-first-network-failure.json','mod_nailong/data/production-checkpoint-failures/20261026-v12-first-network-failure-original-publisher-state.json','mod_nailong/data/production-checkpoint-failures/20261026-v12-first-network-failure-original-publication.json']\nfor item in phase['completed']:paths.append(f'mod_nailong/data/production-review-handovers/20261025-root-{item[\"tag\"]}.json')\npaths=list(dict.fromkeys(paths));doc=ROOT/'docs/handoffs/2026-10-25-low-resumed.md';old=doc.read_text(encoding='utf-8');now=utc_now()\nprefix=f'''## Local selection overhead reduced; LOW continues / {now}\n\nMachine `{machine_id()}`. User requested faster execution. Actual window timings showed builtin service returns23-47s in selected windows while repeated local prepare/import/boundary work also cost tens of seconds. Read-only ready-art profile before:255 journal reads/177 distinct,78 repeated,9.853642s; after current-SHA/pending-or-rejected filtering and per-selection deduplication:0 journal reads/no eligible sources,7.733854s. Single uncontrolled observations while production continued, not a whole-pipeline throughput claim. All relevant latest attempts are re-read on every selection; no persistent cache, changed frozen prompt/input, service-hold exemption or automatic art decision.21 focused tests actually passed in cell981, including fresh-attempt/absent-current-evidence and existing service-hold/HIGH-first/report-binding cases.\n\nActual sole builtin cell943 remains v12, original19:16:52.234856Z cutoff/max64calls unchanged. Current counter at static evidence capture{run['completed_source_requests']} completed calls. Root review/source groups completed{phase['completed_groups']}; current assignment{phase['current_tag']} is not claimed reviewed. b1171 approve/3 retained-human-anatomy repairs; b1183 approve/1 missing visible source brows. Actual b source groups continue supplying full per-original native/NN observations independently of delayed output reviews.\n\nV12 first16-PNG immutable snapshot bff7ef44e4c5bedd10dd1754cec7d1bb8ee06461 initially failed Git push/remote probe due connection reset and temporarily unavailable localhost proxy. Original publisher actually exited1, original publisher/publication JSON bytes preserved in production-checkpoint-failures. Normal Git connectivity recovered; same fixed commit publication is now actually pushed, remote raw readback status at this checkpoint `{publication['status']}`. Reconciliation is Git-only; no image replay, global proxy/TLS/account change, force push, owner or deadline reset. Original Git-only publisher is not blindly restarted. V11 remains fully delivered/verified; own verified originals through v11 stay352 until actual v12 readback proves more.\n\nLatest user percentage report remains the timestamped01:15 Beijing snapshot: HIGH97.11%, LOW26.46%, overall87.63%; later activity does not backfill that observation. Capacity{shutil.disk_usage(ROOT).free} free bytes, storage review2026-10-29T10:30Z unchanged. No EvoLink/API/CLI images/new agents/Steam/game/build/release/full export/cleanup. Continue useful LOW generation and actual review.\n\n'''\ntemp=doc.with_name(doc.name+'.performance.tmp');temp.write_text(prefix+old,encoding='utf-8');temp.replace(doc)\nfor p in paths:\n assert (ROOT/p).is_file()\n if p.endswith('.json'):read_json(ROOT/p)\ngit('add','--',*paths);git('diff','--cached','--check');staged=set(git('diff','--cached','--name-only').decode().splitlines());assert staged and staged<=set(paths)\nmsg=ROOT/'runtime/current-art-performance-message.txt';msg.write_text('Avoid reopening obsolete art-review journals\\n',encoding='utf-8');git('commit','--no-status','-F',str(msg));commit=git('rev-parse','HEAD').decode().strip()\nsync=rebase_validated_commit(commit,'current-art-performance-20261026');assert sync['synchronized_commit']==commit\ngit('-c','http.version=HTTP/1.1','push','origin',commit+':refs/heads/master');remote=git('ls-remote','origin','refs/heads/master').decode().split()[0]\nif remote!=commit:git('merge-base','--is-ancestor',commit,remote)\nreceipt={'machine_id':machine_id(),'completed_at_utc':utc_now(),'commit':commit,'remote_master_observed':remote,'file_count':len(staged),'isolated_synchronization':sync,'scope':'Own code/tests/profile/audits/docs only, JSON/diff checks,21 relevant tests, isolated fetch/rebase, ordinary FF push and fresh remote presence. Generation continues.'}\nwrite_json(ROOT/'runtime/current-art-performance-pushed-20261026.json',receipt);print(json.dumps({k:v for k,v in receipt.items() if k!='isolated_synchronization'},ensure_ascii=True),flush=True)\n",
+  "profiler_source": "import sys,time,json\nfrom collections import Counter\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,utc_now,write_json\nimport tools.rolling_production_queue as queue\nfrom unittest.mock import patch\ncounts=Counter();elapsed=Counter()\ndef observed(path):\n start=time.perf_counter();value=read_json(path);name=str(path);counts[name]+=1;elapsed[name]+=time.perf_counter()-start;return value\nstart=time.perf_counter()\nwith patch.object(queue,'read_json',observed):result=queue.ready_art(ROOT,queue.machine_id())\njournals={p:n for p,n in counts.items() if '/generation-requests/' in p.replace('\\\\','/')}\nsummary={'observed_at_utc':utc_now(),'seconds':time.perf_counter()-start,'journal_reads':sum(journals.values()),'distinct_journals':len(journals),'extra_repeat_journal_reads':sum(n-1 for n in journals.values()),'direct_json_reads':sum(counts.values()),'direct_json_seconds':sum(elapsed.values()),'eligible_sources':[e['source_sha256'] for _,e in result],'scope':'Read-only profiling of selector; no image call, approval, preparation, claim or canonical mutation.'}\nlabel=sys.argv[1];write_json(ROOT/f'runtime/ready-art-read-profile-{label}-20261026.json',summary);print(json.dumps(summary,ensure_ascii=True))\n",
+  "current_sole_builtin_state": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v12",
+    "next_index": 817,
+    "after_window": "resume-20261025-large-logical-queue-v12-window816",
+    "status": "running",
+    "created_at_utc": "2026-10-25T17:16:52.234856+00:00",
+    "completed_windows": 26,
+    "completed_source_requests": 26,
+    "updated_at_utc": "2026-10-25T18:28:22.777888+00:00"
+  },
+  "current_root_phase": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v12",
+    "operator": "Codex root in existing b slot, b agent stopped",
+    "created_at_utc": "2026-10-25T17:20:09.413928+00:00",
+    "deadline_utc": "2026-10-25T19:16:52.234856+00:00",
+    "max_groups": 16,
+    "completed_groups": 7,
+    "current_tag": "rollingb119",
+    "current_kind": "portrait",
+    "previous_phase_preserved": {
+      "machine_id": "bf-202609141645-5434332d4d",
+      "run_id": "resume-20261025-large-logical-queue-v11",
+      "operator": "Codex root in existing b slot, b agent stopped",
+      "created_at_utc": "2026-10-25T14:30:48.229094+00:00",
+      "deadline_utc": "2026-10-25T16:29:22.967366+00:00",
+      "max_groups": 16,
+      "completed_groups": 6,
+      "current_tag": null,
+      "current_kind": null,
+      "previous_phase_preserved": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "run_id": "resume-20261025-large-logical-queue-v10",
+        "operator": "Codex root in existing b slot, b agent stopped",
+        "created_at_utc": "2026-10-25T12:08:29.567386+00:00",
+        "deadline_utc": "2026-10-25T14:07:36.270673+00:00",
+        "max_groups": 16,
+        "completed_groups": 14,
+        "current_tag": null,
+        "current_kind": null,
+        "previous_phase_preserved": {
+          "machine_id": "bf-202609141645-5434332d4d",
+          "run_id": "resume-20261025-large-logical-queue-v9",
+          "operator": "Codex root in existing b slot, b agent stopped",
+          "created_at_utc": "2026-10-25T10:06:14.908674+00:00",
+          "deadline_utc": "2026-10-25T12:04:47.951076+00:00",
+          "max_groups": 16,
+          "completed_groups": 5,
+          "current_tag": null,
+          "current_kind": null,
+          "previous_phase_preserved": {
+            "machine_id": "bf-202609141645-5434332d4d",
+            "run_id": "resume-20261025-large-logical-queue-v8",
+            "operator": "Codex root in existing b slot, b agent stopped",
+            "created_at_utc": "2026-10-25T08:49:35.750481+00:00",
+            "deadline_utc": "2026-10-25T09:47:50.498851+00:00",
+            "max_groups": 16,
+            "completed_groups": 4,
+            "current_tag": null,
+            "current_kind": null,
+            "previous_phase_preserved": {
+              "machine_id": "bf-202609141645-5434332d4d",
+              "run_id": "resume-20261025-large-logical-queue-v7",
+              "operator": "Codex root in existing b slot; b agent stopped",
+              "created_at_utc": "2026-10-25T05:18:26.825718+00:00",
+              "deadline_utc": "2026-10-25T07:11:51.649293+00:00",
+              "max_groups": 16,
+              "completed_groups": 6,
+              "current_tag": null,
+              "current_kind": null,
+              "previous_phase": "runtime/root-b-review-v6-phase.json",
+              "previous_phase_sha256": "d93489a2e64dbeab34d114b8e3566ddf029d9015c1936667a69342f8ad75d407",
+              "previous_phase_counts_preserved": true,
+              "scope": "Separate finite v7 review/source-supply phase, only after old root b8 groups actually completed. No new slot/agent, previous deadline unchanged. Finish assigned groups at boundary before stopping.",
+              "allocated_at_utc": "2026-10-25T07:01:19.146661+00:00",
+              "updated_at_utc": "2026-10-25T07:31:14.536003+00:00",
+              "completed": [
+                {
+                  "tag": "rollingb103",
+                  "report": "mod_nailong/data/resumed-20261024-rollingb103-agent-review.json",
+                  "report_sha256": "9ed3fac54855420866c2129486de8961843e63ca339bea928eda7a9d6c53a945",
+                  "completed_at_utc": "2026-10-25T05:30:31.380227+00:00"
+                },
+                {
+                  "tag": "fresh-observed-20261025T053833-b-b0b8d15c",
+                  "kind": "originals",
+                  "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T053833-b-b0b8d15c.json",
+                  "completion_sha256": "06a6d38533b95dd96d14bd8fdfc1b25ed1cf45ed9134fb6dbe1c60fb6dbd3b3c",
+                  "completed_at_utc": "2026-10-25T05:48:49.100609+00:00"
+                },
+                {
+                  "tag": "rollingb104",
+                  "report": "mod_nailong/data/resumed-20261024-rollingb104-agent-review.json",
+                  "report_sha256": "8d836d79bd3d232e82d07f3bb04cf75f272d670fbc64000c1dd6b5b66e5c0727",
+                  "completed_at_utc": "2026-10-25T06:39:53.157800+00:00"
+                },
+                {
+                  "tag": "fresh-observed-20261025T064046-b-af213b42",
+                  "kind": "originals",
+                  "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T064046-b-af213b42.json",
+                  "completion_sha256": "227efd1ca88e8d3c3b2962b7d3cba8b568f96f22492562033515e29717b7d693",
+                  "completed_at_utc": "2026-10-25T06:43:10.343380+00:00"
+                },
+                {
+                  "tag": "fresh-observed-20261025T064918-b-d22fb45c",
+                  "kind": "originals",
+                  "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T064918-b-d22fb45c.json",
+                  "completion_sha256": "bf1b609f871468926666af1cc27b24d25a41cb26861b46d01c1bd09f4018e1c9",
+                  "completed_at_utc": "2026-10-25T06:51:55.767180+00:00"
+                },
+                {
+                  "tag": "rollingb105",
+                  "report": "mod_nailong/data/resumed-20261024-rollingb105-agent-review.json",
+                  "report_sha256": "4fe3222f45e746058d1b016b21d5272fe98347ccaa70407665a61fb98f9596c0",
+                  "completed_at_utc": "2026-10-25T07:31:14.300361+00:00"
+                }
+              ]
+            },
+            "scope": "Independent finite v8 phase in same slot after v7 actual completion. No new reviewer/agent, no prior deadline reset; finish allocated group at boundary.",
+            "allocated_at_utc": "2026-10-25T09:41:37.792364+00:00",
+            "updated_at_utc": "2026-10-25T09:49:12.886419+00:00",
+            "completed": [
+              {
+                "tag": "rollingb106",
+                "report": "mod_nailong/data/resumed-20261024-rollingb106-agent-review.json",
+                "report_sha256": "5e6c1914f3b87f423d5ba7fd1e50ed393cecd739c3c8a50b6a1d20098d431e12",
+                "completed_at_utc": "2026-10-25T09:19:37.706853+00:00"
+              },
+              {
+                "tag": "fresh-observed-20261025T092104-b-dce744ac",
+                "kind": "originals",
+                "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T092104-b-dce744ac.json",
+                "completion_sha256": "4fe8a568b274b37919c513957fa30992c154ba57aedf911df827995a46a19964",
+                "completed_at_utc": "2026-10-25T09:26:01.727763+00:00"
+              },
+              {
+                "tag": "fresh-observed-20261025T092720-b-77c971d8",
+                "kind": "originals",
+                "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T092720-b-77c971d8.json",
+                "completion_sha256": "1e310fc74e74ecba55e0b473ef9faa5589e5fc280a1ef557e583bbbcf42871bf",
+                "completed_at_utc": "2026-10-25T09:29:38.575978+00:00"
+              },
+              {
+                "tag": "fresh-observed-20261025T094019-b-0d9850a4",
+                "kind": "originals",
+                "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T094019-b-0d9850a4.json",
+                "completion_sha256": "c89ba7cec36938decdab5e0b45b1060c8908aebebcb637f9f97606ba7ecc401b",
+                "completed_at_utc": "2026-10-25T09:49:05.004642+00:00"
+              }
+            ]
+          },
+          "scope": "Independent finite v9 phase after v8 actual producer/review completion. Same existing b slot; no new reviewer/agent or prior deadline reset.",
+          "allocated_at_utc": "2026-10-25T11:02:19.635163+00:00",
+          "updated_at_utc": "2026-10-25T12:04:30.425169+00:00",
+          "completed": [
+            {
+              "tag": "fresh-observed-20261025T100651-b-bbb31400",
+              "kind": "originals",
+              "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T100651-b-bbb31400.json",
+              "completion_sha256": "da9a53b4404d3a0165469e883291f8415de799130fe9744a64ab0b6a3427b4f8",
+              "completed_at_utc": "2026-10-25T10:16:25.938022+00:00"
+            },
+            {
+              "tag": "fresh-observed-20261025T101841-b-40a8e41c",
+              "kind": "originals",
+              "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T101841-b-40a8e41c.json",
+              "completion_sha256": "b3c0108ce17e86a8a4efe3ea6246d5ec27d783a38753c172c78a89a29e49f2c1",
+              "completed_at_utc": "2026-10-25T10:24:39.351205+00:00"
+            },
+            {
+              "tag": "rollingb107",
+              "report": "mod_nailong/data/resumed-20261024-rollingb107-agent-review.json",
+              "report_sha256": "a83592bd4266f8aa561235cb923ae6e9dfd2e024b85f5ca271d9949184241e67",
+              "completed_at_utc": "2026-10-25T10:39:07.465436+00:00"
+            },
+            {
+              "tag": "rollingb108",
+              "report": "mod_nailong/data/resumed-20261024-rollingb108-agent-review.json",
+              "report_sha256": "5211b9900125b70cda4c34cd2d61c35ef1cdc1362f88d7a57d7678480aadcc4f",
+              "completed_at_utc": "2026-10-25T11:00:33.684127+00:00"
+            },
+            {
+              "tag": "rollingb109",
+              "report": "mod_nailong/data/resumed-20261024-rollingb109-agent-review.json",
+              "report_sha256": "3d7ce626533c0f79bab300c5f3ffb7f260ea1556c1c8a2f28db8265ae750452a",
+              "completed_at_utc": "2026-10-25T12:04:30.153755+00:00"
+            }
+          ]
+        },
+        "scope": "Independent finite v10 after actual previous safe stop. Same existing reviewer, no agent creation or previous cutoff reset.",
+        "allocated_at_utc": "2026-10-25T13:57:38.605285+00:00",
+        "updated_at_utc": "2026-10-25T14:17:25.103179+00:00",
+        "completed": [
+          {
+            "tag": "fresh-observed-20261025T120846-b-82ed430f",
+            "kind": "originals",
+            "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T120846-b-82ed430f.json",
+            "completion_sha256": "042db88985db16fca5ded1261c25f0f63bffd2287458f75b177d802009fa510e",
+            "completed_at_utc": "2026-10-25T12:10:34.432337+00:00"
+          },
+          {
+            "tag": "fresh-observed-20261025T121343-b-4395bf90",
+            "kind": "originals",
+            "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T121343-b-4395bf90.json",
+            "completion_sha256": "d07feabd6ed92b04f573bd8e652f205ebabb7e4cbdc57950ba8ee38eb90bacbb",
+            "completed_at_utc": "2026-10-25T12:15:38.574842+00:00"
+          },
+          {
+            "tag": "fresh-observed-20261025T121919-b-e5663e36",
+            "kind": "originals",
+            "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T121919-b-e5663e36.json",
+            "completion_sha256": "6443bd0a298c0e71b7ef5aecf02e80fdfa11c0c726ad3cf07c5fe83eee2d6db4",
+            "completed_at_utc": "2026-10-25T12:20:55.306826+00:00"
+          },
+          {
+            "tag": "fresh-observed-20261025T122057-b-08c60e04",
+            "kind": "originals",
+            "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T122057-b-08c60e04.json",
+            "completion_sha256": "f51edcbb4c7b2d1553154b20885bc50396b9044c1fd21e7c26cf2ecbbbb8fa0d",
+            "completed_at_utc": "2026-10-25T12:21:56.133393+00:00"
+          },
+          {
+            "tag": "fresh-observed-20261025T122157-b-8ed194b3",
+            "kind": "originals",
+            "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T122157-b-8ed194b3.json",
+            "completion_sha256": "fae5bd4a32317e318b0aae13b8385a21048e8ccf5a775df295fb9024ef8ac49f",
+            "completed_at_utc": "2026-10-25T12:23:02.603655+00:00"
+          },
+          {
+            "tag": "rollingb110",
+            "report": "mod_nailong/data/resumed-20261024-rollingb110-agent-review.json",
+            "report_sha256": "85d1c0fe7f57d043e550b3cd5760506bab0a9f5796fd2a0c662c0561942cef15",
+            "completed_at_utc": "2026-10-25T12:27:10.068484+00:00"
+          },
+          {
+            "tag": "fresh-observed-20261025T122724-b-fd7c63d4",
+            "kind": "originals",
+            "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T122724-b-fd7c63d4.json",
+            "completion_sha256": "fbc9ff0ccddd3f261d7e355e3ff54ee4a20acd71034aeb0ea693ae94fa23b306",
+            "completed_at_utc": "2026-10-25T12:28:39.359713+00:00"
+          },
+          {
+            "tag": "rollingb111",
+            "report": "mod_nailong/data/resumed-20261024-rollingb111-agent-review.json",
+            "report_sha256": "c1d5fe3047e504f534b55c475fd4741f284e09d8cdaa91ff2db0afc50c5da30a",
+            "completed_at_utc": "2026-10-25T12:33:28.345083+00:00"
+          },
+          {
+            "tag": "rollingb112",
+            "report": "mod_nailong/data/resumed-20261024-rollingb112-agent-review.json",
+            "report_sha256": "eae1a7a3c2204e746d4ccf36a3c900a63329384cd3b72579e66c7b4b86fb0b4d",
+            "completed_at_utc": "2026-10-25T12:41:56.063770+00:00"
+          },
+          {
+            "tag": "rollingb113",
+            "report": "mod_nailong/data/resumed-20261024-rollingb113-agent-review.json",
+            "report_sha256": "0f7c5d0e1c9657a4f9aa6df9d64d242bdaacf09f28fe73abfcc06cc4a49678ff",
+            "completed_at_utc": "2026-10-25T13:28:32.970982+00:00"
+          },
+          {
+            "tag": "fresh-observed-20261025T132834-b-a96b7ce4",
+            "kind": "originals",
+            "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T132834-b-a96b7ce4.json",
+            "completion_sha256": "7f6680979d4a6810952da8c949ba0b643e7ca88e47ed30d4dacca0a0fe6069da",
+            "completed_at_utc": "2026-10-25T13:38:10.082217+00:00"
+          },
+          {
+            "tag": "fresh-observed-20261025T133812-b-7e7e13df",
+            "kind": "originals",
+            "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T133812-b-7e7e13df.json",
+            "completion_sha256": "98d102919aab926cc67d14c1c611d7e5383af828c0e39986aac3766c10a65157",
+            "completed_at_utc": "2026-10-25T13:39:37.455328+00:00"
+          },
+          {
+            "tag": "fresh-observed-20261025T134049-b-64562bc6",
+            "kind": "originals",
+            "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T134049-b-64562bc6.json",
+            "completion_sha256": "1d7771da341308d5945987f1da2029727c101a8cde35ebde3eca4c4610dba195",
+            "completed_at_utc": "2026-10-25T13:42:34.896456+00:00"
+          },
+          {
+            "tag": "fresh-observed-20261025T135732-b-7814a428",
+            "kind": "originals",
+            "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T135732-b-7814a428.json",
+            "completion_sha256": "97163a5e0a6b505ffc69c1347eead93538fee06d70a3843062c0d65e1022a85e",
+            "completed_at_utc": "2026-10-25T14:17:24.850738+00:00"
+          }
+        ]
+      },
+      "scope": "Independent finite v11 after actual previous safe stop. Same existing reviewer, no agent creation or previous cutoff reset.",
+      "allocated_at_utc": "2026-10-25T16:02:51.317506+00:00",
+      "updated_at_utc": "2026-10-25T17:12:43.806573+00:00",
+      "completed": [
+        {
+          "tag": "fresh-observed-20261025T143256-b-3b4fc3e9",
+          "kind": "originals",
+          "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T143256-b-3b4fc3e9.json",
+          "completion_sha256": "0ab97fb021cc9d0cb9d9291f1e1b7632c524da6ee2bae3b1174c5061fe91fc6e",
+          "completed_at_utc": "2026-10-25T14:40:27.586456+00:00"
+        },
+        {
+          "tag": "rollingb114",
+          "report": "mod_nailong/data/resumed-20261024-rollingb114-agent-review.json",
+          "report_sha256": "93cf1bfa2f04b1cb20ae43b26a4350f717f026df126332c4ab195e337568482f",
+          "completed_at_utc": "2026-10-25T15:22:20.140490+00:00"
+        },
+        {
+          "tag": "fresh-observed-20261025T153031-b-359d81b4",
+          "kind": "originals",
+          "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T153031-b-359d81b4.json",
+          "completion_sha256": "5437df225ececdd139d683c974efebcfb8eb166670d97b9fcbe440e07b5b80bc",
+          "completed_at_utc": "2026-10-25T15:41:10.036025+00:00"
+        },
+        {
+          "tag": "fresh-observed-20261025T154948-b-4675fea2",
+          "kind": "originals",
+          "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T154948-b-4675fea2.json",
+          "completion_sha256": "73e456ddde68f420fb35d40ff562287c7b08ff9d8c82cf933a0da058084d9176",
+          "completed_at_utc": "2026-10-25T15:51:34.031866+00:00"
+        },
+        {
+          "tag": "fresh-observed-20261025T155341-b-59b9e1b1",
+          "kind": "originals",
+          "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T155341-b-59b9e1b1.json",
+          "completion_sha256": "5d38b1f21638ef21241b28c3b50ac9df095bce9b5bae860d4fb4042f31986d82",
+          "completed_at_utc": "2026-10-25T16:02:06.013136+00:00"
+        },
+        {
+          "tag": "rollingb115",
+          "report": "mod_nailong/data/resumed-20261024-rollingb115-agent-review.json",
+          "report_sha256": "93a1d5c08644ed39eedb136c2366868a415d50f4943ce199ddabf84476fe9d1c",
+          "completed_at_utc": "2026-10-25T17:12:43.009973+00:00"
+        }
+      ]
+    },
+    "scope": "Independent finite v12 following actual v11 safe end. Same existing root reviewer, old deadlines unchanged.",
+    "allocated_at_utc": "2026-10-25T18:26:32.768369+00:00",
+    "updated_at_utc": "2026-10-25T18:26:00.103933+00:00",
+    "completed": [
+      {
+        "tag": "rollingb116",
+        "report": "mod_nailong/data/resumed-20261024-rollingb116-agent-review.json",
+        "report_sha256": "64a427cc201bf4570384ca232a377ab456c17b0e2fd6f249addc6bc29ebbce0b",
+        "completed_at_utc": "2026-10-25T17:29:27.209442+00:00"
+      },
+      {
+        "tag": "rollingb117",
+        "report": "mod_nailong/data/resumed-20261024-rollingb117-agent-review.json",
+        "report_sha256": "c1bdd717f7c61305d8c2735524f034a3b8e7ccde1ad590ff87ce0bfb10e542a0",
+        "completed_at_utc": "2026-10-25T17:46:05.494188+00:00"
+      },
+      {
+        "tag": "fresh-observed-20261025T174610-b-9594dbda",
+        "kind": "originals",
+        "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T174610-b-9594dbda.json",
+        "completion_sha256": "d46551135c9d9246791835e4ee117ffab34f8063c0f68b58fd80024a1679032e",
+        "completed_at_utc": "2026-10-25T17:51:54.168647+00:00"
+      },
+      {
+        "tag": "fresh-observed-20261025T175159-b-2ff30da4",
+        "kind": "originals",
+        "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T175159-b-2ff30da4.json",
+        "completion_sha256": "cb7ddbb98b574e32366a5b1db57d8ada9f27d96de1b3bdd90caaedebccd847e0",
+        "completed_at_utc": "2026-10-25T17:54:52.754506+00:00"
+      },
+      {
+        "tag": "fresh-observed-20261025T175536-b-b2cf9296",
+        "kind": "originals",
+        "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T175536-b-b2cf9296.json",
+        "completion_sha256": "3fd5ce82d4d0dd728a88ff72c339e4fa626451b078a74bd3201fade72c8a1353",
+        "completed_at_utc": "2026-10-25T18:00:32.523781+00:00"
+      },
+      {
+        "tag": "rollingb118",
+        "report": "mod_nailong/data/resumed-20261024-rollingb118-agent-review.json",
+        "report_sha256": "2e707852648d5c235e8d4d94f33c252ce2228fd74c0b09a7dfe20b0ae9c2a9c5",
+        "completed_at_utc": "2026-10-25T18:15:23.617536+00:00"
+      },
+      {
+        "tag": "fresh-observed-20261025T181658-b-960f25dd",
+        "kind": "originals",
+        "completion": "mod_nailong/data/production-fresh-observation-completions/fresh-observed-20261025T181658-b-960f25dd.json",
+        "completion_sha256": "1eebaddde02a81b7ba238df5be647531ae05105188a2e5ca476f08cb6dbcb6dd",
+        "completed_at_utc": "2026-10-25T18:25:59.285554+00:00"
+      }
+    ]
+  },
+  "network_reconciliation_scope": "First v12 publisher network failure preserved byte-for-byte. Same fixed16-PNG commit now actually pushed; full raw readback may still be in progress. This performance checkpoint does not claim v12 readback completion.",
+  "fixed_snapshot_publication_status_observed": "committed_and_pushed",
+  "capacity_free_bytes": 441497382912,
+  "retention_review_at_utc": "2026-10-29T10:30:00Z",
+  "scope": "No image concurrency/channel change, no automatic visual approval, no failed image replay, no new agent/slot, no game/Steam/build/export/release or cleanup."
+}

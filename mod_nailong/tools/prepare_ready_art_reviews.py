@@ -29,6 +29,27 @@ def eligible_entries(reports,rows,latest,held_keys=(),priority=None):
     return selected[:8]
 
 
+
+def latest_current_rejections(root, reports, rows):
+    """Read each relevant journal once per selection, never cache across boundaries.
+
+    Obsolete raw SHAs and already approved portraits cannot be selected by
+    eligible_entries. Their old report occurrences need no journal lookup.
+    Current pending/rejected outputs retain the complete latest-attempt gate.
+    """
+    latest = {}
+    for _, body in reports:
+        for entry in body.get('decisions', []):
+            key = entry.get('source_sha256')
+            row = rows.get(key, {})
+            if (entry.get('decision') == 'rejected' and key not in latest
+                    and row.get('review') in {'pending', 'rejected'}
+                    and entry.get('generated_fullsize_sha256') == row.get('generated_fullsize_sha256')
+                    and key in rows):
+                latest[key] = read_json(root / row['request_journal'])['attempts'][-1]
+    return latest
+
+
 def service_held_keys(keys,priority,failures,accepted_retry_keys=()):
     blocked={f['source_sha256'] for f in failures if f.get('status')=='blocked' and not f.get('resolved_by_retry')}
     return {key for key in keys if key in priority and any(
@@ -89,13 +110,10 @@ def main():
             continue
         last_reports=signatures
         reports=[(p,read_json(p)) for p in paths if p.exists()]
-        rows=read_json(ROOT/'mod_nailong/data/generated.json')['portraits'];latest={}
-        for p,body in reports:
+        rows=read_json(ROOT/'mod_nailong/data/generated.json')['portraits']
+        for _,body in reports:
             assert body.get('machine_id')==machine_id()
-            for entry in body.get('decisions',[]):
-                key=entry.get('source_sha256')
-                if entry.get('decision')=='rejected' and key in rows:
-                    latest[key]=read_json(ROOT/rows[key]['request_journal'])['attempts'][-1]
+        latest=latest_current_rejections(ROOT,reports,rows)
         priority=read_json(ROOT/'mod_nailong/data/production-priority.json')['sources']
         failures=read_json(ROOT/'mod_nailong/data/generation-failures.json')['attempts']
         accepted=accepted_retry_art_proofs(ROOT,rows,latest)

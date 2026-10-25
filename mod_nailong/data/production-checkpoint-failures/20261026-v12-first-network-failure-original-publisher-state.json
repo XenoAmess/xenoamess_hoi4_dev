@@ -1,0 +1,22 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "pid": 20328,
+  "run_id": "resume-20261025-large-logical-queue-v12",
+  "started_at_utc": "2026-10-25T17:30:39.200833+00:00",
+  "production_created_at_utc": "2026-10-25T17:16:52.234856+00:00",
+  "original_deadline_utc": "2026-10-25T23:46:52.234856+00:00",
+  "checkpoints": [
+    {
+      "batch": "resumed-low-v12-auto-1-20261025",
+      "commit": "bff7ef44e4c5bedd10dd1754cec7d1bb8ee06461",
+      "completed_requests_at_snapshot": 16,
+      "new_original_PNGs": 16
+    }
+  ],
+  "scope": "Finite Git-only successor after the prior publisher actually finished/released its unique lock. No generation, output approval, canonical writes or image request replay. Normal LOW snapshots, fast-forward pushes and exact pinned original-byte verification.",
+  "status": "stopped_requires_reconciliation_no_image_replay",
+  "last_checkpoint_requests": 0,
+  "observed_at_utc": "2026-10-25T18:03:20.660488+00:00",
+  "last_completed_requests": 16,
+  "error": "Traceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\low-scoped-publisher-following-run-20261025.py\", line 52, in <module>\n    checked([sys.executable,str(ROOT/'tools/production_checkpoint_publish.py'),receipt['commit'],batch])\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\low-scoped-publisher-following-run-20261025.py\", line 27, in checked\n    if r.returncode:raise RuntimeError(r.stdout+'\\n'+r.stderr)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: \nTraceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\production_checkpoint_publish.py\", line 58, in <module>\n    receipt['push_stdout']=run('git','-c','gc.auto=0','-c','maintenance.auto=false','-c','http.version=HTTP/1.1','push','origin',commit+':refs/heads/master')\n                           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\production_checkpoint_publish.py\", line 17, in run\n    if p.returncode:raise RuntimeError(p.stdout+'\\n'+p.stderr)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: \nfatal: unable to access 'https://github.com/XenoAmess/xenoamess_hoi4_dev.git/': Recv failure: Connection was reset\n\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\production_checkpoint_publish.py\", line 62, in <module>\n    observed=remote_head();item['remote_master_after_error']=observed\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\production_checkpoint_publish.py\", line 46, in remote_head\n    def remote_head():return run('git','ls-remote','origin','refs/heads/master',timeout=120).split()[0]\n                             ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\production_checkpoint_publish.py\", line 17, in run\n    if p.returncode:raise RuntimeError(p.stdout+'\\n'+p.stderr)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: \nfatal: unable to access 'https://github.com/XenoAmess/xenoamess_hoi4_dev.git/': Failed to connect to github.com:443 over proxy 127.0.0.1 after 2068 ms: Could not connect to server\n\n\n"
+}

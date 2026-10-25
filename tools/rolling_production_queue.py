@@ -10,7 +10,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,machine_id,utc_now,file_sha256
 from tools.production_window_gate import inspect_window
 from mod_nailong.tools.ready_art_reports import reports as inbox_reports,independent_art_holds
-from mod_nailong.tools.prepare_ready_art_reviews import eligible_entries,service_held_keys
+from mod_nailong.tools.prepare_ready_art_reviews import eligible_entries,service_held_keys,latest_current_rejections
 from tools.accepted_retry_art import accepted_retry_art_proofs
 from mod_nailong.tools.retry_limits import retry_limit
 from tools.production_priority_gate import low_enabled,high_in_item,immediate_high_work,low_feedback_enabled,low_correction_in_item
@@ -144,12 +144,10 @@ def finish_exact_retry(root,state,runner=None):
 
 def ready_art(root,expected_machine):
     reports=[(p,read_json(p)) for p,_ in inbox_reports('global')]
-    rows=read_json(root/'mod_nailong/data/generated.json')['portraits'];latest={}
+    rows=read_json(root/'mod_nailong/data/generated.json')['portraits']
     for _,body in reports:
         assert body.get('machine_id')==expected_machine and body.get('decisions_staged')
-        for e in body.get('decisions',[]):
-            key=e.get('source_sha256')
-            if e.get('decision')=='rejected' and key in rows:latest[key]=read_json(root/rows[key]['request_journal'])['attempts'][-1]
+    latest=latest_current_rejections(root,reports,rows)
     priority=read_json(root/'mod_nailong/data/production-priority.json')['sources']
     failures=read_json(root/'mod_nailong/data/generation-failures.json')['attempts']
     accepted=accepted_retry_art_proofs(root,rows,latest)
