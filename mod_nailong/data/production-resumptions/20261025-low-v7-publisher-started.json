@@ -1,0 +1,269 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-25T05:32:42.317694+00:00",
+  "run_id": "resume-20261025-large-logical-queue-v7",
+  "actual_builtin_exec_cell": 654,
+  "launch": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "observed_at_utc": "2026-10-25T05:31:32.551082+00:00",
+    "run_id": "resume-20261025-large-logical-queue-v7",
+    "pid": 5372,
+    "status": "process_spawned_state_not_yet_confirmed",
+    "prior_finished_state": {
+      "machine_id": "bf-202609141645-5434332d4d",
+      "pid": 17696,
+      "run_id": "resume-20261025-large-logical-queue-v6",
+      "started_at_utc": "2026-10-25T03:13:34.321527+00:00",
+      "production_created_at_utc": "2026-10-25T03:03:54.000451+00:00",
+      "original_deadline_utc": "2026-10-25T09:33:54.000451+00:00",
+      "checkpoints": [
+        {
+          "batch": "resumed-low-v6-auto-1-20261025",
+          "commit": "848a9e2a2afb312080ea6b709c1ed1cfe4dc0c10",
+          "completed_requests_at_snapshot": 16,
+          "new_original_PNGs": 16
+        },
+        {
+          "batch": "resumed-low-v6-auto-2-20261025",
+          "commit": "e64939d667f9054bb472cf73b7f9afc6f2c16722",
+          "completed_requests_at_snapshot": 32,
+          "new_original_PNGs": 14
+        },
+        {
+          "batch": "resumed-low-v6-auto-3-20261025",
+          "commit": "b1b44dfb14c13e63872bf3e6e6f60a39a9aa65a4",
+          "completed_requests_at_snapshot": 48,
+          "new_original_PNGs": 15
+        },
+        {
+          "batch": "resumed-low-v6-auto-4-20261025",
+          "commit": "9e69c20ce692ff357cf4390ae2c3ec5517269e4e",
+          "completed_requests_at_snapshot": 50,
+          "new_original_PNGs": 2
+        }
+      ],
+      "scope": "Finite Git-only successor after the prior publisher actually finished/released its unique lock. No generation, output approval, canonical writes or image request replay. Normal LOW snapshots, fast-forward pushes and exact pinned original-byte verification.",
+      "status": "finished_at_owner_boundary_or_original_deadline",
+      "last_checkpoint_requests": 50,
+      "observed_at_utc": "2026-10-25T05:21:11.670913+00:00",
+      "last_completed_requests": 50,
+      "last_commit": "9e69c20ce692ff357cf4390ae2c3ec5517269e4e",
+      "finished_at_utc": "2026-10-25T05:21:11.670895+00:00"
+    },
+    "prior_state_sha256": "6cccf23bf7e78a6bb70a2eb718a104e51d8fd4575d55b13635bce6ebc371a569",
+    "prior_original_readbacks_actually_verified": true,
+    "prior_publisher_and_readback_locks_observed_absent": true,
+    "helper_path": "runtime/low-scoped-publisher-following-run-20261025.py",
+    "helper_sha256": "a0b9e23c4bfae965d1c0235dc96dfe75f0f791094185ab50ca1e7532fc22d48b",
+    "log_path": "runtime/resume-low-20261025/v7-publisher.log",
+    "source_code": "\"\"\"Launch the next hidden Git-only process only after prior exact readbacks end.\"\"\"\nimport json,subprocess,sys\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,machine_id,utc_now,file_sha256\nfolder=ROOT/'runtime/resume-low-20261025';run='resume-20261025-large-logical-queue-v7'\nprior_path=folder/'publisher-resume-20261025-large-logical-queue-v6.json';prior=read_json(prior_path)\nassert prior['status']=='finished_at_owner_boundary_or_original_deadline' and prior['last_checkpoint_requests']==50\nfor item in prior['checkpoints']:\n assert read_json(ROOT/f'runtime/checkpoint-{item[\"batch\"]}.json')['status']=='committed_pushed_and_originals_verified'\nassert not (folder/'publisher.lock').exists() and not (ROOT/'runtime/master-git-readback.lock').exists()\nassert read_json(ROOT/'runtime/rolling-production/owner.json')=={'run_id':run,'machine_id':machine_id()}\nassert read_json(ROOT/f'runtime/rolling-production/{run}.json')['status']=='running'\nassert not (folder/f'publisher-{run}.json').exists()\nreceipt=folder/'v7-publisher-launch.json';assert not receipt.exists()\nscript=ROOT/'runtime/low-scoped-publisher-following-run-20261025.py';log_path=folder/'v7-publisher.log'\nwith log_path.open('xb') as log:\n p=subprocess.Popen([sys.executable,'-X','utf8',str(script),run],cwd=ROOT,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW)\nwrite_json(receipt,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'run_id':run,'pid':p.pid,'status':'process_spawned_state_not_yet_confirmed','prior_finished_state':prior,'prior_state_sha256':file_sha256(prior_path),'prior_original_readbacks_actually_verified':True,'prior_publisher_and_readback_locks_observed_absent':True,'helper_path':script.relative_to(ROOT).as_posix(),'helper_sha256':file_sha256(script),'log_path':log_path.relative_to(ROOT).as_posix(),'source_code':Path(__file__).read_text(encoding='utf-8'),'scope':'Hidden Git-only child after old publisher actually finished, no image call or canonical portrait mutation. Spawn receipt alone proves no lock claim/commit/push/raw verification.'})\nprint(json.dumps({'started':True,'pid':p.pid,'run_id':run,'launch_receipt':receipt.relative_to(ROOT).as_posix(),'state_confirmation_required':True},ensure_ascii=True))\n",
+    "scope": "Hidden Git-only child after old publisher actually finished, no image call or canonical portrait mutation. Spawn receipt alone proves no lock claim/commit/push/raw verification."
+  },
+  "launch_sha256": "c1b55771172ae7a6e88e8aaf8532a4ee550238e8eb8bcb085fb43643bcd1827f",
+  "actual_publisher_state": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "pid": 5372,
+    "run_id": "resume-20261025-large-logical-queue-v7",
+    "started_at_utc": "2026-10-25T05:31:34.540176+00:00",
+    "production_created_at_utc": "2026-10-25T05:11:51.649293+00:00",
+    "original_deadline_utc": "2026-10-25T11:41:51.649293+00:00",
+    "checkpoints": [],
+    "scope": "Finite Git-only successor after the prior publisher actually finished/released its unique lock. No generation, output approval, canonical writes or image request replay. Normal LOW snapshots, fast-forward pushes and exact pinned original-byte verification.",
+    "status": "waiting_for_next_16_completed_requests",
+    "last_checkpoint_requests": 0,
+    "observed_at_utc": "2026-10-25T05:32:34.570938+00:00",
+    "last_completed_requests": 8
+  },
+  "state_sha256": "6bcb13552f89dc4e950230bbb7f64d7a52376bb12f9e58f5e02e242e85906fea",
+  "actual_unique_lock_pid": 5372,
+  "prior_v6_publisher_finished": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "pid": 17696,
+    "run_id": "resume-20261025-large-logical-queue-v6",
+    "started_at_utc": "2026-10-25T03:13:34.321527+00:00",
+    "production_created_at_utc": "2026-10-25T03:03:54.000451+00:00",
+    "original_deadline_utc": "2026-10-25T09:33:54.000451+00:00",
+    "checkpoints": [
+      {
+        "batch": "resumed-low-v6-auto-1-20261025",
+        "commit": "848a9e2a2afb312080ea6b709c1ed1cfe4dc0c10",
+        "completed_requests_at_snapshot": 16,
+        "new_original_PNGs": 16
+      },
+      {
+        "batch": "resumed-low-v6-auto-2-20261025",
+        "commit": "e64939d667f9054bb472cf73b7f9afc6f2c16722",
+        "completed_requests_at_snapshot": 32,
+        "new_original_PNGs": 14
+      },
+      {
+        "batch": "resumed-low-v6-auto-3-20261025",
+        "commit": "b1b44dfb14c13e63872bf3e6e6f60a39a9aa65a4",
+        "completed_requests_at_snapshot": 48,
+        "new_original_PNGs": 15
+      },
+      {
+        "batch": "resumed-low-v6-auto-4-20261025",
+        "commit": "9e69c20ce692ff357cf4390ae2c3ec5517269e4e",
+        "completed_requests_at_snapshot": 50,
+        "new_original_PNGs": 2
+      }
+    ],
+    "scope": "Finite Git-only successor after the prior publisher actually finished/released its unique lock. No generation, output approval, canonical writes or image request replay. Normal LOW snapshots, fast-forward pushes and exact pinned original-byte verification.",
+    "status": "finished_at_owner_boundary_or_original_deadline",
+    "last_checkpoint_requests": 50,
+    "observed_at_utc": "2026-10-25T05:21:11.670913+00:00",
+    "last_completed_requests": 50,
+    "last_commit": "9e69c20ce692ff357cf4390ae2c3ec5517269e4e",
+    "finished_at_utc": "2026-10-25T05:21:11.670895+00:00"
+  },
+  "verified_original_PNG_count_at_observation": 208,
+  "verified_original_receipts": [
+    {
+      "batch": "resumed-low-auto-1-20261025",
+      "commit": "ee7f4527e52c94053715ec6778807b36fa5e82d9",
+      "new_original_PNGs": 10,
+      "receipt_sha256": "cf36ed6b8aec45bc0f72615f85a1d5f0f7c7fecea1b516fb847bee35a75749d4"
+    },
+    {
+      "batch": "resumed-low-auto-10-20261025",
+      "commit": "18ff88f4a9d70976f6ca4b2c34674bbce40970e2",
+      "new_original_PNGs": 15,
+      "receipt_sha256": "96b73b2816bf45f214b89acfd125474d824509ae04536030d32eee4014970b08"
+    },
+    {
+      "batch": "resumed-low-auto-11-20261025",
+      "commit": "b8e9f9857b1c108264ac0041256038b9d8f34b22",
+      "new_original_PNGs": 15,
+      "receipt_sha256": "1af73b2740c5997099ce10d6e37105149a85bfd423cf433ad284741c03d8556d"
+    },
+    {
+      "batch": "resumed-low-auto-12-20261025",
+      "commit": "baa4147d77d34d611826995b7b69d38270547102",
+      "new_original_PNGs": 2,
+      "receipt_sha256": "d17b35b9d16dca379ad9ee2b86478d4f8cb7b64003b43c08c1b90a20f5ae52f6"
+    },
+    {
+      "batch": "resumed-low-auto-2-20261025",
+      "commit": "5b41a3f33a3052b5ab35f7ecb92484ee50f4bbc4",
+      "new_original_PNGs": 4,
+      "receipt_sha256": "e013974df3f4d28002fb60537b333e214832467943072b632f83fee2f752f207"
+    },
+    {
+      "batch": "resumed-low-auto-3-20261025",
+      "commit": "2295d97922e0cff728fc27828a3405b6bda69bdf",
+      "new_original_PNGs": 16,
+      "receipt_sha256": "206ff1e76143531c422d8e6f537ade610a8e981e479b994ac50c2ea1380c7276"
+    },
+    {
+      "batch": "resumed-low-auto-4-20261025",
+      "commit": "672932b2c2002f0add1ea013ab766d376f0aaa47",
+      "new_original_PNGs": 14,
+      "receipt_sha256": "87d59d0548297c086259ddb6b5a6a89bea608c4fa54c22d724c8beed9003d3cc"
+    },
+    {
+      "batch": "resumed-low-auto-5-20261025",
+      "commit": "8c80ebe0ae536fe6be7b9889349c6e45525f1f69",
+      "new_original_PNGs": 15,
+      "receipt_sha256": "bf5bd63d0140c60d320400806ffb2415d94cc417592253f7fcf426c9b3eb576d"
+    },
+    {
+      "batch": "resumed-low-auto-6-20261025",
+      "commit": "b7daaa22f90c56af253b3b81144940a329905447",
+      "new_original_PNGs": 16,
+      "receipt_sha256": "fa3e5b3d34fc1f792ca46bb2b669e90c89da08b62788ba02ebb18f87374c8d33"
+    },
+    {
+      "batch": "resumed-low-auto-7-20261025",
+      "commit": "076360191607f282a4c0cdb8500c4b1d13971493",
+      "new_original_PNGs": 16,
+      "receipt_sha256": "e124e13d52fe04e2bacd95754d69fc61afa0a031c79087a20fc5bde412099996"
+    },
+    {
+      "batch": "resumed-low-auto-8-20261025",
+      "commit": "93fc0e88aa2d22fb23b2369e6325ca0b66b01a48",
+      "new_original_PNGs": 16,
+      "receipt_sha256": "a8b113b051235e0ab31b32b333b59c25ec707d05b43ee0af28483e98feaa82b7"
+    },
+    {
+      "batch": "resumed-low-auto-9-20261025",
+      "commit": "769618d54e86314ce9f6d4f009687a6fe165f249",
+      "new_original_PNGs": 12,
+      "receipt_sha256": "d9dc7e68941a1a67ff23391b345f81cebcfca821d42f6c44cc625c89f45e633b"
+    },
+    {
+      "batch": "resumed-low-checkpoint2-20261025",
+      "commit": "8e60e025543cc046cdf3053bb502d3bfe8e02c71",
+      "new_original_PNGs": 10,
+      "receipt_sha256": "046693fc57c3327f21d9b1f41ffa4ef83c21235a012052dac69d78f3e78e90d6"
+    },
+    {
+      "batch": "resumed-low-v6-auto-1-20261025",
+      "commit": "848a9e2a2afb312080ea6b709c1ed1cfe4dc0c10",
+      "new_original_PNGs": 16,
+      "receipt_sha256": "dd04e75a247fc900960b2e2b6350d0c7cffc66516bf5e2effa9ff935bedd8641"
+    },
+    {
+      "batch": "resumed-low-v6-auto-2-20261025",
+      "commit": "e64939d667f9054bb472cf73b7f9afc6f2c16722",
+      "new_original_PNGs": 14,
+      "receipt_sha256": "2044e8a262582590263bada7fb92564e20ef2478befdd23571bbe472866d3b99"
+    },
+    {
+      "batch": "resumed-low-v6-auto-3-20261025",
+      "commit": "b1b44dfb14c13e63872bf3e6e6f60a39a9aa65a4",
+      "new_original_PNGs": 15,
+      "receipt_sha256": "16aeecee3c752be47b3df376c38059086d83c3af1b047dae5e322ea967e5da50"
+    },
+    {
+      "batch": "resumed-low-v6-auto-4-20261025",
+      "commit": "9e69c20ce692ff357cf4390ae2c3ec5517269e4e",
+      "new_original_PNGs": 2,
+      "receipt_sha256": "1847482dd45ece2349d89d733a62fed42d0ebd87ba15efec579101e311dd98e6"
+    }
+  ],
+  "production_status": {
+    "observed_at_utc": "2026-10-25T05:32:42.183863+00:00",
+    "state": {
+      "machine_id": "bf-202609141645-5434332d4d",
+      "run_id": "resume-20261025-large-logical-queue-v7",
+      "next_index": 641,
+      "after_window": "resume-20261025-large-logical-queue-v7-window640",
+      "status": "running",
+      "created_at_utc": "2026-10-25T05:11:51.649293+00:00",
+      "completed_windows": 8,
+      "completed_source_requests": 8,
+      "updated_at_utc": "2026-10-25T05:30:05.021066+00:00"
+    },
+    "prepared_plan_remaining_windows": 7,
+    "counts": {
+      "HIGH": {
+        "ready": 4404,
+        "pending": 0,
+        "rejected": 26
+      },
+      "LOW": {
+        "ready": 130,
+        "pending": 37,
+        "rejected": 6
+      }
+    },
+    "completed_window_calls": 8,
+    "completed_window_PNGs": 8,
+    "completed_window_errors": 0,
+    "same_machine_execution_totals": {
+      "calls": 229,
+      "PNG_returns": 216,
+      "content_refusals": 12,
+      "authentication_errors": 1,
+      "other_tool_errors": 0
+    },
+    "recent_errors": []
+  },
+  "available_bytes": 453379141632,
+  "retention_review_at_utc": "2026-10-29T10:30:00Z",
+  "cleanup_performed": false,
+  "protection_renewed": false,
+  "source_code": "\"\"\"Record actual unique publisher ownership, never infer it from spawn alone.\"\"\"\nimport json,shutil,subprocess,sys\nfrom datetime import datetime,timedelta\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfolder=ROOT/'runtime/resume-low-20261025';run='resume-20261025-large-logical-queue-v7'\nlaunch_path=folder/'v7-publisher-launch.json';launch=read_json(launch_path)\nstate_path=folder/('publisher-'+run+'.json');state=read_json(state_path)\nassert launch['machine_id']==state['machine_id']==machine_id() and launch['pid']==state['pid']==int((folder/'publisher.lock').read_text())\nassert state['run_id']==run and state['status'] in ['waiting_for_next_16_completed_requests','snapshotting_LOW_scope','publishing_and_verifying_immutable_snapshot']\nproduction=read_json(ROOT/f'runtime/rolling-production/{run}.json')\nassert state['original_deadline_utc']==(datetime.fromisoformat(production['created_at_utc'])+timedelta(seconds=23400)).isoformat()\nprior=read_json(folder/'publisher-resume-20261025-large-logical-queue-v6.json');assert prior['status']=='finished_at_owner_boundary_or_original_deadline'\nverified=[]\nfor p in (ROOT/'runtime').glob('checkpoint-resumed-low-*.json'):\n item=read_json(p)\n if item.get('status')=='committed_pushed_and_originals_verified':verified.append({'batch':item['batch'],'commit':item['commit'],'new_original_PNGs':item['new_original_PNGs'],'receipt_sha256':file_sha256(p)})\ncount=sum(x['new_original_PNGs'] for x in verified);assert count>=208\nstatus_result=subprocess.run([sys.executable,'-X','utf8',str(ROOT/'runtime/low-production-status-20261025.py'),run],cwd=ROOT,capture_output=True,text=True,encoding='utf-8');assert status_result.returncode==0,status_result.stderr\nproduction_status=json.loads(status_result.stdout);now=utc_now();disk=shutil.disk_usage(ROOT)\ntarget=ROOT/'mod_nailong/data/production-resumptions/20261025-low-v7-publisher-started.json';assert not target.exists()\nwrite_json(target,{'machine_id':machine_id(),'observed_at_utc':now,'run_id':run,'actual_builtin_exec_cell':654,'launch':launch,'launch_sha256':file_sha256(launch_path),'actual_publisher_state':state,'state_sha256':file_sha256(state_path),'actual_unique_lock_pid':state['pid'],'prior_v6_publisher_finished':prior,'verified_original_PNG_count_at_observation':count,'verified_original_receipts':verified,'production_status':production_status,'available_bytes':disk.free,'retention_review_at_utc':'2026-10-29T10:30:00Z','cleanup_performed':False,'protection_renewed':False,'source_code':Path(__file__).read_text(encoding='utf-8'),'scope':'New Git-only publisher actual lock/state observed after prior v6 last50 snapshot/readback really finished and lock released. No image-service API, extra reviewer, canonical portrait writes or PNG replay. Each new commit/push/raw readback remains pending until its own real receipt.'})\nhandoff=ROOT/'docs/handoffs/2026-10-25-low-resumed.md';text=handoff.read_text(encoding='utf-8');heading='# 钢奶龙心：LOW 已恢复生产\\n\\n';assert text.startswith(heading)\nparagraph='UTC'+now+'已实际确认，v6提交器17696于UTC05:21:11完成最后50次请求快照核验并退出、释放唯一锁。`b1b44dfb14c13e63872bf3e6e6f60a39a9aa65a4` 的15张与 `9e69c20ce692ff357cf4390ae2c3ec5517269e4e` 的2张原始PNG均已完成固定提交远端字节核验，本轮累计'+str(count)+'张原件核验交付。v7 Git-only进程'+str(state['pid'])+'随后实际领取唯一锁/状态，截止'+state['original_deadline_utc']+'，每16请求或本阶段安全停点保存本执行链LOW；新快照须单独核验，不能把旧208张证据算给新图。图片仍由唯一内置cell654执行。root已完成b103，3通过/1人鼻返修，报告及绑定/像素证据见 `mod_nailong/data/production-review-handovers/20261025-root-rollingb103.json`。静态交接与此前b100–102/16原图观察已在 `42e7bcd586218fa75534afa6546411d4752453c2` 普通推送并新鲜远端读回确认。实际新提交器启动证据和完整启动器源码为 `mod_nailong/data/production-resumptions/20261025-low-v7-publisher-started.json`。\\n\\n'\nhandoff.write_text(heading+paragraph+text[len(heading):],encoding='utf-8',newline='\\n')\nprint(json.dumps({'audit':target.relative_to(ROOT).as_posix(),'publisher_pid':state['pid'],'publisher_status':state['status'],'verified_original_PNGs':count,'production_status':production_status,'free_bytes':disk.free},ensure_ascii=True))\n",
+  "scope": "New Git-only publisher actual lock/state observed after prior v6 last50 snapshot/readback really finished and lock released. No image-service API, extra reviewer, canonical portrait writes or PNG replay. Each new commit/push/raw readback remains pending until its own real receipt."
+}
