@@ -123,6 +123,108 @@ class InputRouteTests(unittest.TestCase):
                     verify.expected_input_route(self.scope, self.asset, repair)
 
 
+class MaskInputRouteTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.scope = {
+            'model': 'gpt-image-2.5-flare',
+            'mascot_reference': {'url': 'mascot-url', 'sha256': '2' * 64},
+        }
+        self.asset = {'url': 'source-url', 'converted_png_sha256': '3' * 64}
+        self.target_sha = '4' * 64
+        self.mask_sha = '5' * 64
+        self.detail_sha = '6' * 64
+        self.manifest_sha = '7' * 64
+        self.commit = 'a' * 40
+        self.target_relative = f'mod_nailong/assets/generated_fullsize/{self.target_sha}.png'
+        self.mask_relative = 'mod_nailong/experiments/evolink-high131-flare-20261025/review-masks/mask.png'
+        self.detail_relative = 'mod_nailong/experiments/evolink-high131-flare-20261025/review-source-details/detail.png'
+        self.manifest_relative = 'mod_nailong/experiments/evolink-high131-flare-20261025/review-masks/mask.json'
+        prefix = f'https://raw.githubusercontent.com/XenoAmess/xenoamess_hoi4_dev/{self.commit}'
+        self.target_url = f'{prefix}/{self.target_relative}'
+        self.mask_url = f'{prefix}/{self.mask_relative}'
+        self.detail_url = f'{prefix}/{self.detail_relative}'
+        self.mask = {
+            'path': self.mask_relative, 'sha256': self.mask_sha, 'url': self.mask_url,
+            'target_sha256': self.target_sha, 'manifest': self.manifest_relative,
+            'manifest_sha256': self.manifest_sha,
+        }
+        self.repair = {
+            'repair_input_mode': verify.hd_proof.MASK_NOTE_MODE,
+            'remote_commit': self.commit, 'remote_readback': 'runtime/proof.json',
+            'edit_target_image': self.target_relative, 'edit_target_sha256': self.target_sha,
+            'rejected_output_sha256': self.target_sha, 'remote_target_url': self.target_url,
+            'image_urls': [self.target_url, 'source-url', 'mascot-url', self.detail_url],
+            'ordered_input_sha256': [self.target_sha, '3' * 64, '2' * 64, self.detail_sha],
+            'note_detail': {
+                'path': self.detail_relative, 'sha256': self.detail_sha,
+                'url': self.detail_url, 'source_png_sha256': '3' * 64,
+            },
+            'mask': self.mask, 'mask_url': self.mask_url,
+        }
+        self.proof = {
+            'targets': {
+                self.mask_sha: {
+                    'mask_manifest': self.manifest_relative,
+                    'mask_manifest_sha256': self.manifest_sha,
+                },
+            },
+        }
+
+    def expected_route(self, repair):
+        with (
+            patch.object(verify, 'ROOT', self.root),
+            patch.object(verify.hd_proof, 'load_remote_proof', return_value=(self.proof, None)),
+            patch.object(verify.hd_proof, 'validate_remote_target', return_value=self.target_url),
+            patch.object(verify.hd_proof, 'validate_remote_reference', return_value=self.detail_url) as detail_check,
+            patch.object(verify.hd_proof, 'validate_remote_mask', return_value=self.mask_url) as mask_check,
+        ):
+            result = verify.expected_input_route(
+                self.scope, self.asset, repair,
+                source_path=self.root / 'runtime/references/source.png',
+            )
+        return result, detail_check, mask_check
+
+    def test_mask_route_verifies_note_proof_mask_and_actual_request(self):
+        (urls, binding), detail_check, mask_check = self.expected_route(self.repair)
+        self.assertEqual(urls, self.repair['image_urls'])
+        self.assertNotIn(self.mask_url, urls)
+        self.assertEqual(binding['note_detail_sha256'], self.detail_sha)
+        self.assertEqual(binding['mask_sha256'], self.mask_sha)
+        self.assertEqual(binding['mask_target_sha256'], self.target_sha)
+        self.assertEqual(binding['mask_url'], self.mask_url)
+        detail_check.assert_called_once()
+        mask_check.assert_called_once_with(
+            self.proof, self.commit, self.root / self.mask_relative, self.mask_sha,
+            self.root / self.target_relative, self.target_sha, root=self.root,
+        )
+        verify.validate_request_mask({'mask_url': self.mask_url}, self.repair)
+        for request in ({}, {'mask_url': 'https://example.invalid/wrong.png'}):
+            with self.subTest(request=request), self.assertRaises(AssertionError):
+                verify.validate_request_mask(request, self.repair)
+
+    def test_mask_manifest_and_url_must_match_remote_proof(self):
+        for field, value in (
+            ('url', 'https://example.invalid/other-mask.png'),
+            ('manifest', 'mod_nailong/experiments/evolink-high131-flare-20261025/review-masks/other.json'),
+            ('manifest_sha256', '0' * 64),
+        ):
+            with self.subTest(field=field):
+                repair = dict(self.repair)
+                repair['mask'] = {**self.mask, field: value}
+                with self.assertRaises(AssertionError):
+                    self.expected_route(repair)
+
+    def test_old_routes_reject_any_actual_mask_url(self):
+        for repair in (None, {'repair_input_mode': 'raw-hd-edit-v1'}, {'repair_input_mode': verify.hd_proof.NOTE_DETAIL_MODE}):
+            with self.subTest(repair=repair):
+                verify.validate_request_mask({}, repair)
+                with self.assertRaises(AssertionError):
+                    verify.validate_request_mask({'mask_url': self.mask_url}, repair)
+
+
 class BoundedJsonReplaceTests(unittest.TestCase):
     def test_transient_windows_error_retries_same_payload(self):
         with tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:

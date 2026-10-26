@@ -108,6 +108,8 @@ def main():
                 and previous.get("readback_commit") == args.commit
                 and previous.get("method") == METHOD
                 and previous.get("role") == row["role"]
+                and previous.get("size") == row["size"]
+                and previous.get("mode") == row["mode"]
                 and previous.get("derivation") == derivation
                 and previous.get("verified_at_utc")
             ):
@@ -141,6 +143,8 @@ def main():
                 "png_signature_verified": True,
                 "role": row["role"],
                 "not_generated_or_game_payload": True,
+                "size": row["size"],
+                "mode": row["mode"],
                 "derivation": derivation,
             }
             downloaded.append(index)

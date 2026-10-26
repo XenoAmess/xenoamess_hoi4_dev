@@ -165,6 +165,170 @@ class HDRepairInputContractTests(unittest.TestCase):
             repairs.repair_input_contract(self.context, self.state)
 
 
+class MaskRepairInputContractTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        patch.object(repairs.batch, "ROOT", self.root).start()
+        self.addCleanup(patch.stopall)
+        self.key = "a" * 64
+        self.source_sha = "1" * 64
+        self.target_sha = "2" * 64
+        self.mascot_sha = "3" * 64
+        self.mask_sha = "4" * 64
+        self.detail_sha = "5" * 64
+        self.manifest_sha = "6" * 64
+        self.commit = "c" * 40
+        self.target_relative = f"mod_nailong/assets/generated_fullsize/{self.target_sha}.png"
+        self.mask_relative = "mod_nailong/experiments/evolink-high131-flare-20261025/review-masks/mask.png"
+        self.detail_relative = "mod_nailong/experiments/evolink-high131-flare-20261025/review-source-details/detail.png"
+        self.manifest_relative = "mod_nailong/experiments/evolink-high131-flare-20261025/review-masks/mask.json"
+        prefix = f"https://raw.githubusercontent.com/XenoAmess/xenoamess_hoi4_dev/{self.commit}"
+        self.target_url = f"{prefix}/{self.target_relative}"
+        self.mask_url = f"{prefix}/{self.mask_relative}"
+        self.detail_url = f"{prefix}/{self.detail_relative}"
+        self.mask = {
+            "path": self.mask_relative,
+            "sha256": self.mask_sha,
+            "url": self.mask_url,
+            "target_sha256": self.target_sha,
+            "manifest": self.manifest_relative,
+            "manifest_sha256": self.manifest_sha,
+        }
+        self.note_detail = {
+            "path": self.detail_relative,
+            "sha256": self.detail_sha,
+            "url": self.detail_url,
+            "source_png_sha256": self.source_sha,
+        }
+        self.repair = {
+            "repair_input_mode": repairs.hd_proof.MASK_NOTE_MODE,
+            "remote_commit": self.commit,
+            "remote_readback": "runtime/proof.json",
+            "edit_target_image": self.target_relative,
+            "edit_target_sha256": self.target_sha,
+            "rejected_output_sha256": self.target_sha,
+            "remote_target_url": self.target_url,
+            "image_urls": [self.target_url, "source-url", "mascot-url", self.detail_url],
+            "ordered_input_sha256": [self.target_sha, self.source_sha, self.mascot_sha, self.detail_sha],
+            "note_detail": self.note_detail,
+            "mask": self.mask,
+            "mask_url": self.mask_url,
+        }
+        self.proof = {
+            "targets": {
+                self.mask_sha: {
+                    "mask_manifest": self.manifest_relative,
+                    "mask_manifest_sha256": self.manifest_sha,
+                },
+            },
+        }
+        self.state = {
+            "key": self.key,
+            "repair_input_mode": repairs.hd_proof.MASK_NOTE_MODE,
+            "original_entry": {
+                "source_sha256": self.key,
+                "index": 65,
+                "converted_png_sha256": self.source_sha,
+                "source_png": "runtime/references/source.png",
+            },
+            "entry": {"mask_url": self.mask_url},
+            "repair": self.repair,
+            "mask": self.mask,
+        }
+        self.context = {
+            "release_assets": {self.key: {"url": "source-url"}},
+            "scope": {"mascot_reference": {"sha256": self.mascot_sha, "url": "mascot-url"}},
+        }
+
+    def validated_contract(self, state):
+        with (
+            patch.object(repairs.hd_proof, "load_remote_proof", return_value=(self.proof, None)),
+            patch.object(repairs.hd_proof, "validate_remote_target", return_value=self.target_url),
+            patch.object(repairs.hd_proof, "validate_remote_reference", return_value=self.detail_url) as detail_check,
+            patch.object(repairs.hd_proof, "validate_remote_mask", return_value=self.mask_url) as mask_check,
+        ):
+            result = repairs.repair_input_contract(self.context, state)
+        return result, detail_check, mask_check
+
+    def test_mask_mode_uses_note_detail_and_binds_independent_mask(self):
+        (inputs, urls), detail_check, mask_check = self.validated_contract(self.state)
+        self.assertEqual(inputs, self.repair["ordered_input_sha256"])
+        self.assertEqual(urls, self.repair["image_urls"])
+        self.assertNotIn(self.mask_url, urls)
+        detail_check.assert_called_once()
+        mask_check.assert_called_once_with(
+            self.proof,
+            self.commit,
+            self.root / self.mask_relative,
+            self.mask_sha,
+            self.root / self.target_relative,
+            self.target_sha,
+            root=self.root,
+        )
+
+    def test_mask_url_target_and_manifest_mismatches_fail_closed(self):
+        for field, value in (
+            ("mask_url", "https://example.invalid/other-mask.png"),
+            ("target_sha256", "0" * 64),
+            ("manifest", "mod_nailong/experiments/evolink-high131-flare-20261025/review-masks/other.json"),
+            ("manifest_sha256", "0" * 64),
+        ):
+            with self.subTest(field=field):
+                state = dict(self.state)
+                repair = dict(self.repair)
+                mask = dict(self.mask)
+                state["repair"] = repair
+                repair["mask"] = mask
+                if field == "mask_url":
+                    repair["mask_url"] = value
+                else:
+                    mask[field] = value
+                with self.assertRaises(repairs.batch.BatchError):
+                    self.validated_contract(state)
+
+    def test_non_mask_mode_cannot_carry_mask_metadata(self):
+        state = dict(self.state)
+        state["repair_input_mode"] = repairs.hd_proof.NOTE_DETAIL_MODE
+        with self.assertRaisesRegex(repairs.batch.BatchError, "only valid for raw-hd-mask-note-v1"):
+            repairs.repair_input_contract(self.context, state)
+
+    def test_repair_state_forwards_mask_metadata_without_adding_an_image_input(self):
+        experiment = self.root / "exp"
+        repair = {
+            **self.repair,
+            "source_sha256": self.key,
+            "attempt": "external-02",
+            "prompt_file": f"exp/prompts/{self.key}-02.txt",
+            "prompt_sha256": "7" * 64,
+            "output": f"exp/outputs/{self.key}-02.png",
+            "previous_prompt": f"exp/outputs/{self.key}-01.prompt.txt",
+            "review": "exp/review.json",
+            "review_sha256": "8" * 64,
+        }
+        context = {
+            "prepared_entries": {self.key: self.state["original_entry"]},
+            "scope_entries": {self.key: {"index": 65}},
+            "progress_entries": {self.key: {}},
+            "repair_preparation_sha256": "9" * 64,
+        }
+        with (
+            patch.object(repairs, "EXPERIMENT", experiment),
+            patch.object(repairs, "PROMPTS_DIR", experiment / "prompts"),
+            patch.object(repairs, "OUTPUTS_DIR", experiment / "outputs"),
+            patch.object(repairs, "REPAIR_PATH", experiment / "repairs.json"),
+            patch.object(repairs.batch, "LOGS_DIR", experiment / "logs"),
+            patch.object(repairs.batch, "EXECUTIONS_DIR", experiment / "executions"),
+        ):
+            state = repairs.repair_state(context, repair)
+        self.assertEqual(state["entry"]["mask_url"], self.mask_url)
+        self.assertEqual(state["mask_url"], self.mask_url)
+        self.assertEqual(state["mask"], self.mask)
+        self.assertEqual(state["note_detail"], self.note_detail)
+        self.assertNotIn(self.mask_url, state["entry"]["image_urls"])
+
+
 class LaterRepairArtifactTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()

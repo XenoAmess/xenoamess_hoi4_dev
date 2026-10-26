@@ -1,0 +1,207 @@
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from PIL import Image, ImageDraw
+
+from runtime import high131_hd_proof as hd_proof
+from runtime import high131_run_repairs as repairs
+from runtime import high131_verify_records as verify
+from tools.common import ROOT, file_sha256, machine_id, write_json
+
+
+class NoteMaskInputTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(dir=ROOT / 'runtime')
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.experiment = self.root / 'mod_nailong/experiments/evolink-high131-flare-20261025'
+        self.source = self.root / 'runtime/references/source.png'
+        self.source.parent.mkdir(parents=True)
+        source_image = Image.new('RGBA', (65, 67))
+        for y in range(67):
+            for x in range(65):
+                source_image.putpixel((x, y), ((x * 17) % 256, (y * 19) % 256, ((x + y) * 11) % 256, 255))
+        source_image.save(self.source)
+        self.source_sha = file_sha256(self.source)
+        self.rect = [32, 22, 65, 67]
+        self.detail = self.experiment / 'review-source-details/detail.png'
+        self.detail.parent.mkdir(parents=True)
+        source_image.crop(self.rect).resize((528, 720), Image.Resampling.NEAREST).save(self.detail)
+        self.detail_sha = file_sha256(self.detail)
+        self.raw = self.root / 'mod_nailong/assets/generated_fullsize/raw.png'
+        self.raw.parent.mkdir(parents=True)
+        Image.new('RGBA', (16, 16), (12, 34, 56, 255)).save(self.raw)
+        self.raw_sha = file_sha256(self.raw)
+        mascot = self.root / 'mascot.png'
+        mascot.write_bytes(b'mascot fixture')
+        self.mascot_sha = file_sha256(mascot)
+        self.commit = 'c' * 40
+        raw_relative = self.raw.relative_to(self.root).as_posix()
+        detail_relative = self.detail.relative_to(self.root).as_posix()
+        self.raw_url = self.remote_url(raw_relative)
+        self.detail_url = self.remote_url(detail_relative)
+        self.mask = self.experiment / 'review-masks/mask.png'
+        self.mask.parent.mkdir(parents=True)
+        self.preview = self.experiment / 'review-masks/mask-preview.png'
+        self.rects = [[3, 4, 10, 8], [2, 10, 12, 12]]
+        mask_image = Image.new('RGBA', (16, 16), (0, 0, 0, 255))
+        overlay = Image.new('RGBA', (16, 16), (0, 0, 0, 0))
+        mask_draw = ImageDraw.Draw(mask_image)
+        overlay_draw = ImageDraw.Draw(overlay)
+        for rect in self.rects:
+            mask_draw.rectangle(rect, fill=(0, 0, 0, 0))
+            overlay_draw.rectangle(rect, fill=(255, 0, 0, 90))
+        mask_image.save(self.mask)
+        with Image.open(self.raw) as raw_image:
+            Image.alpha_composite(raw_image.convert('RGBA'), overlay).save(self.preview)
+        self.mask_sha = file_sha256(self.mask)
+        self.mask_url = self.remote_url(self.mask.relative_to(self.root).as_posix())
+        self.manifest_path = self.experiment / 'note-mask-65.json'
+        alpha = mask_image.getchannel('A')
+        histogram = alpha.histogram()
+        self.manifest = {
+            'schema': 'high131-note-inpainting-mask-v1',
+            'machine_id': machine_id(), 'status': 'mask_visually_verified',
+            'reviewer': 'Actual visual review fixture', 'reviewed_at_utc': '2026-01-01T00:00:00Z',
+            'index': 65, 'source_sha256': 'a' * 64, 'source_png_sha256': self.source_sha,
+            'target_sha256': self.raw_sha, 'target_size': [16, 16],
+            'mask_file': self.mask.relative_to(self.root).as_posix(), 'mask_sha256': self.mask_sha,
+            'preview_file': self.preview.relative_to(self.root).as_posix(), 'preview_sha256': file_sha256(self.preview),
+            'size': [16, 16], 'mode': 'RGBA', 'rects': self.rects,
+            'alpha_extrema': [0, 255], 'transparent_pixels': histogram[0], 'opaque_pixels': histogram[255],
+            'role': 'inpainting-mask', 'not_generated_or_game_payload': True,
+            'no_generated_master_pixels_modified': True,
+        }
+        write_json(self.manifest_path, self.manifest)
+        common = {
+            'readback_commit': self.commit,
+            'method': 'Complete anonymous raw PNG download; SHA256 and byte count',
+            'verified_at_utc': '2026-01-01T00:00:00Z',
+            'remote_tree_blob_match': True, 'local_original_matches': True, 'png_signature_verified': True,
+        }
+        self.proof = {
+            'schema': 'high131-hd-target-readback-v1', 'status': 'verified',
+            'machine_id': machine_id(), 'commit': self.commit, 'complete_archive_verified': False,
+            'targets': {
+                self.raw_sha: {
+                    **common, 'path': raw_relative, 'bytes': self.raw.stat().st_size,
+                    'sha256': self.raw_sha, 'url': self.raw_url,
+                },
+                self.detail_sha: {
+                    **common, 'path': detail_relative, 'bytes': self.detail.stat().st_size,
+                    'sha256': self.detail_sha, 'url': self.detail_url,
+                    'role': 'source-note-detail-reference', 'not_generated_or_game_payload': True,
+                    'size': [528, 720], 'mode': 'RGBA',
+                    'derivation': {
+                        'source_png_sha256': self.source_sha, 'crop_rect': self.rect,
+                        'scale': 16, 'method': 'source-crop-resize-nearest-v1',
+                        'derivative_reviewed': True,
+                    },
+                },
+                self.mask_sha: {
+                    **common, 'path': self.mask.relative_to(self.root).as_posix(),
+                    'bytes': self.mask.stat().st_size, 'sha256': self.mask_sha, 'url': self.mask_url,
+                    'role': 'inpainting-mask', 'not_generated_or_game_payload': True,
+                    'target_sha256': self.raw_sha, 'no_generated_master_pixels_modified': True,
+                    'mask_manifest': self.manifest_path.relative_to(self.root).as_posix(),
+                    'mask_manifest_sha256': file_sha256(self.manifest_path),
+                    'size': [16, 16], 'mode': 'RGBA', 'rects': self.rects,
+                    'alpha_extrema': [0, 255], 'transparent_pixels': histogram[0], 'opaque_pixels': histogram[255],
+                },
+            },
+        }
+        write_json(self.root / 'runtime/proof.json', self.proof)
+        self.repair = {
+            'repair_input_mode': hd_proof.MASK_NOTE_MODE,
+            'remote_commit': self.commit, 'remote_readback': 'runtime/proof.json',
+            'edit_target_image': raw_relative, 'edit_target_sha256': self.raw_sha,
+            'rejected_output_sha256': self.raw_sha, 'remote_target_url': self.raw_url,
+            'image_urls': [self.raw_url, 'source-url', 'mascot-url', self.detail_url],
+            'ordered_input_sha256': [self.raw_sha, self.source_sha, self.mascot_sha, self.detail_sha],
+            'note_detail': {
+                'path': detail_relative, 'sha256': self.detail_sha, 'url': self.detail_url,
+                'source_png_sha256': self.source_sha,
+            },
+            'mask_url': self.mask_url,
+            'mask': {
+                'path': self.mask.relative_to(self.root).as_posix(), 'sha256': self.mask_sha,
+                'url': self.mask_url, 'target_sha256': self.raw_sha,
+                'manifest': self.manifest_path.relative_to(self.root).as_posix(),
+                'manifest_sha256': file_sha256(self.manifest_path),
+            },
+        }
+        self.state = {
+            'key': 'a' * 64, 'repair_input_mode': hd_proof.MASK_NOTE_MODE,
+            'original_entry': {'converted_png_sha256': self.source_sha, 'source_png': self.source.relative_to(self.root).as_posix()},
+            'repair': self.repair,
+        }
+        self.context = {
+            'release_assets': {'a' * 64: {'url': 'source-url'}},
+            'scope': {'mascot_reference': {'sha256': self.mascot_sha, 'url': 'mascot-url'}},
+        }
+
+    def remote_url(self, relative):
+        return f'https://raw.githubusercontent.com/XenoAmess/xenoamess_hoi4_dev/{self.commit}/{relative}'
+
+    def validate_mask(self):
+        return hd_proof.validate_remote_mask(
+            self.proof, self.commit, self.mask, self.mask_sha, self.raw, self.raw_sha, root=self.root,
+        )
+
+    def refresh_manifest_proof(self):
+        write_json(self.manifest_path, self.manifest)
+        self.proof['targets'][self.mask_sha]['mask_manifest_sha256'] = file_sha256(self.manifest_path)
+
+    def test_mask_geometry_and_repair_contract(self):
+        self.assertEqual(self.validate_mask(), self.mask_url)
+        with patch.object(repairs.batch, 'ROOT', self.root), patch.object(verify, 'ROOT', self.root):
+            inputs, urls = repairs.repair_input_contract(self.context, self.state)
+            verified_urls, binding = verify.expected_input_route(
+                self.context['scope'],
+                {'url': 'source-url', 'converted_png_sha256': self.source_sha},
+                self.repair, source_path=self.source,
+            )
+        self.assertEqual(inputs, self.repair['ordered_input_sha256'])
+        self.assertEqual(urls, self.repair['image_urls'])
+        self.assertEqual(verified_urls, urls)
+        self.assertEqual(binding['mask_sha256'], self.mask_sha)
+        self.assertEqual(binding['mask_target_sha256'], self.raw_sha)
+        self.assertEqual(binding['mask_url'], self.mask_url)
+        self.assertNotIn(self.mask_url, urls)
+
+    def test_pending_visual_review_cannot_authorize_mask(self):
+        self.manifest['status'] = 'pending_actual_mask_review'
+        self.refresh_manifest_proof()
+        with self.assertRaisesRegex(RuntimeError, 'actual visual review'):
+            self.validate_mask()
+
+    def test_changed_mask_pixels_are_rejected(self):
+        with Image.open(self.mask) as image:
+            image.putpixel((0, 0), (0, 0, 0, 127))
+            image.save(self.mask)
+        old_sha = self.mask_sha
+        self.mask_sha = file_sha256(self.mask)
+        record = dict(self.proof['targets'][old_sha])
+        record.update(sha256=self.mask_sha, bytes=self.mask.stat().st_size)
+        self.proof['targets'][self.mask_sha] = record
+        self.manifest['mask_sha256'] = self.mask_sha
+        self.refresh_manifest_proof()
+        with self.assertRaisesRegex(RuntimeError, 'Mask pixels differ'):
+            self.validate_mask()
+
+    def test_another_rejected_target_cannot_be_substituted(self):
+        self.manifest['target_sha256'] = '0' * 64
+        self.refresh_manifest_proof()
+        with self.assertRaisesRegex(RuntimeError, 'rejected target'):
+            self.validate_mask()
+
+    def test_mask_cannot_expand_into_complete_archive_claim(self):
+        self.proof['complete_archive_verified'] = True
+        with self.assertRaisesRegex(RuntimeError, 'target-scoped proof'):
+            self.validate_mask()
+
+
+if __name__ == '__main__':
+    unittest.main()

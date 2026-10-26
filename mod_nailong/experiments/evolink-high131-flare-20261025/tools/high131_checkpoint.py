@@ -179,7 +179,9 @@ def main():
         "high131_tree_cache.py",
         "high131_verify_hd_targets.py",
         "high131_verify_note_details.py",
+        "high131_verify_note_mask.py",
         "high131_prepare_note_details.py",
+        "high131_prepare_note_masks.py",
         "high131_prepare_note_repairs.py",
         "high131_review_sheet.py",
         "high131_run_batch.py",
@@ -227,6 +229,10 @@ def main():
         "/tests/test_scoped_readback_checkpoint.py",
         "/tests/test_high131_verify_records.py",
         "/tests/test_high131_note_details.py",
+        "/tests/test_high131_note_masks.py",
+        "/tests/test_evolink_skill_client.py",
+        "/skills/evolink-imagegen/scripts/evolink_image.py",
+        "/tools/production_checkpoint_publish.py",
     ]
     approved = read_json(EXPERIMENT / "approved-masters.json")
     archive_path = EXPERIMENT / "output-masters.json"
@@ -253,6 +259,10 @@ def main():
         "tests/test_scoped_readback_checkpoint.py",
         "tests/test_high131_verify_records.py",
         "tests/test_high131_note_details.py",
+        "tests/test_high131_note_masks.py",
+        "tests/test_evolink_skill_client.py",
+        "skills/evolink-imagegen/scripts/evolink_image.py",
+        "tools/production_checkpoint_publish.py",
         *master_paths,
     ]:
         copy_stable(ROOT / relative, worktree / relative)
@@ -310,6 +320,10 @@ def main():
         "tests/test_scoped_readback_checkpoint.py",
         "tests/test_high131_verify_records.py",
         "tests/test_high131_note_details.py",
+        "tests/test_high131_note_masks.py",
+        "tests/test_evolink_skill_client.py",
+        "skills/evolink-imagegen/scripts/evolink_image.py",
+        "tools/production_checkpoint_publish.py",
         *master_paths,
         cwd=worktree,
     )
@@ -317,7 +331,7 @@ def main():
     staged = set(git("diff", "--cached", "--name-only", cwd=worktree).decode().splitlines())
     assert staged <= paths
     assert not any(path.startswith("mod_nailong/data/") and path != "mod_nailong/data/fullsize-files.json" for path in staged)
-    git("commit", "-m", "Continue authorized HIGH portrait generation", cwd=worktree)
+    git("commit", "-m", "Preserve HIGH portrait evidence", cwd=worktree)
     commit = git("rev-parse", "HEAD", cwd=worktree).decode().strip()
     receipt = {
         "machine_id": machine_id(),
@@ -336,7 +350,7 @@ def main():
         "snapshot": worktree.relative_to(ROOT).as_posix(),
         "status": "committed_push_pending",
         "local_original_validation": "New HIGH originals fully verified with sync-git; existing index retained from immutable origin/master parent, not claimed freshly read",
-        "scope": "Isolated sparse checkpoint of the authorized EvoLink HIGH131 task only, including all retained actual output PNGs rather than only approvals. Primary worktree and all unrelated LOW dirty records remain untouched. No production import, game build or Steam claim.",
+        "scope": "Isolated sparse checkpoint of HIGH131 experiment evidence and offline input validation only, including all retained actual output PNGs rather than only approvals. No new image generation or EvoLink invocation is authorized by this snapshot. Primary worktree and all unrelated LOW dirty records remain untouched. No production import, game build or Steam claim.",
     }
     receipt["storage_precheck"] = storage_precheck_path(batch).relative_to(ROOT).as_posix()
     receipt["shared_publication_lock_during_snapshot"] = str(publish_lock.config.batch)

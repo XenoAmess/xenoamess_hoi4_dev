@@ -218,11 +218,14 @@ def repair_input_contract(context, state):
     original = state["original_entry"]
     mascot = context["scope"]["mascot_reference"]
     source_url = context["release_assets"][state["key"]]["url"]
-    if state.get("repair_input_mode") is None:
-        return [original["converted_png_sha256"], mascot["sha256"]], [source_url, mascot["url"]]
-    if state["repair_input_mode"] not in hd_proof.HD_INPUT_MODES:
-        raise batch.BatchError("repair_input_mismatch", "Unsupported repair input mode")
     repair = state["repair"]
+    mode = state.get("repair_input_mode")
+    if mode != hd_proof.MASK_NOTE_MODE and (repair.get("mask") is not None or repair.get("mask_url") is not None):
+        raise batch.BatchError("repair_input_mismatch", "Mask metadata is only valid for raw-hd-mask-note-v1")
+    if mode is None:
+        return [original["converted_png_sha256"], mascot["sha256"]], [source_url, mascot["url"]]
+    if mode not in hd_proof.HD_INPUT_MODES:
+        raise batch.BatchError("repair_input_mismatch", "Unsupported repair input mode")
     commit = repair.get("remote_commit")
     if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise batch.BatchError("remote_input_mismatch", "Raw-HD repair requires a full pinned remote commit")
@@ -237,7 +240,7 @@ def repair_input_contract(context, state):
         raise batch.BatchError("remote_input_mismatch", str(exc)) from exc
     expected_inputs = [digest, original["converted_png_sha256"], mascot["sha256"]]
     expected_urls = [target_url, source_url, mascot["url"]]
-    if state["repair_input_mode"] == hd_proof.NOTE_DETAIL_MODE:
+    if mode in (hd_proof.NOTE_DETAIL_MODE, hd_proof.MASK_NOTE_MODE):
         detail = repair.get("note_detail")
         if not isinstance(detail, dict) or detail.get("source_png_sha256") != original["converted_png_sha256"]:
             raise batch.BatchError("repair_input_mismatch", "Source-detail reference is missing or bound to another original")
@@ -250,6 +253,28 @@ def repair_input_contract(context, state):
             raise batch.BatchError("repair_input_mismatch", "Source-detail URL differs from the verified pinned reference")
         expected_inputs.append(detail["sha256"])
         expected_urls.append(detail_url)
+    if mode == hd_proof.MASK_NOTE_MODE:
+        mask = repair.get("mask")
+        if not isinstance(mask, dict):
+            raise batch.BatchError("repair_input_mismatch", "Mask-note repair lacks its mask binding")
+        mask_path = batch.project_path(mask.get("path"), batch.ROOT / hd_proof.NOTE_MASK_DIR)
+        try:
+            mask_url = hd_proof.validate_remote_mask(
+                proof, commit, mask_path, mask.get("sha256"), master_path, digest, root=batch.ROOT,
+            )
+        except (OSError, RuntimeError, ValueError, TypeError) as exc:
+            raise batch.BatchError("remote_input_mismatch", str(exc)) from exc
+        mask_proof = proof.get("targets", {}).get(mask.get("sha256"))
+        if not isinstance(mask_proof, dict):
+            raise batch.BatchError("repair_input_mismatch", "Mask proof record is missing")
+        if (
+            mask.get("url") != mask_url
+            or repair.get("mask_url") != mask_url
+            or mask.get("target_sha256") != digest
+            or mask.get("manifest") != mask_proof.get("mask_manifest")
+            or mask.get("manifest_sha256") != mask_proof.get("mask_manifest_sha256")
+        ):
+            raise batch.BatchError("repair_input_mismatch", "Mask URL, target or visual-review manifest binding differs")
     if repair.get("remote_target_url") != target_url or repair.get("image_urls") != expected_urls or repair.get("ordered_input_sha256") != expected_inputs:
         raise batch.BatchError("repair_input_mismatch", "Raw-HD target, original, mascot and declared reference input binding differs")
     return expected_inputs, expected_urls
@@ -423,11 +448,15 @@ def repair_state(context, repair):
             "ordered_input_sha256": repair.get("ordered_input_sha256"),
             "background": repair.get("background"),
         })
+    if mode == hd_proof.MASK_NOTE_MODE:
+        entry["mask_url"] = repair.get("mask_url")
     state_extras = {"repair_input_mode": mode} if mode is not None else {}
     if mode is not None:
         state_extras.update({name: repair.get(name) for name in ("edit_target_image", "edit_target_sha256", "remote_commit", "remote_readback")})
-    if mode == hd_proof.NOTE_DETAIL_MODE:
+    if mode in (hd_proof.NOTE_DETAIL_MODE, hd_proof.MASK_NOTE_MODE):
         state_extras["note_detail"] = repair.get("note_detail")
+    if mode == hd_proof.MASK_NOTE_MODE:
+        state_extras.update({"mask": repair.get("mask"), "mask_url": repair.get("mask_url")})
     return {
         "entry": entry,
         **state_extras,

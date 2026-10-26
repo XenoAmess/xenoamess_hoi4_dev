@@ -336,6 +336,8 @@ def client_command(state):
     ]
     for url in entry.get("image_urls", []):
         command.extend(("--image-url", url))
+    if entry.get("mask_url") is not None:
+        command.extend(("--mask-url", entry["mask_url"]))
     return command
 
 
@@ -410,6 +412,8 @@ def validate_frozen_entry(context, state):
         "background": entry.get("background"),
         "n": 1,
     }
+    if entry.get("mask_url") is not None:
+        parameters["mask_url"] = entry["mask_url"]
     custom_validation = state.get("frozen_validator")
     if custom_validation is not None:
         custom_validation(context, state)
@@ -607,6 +611,7 @@ def dispatch_one(context, state):
         "repair_preparation", "repair_preparation_sha256", "review",
         "review_sha256", "rejected_output_sha256", "repair_input_mode",
         "edit_target_image", "edit_target_sha256", "remote_commit", "remote_readback", "note_detail",
+        "mask", "mask_url",
     ):
         if state.get(name) is not None:
             record[name] = state[name]

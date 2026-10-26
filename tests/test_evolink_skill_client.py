@@ -119,4 +119,44 @@ class EvoLinkSkillTests(unittest.TestCase):
                 self.run_client(['--dry-run', '--prompt-file', str(self.prompt), '--image-url', url])
 
 
+    def test_mask_url_is_optional_and_forwarded_without_changing_existing_routes(self):
+        source_url = 'https://example.org/source.png'
+        mask_url = 'https://example.org/mask.png'
+        legacy_args = type('Args', (), {'prompt_file': self.prompt, 'model': 'gpt-image-2.5-flare', 'size': '1:1', 'resolution': '2K', 'quality': 'high', 'background': 'transparent', 'image_url': [source_url]})()
+        _, legacy_payload = client.build_request(legacy_args)
+        self.assertNotIn('mask_url', legacy_payload)
+        result, key, api, fetch = self.run_client(['--dry-run', '--prompt-file', str(self.prompt), '--model', 'gpt-image-2.5-flare', '--image-url', source_url])
+        self.assertEqual(result, 0)
+        key.assert_not_called(); api.assert_not_called(); fetch.assert_not_called()
+        self.assertNotIn('mask_url', json.loads(self.stdout.getvalue())['parameters'])
+
+        self.stdout = io.StringIO()
+        args = type('Args', (), {'prompt_file': self.prompt, 'model': 'gpt-image-2.5-flare', 'size': '1:1', 'resolution': '2K', 'quality': 'high', 'background': 'transparent', 'image_url': [source_url], 'mask_url': mask_url})()
+        _, payload = client.build_request(args)
+        self.assertEqual(payload['mask_url'], mask_url)
+        result, key, api, fetch = self.run_client(['--dry-run', '--prompt-file', str(self.prompt), '--model', 'gpt-image-2.5-flare', '--image-url', source_url, '--mask-url', mask_url])
+        self.assertEqual(result, 0)
+        key.assert_not_called(); api.assert_not_called(); fetch.assert_not_called()
+        body = json.loads(self.stdout.getvalue())
+        self.assertEqual(body['parameters']['mask_url'], mask_url)
+
+    def test_mask_requires_a_reference_and_gpt_image_25(self):
+        for model, image_url in (
+            ('gpt-image-2.5-flare', []),
+            ('gpt-image-2', ['https://example.org/source.png']),
+            ('gemini-nano-banana-2.1', ['https://example.org/source.png']),
+        ):
+            with self.subTest(model=model, image_url=image_url):
+                args = type('Args', (), {'prompt_file': self.prompt, 'model': model, 'size': '1:1', 'resolution': '2K', 'quality': 'high', 'background': 'transparent', 'image_url': image_url, 'mask_url': 'https://example.org/mask.png'})()
+                with self.assertRaises(RuntimeError):
+                    client.build_request(args)
+
+    def test_mask_url_is_validated_as_a_public_reference(self):
+        mask_url = 'https://user:secret@example.org/mask.png'
+        with patch.object(client, 'validate_public_reference_urls', wraps=client.validate_public_reference_urls) as validate:
+            with self.assertRaisesRegex(RuntimeError, 'must not contain credentials'):
+                self.run_client(['--dry-run', '--prompt-file', str(self.prompt), '--model', 'gpt-image-2.5-flare', '--image-url', 'https://example.org/source.png', '--mask-url', mask_url])
+        self.assertEqual(validate.call_args_list[-1].args, ([mask_url],))
+
+
 if __name__ == '__main__': unittest.main()

@@ -115,25 +115,70 @@ class High131RunBatchTests(unittest.TestCase):
             "quality": "high",
             "background": "transparent",
             "n": 1,
+            "attempt": "external-03",
         }
         state = {
             "entry": entry,
+            "index": 118,
             "key": key,
+            "stem": f"{key}-03",
             "output": self.experiment / "outputs" / f"{key}-03.png",
             "scope_entry": {"source_png": "source.png", "converted_png_sha256": source_sha},
             "prompt_path": prompt_path,
             "input_validation": lambda context, current: (expected_inputs, expected_urls),
+            "dry_run_log": self.experiment / "logs" / f"{key}-03-dryrun.log",
+            "actual_log": self.experiment / "logs" / f"{key}-03.log",
+            "execution": self.experiment / "executions" / f"{key}-03.json",
         }
         context = {
             "scope": {"model": "model", "mascot_reference": {"path": "mascot.png", "sha256": mascot_sha, "url": expected_urls[2]}},
             "release_assets": {key: {"url": expected_urls[1], "converted_png_sha256": source_sha, "public_unauthenticated_sha256_verified": True}},
+            "prepared_sha256": "1" * 64,
+            "scope_sha256": "2" * 64,
+            "input_release_sha256": "3" * 64,
         }
         with patch.object(batch, "require_context_unchanged", return_value=None):
             result = batch.validate_frozen_entry(context, state)
         self.assertEqual(result["parameters"]["image_urls"], expected_urls)
+        self.assertNotIn("mask_url", result["parameters"])
+        self.assertNotIn("--mask-url", result["command"])
         self.assertEqual(entry["ordered_input_sha256"], expected_inputs)
         command = result["command"]
         self.assertEqual([command[offset + 1] for offset, value in enumerate(command[:-1]) if value == "--image-url"], expected_urls)
+
+        mask_url = "https://example.invalid/mask.png"
+        mask = {
+            "path": "exp/review-masks/mask.png",
+            "sha256": "4" * 64,
+            "url": mask_url,
+            "target_sha256": target_sha,
+            "manifest": "exp/review-masks/mask.json",
+            "manifest_sha256": "5" * 64,
+        }
+        entry["mask_url"] = mask_url
+        state["mask"] = mask
+        state["mask_url"] = mask_url
+        with patch.object(batch, "require_context_unchanged", return_value=None):
+            masked = batch.validate_frozen_entry(context, state)
+        self.assertEqual(masked["parameters"]["mask_url"], mask_url)
+        self.assertEqual(masked["command"][-2:], ["--mask-url", mask_url])
+        self.assertEqual(masked["parameters"]["image_urls"], expected_urls)
+
+        with (
+            patch.object(batch, "artifact_action", return_value=("dispatch", None)),
+            patch.object(batch, "validate_frozen_entry", return_value=masked),
+            patch.object(batch, "require_disk_space", return_value=100 * 1024 ** 3),
+            patch.object(batch, "run_to_log", return_value=0),
+            patch.object(batch, "validate_dry_run", return_value=None),
+            patch.object(batch, "machine_id", return_value="test-machine"),
+            patch.object(batch, "write_json_new") as write_execution,
+            patch.object(batch, "finish_actual_execution", return_value="6" * 64),
+        ):
+            self.assertEqual(batch.dispatch_one(context, state), ("completed", "6" * 64))
+        record = write_execution.call_args.args[1]
+        self.assertEqual(record["mask"], mask)
+        self.assertEqual(record["mask_url"], mask_url)
+        self.assertEqual(record["arguments"][-2:], ["--mask-url", mask_url])
 
 
 if __name__ == "__main__":

@@ -70,7 +70,7 @@ try:
  receipt.update(status='committed_and_pushed',pushed_at_utc=receipt.get('pushed_at_utc') or utc_now(),remote_master_observed=observed)
  write_json(out,receipt)
  lock.unlink();acquired=False
- run(sys.executable,str(ROOT/'runtime/verify-production-commit.py'),commit,batch,timeout=1200)
+ run(sys.executable,str(ROOT/'runtime/verify-production-commit.py'),commit,batch,timeout=max(1200,int(os.environ.get('XAR_READBACK_TIMEOUT_SECONDS','1200'))))
  proof=read_json(ROOT/f'runtime/master-readback-{batch}.json');assert proof['status']=='verified' and proof['commit']==commit
  receipt.update(status='committed_pushed_and_originals_verified',completed_at_utc=utc_now(),remote_original_readback=f'runtime/master-readback-{batch}.json')
 except BaseException:

@@ -14,6 +14,8 @@ EXPERIMENT = ROOT / "mod_nailong/experiments/evolink-high131-flare-20261025"
 def expected_input_route(scope, asset, repair, source_path=None):
     mascot = scope["mascot_reference"]
     mode = repair.get("repair_input_mode") if repair else None
+    if repair and mode != hd_proof.MASK_NOTE_MODE:
+        assert repair.get("mask") is None and repair.get("mask_url") is None, "Mask metadata is only valid for raw-hd-mask-note-v1"
     if mode is None:
         return [asset["url"], mascot["url"]], {
             "input_route": "original-source-and-mascot-v1",
@@ -39,7 +41,7 @@ def expected_input_route(scope, asset, repair, source_path=None):
             "remote_commit": commit,
             "remote_readback": repair["remote_readback"],
         }
-        if mode == hd_proof.NOTE_DETAIL_MODE:
+        if mode in (hd_proof.NOTE_DETAIL_MODE, hd_proof.MASK_NOTE_MODE):
             detail = repair["note_detail"]
             assert detail["source_png_sha256"] == asset["converted_png_sha256"], "Source-detail reference is bound to another original"
             detail_path = (ROOT / detail["path"]).resolve()
@@ -48,11 +50,34 @@ def expected_input_route(scope, asset, repair, source_path=None):
             urls.append(detail_url)
             ordered_sha.append(detail["sha256"])
             binding["note_detail_sha256"] = detail["sha256"]
+        if mode == hd_proof.MASK_NOTE_MODE:
+            mask = repair["mask"]
+            mask_path = (ROOT / mask["path"]).resolve()
+            mask_url = hd_proof.validate_remote_mask(
+                proof, commit, mask_path, mask["sha256"], target_path, digest, root=ROOT,
+            )
+            mask_proof = proof["targets"][mask["sha256"]]
+            assert mask["url"] == mask_url == repair["mask_url"], "Mask URL differs from the verified pinned reference"
+            assert mask["target_sha256"] == digest, "Mask is bound to another rejected target"
+            assert mask["manifest"] == mask_proof.get("mask_manifest"), "Mask visual-review manifest path differs"
+            assert mask["manifest_sha256"] == mask_proof.get("mask_manifest_sha256"), "Mask visual-review manifest SHA differs"
+            binding.update({
+                "mask_sha256": mask["sha256"],
+                "mask_target_sha256": mask["target_sha256"],
+                "mask_url": mask_url,
+            })
     except RuntimeError as exc:
         raise AssertionError(str(exc)) from exc
     assert repair["remote_target_url"] == target_url and repair["image_urls"] == urls, "Declared input URL order differs"
     assert repair["ordered_input_sha256"] == ordered_sha, "Declared input SHA order differs"
     return urls, binding
+
+
+def validate_request_mask(request, repair):
+    if repair is not None and repair.get("repair_input_mode") == hd_proof.MASK_NOTE_MODE:
+        assert request.get("mask_url") == repair["mask_url"], "Actual request mask URL differs from the verified repair mask"
+    else:
+        assert "mask_url" not in request, "Actual non-mask request unexpectedly contains mask_url"
 
 
 def main():
@@ -96,6 +121,7 @@ def main():
         repair = repairs_by_attempt.get((key, attempt))
         expected_urls, input_binding = expected_input_route(scope, assets[key], repair, source_path=source)
         assert request["image_urls"] == expected_urls
+        validate_request_mask(request, repair)
         assert request["model"] == scope["model"]
         assert request["n"] == 1
         assert request["background"] in {"opaque", "transparent"}

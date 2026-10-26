@@ -22,6 +22,7 @@ def main():
     parser.add_argument("--readback", required=True)
     parser.add_argument("--index", action="append", type=int)
     parser.add_argument("--note-details", action="store_true")
+    parser.add_argument("--mask", action="store_true")
     args = parser.parse_args()
     if not re.fullmatch(r"[0-9a-f]{40}", args.remote_commit):
         raise RuntimeError("Expected a full lowercase remote commit")
@@ -30,7 +31,9 @@ def main():
         raise RuntimeError("Only reviewed HIGH note sources are eligible; 60 and 117 remain unresolved")
     if args.note_details and not indices <= {65, 67}:
         raise RuntimeError("Only the actually reviewed pilot note references for 65 and 67 are eligible for four-input repair")
-    mode = hd_proof.NOTE_DETAIL_MODE if args.note_details else MODE
+    if args.mask and (not args.note_details or indices != {65}):
+        raise RuntimeError("The pilot mask requires --index 65 --note-details and its actual visual review")
+    mode = hd_proof.MASK_NOTE_MODE if args.mask else hd_proof.NOTE_DETAIL_MODE if args.note_details else MODE
     detail_entries = {}
     if args.note_details:
         detail_manifest = read_json(EXPERIMENT / "note-detail-sources.json")
@@ -105,6 +108,30 @@ def main():
             detail_path = (ROOT / detail["path"]).resolve()
             detail_path.relative_to((EXPERIMENT / "review-source-details").resolve())
             detail_url = hd_proof.validate_remote_reference(proof, args.remote_commit, detail_path, detail["sha256"], original_source)
+        mask = None
+        mask_url = None
+        if args.mask:
+            manifest_path = EXPERIMENT / f"note-mask-{index}.json"
+            manifest = read_json(manifest_path)
+            if manifest.get("schema") != "high131-note-inpainting-mask-v1" or manifest.get("status") != "mask_visually_verified":
+                raise RuntimeError(f"Mask for index {index} still requires actual visual review")
+            if not manifest.get("reviewer") or not manifest.get("reviewed_at_utc") or manifest.get("machine_id") != machine_id():
+                raise RuntimeError(f"Mask review for index {index} lacks reviewer, time or machine binding")
+            if manifest.get("index") != index or manifest.get("source_sha256") != key or manifest.get("source_png_sha256") != source["converted_png_sha256"]:
+                raise RuntimeError(f"Mask for index {index} is bound to another source")
+            if manifest.get("target_sha256") != digest or manifest.get("role") != "inpainting-mask" or manifest.get("not_generated_or_game_payload") is not True:
+                raise RuntimeError(f"Mask for index {index} is not bound to the current rejected target")
+            mask_path = (ROOT / manifest["mask_file"]).resolve()
+            mask_path.relative_to((EXPERIMENT / "review-masks").resolve())
+            mask_url = hd_proof.validate_remote_mask(proof, args.remote_commit, mask_path, manifest["mask_sha256"], master_path, digest)
+            mask = {
+                "path": mask_path.relative_to(ROOT).as_posix(),
+                "sha256": manifest["mask_sha256"],
+                "url": mask_url,
+                "target_sha256": digest,
+                "manifest": manifest_path.relative_to(ROOT).as_posix(),
+                "manifest_sha256": file_sha256(manifest_path),
+            }
         observation_path = ROOT / route["observation"]
         if file_sha256(observation_path) != route["observation_sha256"]:
             raise RuntimeError(f"Source observation changed for index {index}")
@@ -123,11 +150,15 @@ def main():
         detail_prompt = ""
         if detail is not None:
             detail_prompt = "Image4 is only a nearest-neighbor enlarged view of Image2's actual note region, provided to make the source's small gray-mark shapes and right-edge tab easier to inspect. It is not a generated image and not an instruction to enlarge the note or imitate enlarged pixels. Image2 remains the authority for composition, card scale, backing and source alpha. Compare only the irregular group shapes, relative lengths and compact footprint; do not invent readable text or replace the person.\n\n"
+        mask_prompt = ""
+        if mask is not None:
+            mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its two transparent rectangles cover only the existing wrong upper and lower note-mark rows with a narrow paper margin. Do not regenerate the person, photographic frame/backplate, restored right-edge tab or blank lower paper. Within those two regions use Image2 and Image4 to restore the source-scale compact irregular gray marks, their relative lengths and spacing, without generic ovals, dots, long continuous bars, extra groups or newly readable writing. Retain the original paper colour, texture and lighting outside the actual source marks. This editing mask does not redefine the card's exterior alpha or authorize removing backing.\n\n"
         prompt = (
             "Use case: precise-object-edit. Image1 is the actual raw-HD mascot edit target with output SHA256 "
             + digest
             + ". Image2 is the exact original game portrait/card and sole authority for the original visible features and note shapes. Image3 is the user mascot identity reference.\n\n"
             + detail_prompt
+            + mask_prompt
             + "ACTUAL OBSERVED CORRECTION: " + reasons + "\n\n"
             + "The exact original note has TWO separated irregular gray-mark groups in its upper note row and TWO separated irregular gray-mark groups in its lower row. Restore exactly TWO source-scale irregular groups in EACH row, with the original relative lengths, spacing and compact footprint. They are not generic repeated dots, uniform short dashes, long horizontal bars, extra groups or newly readable writing. Keep the lower paper blank outside the original marks and retain the original small dark right-edge tab.\n\n"
             + "Preserve every already-correct part of Image1: the yellow compact mascot identity, green-ringed black eyes, exactly one source-appropriate mouth, source-visible hair, brows and facial hair, headgear, clothing, decorations, expression, head pose, crop and lighting. Do not replace the person with a human or a generic mascot. Preserve the short broad fitted neck and correct collar without pinching, floating cloth or a cream bib.\n\n"
@@ -182,6 +213,9 @@ def main():
                 "role": detail["role"],
                 "not_generated_or_game_payload": True,
             }
+        if mask is not None:
+            row["mask_url"] = mask_url
+            row["mask"] = mask
         prior_preparation = known.get((key, attempt))
         if prior_preparation is not None:
             if prior_preparation.get("prompt_sha256") == prompt_sha:
@@ -206,9 +240,9 @@ def main():
         "prepared_at_utc": existing["prepared_at_utc"],
         "updated_at_utc": utc_now(),
         "entries": entries,
-        "scope": "SHA-bound HIGH art repairs. Legacy source/mascot, three-input raw-HD and explicitly verified four-input source-note-detail modes are distinct per entry. Raw-HD targets and any additional source-only detail references require fixed remote byte proof, source-derived pixel validation and full frozen prompts. Detail crops are not generated masters or game payload. No image call is established by preparation; existing attempts, prompts and rejected reviews remain retained.",
+        "scope": "SHA-bound HIGH art repairs. Legacy source/mascot, three-input raw-HD, explicitly verified four-input source-note-detail and source-65 pilot mask modes are distinct per entry. Raw-HD targets and additional references require fixed remote byte proof, source-derived pixel validation and full frozen prompts. Masks additionally require actual visual review, exact target-bound dimensions, RGBA 0/255 geometry and fixed remote byte proof; they are not generated masters or game payload. Preparation does not authorize or establish an image call; current tool restrictions still apply and existing attempts, prompts and rejected reviews remain retained.",
     })
-    print(json.dumps({"prepared": len(entries), "indices": sorted(indices), "remote_commit": args.remote_commit, "readback": readback_path.relative_to(ROOT).as_posix(), "note_details": args.note_details, "network_image_calls": 0}, ensure_ascii=True))
+    print(json.dumps({"prepared": len(entries), "indices": sorted(indices), "remote_commit": args.remote_commit, "readback": readback_path.relative_to(ROOT).as_posix(), "note_details": args.note_details, "mask": args.mask, "network_image_calls": 0}, ensure_ascii=True))
 
 
 if __name__ == "__main__":

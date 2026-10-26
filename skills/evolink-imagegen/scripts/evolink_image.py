@@ -51,6 +51,7 @@ def parse_args() -> argparse.Namespace:
         help="Resume an existing task without creating or billing another generation.",
     )
     parser.add_argument("--image-url", action="append", default=[])
+    parser.add_argument("--mask-url")
     parser.add_argument("--size", default="2:3")
     parser.add_argument("--resolution", choices=("1K", "2K", "4K"), default="2K")
     parser.add_argument("--quality", choices=("low", "medium", "high"), default="high")
@@ -273,6 +274,13 @@ def build_request(args: argparse.Namespace) -> tuple[str, dict[str, Any]]:
         "model": args.model, "prompt": prompt, "size": args.size,
         "image_urls": args.image_url,
     }
+    mask_url = getattr(args, "mask_url", None)
+    if mask_url is not None:
+        if not args.image_url:
+            raise RuntimeError("--mask-url requires at least one --image-url")
+        if args.model not in ("gpt-image-2.5-sunburst", "gpt-image-2.5-flare"):
+            raise RuntimeError("--mask-url requires gpt-image-2.5-sunburst or gpt-image-2.5-flare")
+        payload["mask_url"] = mask_url
     if args.model in ("gpt-image-2", "gpt-image-2.5-sunburst", "gpt-image-2.5-flare"):
         payload.update({
             "resolution": args.resolution, "quality": args.quality,
@@ -287,6 +295,8 @@ def main() -> int:
     args = parse_args()
     args.output = require_output_path(args.output)
     validate_public_reference_urls(args.image_url)
+    if args.mask_url is not None:
+        validate_public_reference_urls([args.mask_url])
     if args.output.exists():
         raise RuntimeError(f"Refusing to overwrite existing output: {args.output}")
     if args.poll_seconds <= 0 or args.timeout_seconds <= 0:
