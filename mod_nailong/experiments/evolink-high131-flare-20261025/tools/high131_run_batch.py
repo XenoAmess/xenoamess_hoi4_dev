@@ -606,7 +606,7 @@ def dispatch_one(context, state):
     for name in (
         "repair_preparation", "repair_preparation_sha256", "review",
         "review_sha256", "rejected_output_sha256", "repair_input_mode",
-        "edit_target_image", "edit_target_sha256", "remote_commit", "remote_readback",
+        "edit_target_image", "edit_target_sha256", "remote_commit", "remote_readback", "note_detail",
     ):
         if state.get(name) is not None:
             record[name] = state[name]

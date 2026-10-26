@@ -21,12 +21,24 @@ def main():
     parser.add_argument("--remote-commit", required=True)
     parser.add_argument("--readback", required=True)
     parser.add_argument("--index", action="append", type=int)
+    parser.add_argument("--note-details", action="store_true")
     args = parser.parse_args()
     if not re.fullmatch(r"[0-9a-f]{40}", args.remote_commit):
         raise RuntimeError("Expected a full lowercase remote commit")
     indices = set(args.index or NOTE_INDICES)
     if not indices <= set(NOTE_INDICES):
         raise RuntimeError("Only reviewed HIGH note sources are eligible; 60 and 117 remain unresolved")
+    if args.note_details and not indices <= {65, 67}:
+        raise RuntimeError("Only the actually reviewed pilot note references for 65 and 67 are eligible for four-input repair")
+    mode = hd_proof.NOTE_DETAIL_MODE if args.note_details else MODE
+    detail_entries = {}
+    if args.note_details:
+        detail_manifest = read_json(EXPERIMENT / "note-detail-sources.json")
+        if detail_manifest.get("status") != "source_derivatives_visually_verified":
+            raise RuntimeError("Source-detail references still require actual derivative review")
+        detail_entries = {row["index"]: row for row in detail_manifest["entries"]}
+        if not indices <= set(detail_entries):
+            raise RuntimeError("A requested source lacks its reviewed note-detail reference")
     readback_path = (ROOT / args.readback).resolve()
     readback_path.relative_to((ROOT / "runtime").resolve())
     proof, committed_index = hd_proof.load_remote_proof(args.remote_commit, readback_path)
@@ -84,6 +96,15 @@ def main():
         original_source = ROOT / source["source_png"]
         if file_sha256(original_source) != source["converted_png_sha256"]:
             raise RuntimeError(f"Original source changed for index {index}")
+        detail = None
+        detail_url = None
+        if args.note_details:
+            detail = detail_entries[index]
+            if detail["source_sha256"] != key or detail["source_png"] != source["source_png"] or detail["source_png_sha256"] != source["converted_png_sha256"]:
+                raise RuntimeError(f"Source-detail reference is bound to another original for index {index}")
+            detail_path = (ROOT / detail["path"]).resolve()
+            detail_path.relative_to((EXPERIMENT / "review-source-details").resolve())
+            detail_url = hd_proof.validate_remote_reference(proof, args.remote_commit, detail_path, detail["sha256"], original_source)
         observation_path = ROOT / route["observation"]
         if file_sha256(observation_path) != route["observation_sha256"]:
             raise RuntimeError(f"Source observation changed for index {index}")
@@ -99,10 +120,14 @@ def main():
         if any(term in background_prompt for term in ("working matte only outside", "opaque RGB pass", "restore the source alpha afterward")):
             raise RuntimeError(f"Legacy opaque-pass alpha wording requires explicit reconciliation for index {index}")
         reasons = " ".join(decision["remaining_reasons"])
+        detail_prompt = ""
+        if detail is not None:
+            detail_prompt = "Image4 is only a nearest-neighbor enlarged view of Image2's actual note region, provided to make the source's small gray-mark shapes and right-edge tab easier to inspect. It is not a generated image and not an instruction to enlarge the note or imitate enlarged pixels. Image2 remains the authority for composition, card scale, backing and source alpha. Compare only the irregular group shapes, relative lengths and compact footprint; do not invent readable text or replace the person.\n\n"
         prompt = (
             "Use case: precise-object-edit. Image1 is the actual raw-HD mascot edit target with output SHA256 "
             + digest
             + ". Image2 is the exact original game portrait/card and sole authority for the original visible features and note shapes. Image3 is the user mascot identity reference.\n\n"
+            + detail_prompt
             + "ACTUAL OBSERVED CORRECTION: " + reasons + "\n\n"
             + "The exact original note has TWO separated irregular gray-mark groups in its upper note row and TWO separated irregular gray-mark groups in its lower row. Restore exactly TWO source-scale irregular groups in EACH row, with the original relative lengths, spacing and compact footprint. They are not generic repeated dots, uniform short dashes, long horizontal bars, extra groups or newly readable writing. Keep the lower paper blank outside the original marks and retain the original small dark right-edge tab.\n\n"
             + "Preserve every already-correct part of Image1: the yellow compact mascot identity, green-ringed black eyes, exactly one source-appropriate mouth, source-visible hair, brows and facial hair, headgear, clothing, decorations, expression, head pose, crop and lighting. Do not replace the person with a human or a generic mascot. Preserve the short broad fitted neck and correct collar without pinching, floating cloth or a cream bib.\n\n"
@@ -133,7 +158,7 @@ def main():
             "quality": route["quality"],
             "ordered_inputs": ["rejected raw-HD output", "original source PNG", "user mascot reference"],
             "reason": reasons,
-            "repair_input_mode": MODE,
+            "repair_input_mode": mode,
             "edit_target_image": relative_master,
             "edit_target_sha256": digest,
             "remote_commit": args.remote_commit,
@@ -142,6 +167,21 @@ def main():
             "image_urls": [target_url, route["image_urls"][0], route["image_urls"][1]],
             "ordered_input_sha256": [digest, source["converted_png_sha256"], scope["mascot_reference"]["sha256"]],
         }
+        if detail is not None:
+            row["ordered_inputs"].append("exact source-note crop enlarged by nearest-neighbor for visual reference only")
+            row["image_urls"].append(detail_url)
+            row["ordered_input_sha256"].append(detail["sha256"])
+            row["note_detail"] = {
+                "path": detail_path.relative_to(ROOT).as_posix(),
+                "sha256": detail["sha256"],
+                "url": detail_url,
+                "source_png_sha256": detail["source_png_sha256"],
+                "crop_rect": detail["crop_rect"],
+                "scale": detail["scale"],
+                "method": detail["method"],
+                "role": detail["role"],
+                "not_generated_or_game_payload": True,
+            }
         prior_preparation = known.get((key, attempt))
         if prior_preparation is not None:
             if prior_preparation.get("prompt_sha256") == prompt_sha:
@@ -166,9 +206,9 @@ def main():
         "prepared_at_utc": existing["prepared_at_utc"],
         "updated_at_utc": utc_now(),
         "entries": entries,
-        "scope": "SHA-bound HIGH art repairs. Legacy source/mascot and raw-HD edit-target modes are explicit per entry. Raw-HD targets require verified fixed remote original bytes and a three-input prompt. No image call is established by preparation; existing attempts, prompts and rejected reviews remain retained.",
+        "scope": "SHA-bound HIGH art repairs. Legacy source/mascot, three-input raw-HD and explicitly verified four-input source-note-detail modes are distinct per entry. Raw-HD targets and any additional source-only detail references require fixed remote byte proof, source-derived pixel validation and full frozen prompts. Detail crops are not generated masters or game payload. No image call is established by preparation; existing attempts, prompts and rejected reviews remain retained.",
     })
-    print(json.dumps({"prepared": len(entries), "indices": sorted(indices), "remote_commit": args.remote_commit, "readback": readback_path.relative_to(ROOT).as_posix(), "network_image_calls": 0}, ensure_ascii=True))
+    print(json.dumps({"prepared": len(entries), "indices": sorted(indices), "remote_commit": args.remote_commit, "readback": readback_path.relative_to(ROOT).as_posix(), "note_details": args.note_details, "network_image_calls": 0}, ensure_ascii=True))
 
 
 if __name__ == "__main__":

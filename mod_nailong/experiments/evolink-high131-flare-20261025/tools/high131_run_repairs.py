@@ -220,7 +220,7 @@ def repair_input_contract(context, state):
     source_url = context["release_assets"][state["key"]]["url"]
     if state.get("repair_input_mode") is None:
         return [original["converted_png_sha256"], mascot["sha256"]], [source_url, mascot["url"]]
-    if state["repair_input_mode"] != "raw-hd-edit-v1":
+    if state["repair_input_mode"] not in hd_proof.HD_INPUT_MODES:
         raise batch.BatchError("repair_input_mismatch", "Unsupported repair input mode")
     repair = state["repair"]
     commit = repair.get("remote_commit")
@@ -237,8 +237,21 @@ def repair_input_contract(context, state):
         raise batch.BatchError("remote_input_mismatch", str(exc)) from exc
     expected_inputs = [digest, original["converted_png_sha256"], mascot["sha256"]]
     expected_urls = [target_url, source_url, mascot["url"]]
+    if state["repair_input_mode"] == hd_proof.NOTE_DETAIL_MODE:
+        detail = repair.get("note_detail")
+        if not isinstance(detail, dict) or detail.get("source_png_sha256") != original["converted_png_sha256"]:
+            raise batch.BatchError("repair_input_mismatch", "Source-detail reference is missing or bound to another original")
+        detail_path = batch.project_path(detail.get("path"), batch.ROOT / "mod_nailong/experiments/evolink-high131-flare-20261025/review-source-details")
+        try:
+            detail_url = hd_proof.validate_remote_reference(proof, commit, detail_path, detail.get("sha256"), batch.project_path(original["source_png"], batch.ROOT / "runtime/references"), root=batch.ROOT)
+        except (OSError, RuntimeError, ValueError, TypeError) as exc:
+            raise batch.BatchError("remote_input_mismatch", str(exc)) from exc
+        if detail.get("url") != detail_url:
+            raise batch.BatchError("repair_input_mismatch", "Source-detail URL differs from the verified pinned reference")
+        expected_inputs.append(detail["sha256"])
+        expected_urls.append(detail_url)
     if repair.get("remote_target_url") != target_url or repair.get("image_urls") != expected_urls or repair.get("ordered_input_sha256") != expected_inputs:
-        raise batch.BatchError("repair_input_mismatch", "Raw-HD target, original and mascot input binding differs")
+        raise batch.BatchError("repair_input_mismatch", "Raw-HD target, original, mascot and declared reference input binding differs")
     return expected_inputs, expected_urls
 
 
@@ -248,7 +261,7 @@ def validate_repair_binding(context, state):
     original = state["original_entry"]
     repair = state["repair"]
     entry = state["entry"]
-    hd_edit = state.get("repair_input_mode") == "raw-hd-edit-v1"
+    hd_edit = state.get("repair_input_mode") in hd_proof.HD_INPUT_MODES
     for name in ROUTE_FIELDS:
         if hd_edit and name == "background":
             continue
@@ -395,7 +408,7 @@ def repair_state(context, repair):
     previous_prompt_path = batch.project_path(repair.get("previous_prompt"), OUTPUTS_DIR)
     review_path = batch.project_path(repair.get("review"), EXPERIMENT)
     mode = repair.get("repair_input_mode")
-    if mode is not None and mode != "raw-hd-edit-v1":
+    if mode is not None and mode not in hd_proof.HD_INPUT_MODES:
         raise batch.BatchError("repair_input_mismatch", f"Unsupported repair input mode: {mode}")
     entry = {
         **original,
@@ -413,6 +426,8 @@ def repair_state(context, repair):
     state_extras = {"repair_input_mode": mode} if mode is not None else {}
     if mode is not None:
         state_extras.update({name: repair.get(name) for name in ("edit_target_image", "edit_target_sha256", "remote_commit", "remote_readback")})
+    if mode == hd_proof.NOTE_DETAIL_MODE:
+        state_extras["note_detail"] = repair.get("note_detail")
     return {
         "entry": entry,
         **state_extras,

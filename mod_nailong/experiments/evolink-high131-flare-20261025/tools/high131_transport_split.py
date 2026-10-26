@@ -848,6 +848,37 @@ def transport(plan, resume, config=DEFAULT_CONFIG):
 
 
 def standard_publish(plan, config=DEFAULT_CONFIG):
+    if config.checkpoint_path.is_file() and config.readback_path.is_file():
+        checkpoint = read_json(config.checkpoint_path)
+        proof = read_json(config.readback_path)
+        if (
+            checkpoint.get("status") == "committed_pushed_and_originals_verified"
+            and checkpoint.get("commit") == plan["final_commit"]
+            and checkpoint.get("machine_id") == machine_id()
+            and checkpoint.get("final_tree") == plan["final_tree"]
+            and proof.get("status") == "verified"
+            and proof.get("commit") == plan["final_commit"]
+            and proof.get("machine_id") == machine_id()
+        ):
+            plan["verified_receipt_finalization"] = {
+                "checked_at_utc": utc_now(),
+                "checkpoint": str(config.checkpoint_path),
+                "remote_original_readback": str(config.readback_path),
+                "publisher_not_repeated": True,
+            }
+            plan["status"] = "committed_pushed_and_originals_verified"
+            save_plan(plan, config)
+            return {
+                "status": plan["status"],
+                "commit": plan["final_commit"],
+                "original_commit": config.original_commit,
+                "final_tree": plan["final_tree"],
+                "groups": len(plan["groups"]),
+                "max_group_bytes": max(group["bytes"] for group in plan["groups"]),
+                "checkpoint": str(config.checkpoint_path),
+                "remote_original_readback": str(config.readback_path),
+                "existing_verified_receipts": True,
+            }
     started = utc_now()
     result = command_result(
         [sys.executable, str(PUBLISHER_PATH), plan["final_commit"], config.batch],

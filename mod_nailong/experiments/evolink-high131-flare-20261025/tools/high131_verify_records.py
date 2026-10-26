@@ -11,7 +11,7 @@ from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now
 EXPERIMENT = ROOT / "mod_nailong/experiments/evolink-high131-flare-20261025"
 
 
-def expected_input_route(scope, asset, repair):
+def expected_input_route(scope, asset, repair, source_path=None):
     mascot = scope["mascot_reference"]
     mode = repair.get("repair_input_mode") if repair else None
     if mode is None:
@@ -21,7 +21,7 @@ def expected_input_route(scope, asset, repair):
             "remote_commit": None,
             "remote_readback": None,
         }
-    assert mode == "raw-hd-edit-v1", f"Unsupported repair input route: {mode}"
+    assert mode in hd_proof.HD_INPUT_MODES, f"Unsupported repair input route: {mode}"
     commit = repair.get("remote_commit")
     assert isinstance(commit, str) and len(commit) == 40 and all(value in "0123456789abcdef" for value in commit), "Invalid pinned remote commit"
     digest = repair["edit_target_sha256"]
@@ -30,19 +30,29 @@ def expected_input_route(scope, asset, repair):
     try:
         proof, index = hd_proof.load_remote_proof(commit, repair["remote_readback"], root=ROOT)
         target_url = hd_proof.validate_remote_target(proof, commit, target_path, digest, index=index, root=ROOT)
+        urls = [target_url, asset["url"], mascot["url"]]
+        ordered_sha = [digest, asset["converted_png_sha256"], mascot["sha256"]]
+        binding = {
+            "input_route": mode,
+            "ordered_input_sha256": ordered_sha,
+            "edit_target_sha256": digest,
+            "remote_commit": commit,
+            "remote_readback": repair["remote_readback"],
+        }
+        if mode == hd_proof.NOTE_DETAIL_MODE:
+            detail = repair["note_detail"]
+            assert detail["source_png_sha256"] == asset["converted_png_sha256"], "Source-detail reference is bound to another original"
+            detail_path = (ROOT / detail["path"]).resolve()
+            detail_url = hd_proof.validate_remote_reference(proof, commit, detail_path, detail["sha256"], source_path, root=ROOT)
+            assert detail["url"] == detail_url, "Source-detail URL differs from the verified pinned reference"
+            urls.append(detail_url)
+            ordered_sha.append(detail["sha256"])
+            binding["note_detail_sha256"] = detail["sha256"]
     except RuntimeError as exc:
         raise AssertionError(str(exc)) from exc
-    urls = [target_url, asset["url"], mascot["url"]]
-    ordered_sha = [digest, asset["converted_png_sha256"], mascot["sha256"]]
-    assert repair["remote_target_url"] == target_url and repair["image_urls"] == urls, "Raw-HD target, original and mascot URL order differs"
-    assert repair["ordered_input_sha256"] == ordered_sha, "Raw-HD target, original and mascot SHA order differs"
-    return urls, {
-        "input_route": mode,
-        "ordered_input_sha256": ordered_sha,
-        "edit_target_sha256": digest,
-        "remote_commit": commit,
-        "remote_readback": repair["remote_readback"],
-    }
+    assert repair["remote_target_url"] == target_url and repair["image_urls"] == urls, "Declared input URL order differs"
+    assert repair["ordered_input_sha256"] == ordered_sha, "Declared input SHA order differs"
+    return urls, binding
 
 
 def main():
@@ -84,7 +94,7 @@ def main():
         source_sha = file_sha256(source)
         assert source_sha == assets[key]["converted_png_sha256"] == scope_sources[key]["converted_png_sha256"]
         repair = repairs_by_attempt.get((key, attempt))
-        expected_urls, input_binding = expected_input_route(scope, assets[key], repair)
+        expected_urls, input_binding = expected_input_route(scope, assets[key], repair, source_path=source)
         assert request["image_urls"] == expected_urls
         assert request["model"] == scope["model"]
         assert request["n"] == 1
@@ -95,7 +105,7 @@ def main():
             assert repair["attempt"] == attempt and repair["output"] == output.relative_to(ROOT).as_posix()
             for field in ("size", "background", "resolution", "quality"):
                 assert request[field] == repair[field], f"Actual repair parameter differs: {field}"
-            if repair.get("repair_input_mode") == "raw-hd-edit-v1":
+            if repair.get("repair_input_mode") in hd_proof.HD_INPUT_MODES:
                 repair_prompt = (ROOT / repair["prompt_file"]).resolve()
                 repair_prompt.relative_to((EXPERIMENT / "prompts").resolve())
                 assert repair_prompt.stem == prompt_path.name.removesuffix(".prompt.txt")
@@ -139,7 +149,7 @@ def main():
         "verified_results": len(entries),
         "unique_task_ids": len(task_ids),
         "unique_output_sha256": len(output_hashes),
-        "raw_hd_results": sum(row["input_route"] == "raw-hd-edit-v1" for row in entries),
+        "raw_hd_results": sum(row["input_route"] in hd_proof.HD_INPUT_MODES for row in entries),
         "unresolved_task_records": unresolved,
     }, ensure_ascii=True))
 

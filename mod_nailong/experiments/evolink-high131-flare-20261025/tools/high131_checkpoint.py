@@ -176,7 +176,10 @@ def main():
         "high131_prepare_hd_repairs.py",
         "high131_hd_proof.py",
         "high131_io.py",
+        "high131_tree_cache.py",
         "high131_verify_hd_targets.py",
+        "high131_verify_note_details.py",
+        "high131_prepare_note_details.py",
         "high131_prepare_note_repairs.py",
         "high131_review_sheet.py",
         "high131_run_batch.py",
@@ -223,6 +226,7 @@ def main():
         "/tests/test_high131_run_repairs.py",
         "/tests/test_scoped_readback_checkpoint.py",
         "/tests/test_high131_verify_records.py",
+        "/tests/test_high131_note_details.py",
     ]
     approved = read_json(EXPERIMENT / "approved-masters.json")
     archive_path = EXPERIMENT / "output-masters.json"
@@ -248,6 +252,7 @@ def main():
         "tests/test_high131_run_repairs.py",
         "tests/test_scoped_readback_checkpoint.py",
         "tests/test_high131_verify_records.py",
+        "tests/test_high131_note_details.py",
         *master_paths,
     ]:
         copy_stable(ROOT / relative, worktree / relative)
@@ -304,6 +309,7 @@ def main():
         "tests/test_high131_run_repairs.py",
         "tests/test_scoped_readback_checkpoint.py",
         "tests/test_high131_verify_records.py",
+        "tests/test_high131_note_details.py",
         *master_paths,
         cwd=worktree,
     )

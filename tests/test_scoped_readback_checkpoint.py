@@ -7,6 +7,7 @@ import unittest
 from unittest.mock import patch
 
 from runtime import high131_checkpoint as checkpoint
+from runtime import high131_tree_cache as tree_cache
 from runtime import high131_transport_split as transport
 from tools.common import ROOT, write_json
 
@@ -41,6 +42,34 @@ class ScopedReadbackCheckpointTests(unittest.TestCase):
             with patch.dict(os.environ, {'XAR_READBACK_CHECKPOINT': '../outside.json'}):
                 with self.assertRaises(ValueError):
                     module.scoped_readback_checkpoint()
+
+
+class LocalTreeCacheTests(unittest.TestCase):
+    def test_completed_local_tree_proof_is_reused_only_for_same_commit_and_index(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:
+            commit = 'c' * 40
+            digest = 'a' * 64
+            blobs = {digest: 'b' * 40}
+            index = {'count': 1, 'original_png_bytes': 4, 'outputs': {digest: {'path': 'a.png', 'bytes': 4}}}
+            with (
+                patch.object(tree_cache, 'ROOT', Path(directory)),
+                patch.object(tree_cache, 'machine_id', return_value='test-machine'),
+                patch.object(tree_cache.subprocess, 'check_output', return_value=commit),
+                patch.object(tree_cache.master_git_remote, 'verify_tree', return_value=(commit, blobs)) as original,
+                patch.dict(os.environ, {'XAR_HIGH131_TREE_CACHE': '1'}, clear=False),
+            ):
+                state = tree_cache.install_local_tree_cache()
+                cached = tree_cache.master_git_remote.verify_tree
+                first = cached(commit, index=index)
+                self.assertFalse(state['reused'])
+                second = cached(commit, index=index)
+                self.assertTrue(state['reused'])
+                self.assertEqual(first, second)
+                original.assert_called_once()
+                proof = json.loads((Path(directory) / state['path']).read_text(encoding='utf-8'))
+                self.assertEqual(proof['distinct_outputs'], 1)
+                self.assertEqual(proof['blobs'], blobs)
+                self.assertEqual(proof['machine_id'], 'test-machine')
 
 
 class TransportCheckpointCompatibilityTests(unittest.TestCase):
