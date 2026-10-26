@@ -1,0 +1,99 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observation_opened_at_utc": "2026-10-26T21:57:57.285126+00:00",
+  "observation_closed_at_utc": "2026-10-26T21:58:15.661613+00:00",
+  "counts": {
+    "HIGH": {
+      "ready": 4404,
+      "pending": 0,
+      "rejected": 26,
+      "total": 4535,
+      "no_current_output": 105,
+      "ready_percent": 97.1114
+    },
+    "LOW": {
+      "ready": 366,
+      "pending": 97,
+      "rejected": 11,
+      "total": 703,
+      "no_current_output": 229,
+      "ready_percent": 52.0626
+    },
+    "ALL": {
+      "ready": 4770,
+      "total": 5238,
+      "remaining": 468,
+      "ready_percent": 91.0653
+    }
+  },
+  "actual_production_snapshot": {
+    "observed_at_utc": "2026-10-26T21:58:14.628426+00:00",
+    "state": {
+      "machine_id": "bf-202609141645-5434332d4d",
+      "run_id": "resume-20261025-large-logical-queue-v24",
+      "next_index": 1179,
+      "after_window": "resume-20261025-large-logical-queue-v24-window1178",
+      "status": "running",
+      "created_at_utc": "2026-10-26T21:29:04.058426+00:00",
+      "completed_windows": 5,
+      "completed_source_requests": 5,
+      "updated_at_utc": "2026-10-26T21:56:51.989351+00:00"
+    },
+    "prepared_plan_remaining_windows": 12,
+    "counts": {
+      "HIGH": {
+        "ready": 4404,
+        "pending": 0,
+        "rejected": 26
+      },
+      "LOW": {
+        "ready": 366,
+        "pending": 97,
+        "rejected": 11
+      }
+    },
+    "completed_window_calls": 5,
+    "completed_window_PNGs": 5,
+    "completed_window_errors": 0,
+    "same_machine_execution_totals": {
+      "calls": 767,
+      "PNG_returns": 721,
+      "content_refusals": 42,
+      "authentication_errors": 1,
+      "other_tool_errors": 3
+    },
+    "recent_errors": []
+  },
+  "previous_report_reference": {
+    "observed_at_utc": "2026-10-26T17:48:01.777+00:00",
+    "LOW_ready": 343,
+    "ALL_ready": 4747,
+    "scope": "Explicit earlier canonical snapshot, distinct from the still earlier324-LOW baseline. Comparisons must name their baseline."
+  },
+  "verified_originals_this_execution": 709,
+  "verified_original_scope": "Previously668 plus41 actual newly remotely verified originals; this is execution delivery count, not total unique character coverage.",
+  "fixed_remote_originals_commit": "04fb6ddf941943986aa017212d4cc2a01fb93a8b",
+  "actual_remote_readback_summary": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "commit": "04fb6ddf941943986aa017212d4cc2a01fb93a8b",
+    "started_at_utc": "2026-10-26T21:24:30.992929+00:00",
+    "process_id": 19096,
+    "status": "verified",
+    "local_tree_validation": {
+      "method": "Prior actual SHA256/size proof reused only after exact immutable blob/path/size match; every new Git PNG streamed and SHA256/size verified",
+      "prior_commit": "c31746182dc8107663580331813869b48b638666",
+      "prior_local_proof_sha256": "970258885a686b70e9aab66c10a035f1fd4d45dc95b189941ebe31d4a663177e",
+      "prior_actual_verified_at_utc": "2026-10-26T19:59:49.145614+00:00",
+      "reused_local_byte_proofs": 6971,
+      "new_streamed_Git_PNGs": 41,
+      "new_streamed_Git_bytes": 80958732,
+      "source_code": "\"\"\"Reuse immutable prior local byte proofs; still verify remote tree and new raw bytes.\"\"\"\nimport sys,os,json,hashlib,subprocess,traceback\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom mod_nailong.tools import master_git_remote as remote\nbase='c31746182dc8107663580331813869b48b638666';commit,batch=sys.argv[1:3]\ncommit=subprocess.check_output(['git','rev-parse',commit+'^{commit}'],cwd=ROOT,text=True).strip()\nprior=read_json(ROOT/f'runtime/high131-local-tree-proofs/{base}.json');assert prior['status']=='verified' and prior['machine_id']==machine_id() and prior['commit']==base\nold_index=json.loads(subprocess.check_output(['git','show',base+':mod_nailong/data/fullsize-files.json'],cwd=ROOT))\nassert set(prior['blobs'])==set(old_index['outputs'])\ndef verified_tree(actual_commit='HEAD',root=ROOT,index=None):\n assert actual_commit==commit and index is not None\n assert all(index['outputs'].get(k)==v for k,v in old_index['outputs'].items()),'Prior indexed originals changed'\n rows=subprocess.check_output(['git','ls-tree','-r','-l',commit,'--','mod_nailong/assets/generated_fullsize'],cwd=ROOT).decode().splitlines()\n tree={}\n for row in rows:\n  meta,path=row.split('\\t',1);mode,kind,blob,size=meta.split();tree[path]=(kind,blob,int(size))\n blobs={};pending=[]\n for digest,entry in sorted(index['outputs'].items()):\n  kind,blob,size=tree[entry['path']];assert kind=='blob' and size==entry['bytes']\n  if digest in prior['blobs']:\n   assert blob==prior['blobs'][digest];blobs[digest]=blob\n  else:pending.append((digest,entry,blob))\n process=subprocess.Popen(['git','cat-file','--batch'],cwd=ROOT,stdin=subprocess.PIPE,stdout=subprocess.PIPE)\n try:\n  for digest,entry,expected in pending:\n   process.stdin.write((commit+':'+entry['path']+'\\n').encode());process.stdin.flush();head=process.stdout.readline().decode().split();assert head==[expected,'blob',str(entry['bytes'])]\n   sha=hashlib.sha256();left=entry['bytes']\n   while left:\n    block=process.stdout.read(min(left,1048576));assert block;sha.update(block);left-=len(block)\n   assert process.stdout.read(1)==b'\\n' and sha.hexdigest()==digest;blobs[digest]=expected\n finally:process.stdin.close();process.stdout.close();assert process.wait()==0\n assert len(blobs)==index['count']\n receipt['local_tree_validation']={'method':'Prior actual SHA256/size proof reused only after exact immutable blob/path/size match; every new Git PNG streamed and SHA256/size verified','prior_commit':base,'prior_local_proof_sha256':file_sha256(ROOT/f'runtime/high131-local-tree-proofs/{base}.json'),'prior_actual_verified_at_utc':prior['verified_at_utc'],'reused_local_byte_proofs':len(blobs)-len(pending),'new_streamed_Git_PNGs':len(pending),'new_streamed_Git_bytes':sum(e['bytes'] for _,e,_ in pending),'source_code':Path(__file__).read_text(encoding='utf-8')}\n return commit,blobs\nremote.verify_tree=verified_tree\nreceipt={'machine_id':machine_id(),'commit':commit,'started_at_utc':utc_now(),'process_id':os.getpid(),'status':'running'};out=ROOT/f'runtime/master-readback-{batch}.json';write_json(out,receipt)\nlock=ROOT/'runtime/master-git-readback.lock';fd=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY);os.write(fd,str(os.getpid()).encode());os.close(fd)\ntry:\n result=remote.verify_remote(commit);receipt.update(status='verified',distinct_outputs=result['distinct_outputs'],original_png_bytes=result['original_png_bytes'],completed_at_utc=utc_now())\nexcept BaseException:receipt.update(status='failed',error=traceback.format_exc(),completed_at_utc=utc_now());raise\nfinally:\n write_json(out,receipt);assert lock.read_text()==str(os.getpid());lock.unlink()\n"
+    },
+    "distinct_outputs": 7012,
+    "original_png_bytes": 14494335493,
+    "completed_at_utc": "2026-10-26T21:27:50.905682+00:00"
+  },
+  "static_progress_commit_already_pushed": "df1beb044b6dcee71abefc9aa4aac2b0d14e8505",
+  "scope": "Canonical current-source art qualification only; pending/rejected/generated returns are not counted ready. Current generation may advance during these local observations. HIGH service-refused sources remain in denominator and skipped by this Codex chain. No release/game-display completion claim.",
+  "source_code": "import sys,json,subprocess,re\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nrun='resume-20261025-large-logical-queue-v24';opened=utc_now()\nraw=subprocess.check_output([sys.executable,'-X','utf8','runtime/low-production-status-20261025.py',run],cwd=ROOT,text=True,encoding='utf-8',timeout=300);status=json.loads(raw)\nproof=read_json(ROOT/'runtime/master-readback-resumed-low-v21-auto-2-20261025.json');assert proof['status']=='verified' and proof['commit']=='04fb6ddf941943986aa017212d4cc2a01fb93a8b'\ntotals={'HIGH':4535,'LOW':703};counts={}\nfor tier,total in totals.items():\n row=status['counts'][tier];counts[tier]={**row,'total':total,'no_current_output':total-sum(row.values()),'ready_percent':round(100*row['ready']/total,4)}\nready=sum(x['ready'] for x in counts.values());counts['ALL']={'ready':ready,'total':5238,'remaining':5238-ready,'ready_percent':round(100*ready/5238,4)}\nclosed=utc_now();stamp=closed.split('.')[0].replace('-','').replace(':','').replace('+0000','')\ntarget=ROOT/('mod_nailong/data/production-progress-snapshots/'+stamp+'-low.json');assert not target.exists()\nrecord={'machine_id':machine_id(),'observation_opened_at_utc':opened,'observation_closed_at_utc':closed,'counts':counts,'actual_production_snapshot':status,'previous_report_reference':{'observed_at_utc':'2026-10-26T17:48:01.777+00:00','LOW_ready':343,'ALL_ready':4747,'scope':'Explicit earlier canonical snapshot, distinct from the still earlier324-LOW baseline. Comparisons must name their baseline.'},'verified_originals_this_execution':709,'verified_original_scope':'Previously668 plus41 actual newly remotely verified originals; this is execution delivery count, not total unique character coverage.','fixed_remote_originals_commit':proof['commit'],'actual_remote_readback_summary':proof,'static_progress_commit_already_pushed':'df1beb044b6dcee71abefc9aa4aac2b0d14e8505','scope':'Canonical current-source art qualification only; pending/rejected/generated returns are not counted ready. Current generation may advance during these local observations. HIGH service-refused sources remain in denominator and skipped by this Codex chain. No release/game-display completion claim.','source_code':Path(__file__).read_text(encoding='utf-8')}\nwrite_json(target,record)\npaths=['docs/handoffs/2026-10-26-low-v24-helper-sources.json','mod_nailong/data/production-resumptions/20261026-low-v24.json','mod_nailong/data/production-resumptions/20261026-low-v24-started.json','mod_nailong/data/production-performance/20261026-following-incremental-publisher-frozen.json','mod_nailong/data/production-checkpoint-failures/20261026-v21-tail-proxy-new-phase-retry2.json','mod_nailong/data/production-resumptions/20261026-v21-tail-publication-reconciled.json','mod_nailong/data/production-owner-failures/20261026-root-b177-atomic-claim-reconciliation.json','mod_nailong/data/production-review-handovers/20261025-root-rollingb176.json','mod_nailong/data/production-review-handovers/20261025-root-rollingb177.json',target.relative_to(ROOT).as_posix()]\nexpected={p:file_sha256(ROOT/p) for p in paths}\nfor p in paths:json.loads((ROOT/p).read_text(encoding='utf-8'))\nbase=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()\ncode=(ROOT/'runtime/publish-v23-static-progress-20261026.py').read_text(encoding='utf-8')\ncode=re.sub(r\"^base='[0-9a-f]+'\",lambda m:'base='+repr(base),code,flags=re.M).replace('low-v23-static-progress','low-v24-status-progress').replace('low-v23-static-private-rebase-adoption','low-v24-status-private-rebase-adoption')\ncode=re.sub(r'^paths=.*$',lambda m:'paths='+repr(paths),code,flags=re.M);code=re.sub(r'^expected=.*$',lambda m:'expected='+repr(expected),code,flags=re.M)\ncode=code.replace('Record LOW reviews and generation recovery evidence','Record portrait progress and verified original delivery')\ndest=ROOT/'runtime/publish-v24-status-progress-20261026.py';assert not dest.exists();compile(code,str(dest),'exec');dest.write_text(code,encoding='utf-8',newline='\\n')\nprint(json.dumps({'snapshot':target.relative_to(ROOT).as_posix(),'counts':counts,'files':len(paths),'base':base}),flush=True)\n"
+}
