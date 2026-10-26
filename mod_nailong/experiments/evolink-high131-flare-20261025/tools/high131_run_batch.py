@@ -200,6 +200,9 @@ def identity(state):
 
 
 def artifact_action(state, include_dry_run):
+    custom_action = state.get("artifact_action")
+    if custom_action is not None:
+        return custom_action(state, include_dry_run)
     for name, reason in (
         ("output", "output_exists"),
         ("task", "task_record_exists"),
@@ -228,7 +231,42 @@ def stop_message(reason):
     return messages.get(reason, reason)
 
 
-def collect_batch(context, limit):
+def acknowledged_execution_hold(scope_entry, entry):
+    index = scope_entry.get("index")
+    key = scope_entry.get("source_sha256")
+    if entry is None or entry.get("status") != "prepared_not_dispatched" or entry.get("index") != index or entry.get("attempt") != "external-01":
+        raise BatchError("invalid_execution_hold", f"Hold {index} is not a frozen original prepared source")
+    stem = f"{key}-01"
+    execution_path = EXECUTIONS_DIR / f"{stem}.json"
+    try:
+        execution, execution_sha = read_json_with_sha(execution_path)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise BatchError("invalid_execution_hold", f"Unable to verify original execution hold {index}: {exc}") from exc
+    if any(execution.get(field) != expected for field, expected in (
+        ("index", index), ("source_sha256", key), ("attempt", "external-01"),
+        ("result", None), ("output_sha256", None),
+    )):
+        raise BatchError("invalid_execution_hold", f"Execution identity or result binding differs for hold {index}")
+    if execution.get("status") not in {"failed", "resume_existing_task_required"} or not execution.get("finished_at_utc"):
+        raise BatchError("invalid_execution_hold", f"Execution {index} is not a finished unresolved dispatch")
+    for suffix in (".png", ".result.json"):
+        if (OUTPUTS_DIR / f"{stem}{suffix}").exists():
+            raise BatchError("invalid_execution_hold", f"Hold {index} now has a returned result; reconcile it instead of holding")
+    return {
+        "index": index,
+        "source_sha256": key,
+        "stem": stem,
+        "reason": "unresolved_execution_hold_retained",
+        "execution": relative_path(execution_path),
+        "execution_sha256": execution_sha,
+        "execution_status": execution["status"],
+        "task_id": execution.get("task_id"),
+        "completion_claimed": False,
+        "retry_or_resume_attempted": False,
+    }
+
+
+def collect_batch(context, limit, only_indices=None, acknowledged_holds=()):
     selected = []
     skipped = []
     failed = []
@@ -240,6 +278,11 @@ def collect_batch(context, limit):
             raise BatchError("invalid_input", "scope.json contains an invalid entry")
         key = scope_entry.get("source_sha256")
         entry = context["prepared_entries"].get(key)
+        if scope_entry.get("index") in acknowledged_holds:
+            skipped.append(acknowledged_execution_hold(scope_entry, entry))
+            continue
+        if only_indices is not None and scope_entry.get("index") not in only_indices:
+            continue
         if entry is None or entry.get("status") != "prepared_not_dispatched":
             continue
         try:
@@ -343,12 +386,16 @@ def validate_frozen_entry(context, state):
         raise BatchError("frozen_input_mismatch", f"Unable to hash local mascot PNG: {exc}") from exc
     if mascot.get("sha256") != mascot_sha:
         raise BatchError("frozen_input_mismatch", "Local mascot SHA differs from the frozen scope")
-    expected_inputs = [source_sha, mascot_sha]
+    input_validation = state.get("input_validation")
+    if input_validation is None:
+        expected_inputs = [source_sha, mascot_sha]
+        expected_urls = [release_asset.get("url"), mascot.get("url")]
+    else:
+        expected_inputs, expected_urls = input_validation(context, state)
     if entry.get("ordered_input_sha256") != expected_inputs:
         raise BatchError("frozen_input_mismatch", f"Ordered input SHA binding mismatch for {key}")
-    expected_urls = [release_asset.get("url"), mascot.get("url")]
     if entry.get("image_urls") != expected_urls:
-        raise BatchError("frozen_input_mismatch", f"Ordered source/mascot URL binding mismatch for {key}")
+        raise BatchError("frozen_input_mismatch", f"Ordered input URL binding mismatch for {key}")
     if entry.get("model") != context["scope"].get("model"):
         raise BatchError("frozen_input_mismatch", f"Model differs from frozen scope for {key}")
     if entry.get("n") != 1:
@@ -363,6 +410,9 @@ def validate_frozen_entry(context, state):
         "background": entry.get("background"),
         "n": 1,
     }
+    custom_validation = state.get("frozen_validator")
+    if custom_validation is not None:
+        custom_validation(context, state)
     return {
         "prompt_sha256": prompt_sha,
         "command": client_command(state),
@@ -553,6 +603,13 @@ def dispatch_one(context, state):
         "disk_free_bytes_c_before_actual": free_bytes,
         "error": None,
     }
+    for name in (
+        "repair_preparation", "repair_preparation_sha256", "review",
+        "review_sha256", "rejected_output_sha256", "repair_input_mode",
+        "edit_target_image", "edit_target_sha256", "remote_commit", "remote_readback",
+    ):
+        if state.get(name) is not None:
+            record[name] = state[name]
     write_json_new(state["execution"], record)
     try:
         actual_returncode = run_to_log(validated["command"], state["actual_log"])
@@ -577,14 +634,22 @@ def emit_summary(collect_only, completed, skipped, failed, selected=None):
         "failed": failed,
     }
     if collect_only:
-        summary["candidates"] = [
-            {
+        candidates = []
+        for state in (selected or []):
+            candidate = {
                 **identity(state),
                 "prompt_sha256": state["entry"].get("prompt_sha256"),
                 "output": relative_path(state["output"]),
             }
-            for state in (selected or [])
-        ]
+            if "repair_preparation" in state:
+                candidate["attempt"] = state["entry"].get("attempt")
+                candidate["parameters"] = {
+                    name: state["entry"].get(name)
+                    for name in ("model", "size", "background", "resolution", "quality", "n")
+                }
+                candidate["repair_preparation_sha256"] = state["repair_preparation_sha256"]
+            candidates.append(candidate)
+        summary["candidates"] = candidates
     if failed:
         summary["stopped"] = True
     print(json.dumps(summary, ensure_ascii=True, separators=(",", ":")))
@@ -610,7 +675,16 @@ def parse_args():
         action="store_true",
         help="Only list selected candidates; do not invoke the client, read credentials, access the network, or write logs",
     )
-    return parser.parse_args()
+    parser.add_argument("--index", action="append", type=int, help="Only process this original scope index; repeat for multiple indices")
+    parser.add_argument("--acknowledge-hold", action="append", type=int, default=[], help="Retain a verified unresolved original execution as held, never as completed; requires --index")
+    args = parser.parse_args()
+    if args.acknowledge_hold and not args.index:
+        parser.error("--acknowledge-hold requires at least one explicit --index")
+    if set(args.acknowledge_hold) & set(args.index or []):
+        parser.error("An index cannot be both dispatched and acknowledged as an unresolved hold")
+    if args.index and any(index < 1 for index in args.index + args.acknowledge_hold):
+        parser.error("Scope indices must be positive")
+    return args
 
 
 def main():
@@ -621,7 +695,12 @@ def main():
     selected = []
     try:
         context = load_context()
-        selected, skipped, failed = collect_batch(context, args.limit)
+        selected, skipped, failed = collect_batch(
+            context,
+            args.limit,
+            only_indices=set(args.index) if args.index else None,
+            acknowledged_holds=set(args.acknowledge_hold),
+        )
     except BatchError as exc:
         failed.append({"status": exc.status, "error": str(exc)})
     except (OSError, ValueError, RuntimeError) as exc:

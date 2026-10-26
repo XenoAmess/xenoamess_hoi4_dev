@@ -10,9 +10,46 @@ from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now, writ
 EXPERIMENT = ROOT / "mod_nailong/experiments/evolink-high131-flare-20261025"
 
 
+def load_nonperson_exceptions(scope):
+    path = EXPERIMENT / "nonperson-scope-decision.json"
+    if not path.exists():
+        return {}, None
+    body = read_json(path)
+    assert body["schema"] == "naiwa-evolink-high131-nonperson-scope-decision-v1"
+    assert body["machine_id"] == machine_id()
+    assert body["decision"] == "preserved_original_nonperson_exception"
+    assert body["user_selection"]["selected_option"] == "保留原图并登记例外（推荐）"
+    assert body["no_image_call_created_for_this_decision"] is True
+    assert body["generated_output_required"] is False
+    assert body["original_assets_retained"] is True
+    assert body["canonical_generated_row_must_not_be_fabricated"] is True
+    prior = ROOT / body["prior_visual_review"]
+    assert prior.parent == EXPERIMENT
+    prior_entries = read_json(prior)["entries"]
+    scope_by_key = {row["source_sha256"]: row for row in scope["entries"]}
+    exceptions = {}
+    for row in body["entries"]:
+        key = row["source_sha256"]
+        source = scope_by_key[key]
+        assert source["index"] == row["index"]
+        assert source["source_assets"] == row["source_assets"]
+        assert source["source_size"] == row["source_size"]
+        assert source["source_png"] == row["source_png"]
+        assert source["source_alpha_extrema"] == row["source_alpha_extrema"]
+        assert source["converted_png_sha256"] == row["source_png_sha256"]
+        assert file_sha256(ROOT / row["source_png"]) == row["source_png_sha256"]
+        assert row["observed_subject"]
+        assert key not in exceptions
+        exceptions[key] = row
+    assert {row["source_sha256"] for row in prior_entries} == set(exceptions)
+    assert len(exceptions) == 4
+    return exceptions, {"path": path.relative_to(ROOT).as_posix(), "sha256": file_sha256(path)}
+
+
 def main():
     scope = read_json(EXPERIMENT / "scope.json")
     prepared = read_json(EXPERIMENT / "prepared.json")
+    nonperson_exceptions, nonperson_scope_receipt = load_nonperson_exceptions(scope)
     prepared_by_key = {row["source_sha256"]: row for row in prepared["entries"]}
     results = collections.defaultdict(dict)
     for result_path in (EXPERIMENT / "outputs").glob("*.result.json"):
@@ -79,8 +116,13 @@ def main():
             attempt_history.append(record)
             current = record
         if prep["status"] == "nonperson_scope_review_required":
-            status = "nonperson_scope_review_required"
-            decision = None
+            if key in nonperson_exceptions:
+                assert not attempts
+                status = "preserved_original_nonperson_exception"
+                decision = status
+            else:
+                status = "nonperson_scope_review_required"
+                decision = None
             review = None
         elif current is None:
             status = prep["status"]
@@ -105,6 +147,7 @@ def main():
             "current_decision": decision,
             "current_review": review,
             "attempts_returned": attempt_history,
+            "nonperson_scope_exception": nonperson_scope_receipt if key in nonperson_exceptions else None,
             "planned_route": {field: prep.get(field) for field in ("status", "model", "size", "background", "prompt_file", "prompt_sha256")},
         })
     target = EXPERIMENT / "progress.json"
@@ -115,6 +158,8 @@ def main():
         "source_count": len(rows),
         "counts": dict(sorted(counts.items())),
         "approved_png_returns_are_not_production_imports": True,
+        "preserved_original_nonperson_exceptions_are_not_generated_portraits": True,
+        "nonperson_scope_decision": nonperson_scope_receipt,
         "entries": rows,
     })
     print(json.dumps({"observed_at_utc": utc_now(), "counts": dict(sorted(counts.items())), "target": target.relative_to(ROOT).as_posix()}, ensure_ascii=True))
