@@ -1,0 +1,64 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-26T19:17:20.273318+00:00",
+  "previous_exact_state": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v22",
+    "next_index": 1158,
+    "after_window": "resume-20261025-large-logical-queue-v22-window1157-network-reconciled",
+    "status": "running",
+    "created_at_utc": "2026-10-26T16:47:26.939092+00:00",
+    "completed_windows": 14,
+    "completed_source_requests": 14,
+    "updated_at_utc": "2026-10-26T19:07:38.238247+00:00",
+    "last_local_reconciliation": "mod_nailong/data/production-owner-failures/20261026-v22-window1157-network-reconciliation.json"
+  },
+  "previous_exact_state_sha256": "1a89687e7750b1b82e98f8006017e0802311155b036a4cecf5f4ba1b1dbd8fdf",
+  "original_owner_release": {
+    "run_id": "resume-20261025-large-logical-queue-v22",
+    "machine_id": "bf-202609141645-5434332d4d"
+  },
+  "original_owner_release_sha256": "b89bdf01b9a2ed8d8bee494999f3dd8ae0ab6d8864c3eadb0b4603ea5af11f95",
+  "actual_stop_tool_response_recovered": {
+    "stopped_at_utc": "2026-10-26T19:06:30.393118+00:00",
+    "status": "stopped_at_safe_boundary",
+    "completed_source_requests": 13,
+    "completed_windows": 13,
+    "next_index": 1157,
+    "reason": "expired_original_cutoff_after_terminal_network_error",
+    "evidence_origin": "Actual completed write_stdin session71726 output, recovered after accounting write superseded the state; not claimed pre-request persisted."
+  },
+  "second_error_account": "mod_nailong/data/production-owner-failures/20261026-v22-window1157-network-reconciliation.json",
+  "second_error_account_sha256": "fc513ef3247f3098365e138df8942f1b355183917ef9655e863dc1d677351f1a",
+  "actual_event_counts": {
+    "calls": 14,
+    "PNG_returns": 11,
+    "errors": 3
+  },
+  "last_window_gate": {
+    "ready": true,
+    "window_id": "resume-20261025-large-logical-queue-v22-window1157-network-reconciled",
+    "machine_id": "bf-202609141645-5434332d4d",
+    "receipt": "mod_nailong/data/production-window-timings/resume-20261025-large-logical-queue-v22-window1157-network-reconciled-completed.json",
+    "observed_at_utc": "2026-10-26T19:17:20.047205+00:00"
+  },
+  "corrected_final_state": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v22",
+    "next_index": 1158,
+    "after_window": "resume-20261025-large-logical-queue-v22-window1157-network-reconciled",
+    "status": "stopped_at_safe_boundary",
+    "created_at_utc": "2026-10-26T16:47:26.939092+00:00",
+    "completed_windows": 14,
+    "completed_source_requests": 14,
+    "updated_at_utc": "2026-10-26T19:17:20.270422+00:00",
+    "last_local_reconciliation": "mod_nailong/data/production-owner-failures/20261026-v22-window1157-network-reconciliation.json",
+    "reason": "expired_original_cutoff_after_two_accounted_terminal_network_errors",
+    "stopped_at_utc": "2026-10-26T19:06:30.393118+00:00",
+    "terminal_stop_order_reconciliation": "mod_nailong/data/production-owner-failures/20261026-v22-terminal-stop-order-reconciliation.json"
+  },
+  "new_image_calls": 0,
+  "new_PNGs": 0,
+  "scope": "Stop command was issued before waiting for asynchronous second error-accounting process exit. Both completed successfully but stop read prior13-call state; second accounting write superseded it. Restore final14 actual calls from two SHA-bound terminal error receipts and actual completed stop tool response; owner remains released, original timestamps/cutoff unchanged, no replay. Preserve old state/release bytes and label post-tool timestamp recovery boundary in this audit.",
+  "source_code": "import sys,json\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom tools.rolling_production_queue import no_calling\nfrom tools.production_window_gate import inspect_window\nrun='resume-20261025-large-logical-queue-v22';folder=ROOT/'runtime/rolling-production';p=folder/(run+'.json');old=read_json(p);releasep=folder/(run+'-released-owner.json');release=read_json(releasep)\nassert not (folder/'owner.json').exists();no_calling(ROOT)\naccountp=ROOT/'mod_nailong/data/production-owner-failures/20261026-v22-window1157-network-reconciliation.json';account=read_json(accountp);updated=account['owner_state_after'];assert updated['completed_source_requests']==updated['completed_windows']==14 and updated['next_index']==1158\ngate=inspect_window(ROOT,updated['after_window'],machine_id());assert gate['ready'],gate\nevents=[e for f in (ROOT/'mod_nailong/data/production-window-timings').glob(run+'-window*-completed.json') for e in read_json(f)['events'] if e['phase']=='image_resolved'];counts={'calls':len(events),'PNG_returns':sum(not e.get('error') for e in events),'errors':sum(bool(e.get('error')) for e in events)};assert counts=={'calls':14,'PNG_returns':11,'errors':3},counts\naudit=ROOT/'mod_nailong/data/production-owner-failures/20261026-v22-terminal-stop-order-reconciliation.json';assert not audit.exists()\nstop=old if old.get('stopped_at_utc') else {'stopped_at_utc':'2026-10-26T19:06:30.393118+00:00','status':'stopped_at_safe_boundary','completed_source_requests':13,'completed_windows':13,'next_index':1157,'reason':'expired_original_cutoff_after_terminal_network_error','evidence_origin':'Actual completed write_stdin session71726 output, recovered after accounting write superseded the state; not claimed pre-request persisted.'}\nfinal={**updated,'status':'stopped_at_safe_boundary','reason':'expired_original_cutoff_after_two_accounted_terminal_network_errors','stopped_at_utc':stop.get('stopped_at_utc') or release.get('released_at_utc'),'updated_at_utc':utc_now(),'terminal_stop_order_reconciliation':audit.relative_to(ROOT).as_posix()}\nwrite_json(audit,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'previous_exact_state':old,'previous_exact_state_sha256':file_sha256(p),'original_owner_release':release,'original_owner_release_sha256':file_sha256(releasep),'actual_stop_tool_response_recovered':stop,'second_error_account':accountp.relative_to(ROOT).as_posix(),'second_error_account_sha256':file_sha256(accountp),'actual_event_counts':counts,'last_window_gate':gate,'corrected_final_state':final,'new_image_calls':0,'new_PNGs':0,'scope':'Stop command was issued before waiting for asynchronous second error-accounting process exit. Both completed successfully but stop read prior13-call state; second accounting write superseded it. Restore final14 actual calls from two SHA-bound terminal error receipts and actual completed stop tool response; owner remains released, original timestamps/cutoff unchanged, no replay. Preserve old state/release bytes and label post-tool timestamp recovery boundary in this audit.','source_code':Path(__file__).read_text(encoding='utf-8')})\nwrite_json(p,final);print(json.dumps({'status':final['status'],'actual_results':counts,'next_index':final['next_index'],'owner_released':True}),flush=True)\n"
+}

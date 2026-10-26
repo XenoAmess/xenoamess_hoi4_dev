@@ -1,0 +1,32 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-26T20:28:00.821500+00:00",
+  "run_id": "resume-20261025-large-logical-queue-v21",
+  "batch": "resumed-low-v21-auto-1-20261025",
+  "fixed_commit": "c31746182dc8107663580331813869b48b638666",
+  "checkpoint_requests": 16,
+  "new_original_PNGs": 16,
+  "verified_originals_this_execution": 668,
+  "actual_verified_readback": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "commit": "c31746182dc8107663580331813869b48b638666",
+    "started_at_utc": "2026-10-26T20:26:30.159256+00:00",
+    "process_id": 18192,
+    "status": "verified",
+    "distinct_outputs": 6971,
+    "original_png_bytes": 14413376761,
+    "completed_at_utc": "2026-10-26T20:27:59.927501+00:00",
+    "local_tree_cache": {
+      "reused": true,
+      "method": "master_files.verify_tree streaming SHA256 and byte-count checks",
+      "path": "runtime/high131-local-tree-proofs/c31746182dc8107663580331813869b48b638666.json",
+      "index_sha256": "c5cc07267a2e1be48b19f31388a5586f00bf65c78bd8e470f006de028b74523e",
+      "verified_at_utc": "2026-10-26T19:59:49.145614+00:00"
+    }
+  },
+  "failure_audit": "mod_nailong/data/production-checkpoint-failures/20261026-v21-first-cached-readback-proxy-recovery.json",
+  "failure_audit_sha256": "e105d012ca792beca1f7ae234aa6e83886fa232532a1a1b591fca31237b0a071",
+  "original_deadline_utc_unchanged": "2026-10-26T21:04:06.737173+00:00",
+  "scope": "Exact16 original PNG bytes remotely verified, own652+16=668; later V21 tail requires publication.",
+  "source_code": "import os,sys,json,subprocess\nfrom pathlib import Path\nfrom datetime import datetime,timezone\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nrun='resume-20261025-large-logical-queue-v21';batch='resumed-low-v21-auto-1-20261025';commit='c31746182dc8107663580331813869b48b638666';statep=ROOT/f'runtime/resume-low-20261025/publisher-{run}.json';state=read_json(statep);pubp=ROOT/f'runtime/checkpoint-{batch}.json';pub=read_json(pubp)\nremaining=int((datetime.fromisoformat(state['original_deadline_utc'])-datetime.now(timezone.utc)).total_seconds());assert remaining>1200 and pub['commit']==commit and pub.get('pushed_at_utc')\nassert not (ROOT/'runtime/master-git-readback.lock').exists()\ncache=read_json(ROOT/f'runtime/high131-local-tree-proofs/{commit}.json');assert cache['status']=='verified' and cache['commit']==commit and cache['machine_id']==machine_id()\nremote=subprocess.check_output(['git','ls-remote','origin','refs/heads/master'],cwd=ROOT,text=True,timeout=120).split()[0];assert remote==commit\naudit=ROOT/'mod_nailong/data/production-checkpoint-failures/20261026-v21-first-cached-readback-proxy-recovery.json';assert not audit.exists()\nwrite_json(audit,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'fixed_commit':commit,'fresh_remote_master':remote,'previous_exact_publication_receipt':pub,'previous_exact_readback_receipt':read_json(ROOT/f'runtime/master-readback-{batch}.json'),'local_tree_cache_sha256':file_sha256(ROOT/f'runtime/high131-local-tree-proofs/{commit}.json'),'original_deadline_utc_unchanged':state['original_deadline_utc'],'scope':'Prior cached retry failed Git remote probe because localhost proxy was unavailable; fresh ordinary remote probe now succeeds and proves fixed commit. Run read-only pinned verifier directly with existing same-commit cache; preserve original deadline, no push/image call, no proxy/TLS changes or substitute byte proof.','source_code':Path(__file__).read_text(encoding='utf-8')})\np=subprocess.run([sys.executable,'-u','-X','utf8','runtime/verify-production-commit.py',commit,batch],cwd=ROOT,env={**os.environ,'XAR_HIGH131_TREE_CACHE':'1'},timeout=min(1200,remaining));assert p.returncode==0,'Inspect actual fixed verifier receipt'\nproof=read_json(ROOT/f'runtime/master-readback-{batch}.json');assert proof['status']=='verified' and proof['commit']==commit and read_json(statep)==state\npub.update(status='committed_pushed_and_originals_verified',completed_at_utc=utc_now(),remote_original_readback=f'runtime/master-readback-{batch}.json');write_json(pubp,pub)\ntarget=ROOT/'mod_nailong/data/production-resumptions/20261026-v21-first-publication-reconciled.json';assert not target.exists()\nwrite_json(target,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'run_id':run,'batch':batch,'fixed_commit':commit,'checkpoint_requests':16,'new_original_PNGs':16,'verified_originals_this_execution':668,'actual_verified_readback':proof,'failure_audit':audit.relative_to(ROOT).as_posix(),'failure_audit_sha256':file_sha256(audit),'original_deadline_utc_unchanged':state['original_deadline_utc'],'scope':'Exact16 original PNG bytes remotely verified, own652+16=668; later V21 tail requires publication.','source_code':Path(__file__).read_text(encoding='utf-8')})\nstate['checkpoints'][0].update(original_private_commit=state['checkpoints'][0]['commit'],commit=commit);state.update(status='checkpoint_pushed_and_raw_bytes_verified',last_checkpoint_requests=16,last_commit=commit,reconciliation=target.relative_to(ROOT).as_posix(),reconciliation_sha256=file_sha256(target),observed_at_utc=utc_now());write_json(statep,state)\nprint(json.dumps({'status':state['status'],'verified_originals_this_execution':668,'verified_at_utc':proof['completed_at_utc']}),flush=True)\n"
+}

@@ -1,0 +1,24 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-26T14:56:01.747315+00:00",
+  "run_id": "resume-20261025-large-logical-queue-v20",
+  "batch": "resumed-low-v20-auto-2-20261025",
+  "fixed_commit": "de96f5c0dc63e426e9911604f2372c2333cad14e",
+  "new_original_PNGs": 9,
+  "verified_originals_this_execution": 652,
+  "actual_verified_readback": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "commit": "de96f5c0dc63e426e9911604f2372c2333cad14e",
+    "started_at_utc": "2026-10-26T14:39:08.687572+00:00",
+    "process_id": 17476,
+    "status": "verified",
+    "distinct_outputs": 6955,
+    "original_png_bytes": 14382901411,
+    "completed_at_utc": "2026-10-26T14:56:01.627984+00:00"
+  },
+  "failure_audit": "mod_nailong/data/production-checkpoint-failures/20261026-v20-tail-server-error-fixed-retry.json",
+  "failure_audit_sha256": "2d40231d269c7c34f44bf1e3fac2d37cd29dcc5dfa2260f15424f630c88ad6c5",
+  "original_deadline_utc_unchanged": "2026-10-26T18:50:48.157591+00:00",
+  "scope": "V20 first25 plus tail9 originals actually verified, own cumulative618+25+9=652. Art qualification is separate.",
+  "source_code": "import sys,json,subprocess\nfrom pathlib import Path\nfrom datetime import datetime,timezone\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nrun='resume-20261025-large-logical-queue-v20';batch='resumed-low-v20-auto-2-20261025';commit='de96f5c0dc63e426e9911604f2372c2333cad14e'\nstatep=ROOT/f'runtime/resume-low-20261025/publisher-{run}.json';before=read_json(statep);pubp=ROOT/f'runtime/checkpoint-{batch}.json';pub=read_json(pubp)\nassert before['status']=='stopped_requires_reconciliation_no_image_replay' and before['last_checkpoint_requests']==16\nassert datetime.now(timezone.utc)<datetime.fromisoformat(before['original_deadline_utc'])\nassert pub['commit']==commit and pub['new_original_PNGs']==9 and 'Internal Server Error' in pub['error']\naudit=ROOT/'mod_nailong/data/production-checkpoint-failures/20261026-v20-tail-server-error-fixed-retry.json';assert not audit.exists()\nwrite_json(audit,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'fixed_commit':commit,'previous_publisher_state':before,'previous_exact_publication_receipt':pub,'original_deadline_utc_unchanged':before['original_deadline_utc'],'scope':'One ordinary FF retry of same immutable9PNG snapshot after actual GitHub Internal Server Error. Preserve full failure receipt before retry. No image call, PNG change, force push or working file rewrite. Fresh remote presence and pinned original bytes remain required.','source_code':Path(__file__).read_text(encoding='utf-8')})\np=subprocess.run([sys.executable,'-u','-X','utf8','tools/production_checkpoint_publish.py',commit,batch],cwd=ROOT,timeout=3600);assert p.returncode==0,'Inspect preserved fixed publication receipt; no image replay'\npub=read_json(pubp);proof=read_json(ROOT/f'runtime/master-readback-{batch}.json');assert pub['status']=='committed_pushed_and_originals_verified' and proof['status']=='verified' and proof['commit']==commit\nassert read_json(statep)==before\nrecord=ROOT/'mod_nailong/data/production-resumptions/20261026-v20-tail-publication-reconciled.json';assert not record.exists()\nwrite_json(record,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'run_id':run,'batch':batch,'fixed_commit':commit,'new_original_PNGs':9,'verified_originals_this_execution':652,'actual_verified_readback':proof,'failure_audit':audit.relative_to(ROOT).as_posix(),'failure_audit_sha256':file_sha256(audit),'original_deadline_utc_unchanged':before['original_deadline_utc'],'scope':'V20 first25 plus tail9 originals actually verified, own cumulative618+25+9=652. Art qualification is separate.','source_code':Path(__file__).read_text(encoding='utf-8')})\nbefore.update(status='finished_at_owner_boundary_or_original_deadline',last_checkpoint_requests=25,last_commit=commit,finished_at_utc=utc_now(),observed_at_utc=utc_now(),reconciliation=record.relative_to(ROOT).as_posix(),reconciliation_sha256=file_sha256(record));write_json(statep,before)\nprint(json.dumps({'status':before['status'],'commit':commit,'new_original_PNGs_verified':9,'verified_originals_this_execution':652,'verified_at_utc':proof['completed_at_utc']}),flush=True)\n"
+}
