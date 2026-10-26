@@ -98,6 +98,28 @@ class TransportCheckpointCompatibilityTests(unittest.TestCase):
         self.assertEqual(transport.read_json(self.config.checkpoint_path)['status'], 'committed_push_pending')
 
 
+    def test_verified_receipts_do_not_start_another_publisher(self):
+        self.plan['groups'] = [{'number': 1, 'bytes': 1, 'paths': ['example']}]
+        self.plan['layout_sha256'] = transport.layout_fingerprint(self.plan)
+        write_json(self.config.checkpoint_path, {
+            'commit': self.plan['final_commit'],
+            'status': 'committed_pushed_and_originals_verified',
+            'machine_id': 'test-machine',
+            'final_tree': self.plan['final_tree'],
+        })
+        write_json(self.config.readback_path, {
+            'commit': self.plan['final_commit'],
+            'status': 'verified',
+            'machine_id': 'test-machine',
+        })
+        with patch.object(transport, 'machine_id', return_value='test-machine'), patch.object(transport, 'command_result', side_effect=AssertionError('publisher must not rerun')) as publisher:
+            result = transport.standard_publish(self.plan, self.config)
+        publisher.assert_not_called()
+        self.assertEqual(result['status'], 'committed_pushed_and_originals_verified')
+        self.assertTrue(result['existing_verified_receipts'])
+        self.assertEqual(self.plan['status'], 'committed_pushed_and_originals_verified')
+
+
 class CheckpointPublicationLockTests(unittest.TestCase):
     def test_checkpoint_lock_uses_mapping_plan_and_releases_only_its_token(self):
         with tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:

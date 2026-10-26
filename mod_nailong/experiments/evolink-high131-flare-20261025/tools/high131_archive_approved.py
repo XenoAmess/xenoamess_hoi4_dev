@@ -5,7 +5,8 @@ from pathlib import Path
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now, write_json
+from runtime.high131_io import write_json
+from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now
 
 EXPERIMENT = ROOT / "mod_nailong/experiments/evolink-high131-flare-20261025"
 

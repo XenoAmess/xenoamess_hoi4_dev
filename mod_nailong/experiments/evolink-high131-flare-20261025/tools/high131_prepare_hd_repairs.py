@@ -2,13 +2,14 @@ import argparse
 import hashlib
 import json
 import re
-import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from runtime import high131_hd_proof as hd_proof
+from runtime.high131_io import write_json
 from runtime.high131_prepare_card_repairs import revise_undispatched_prompt
-from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now, write_json
+from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now
 
 EXPERIMENT = ROOT / "mod_nailong/experiments/evolink-high131-flare-20261025"
 MODE = "raw-hd-edit-v1"
@@ -28,17 +29,7 @@ def main():
         raise RuntimeError("Only reviewed HIGH note sources are eligible; 60 and 117 remain unresolved")
     readback_path = (ROOT / args.readback).resolve()
     readback_path.relative_to((ROOT / "runtime").resolve())
-    proof = read_json(readback_path)
-    if proof.get("status") != "verified" or proof.get("commit") != args.remote_commit or proof.get("machine_id") != machine_id():
-        raise RuntimeError("The fixed remote original-byte proof is not verified for this machine and commit")
-    committed_index = json.loads(subprocess.check_output(
-        ["git", "show", f"{args.remote_commit}:mod_nailong/data/fullsize-files.json"],
-        cwd=ROOT,
-        text=True,
-        encoding="utf-8",
-    ))
-    if proof.get("distinct_outputs") != committed_index["count"] or proof.get("original_png_bytes") != committed_index["original_png_bytes"]:
-        raise RuntimeError("Remote original proof does not match the pinned fullsize index")
+    proof, committed_index = hd_proof.load_remote_proof(args.remote_commit, readback_path)
 
     scope = read_json(EXPERIMENT / "scope.json")
     prepared = {row["source_sha256"]: row for row in read_json(EXPERIMENT / "prepared.json")["entries"]}
@@ -78,7 +69,7 @@ def main():
         old_prompt_path = EXPERIMENT / "outputs" / f"{key}-{previous_number:02}.prompt.txt"
         if file_sha256(old_prompt_path) != decision["prompt_sha256"]:
             raise RuntimeError(f"Previous actual prompt SHA mismatch for index {index}")
-        masters = [row for row in archive if row["source_sha256"] == key and row["attempt"] == decision["attempt"] and row["output_sha256"] == digest]
+        masters = [row for row in archive if row["source_sha256"] == key and row["attempt"] in {decision["attempt"], f"external-{previous_number}"} and row["output_sha256"] == digest]
         if len(masters) != 1:
             raise RuntimeError(f"Expected one retained raw-HD target for index {index}")
         master = masters[0]
@@ -88,10 +79,7 @@ def main():
         if file_sha256(master_path) != digest:
             raise RuntimeError(f"Raw-HD target byte mismatch for index {index}")
         relative_master = master_path.relative_to(ROOT).as_posix()
-        indexed = committed_index["outputs"].get(digest)
-        if indexed is None or indexed["path"] != relative_master or indexed["bytes"] != master_path.stat().st_size:
-            raise RuntimeError(f"Raw-HD target is not covered by the verified remote index for index {index}")
-        target_url = f"https://raw.githubusercontent.com/XenoAmess/xenoamess_hoi4_dev/{args.remote_commit}/{relative_master}"
+        target_url = hd_proof.validate_remote_target(proof, args.remote_commit, master_path, digest, index=committed_index)
         route = prepared[key]
         original_source = ROOT / source["source_png"]
         if file_sha256(original_source) != source["converted_png_sha256"]:
@@ -103,6 +91,13 @@ def main():
         if len(observations) != 1:
             raise RuntimeError(f"Expected one source observation for index {index}")
         observation = observations[0]
+        background_prompt = observation["background_prompt"].strip()
+        legacy_alpha = "use a neutral working matte only outside that silhouette for the opaque RGB pass; invent no interior backdrop, halo or smoke, and restore the source alpha afterward."
+        native_alpha = "produce genuine native transparency directly; do not use a working matte or defer alpha restoration; invent no interior backdrop, halo or smoke."
+        if legacy_alpha in background_prompt:
+            background_prompt = background_prompt.replace(legacy_alpha, native_alpha)
+        if any(term in background_prompt for term in ("working matte only outside", "opaque RGB pass", "restore the source alpha afterward")):
+            raise RuntimeError(f"Legacy opaque-pass alpha wording requires explicit reconciliation for index {index}")
         reasons = " ".join(decision["remaining_reasons"])
         prompt = (
             "Use case: precise-object-edit. Image1 is the actual raw-HD mascot edit target with output SHA256 "
@@ -114,7 +109,7 @@ def main():
             + "SOURCE-VISIBLE CONTRACT FROM IMAGE2:\n"
             + observation["source_features_prompt"].strip() + "\n"
             + observation["composition_prompt"].strip() + "\n"
-            + observation["background_prompt"].strip() + "\n"
+            + background_prompt + "\n"
             + "Return genuine native transparency only outside the complete original card/frame/note silhouette. Preserve the opaque photographic backing and every subject, garment, frame and note interior; no working matte, halo, smoke, interior holes or invented scene. Do not invent readable text, extra note rows, people, symbols or comparison panels. Keep the full returned detail and original composition; no watermark.\n"
             + observation["visible_limitations"].strip()
         )

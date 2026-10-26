@@ -6,6 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from runtime import high131_run_batch as batch
+from runtime import high131_hd_proof as hd_proof
 
 ROOT = batch.ROOT
 EXPERIMENT = batch.EXPERIMENT
@@ -225,37 +226,15 @@ def repair_input_contract(context, state):
     commit = repair.get("remote_commit")
     if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise batch.BatchError("remote_input_mismatch", "Raw-HD repair requires a full pinned remote commit")
-    proof_path = batch.project_path(repair.get("remote_readback"), batch.ROOT / "runtime")
-    proof, _ = batch.read_json_with_sha(proof_path)
-    if proof.get("status") != "verified" or proof.get("commit") != commit or proof.get("machine_id") != batch.machine_id():
-        raise batch.BatchError("remote_input_mismatch", "Remote original proof is not verified for this commit and machine")
     digest = repair.get("edit_target_sha256")
     if digest != repair.get("rejected_output_sha256"):
         raise batch.BatchError("rejected_output_binding_mismatch", "Raw-HD edit target must be the exact rejected output")
     master_path = batch.project_path(repair.get("edit_target_image"), batch.ROOT / "mod_nailong/assets/generated_fullsize")
-    if batch.file_sha256(master_path) != digest:
-        raise batch.BatchError("rejected_output_binding_mismatch", "Raw-HD edit target bytes differ from the rejected output")
-    relative_master = batch.relative_path(master_path)
-    result = batch.subprocess.run(
-        ["git", "show", f"{commit}:mod_nailong/data/fullsize-files.json"],
-        cwd=batch.ROOT,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        check=False,
-    )
-    if result.returncode:
-        raise batch.BatchError("remote_input_mismatch", "Unable to read the pinned fullsize index")
     try:
-        index = json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        raise batch.BatchError("remote_input_mismatch", "Pinned fullsize index is invalid") from exc
-    if proof.get("distinct_outputs") != index.get("count") or proof.get("original_png_bytes") != index.get("original_png_bytes"):
-        raise batch.BatchError("remote_input_mismatch", "Remote original proof does not match the pinned index")
-    indexed = index.get("outputs", {}).get(digest)
-    if not isinstance(indexed, dict) or indexed.get("path") != relative_master or indexed.get("bytes") != master_path.stat().st_size:
-        raise batch.BatchError("remote_input_mismatch", "The raw-HD target is not covered by the verified remote index")
-    target_url = f"https://raw.githubusercontent.com/XenoAmess/xenoamess_hoi4_dev/{commit}/{relative_master}"
+        proof, index = hd_proof.load_remote_proof(commit, repair.get("remote_readback"), root=batch.ROOT)
+        target_url = hd_proof.validate_remote_target(proof, commit, master_path, digest, index=index, root=batch.ROOT)
+    except (OSError, RuntimeError, ValueError, TypeError) as exc:
+        raise batch.BatchError("remote_input_mismatch", str(exc)) from exc
     expected_inputs = [digest, original["converted_png_sha256"], mascot["sha256"]]
     expected_urls = [target_url, source_url, mascot["url"]]
     if repair.get("remote_target_url") != target_url or repair.get("image_urls") != expected_urls or repair.get("ordered_input_sha256") != expected_inputs:

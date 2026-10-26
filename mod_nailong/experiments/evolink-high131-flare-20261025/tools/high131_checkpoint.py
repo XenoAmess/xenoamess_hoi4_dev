@@ -148,8 +148,12 @@ def validate_remote_recovery(parent, approved, previous_snapshot, published_pref
 
 
 def main():
+    if len(sys.argv) not in (2, 4):
+        raise SystemExit("usage: high131_checkpoint.py BATCH [PREVIOUS_SNAPSHOT PUBLISHED_PREFIX]")
     batch = sys.argv[1]
     assert re.fullmatch(r"[A-Za-z0-9-]+", batch)
+    previous_snapshot = sys.argv[2] if len(sys.argv) == 4 else "b4af5f5e03bf5db62564d66685c9b8d208eed6bf"
+    published_prefix = sys.argv[3] if len(sys.argv) == 4 else "0881ee0cba93b4479b532946cf43fd1207b5ebf7"
     folder = checkpoint_workdir(batch)
     publish_lock = checkpoint_publish_lock(batch)
     publish_lock.acquire()
@@ -170,6 +174,9 @@ def main():
         "high131_prepare_prompts.py",
         "high131_prepare_card_repairs.py",
         "high131_prepare_hd_repairs.py",
+        "high131_hd_proof.py",
+        "high131_io.py",
+        "high131_verify_hd_targets.py",
         "high131_prepare_note_repairs.py",
         "high131_review_sheet.py",
         "high131_run_batch.py",
@@ -177,6 +184,7 @@ def main():
         "high131_status.py",
         "high131_archive_approved.py",
         "high131_archive_outputs.py",
+        "high131_verify_records.py",
         "high131_retrieve_existing.py",
         "high131_record_review.py",
         "high131_alpha_recovery.py",
@@ -192,8 +200,8 @@ def main():
     base_validation = validate_remote_recovery(
         parent,
         read_json(EXPERIMENT / "approved-masters.json"),
-        "b4af5f5e03bf5db62564d66685c9b8d208eed6bf",
-        "0881ee0cba93b4479b532946cf43fd1207b5ebf7",
+        previous_snapshot,
+        published_prefix,
     )
     base_validation_path = ROOT / f"runtime/{batch}-remote-base-validation.json"
     write_json(base_validation_path, base_validation)
@@ -214,6 +222,7 @@ def main():
         "/tests/test_high131_prepare_card_repairs.py",
         "/tests/test_high131_run_repairs.py",
         "/tests/test_scoped_readback_checkpoint.py",
+        "/tests/test_high131_verify_records.py",
     ]
     approved = read_json(EXPERIMENT / "approved-masters.json")
     archive_path = EXPERIMENT / "output-masters.json"
@@ -238,6 +247,7 @@ def main():
         "tests/test_high131_prepare_card_repairs.py",
         "tests/test_high131_run_repairs.py",
         "tests/test_scoped_readback_checkpoint.py",
+        "tests/test_high131_verify_records.py",
         *master_paths,
     ]:
         copy_stable(ROOT / relative, worktree / relative)
@@ -293,6 +303,7 @@ def main():
         "tests/test_high131_prepare_card_repairs.py",
         "tests/test_high131_run_repairs.py",
         "tests/test_scoped_readback_checkpoint.py",
+        "tests/test_high131_verify_records.py",
         *master_paths,
         cwd=worktree,
     )
