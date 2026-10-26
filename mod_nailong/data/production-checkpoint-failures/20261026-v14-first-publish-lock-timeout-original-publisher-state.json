@@ -1,0 +1,22 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "pid": 9324,
+  "run_id": "resume-20261025-large-logical-queue-v14",
+  "started_at_utc": "2026-10-25T22:43:14.376590+00:00",
+  "production_created_at_utc": "2026-10-25T21:44:59.205420+00:00",
+  "original_deadline_utc": "2026-10-26T04:14:59.205420+00:00",
+  "checkpoints": [
+    {
+      "batch": "resumed-low-v14-auto-1-20261025",
+      "commit": "8b2dfdfb684e0b8ded257784a22e18510ef4b86a",
+      "completed_requests_at_snapshot": 16,
+      "new_original_PNGs": 17
+    }
+  ],
+  "scope": "Finite Git-only successor after the prior publisher actually finished/released its unique lock. No generation, output approval, canonical writes or image request replay. Normal LOW snapshots, fast-forward pushes and exact pinned original-byte verification.",
+  "status": "stopped_requires_reconciliation_no_image_replay",
+  "last_checkpoint_requests": 0,
+  "observed_at_utc": "2026-10-25T22:48:59.956610+00:00",
+  "last_completed_requests": 16,
+  "error": "Traceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\low-scoped-publisher-following-run-20261025.py\", line 52, in <module>\n    checked([sys.executable,str(ROOT/'tools/production_checkpoint_publish.py'),receipt['commit'],batch])\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\low-scoped-publisher-following-run-20261025.py\", line 27, in checked\n    if r.returncode:raise RuntimeError(r.stdout+'\\n'+r.stderr)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: \nTraceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\production_checkpoint_publish.py\", line 23, in <module>\n    fd=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY)\nFileExistsError: [Errno 17] File exists: 'C:\\\\workspace\\\\xenoamess_hoi4_dev\\\\runtime\\\\production-publish.lock'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\production_checkpoint_publish.py\", line 25, in <module>\n    if time.monotonic()>=deadline:raise TimeoutError('Publish lock remained occupied for 180 seconds; inspect owner, do not delete an unverified lock')\n                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTimeoutError: Publish lock remained occupied for 180 seconds; inspect owner, do not delete an unverified lock\n\n"
+}

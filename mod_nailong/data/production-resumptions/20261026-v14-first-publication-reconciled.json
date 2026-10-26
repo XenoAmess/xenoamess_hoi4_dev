@@ -1,0 +1,35 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "completed_at_utc": "2026-10-26T00:05:12.801983+00:00",
+  "fixed_commit": "c65358c163ec6816f1a328e8bbec352a806852f8",
+  "original_unpublished_commit": "8b2dfdfb684e0b8ded257784a22e18510ef4b86a",
+  "actual_verified_readback": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "commit": "c65358c163ec6816f1a328e8bbec352a806852f8",
+    "started_at_utc": "2026-10-25T23:58:10.949995+00:00",
+    "process_id": 14220,
+    "status": "verified",
+    "distinct_outputs": 6453,
+    "original_png_bytes": 12573985586,
+    "completed_at_utc": "2026-10-26T00:05:12.529230+00:00"
+  },
+  "checkpoint_requests": 16,
+  "new_original_PNGs": 17,
+  "retry_wrapper_process_id": 18836,
+  "actual_publisher_exit_code": 0,
+  "private_rebase_adoption": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "completed_at_utc": "2026-10-25T23:37:59.882558+00:00",
+    "commit": "c65358c163ec6816f1a328e8bbec352a806852f8",
+    "original_unpublished_commit": "8b2dfdfb684e0b8ded257784a22e18510ef4b86a",
+    "remote_master_observed": "c65358c163ec6816f1a328e8bbec352a806852f8",
+    "files_committed": 185,
+    "audit": "mod_nailong/data/production-checkpoint-failures/20261026-v14-first-private-rebase-adoption.json",
+    "preserved_unchanged_stat_entries": 31365,
+    "working_file_writes": 0,
+    "scope": "Exact unchanged task patch revalidated over remote-only PNG additions, ordinary FF pushed and remote confirmed. Primary metadata adopted safely with prior index backed up; unrelated working files untouched. No new image calls or fullsize readback claimed for colleague files."
+  },
+  "private_rebase_audit": "mod_nailong/data/production-checkpoint-failures/20261026-v14-first-private-rebase-adoption.json",
+  "scope": "Exact original LOW snapshot patch and17PNG bytes revalidated over public colleague-only PNG additions, ordinary FF pushed and complete pinned-byte readback succeeded. Snapshot was taken after16 completed calls while producer continued; output count is17, not17approved portraits. No image replay, public history rewrite, working-file overwrite or deadline reset.",
+  "source_code": "import os,sys,json,subprocess\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nrun='resume-20261025-large-logical-queue-v14';batch='resumed-low-v14-auto-1-20261025';old='8b2dfdfb684e0b8ded257784a22e18510ef4b86a';new='c65358c163ec6816f1a328e8bbec352a806852f8'\nadoption_path=ROOT/'runtime/low-v14-first-checkpoint-rebased-pushed-20261026.json';adoption=read_json(adoption_path)\nassert adoption['commit']==new and adoption['original_unpublished_commit']==old and adoption['working_file_writes']==0\nstate_path=ROOT/f'runtime/resume-low-20261025/publisher-{run}.json';state=read_json(state_path)\npub_path=ROOT/f'runtime/checkpoint-{batch}.json';pub=read_json(pub_path)\nassert state['last_checkpoint_requests']==0 and state['checkpoints'][0]['commit']==old and pub['commit']==old\nassert not (state_path.parent/'publisher.lock').exists()\npub.update(commit=new,original_unpublished_commit=old,status='rebased_pushed_original_readback_pending',private_rebase_adoption=adoption,isolated_git_synchronization={'status':'pending_fresh_public_presence_verification'})\nwrite_json(pub_path,pub)\nstate['checkpoints'][0].update(commit=new,original_unpublished_commit=old)\nstate.update(status='revalidated_rebased_first_publication_readback_running',observed_at_utc=utc_now())\nwrite_json(state_path,state)\nprint(json.dumps({'same_snapshot_rebased_public_commit':new,'original_private_commit':old,'actual_process_id':os.getpid(),'new_image_calls':0}),flush=True)\nresult=subprocess.run([sys.executable,'-u',str(ROOT/'tools/production_checkpoint_publish.py'),new,batch],cwd=ROOT,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=2400)\nassert result.returncode==0,(result.stdout,result.stderr)\npub=read_json(pub_path);proof_path=ROOT/pub['remote_original_readback'];proof=read_json(proof_path)\nassert pub['status']=='committed_pushed_and_originals_verified' and proof['status']=='verified' and proof['commit']==new\nassert read_json(state_path)==state\ntarget=ROOT/'mod_nailong/data/production-resumptions/20261026-v14-first-publication-reconciled.json';assert not target.exists()\nwrite_json(target,{'machine_id':machine_id(),'completed_at_utc':utc_now(),'fixed_commit':new,'original_unpublished_commit':old,'actual_verified_readback':proof,'checkpoint_requests':16,'new_original_PNGs':17,'retry_wrapper_process_id':os.getpid(),'actual_publisher_exit_code':0,'private_rebase_adoption':adoption,'private_rebase_audit':'mod_nailong/data/production-checkpoint-failures/20261026-v14-first-private-rebase-adoption.json','scope':'Exact original LOW snapshot patch and17PNG bytes revalidated over public colleague-only PNG additions, ordinary FF pushed and complete pinned-byte readback succeeded. Snapshot was taken after16 completed calls while producer continued; output count is17, not17approved portraits. No image replay, public history rewrite, working-file overwrite or deadline reset.','source_code':Path(__file__).read_text(encoding='utf-8')})\nstate.update(status='reconciled_checkpoint_requires_same_run_continuation',last_checkpoint_requests=16,last_commit=new,reconciled_at_utc=utc_now(),reconciliation=target.relative_to(ROOT).as_posix(),reconciliation_sha256=file_sha256(target));write_json(state_path,state)\nprint(json.dumps({'reconciled':True,'commit':new,'verified_at_utc':proof['completed_at_utc'],'new_original_PNGs':17,'original_git_deadline_utc':state['original_deadline_utc']}),flush=True)\n"
+}

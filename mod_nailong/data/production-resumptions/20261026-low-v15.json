@@ -1,0 +1,51 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "prepared_at_utc": "2026-10-25T23:52:53.445063+00:00",
+  "previous_actual_state": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v14",
+    "next_index": 892,
+    "after_window": "resume-20261025-large-logical-queue-v14-window891",
+    "status": "stopped_at_safe_boundary",
+    "created_at_utc": "2026-10-25T21:44:59.205420+00:00",
+    "completed_windows": 39,
+    "completed_source_requests": 39,
+    "updated_at_utc": "2026-10-25T23:44:57.881345+00:00",
+    "reason": "bounded_transport_or_run_duration",
+    "stopped_at_utc": "2026-10-25T23:45:02.569955+00:00"
+  },
+  "previous_last_window_gate": {
+    "ready": true,
+    "window_id": "resume-20261025-large-logical-queue-v14-window891",
+    "machine_id": "bf-202609141645-5434332d4d",
+    "receipt": "mod_nailong/data/production-window-timings/resume-20261025-large-logical-queue-v14-window891-completed.json",
+    "observed_at_utc": "2026-10-25T23:52:53.410743+00:00"
+  },
+  "spec": {
+    "runId": "resume-20261025-large-logical-queue-v15",
+    "startIndex": 892,
+    "afterWindow": "resume-20261025-large-logical-queue-v14-window891",
+    "maxCalls": 64,
+    "maxPreviewBytes": 6553600,
+    "maxRunSeconds": 7200
+  },
+  "helper_sources": "docs/handoffs/2026-10-26-low-v15-helper-sources.json",
+  "helper_sources_sha256": "e7594eaaed60cb3b9315d72742e0218228a090a84ba76119fd02083ddeb4fd33",
+  "remaining_prepared_windows": 12,
+  "free_bytes_observed": 429560619008,
+  "image_calls": 0,
+  "scope": "Actual V14 exec1124 finished39 requests/windows at safe boundary. Exact event ledger confirms37PNG and2content refusals, not39PNG. Resume at actual next index with no replay or new parallel lane. Historical executed preparer source retained verbatim; its initial39PNG/zero-error scope sentence is superseded by this explicit correction.",
+  "source_code": "import json,sys,shutil\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom tools.rolling_production_queue import validate_prepared,no_calling\nfrom tools.production_window_gate import inspect_window\nold='resume-20261025-large-logical-queue-v14';new='resume-20261025-large-logical-queue-v15'\nfolder=ROOT/'runtime/rolling-production';state=read_json(folder/(old+'.json'))\nassert state['status']=='stopped_at_safe_boundary' and state['completed_source_requests']==39 and state['completed_windows']==39\nassert state['created_at_utc']=='2026-10-25T21:44:59.205420+00:00' and state['machine_id']==machine_id()\nassert not (folder/'owner.json').exists() and (folder/(old+'-released-owner.json')).exists()\nassert not (folder/(new+'.json')).exists()\nno_calling(ROOT);gate=inspect_window(ROOT,state['after_window'],machine_id());assert gate['ready'],gate\nplan=read_json(ROOT/'runtime/after128-continuous-plan.json')['batches']\nassert state['next_index']<=len(plan)\nfor item in plan[state['next_index']:]:validate_prepared(ROOT,item)\ncandidate_path=ROOT/'docs/handoffs/2026-10-26-low-v15-coalesced-helper-candidate.json';candidate=read_json(candidate_path)\nassert candidate['status']=='tested_candidate_not_applied_to_live_v14'\ntests=candidate['producer_behavior_tests']['tests']+candidate['window_queue_behavior_tests']['tests']\nassert len(tests)==19 and all(t['status']=='passed' for t in tests)\nspec={'runId':new,'startIndex':state['next_index'],'afterWindow':state['after_window'],'maxCalls':64,'maxPreviewBytes':6553600,'maxRunSeconds':7200}\nspec_path=ROOT/'runtime/resume-low-v15-spec-20261026.json';assert not spec_path.exists();write_json(spec_path,spec)\nfrozen=ROOT/'docs/handoffs/2026-10-26-low-v15-helper-sources.json';assert not frozen.exists()\nwrite_json(frozen,{'machine_id':machine_id(),'frozen_before_new_owner_claim_at_utc':utc_now(),'sources':candidate['candidate_sources'],'candidate_evidence':candidate_path.relative_to(ROOT).as_posix(),'candidate_evidence_sha256':file_sha256(candidate_path),'scope':'Exactly one logical request per window. Unchanged Python next_item applies reviews/preparation/HIGH gates. Only duplicate in-producer boundary calls coalesced; legacy/multi/checkpoint use guarded. Exact export/snapshot/begin, family guard, returned/fail/finish paths unchanged. No image called by this preparer.'})\naudit=ROOT/'mod_nailong/data/production-resumptions/20261026-low-v15.json';assert not audit.exists()\nwrite_json(audit,{'machine_id':machine_id(),'prepared_at_utc':utc_now(),'previous_actual_state':state,'previous_last_window_gate':gate,'spec':spec,'helper_sources':frozen.relative_to(ROOT).as_posix(),'helper_sources_sha256':file_sha256(frozen),'remaining_prepared_windows':len(plan)-state['next_index'],'free_bytes_observed':shutil.disk_usage(ROOT).free,'image_calls':0,'scope':'Actual V14 exec1124 finished safe39calls39PNG0serviceerrors; resume at actual next index, no replay/new parallel lane. Original V14 times/counters retained. Candidate behavior tests are fixtures, not a production speedup claim.','source_code':Path(__file__).read_text(encoding='utf-8')})\nprint(json.dumps({'spec':spec,'remaining_prepared_windows':len(plan)-state['next_index'],'frozen_helpers':frozen.relative_to(ROOT).as_posix()}),flush=True)\n",
+  "actual_previous_call_results": {
+    "calls": 39,
+    "PNG_returns": 37,
+    "content_refusals": 2,
+    "other_errors": 0
+  },
+  "counts_corrected_at_utc": "2026-10-25T23:59:52.154407+00:00",
+  "original_pre_correction_record": {
+    "path": "mod_nailong/data/production-resumption-corrections/20261026-low-v15-initial-count-observation.json",
+    "sha256": "3365b6aa159db5675adc3ed5133aeec32f96f7e6c4ae7b9d17a6b9ab93c176c6"
+  },
+  "correction_reason": "Root incorrectly treated the logical exec request count as PNG return count before inspecting all completed image_resolved events. Authoritative original error/return receipts were not changed."
+}
