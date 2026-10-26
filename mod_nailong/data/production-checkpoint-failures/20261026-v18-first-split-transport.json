@@ -1,0 +1,78 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "started_at_utc": "2026-10-26T10:50:30.722764+00:00",
+  "status": "ff_pushed_identical_tree_primary_adopted_readback_pending",
+  "previous_curl55_failure": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "started_at_utc": "2026-10-26T10:30:42.716205+00:00",
+    "status": "requires_explicit_reconciliation",
+    "attempts": [
+      {
+        "number": 1,
+        "remote": "ba6deb1c9996439eea64241e2ecff0c5f3299229",
+        "commit": "ed70de6b92cbb32b7e96215ddf3e0b3f3f00afaa",
+        "observed_at_utc": "2026-10-26T10:33:28.881537+00:00",
+        "push_exit_code": 1,
+        "stdout": "",
+        "stderr": "error: RPC failed; curl 55 Send failure: Connection was reset\nsend-pack: unexpected disconnect while reading sideband packet\nfatal: the remote end hung up unexpectedly\nEverything up-to-date\n",
+        "exact_nonindex_patch": true,
+        "archive_index_count": 6865
+      }
+    ],
+    "prior_failure": "mod_nailong/data/production-checkpoint-failures/20261026-v18-first-concurrent-remote-recovery.json",
+    "prior_failure_sha256": "c7c6cb925e0b34419f38b2d80cc563d288e91e597f421540cda9ba3e5480fb25",
+    "observed_at_utc": "2026-10-26T10:33:28.886477+00:00",
+    "error": "Traceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\recover-v18-first-publication-locked-20261026.py\", line 57, in <module>\n    assert any(t in pushed.stderr.decode('utf-8','replace') for t in ['fetch first','non-fast-forward']),'Transport failure requires inspection'\n           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Transport failure requires inspection\n"
+  },
+  "original_unpublished_snapshot": "9d1c8e2cb53dcd5f22eac3ce3ce4ef5e35e20049",
+  "validated_exact_tree_commit": "ed70de6b92cbb32b7e96215ddf3e0b3f3f00afaa",
+  "primary_before": "7f841040f8ae39a12967f94f23fbe0013f97e062",
+  "original_deadline_utc_unchanged": "2026-10-26T13:27:07.679317+00:00",
+  "scope": "Two smaller ordinary FF pushes for the same113794202bytes/59 originalPNG after actual curl55reset. Both final tree and every own task blob match the validated rebased snapshot exactly. Intermediate commit only archives first part of own raw PNGs. No force, public-history rewrite, image replay, PNG re-encoding or claim of art approval.",
+  "source_code": "\"\"\"Publish the exact validated LOW tree through two smaller ordinary FF commits.\"\"\"\nimport os,sys,json,subprocess,hashlib,time,struct,traceback\nfrom pathlib import Path\nfrom datetime import datetime,timezone\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\noriginal='9d1c8e2cb53dcd5f22eac3ce3ce4ef5e35e20049';previous='7f841040f8ae39a12967f94f23fbe0013f97e062';validated='ed70de6b92cbb32b7e96215ddf3e0b3f3f00afaa';remote='ba6deb1c9996439eea64241e2ecff0c5f3299229';base='000f7ff8abf2cde9ce0eb67cbef70fd3e1c8fb6b';batch='resumed-low-v18-auto-1-20261025';run='resume-20261025-large-logical-queue-v18';ip='mod_nailong/data/fullsize-files.json'\nstatep=ROOT/f'runtime/resume-low-20261025/publisher-{run}.json';state=read_json(statep);assert state['status']=='stopped_requires_reconciliation_no_image_replay' and state['last_checkpoint_requests']==0\nassert datetime.now(timezone.utc)<datetime.fromisoformat(state['original_deadline_utc'])\naudit=ROOT/'mod_nailong/data/production-checkpoint-failures/20261026-v18-first-split-transport.json';assert not audit.exists()\nrecord={'machine_id':machine_id(),'started_at_utc':utc_now(),'status':'preparing_exact_tree_transport_split','previous_curl55_failure':read_json(ROOT/'runtime/v18-first-locked-publication-20261026.json'),'original_unpublished_snapshot':original,'validated_exact_tree_commit':validated,'primary_before':previous,'original_deadline_utc_unchanged':state['original_deadline_utc'],'scope':'Two smaller ordinary FF pushes for the same113794202bytes/59 originalPNG after actual curl55reset. Both final tree and every own task blob match the validated rebased snapshot exactly. Intermediate commit only archives first part of own raw PNGs. No force, public-history rewrite, image replay, PNG re-encoding or claim of art approval.','source_code':Path(__file__).read_text(encoding='utf-8')};write_json(audit,record)\ndef git(*args,env=None,check=True,data=None,timeout=240):\n p=subprocess.run(['git','-c','gc.auto=0','-c','maintenance.auto=false',*args],cwd=ROOT,capture_output=True,input=data,env={**os.environ,'GIT_OPTIONAL_LOCKS':'0',**(env or {})},timeout=timeout)\n if check:assert p.returncode==0,(args,p.stdout.decode('utf-8','replace'),p.stderr.decode('utf-8','replace'))\n return p.stdout if check else p\nassert git('rev-parse','HEAD').decode().strip()==previous and not git('diff','--cached','--name-only').strip()\nlo=json.loads(git('show',original+':'+ip));ba=json.loads(git('show',base+':'+ip));ni=json.loads(git('show',validated+':'+ip));ri=json.loads(git('show',remote+':'+ip));own=sorted(set(lo['outputs'])-set(ba['outputs']));assert len(own)==59\nassert git('rev-parse',validated+'^').decode().strip()==remote and git('diff','--binary',base,original,'--','.',':(exclude)'+ip)==git('diff','--binary',remote,validated,'--','.',':(exclude)'+ip)\nassert all(ni['outputs'].get(k)==v for k,v in ri['outputs'].items()) and set(ni['outputs'])==set(ri['outputs'])|set(own)\nfor d in own:\n e=lo['outputs'][d];raw=git('show',validated+':'+e['path']);assert len(raw)==e['bytes'] and hashlib.sha256(raw).hexdigest()==d\nfolder=ROOT/'runtime/v18-first-transport-split-20261026';folder.mkdir(exist_ok=False);alternate=folder/'parts.index';env={'GIT_INDEX_FILE':str(alternate)};git('read-tree',remote,env=env)\nfirst=own[:29];lines=b''.join(git('ls-tree',validated,'--',lo['outputs'][d]['path']) for d in first);assert len(lines.splitlines())==29\ngit('update-index','--index-info',env=env,data=lines);tree1=git('write-tree',env=env).decode().strip();tree2=git('rev-parse',validated+'^{tree}').decode().strip()\npart1=git('commit-tree',tree1,'-p',remote,data=b'Archive first part of resumed LOW image originals\\n').decode().strip();final=git('commit-tree',tree2,'-p',part1,data=b'Preserve remaining LOW portraits and exact built-in requests\\n').decode().strip();assert git('rev-parse',final+'^{tree}').decode().strip()==tree2\nrecord.update(first_commit=part1,final_commit=final,first_raw_PNGs=29,first_raw_bytes=sum(lo['outputs'][d]['bytes'] for d in first),second_raw_PNGs=30,second_raw_bytes=sum(lo['outputs'][d]['bytes'] for d in own[29:]),final_tree_identical_to_validated=True);write_json(audit,record)\nlock=ROOT/'runtime/production-publish.lock';wait_end=time.monotonic()+180\nwhile True:\n try:fd=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY)\n except FileExistsError:\n  assert time.monotonic()<wait_end,'Existing publisher retains lock';time.sleep(5)\n else:break\nwith os.fdopen(fd,'w',encoding='utf-8') as f:json.dump({'machine_id':machine_id(),'process_id':os.getpid(),'batch':batch+'-split','acquired_at_utc':utc_now()},f)\ntry:\n observed=git('ls-remote','origin','refs/heads/master').decode().split()[0];assert observed==remote,'Remote advanced before first split push; inspect without public rewrite'\n for label,commit in [('raw_part1',part1),('final_exact_tree',final)]:\n  for attempt in range(1,3):\n   p=git('-c','http.version=HTTP/1.1','push','origin',commit+':refs/heads/master',check=False,timeout=900)\n   observed=git('ls-remote','origin','refs/heads/master').decode().split()[0]\n   present=observed==commit\n   if not present:\n    git('fetch','origin','master');present=git('merge-base','--is-ancestor',commit,observed,check=False).returncode==0\n   record.setdefault('push_attempts',[]).append({'part':label,'commit':commit,'attempt':attempt,'observed_at_utc':utc_now(),'exit_code':p.returncode,'stdout':p.stdout.decode('utf-8','replace'),'stderr':p.stderr.decode('utf-8','replace'),'fresh_remote':observed,'fixed_commit_present':present});write_json(audit,record)\n   if present:break\n   assert attempt==1 and any(t in p.stderr.decode('utf-8','replace') for t in ['curl 55','RPC failed','Connection was reset','SSL_ERROR_SYSCALL']),'Inspect failed ordinary push'\n  else:raise RuntimeError('Bounded split push failed')\n record.update(status='two_parts_ff_pushed_exact_final_tree_primary_adoption_pending',pushed_at_utc=utc_now());write_json(audit,record)\n # Stat-preserving metadata adoption, without replacing any live working files.\n assert git('rev-parse','HEAD').decode().strip()==previous and not git('diff','--cached','--name-only').strip()\n gd=Path(git('rev-parse','--absolute-git-dir').decode().strip());idx=gd/'index';il=gd/'index.lock';assert not il.exists();before=idx.read_bytes();(folder/'primary-original.index').write_bytes(before);alt=folder/'stat-preserved.index';alt.write_bytes(before);ie={'GIT_INDEX_FILE':str(alt)};git('read-tree','-i','-m',previous,final,env=ie);assert not git('diff','--cached','--name-only',final,env=ie).strip()\n def entries(data):\n  magic,version,count=struct.unpack('>4sII',data[:12]);assert magic==b'DIRC' and version==2;pos=12;result={}\n  for _ in range(count):\n   start=pos;flags=struct.unpack('>H',data[pos+60:pos+62])[0];assert not flags&0x4000;end=data.index(b'\\0',pos+62);result[data[pos+62:end].decode()]=(data[pos:pos+40],data[pos+40:pos+60],flags&0x3000);pos=start+((end-start+1+7)//8)*8\n  return result\n pe,ae=entries(before),entries(alt.read_bytes());unchanged=[p for p in pe.keys()&ae.keys() if pe[p][1:]==ae[p][1:]];assert len(unchanged)>28000 and all(pe[p][0]==ae[p][0] for p in unchanged)\n fd=os.open(il,os.O_CREAT|os.O_EXCL|os.O_WRONLY);owns=True\n try:\n  assert idx.read_bytes()==before and git('rev-parse','HEAD').decode().strip()==previous\n  with os.fdopen(fd,'wb') as f:fd=None;f.write(alt.read_bytes());f.flush();os.fsync(f.fileno())\n  git('update-ref','refs/low-preserved/v18-recovery2-private-20261026',previous);git('update-ref','-m','Adopt exact validated FF-published LOW split tree','refs/heads/master',final,previous);os.replace(il,idx);owns=False\n finally:\n  if fd is not None:os.close(fd)\n  if owns and il.exists():il.unlink()\n record.update(status='ff_pushed_identical_tree_primary_adopted_readback_pending',preserved_index_stats=len(unchanged),primary_working_file_writes=0);write_json(audit,record)\n pubp=ROOT/f'runtime/checkpoint-{batch}.json';pub=read_json(pubp);assert pub['commit']==previous\n pub.update(commit=final,parent_commit=part1,original_private_validated_commit=original,status='committed_and_pushed',pushed_at_utc=record['pushed_at_utc'],original_index_count=ni['count'],transport_split_audit=audit.relative_to(ROOT).as_posix(),transport_split_audit_sha256=file_sha256(audit),isolated_git_synchronization={'status':'validated_commit_rebased_unchanged_fast_forward_eligible','validated_commit':final,'synchronized_commit':final,'origin_master':remote,'exact_final_tree_from':validated});write_json(pubp,pub)\nfinally:\n assert read_json(lock)['process_id']==os.getpid();lock.unlink()\np=subprocess.run([sys.executable,'-u','-X','utf8','tools/production_checkpoint_publish.py',final,batch],cwd=ROOT,timeout=3600);assert p.returncode==0,'Inspect actual readback status'\npub=read_json(pubp);proof=read_json(ROOT/f'runtime/master-readback-{batch}.json');assert pub['status']=='committed_pushed_and_originals_verified' and proof['status']=='verified' and proof['commit']==final and read_json(statep)==state\ntarget=ROOT/'mod_nailong/data/production-resumptions/20261026-v18-first-publication-reconciled.json';assert not target.exists()\nwrite_json(target,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'run_id':run,'batch':batch,'fixed_commit':final,'original_private_snapshot':original,'checkpoint_requests':17,'new_original_PNGs':59,'actual_verified_readback':proof,'original_deadline_utc_unchanged':state['original_deadline_utc'],'verified_originals_this_execution':562,'transport_split':record,'scope':'Same17-call checkpoint contains59 accumulated originals including v16/v17. Exact final tree preserved and pinned original PNG bytes actually read back, separate from art qualification. No image replay.','source_code':Path(__file__).read_text(encoding='utf-8')})\nstate['checkpoints'][0].update(original_private_commit=original,commit=final);state.update(status='reconciled_checkpoint_requires_same_run_continuation',last_checkpoint_requests=17,last_commit=final,reconciliation=target.relative_to(ROOT).as_posix(),reconciliation_sha256=file_sha256(target),observed_at_utc=utc_now());write_json(statep,state)\nprint(json.dumps({'status':state['status'],'commit':final,'new_original_PNGs_verified':59,'verified_originals_this_execution':562,'verified_at_utc':proof['completed_at_utc']}),flush=True)\n",
+  "first_commit": "8926da80559567bb44acf9fb851be7a802fd6155",
+  "final_commit": "987e000284bcc72921527cfae8cc28f1d4411be2",
+  "first_raw_PNGs": 29,
+  "first_raw_bytes": 55533321,
+  "second_raw_PNGs": 30,
+  "second_raw_bytes": 58260881,
+  "final_tree_identical_to_validated": true,
+  "push_attempts": [
+    {
+      "part": "raw_part1",
+      "commit": "8926da80559567bb44acf9fb851be7a802fd6155",
+      "attempt": 1,
+      "observed_at_utc": "2026-10-26T10:53:23.184581+00:00",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "error: RPC failed; curl 55 Send failure: Connection was reset\nsend-pack: unexpected disconnect while reading sideband packet\nfatal: the remote end hung up unexpectedly\nEverything up-to-date\n",
+      "fresh_remote": "ba6deb1c9996439eea64241e2ecff0c5f3299229",
+      "fixed_commit_present": false
+    },
+    {
+      "part": "raw_part1",
+      "commit": "8926da80559567bb44acf9fb851be7a802fd6155",
+      "attempt": 2,
+      "observed_at_utc": "2026-10-26T10:55:17.408235+00:00",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "remote: \nremote: GitHub found 5 vulnerabilities on XenoAmess/xenoamess_hoi4_dev's default branch (4 high, 1 moderate). To find out more, visit:        \nremote:      https://github.com/XenoAmess/xenoamess_hoi4_dev/security/dependabot        \nremote: \nTo https://github.com/XenoAmess/xenoamess_hoi4_dev.git\n   ba6deb1c..8926da80  8926da80559567bb44acf9fb851be7a802fd6155 -> master\n",
+      "fresh_remote": "8926da80559567bb44acf9fb851be7a802fd6155",
+      "fixed_commit_present": true
+    },
+    {
+      "part": "final_exact_tree",
+      "commit": "987e000284bcc72921527cfae8cc28f1d4411be2",
+      "attempt": 1,
+      "observed_at_utc": "2026-10-26T10:57:13.665279+00:00",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "remote: warning: See https://gh.io/lfs for more information.        \nremote: warning: File mod_nailong/data/generated.json is 51.76 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        \nremote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        \nremote: \nremote: GitHub found 5 vulnerabilities on XenoAmess/xenoamess_hoi4_dev's default branch (4 high, 1 moderate). To find out more, visit:        \nremote:      https://github.com/XenoAmess/xenoamess_hoi4_dev/security/dependabot        \nremote: \nTo https://github.com/XenoAmess/xenoamess_hoi4_dev.git\n   8926da80..987e0002  987e000284bcc72921527cfae8cc28f1d4411be2 -> master\n",
+      "fresh_remote": "987e000284bcc72921527cfae8cc28f1d4411be2",
+      "fixed_commit_present": true
+    }
+  ],
+  "pushed_at_utc": "2026-10-26T10:57:13.670135+00:00",
+  "preserved_index_stats": 34409,
+  "primary_working_file_writes": 0
+}

@@ -1,0 +1,19 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-26T10:03:03.374721+00:00",
+  "private_validated_commit": "9d1c8e2cb53dcd5f22eac3ce3ce4ef5e35e20049",
+  "batch": "resumed-low-v18-auto-1-20261025",
+  "original_deadline_utc_unchanged": "2026-10-26T13:27:07.679317+00:00",
+  "preserved_failed_receipts": [
+    {
+      "path": "mod_nailong/data/production-checkpoint-failures/20261026-v18-first-lock-timeout-rebase-recovery2-publisher-state.json",
+      "sha256": "46a1b677ca6de434bfd943ee215e359524e5a9afb69d549b1e4770bccef1bb3c"
+    },
+    {
+      "path": "mod_nailong/data/production-checkpoint-failures/20261026-v18-first-lock-timeout-rebase-recovery2-publication.json",
+      "sha256": "e349bf0a61d50128d697ea1df3c087ee9f0afea760059633bb22799a42edad2e"
+    }
+  ],
+  "scope": "Git-only recovery. Preserve earlier proxy error and subsequent180-second shared-lock timeout. Remote has advanced, so synchronize the same private snapshot in an isolated sparse worktree, then explicitly validate any new commit. No primary checkout/index replacement, public-history rewrite, image replay, prompt change or deadline extension.",
+  "source_code": "\"\"\"Preserve failed Git receipts and synchronize only the already validated private snapshot.\"\"\"\nimport sys,json,subprocess,shutil\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\ncommit='9d1c8e2cb53dcd5f22eac3ce3ce4ef5e35e20049';batch='resumed-low-v18-auto-1-20261025'\nstatep=ROOT/'runtime/resume-low-20261025/publisher-resume-20261025-large-logical-queue-v18.json';pubp=ROOT/f'runtime/checkpoint-{batch}.json'\nstate=read_json(statep);pub=read_json(pubp)\nassert state['status']=='stopped_requires_reconciliation_no_image_replay' and state['last_checkpoint_requests']==0 and pub['commit']==commit\nassert not (statep.parent/'publisher.lock').exists()\ntarget=ROOT/'mod_nailong/data/production-checkpoint-failures/20261026-v18-first-lock-timeout-rebase-recovery2.json';assert not target.exists()\nsaved=[]\nfor source,name in [(statep,'publisher-state'),(pubp,'publication')]:\n dest=target.with_name(target.stem+'-'+name+'.json')\n with dest.open('xb') as f:f.write(source.read_bytes())\n assert file_sha256(dest)==file_sha256(source)\n saved.append({'path':dest.relative_to(ROOT).as_posix(),'sha256':file_sha256(dest)})\nrecord={'machine_id':machine_id(),'observed_at_utc':utc_now(),'private_validated_commit':commit,'batch':batch,'original_deadline_utc_unchanged':state['original_deadline_utc'],'preserved_failed_receipts':saved,'scope':'Git-only recovery. Preserve earlier proxy error and subsequent180-second shared-lock timeout. Remote has advanced, so synchronize the same private snapshot in an isolated sparse worktree, then explicitly validate any new commit. No primary checkout/index replacement, public-history rewrite, image replay, prompt change or deadline extension.','source_code':Path(__file__).read_text(encoding='utf-8')}\nwrite_json(target,record)\np=subprocess.run([sys.executable,'-X','utf8','tools/isolated_production_sync.py',commit,'resumed-low-v18-auto-1-20261025-recovery2'],cwd=ROOT,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=600)\nout=ROOT/'runtime/v18-first-recovery2-isolated-result-20261026.json';assert not out.exists()\nwrite_json(out,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'exit_code':p.returncode,'stdout':p.stdout,'stderr':p.stderr,'history':target.relative_to(ROOT).as_posix(),'history_sha256':file_sha256(target),'image_calls':0})\nprint(json.dumps({'actual_isolated_helper_exit_code':p.returncode,'result':out.relative_to(ROOT).as_posix(),'stdout':p.stdout[-1500:],'stderr':p.stderr[-2500:]},ensure_ascii=True),flush=True)\n"
+}
