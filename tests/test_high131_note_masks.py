@@ -394,6 +394,49 @@ class NoteMaskInputTests(unittest.TestCase):
             self.assertEqual(sum(histogram[1:255]), 0)
             self.assertEqual(histogram[0] + histogram[255], 2048 * 2048)
 
+    def test_source52_revision2_binds_new_target_and_preserves_v1(self):
+        key = '581dd8fc38811eeca36e65fcfb5093d743744adbcb44be6f160e63af7e450b90'
+        digest = 'a26812c70272cfdb0582a7d6f403b3ef30333583976b117ac39e943ea297d59f'
+        with tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:
+            experiment = Path(directory)
+            shutil.copyfile(prepare.EXPERIMENT / 'scope.json', experiment / 'scope.json')
+            progress = read_json(prepare.EXPERIMENT / 'progress.json')
+            progress['entries'] = [row for row in progress['entries'] if row['source_sha256'] == key]
+            self.assertEqual(len(progress['entries']), 1)
+            progress['entries'][0].update(status='rejected_latest_attempt', current_decision='rejected_for_production', current_review={'review_output_sha256': digest})
+            write_json(experiment / 'progress.json', progress)
+            with patch.object(prepare, 'EXPERIMENT', experiment), patch.object(sys, 'argv', ['high131_prepare_note_masks.py', '--index', '52', '--revision', '2']):
+                prepare.main()
+            manifest = read_json(experiment / 'note-mask-52-v2.json')
+            self.assertEqual(manifest['index'], 52)
+            self.assertEqual(manifest['revision'], 2)
+            self.assertEqual(manifest['target_sha256'], digest)
+            self.assertEqual(manifest['rects'], [[1140, 1070, 1470, 1145]])
+            self.assertEqual(manifest['transparent_pixels'], 331 * 76)
+            self.assertEqual(manifest['opaque_pixels'], 2048 * 2048 - 331 * 76)
+            self.assertEqual(manifest['status'], 'pending_actual_mask_review')
+            self.assertEqual(file_sha256(prepare.MASTER_DIR / f'{digest}.png'), digest)
+            for field, sha_field in (('mask_file', 'mask_sha256'), ('preview_file', 'preview_sha256')):
+                self.assertEqual(file_sha256(ROOT / manifest[field]), manifest[sha_field])
+            with Image.open(ROOT / manifest['mask_file']) as image:
+                histogram = image.getchannel('A').histogram()
+            self.assertEqual(sum(histogram[1:255]), 0)
+            self.assertEqual(histogram[0] + histogram[255], 2048 * 2048)
+            self.assertEqual(file_sha256(prepare.EXPERIMENT / 'review-masks' / f'{key}-note-mask.png'), '0751e88214cacccad47f37f24300559f0eaa9c3e6d9e45320efa3ba8d1e91227')
+            with patch.object(prepare, 'EXPERIMENT', experiment), patch.object(sys, 'argv', ['high131_prepare_note_masks.py', '--index', '52', '--revision', '3']):
+                prepare.main()
+            v3 = read_json(experiment / 'note-mask-52-v3.json')
+            self.assertEqual(v3['target_sha256'], digest)
+            self.assertEqual(v3['rects'], [[1140, 1070, 1560, 1145]])
+            self.assertEqual(v3['transparent_pixels'], 421 * 76)
+            self.assertEqual(v3['opaque_pixels'], 2048 * 2048 - 421 * 76)
+            self.assertEqual(v3['status'], 'pending_actual_mask_review')
+            self.assertEqual(file_sha256(ROOT / v3['mask_file']), v3['mask_sha256'])
+            self.assertEqual(file_sha256(experiment / 'review-masks' / f'{key}-note-mask-v2.png'), '897c76013023ef5fe48e9cd2431a5d83f8c62425f7511491c08529849ddc7d02')
+            with Image.open(ROOT / v3['mask_file']) as image:
+                histogram = image.getchannel('A').histogram()
+            self.assertEqual(sum(histogram[1:255]), 0)
+
 
 if __name__ == '__main__':
     unittest.main()

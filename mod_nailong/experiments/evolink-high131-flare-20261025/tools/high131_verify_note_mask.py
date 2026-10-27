@@ -28,8 +28,8 @@ def main():
         raise RuntimeError("Expected a full lowercase immutable commit")
     if args.index not in {40, 52, 65, 67}:
         raise RuntimeError("Only actually reviewed source-40, source-52, source-65 or source-67 note masks are eligible")
-    if args.revision != 1 and args.index not in {40, 67}:
-        raise RuntimeError("Only source-40 or source-67 supports non-default mask revisions")
+    if args.revision != 1 and args.index not in {40, 52, 67}:
+        raise RuntimeError("Only source-40, source-52 or source-67 supports non-default mask revisions")
     revision_suffix = hd_proof.mask_revision_suffix(args.revision)
     proof_path = ROOT / f"runtime/high131-hd-target-readback-{args.commit}.json"
     proof = read_json(proof_path)
