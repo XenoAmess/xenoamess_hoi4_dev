@@ -16,6 +16,20 @@ MODE = "raw-hd-edit-v1"
 NOTE_INDICES = (40, 52, 53, 54, 57, 61, 62, 63, 64, 65, 67)
 
 
+def native_background_prompt(background_prompt, index):
+    native_alpha = "produce genuine native transparency directly; do not use a working matte or defer alpha restoration; invent no interior backdrop, halo or smoke."
+    legacy_variants = (
+        "use a neutral working matte only outside that silhouette for the opaque RGB pass; invent no interior backdrop, halo or smoke, and restore the source alpha afterward.",
+        "Use a neutral working matte only outside the full card silhouette for the opaque RGB pass, add no interior backdrop, halo or smoke, and restore source alpha afterward.",
+    )
+    for legacy_alpha in legacy_variants:
+        if legacy_alpha in background_prompt:
+            background_prompt = background_prompt.replace(legacy_alpha, native_alpha)
+    if any(term in background_prompt for term in ("working matte only outside", "opaque RGB pass", "restore the source alpha afterward")):
+        raise RuntimeError(f"Legacy opaque-pass alpha wording requires explicit reconciliation for index {index}")
+    return background_prompt
+
+
 def main():
     parser = argparse.ArgumentParser(description="Prepare raw-HD localized HIGH note repairs without any image-generation call.")
     parser.add_argument("--remote-commit", required=True)
@@ -34,8 +48,8 @@ def main():
         raise RuntimeError("Only reviewed source-40, source-65 or source-67 note references are eligible for four-input repair")
     if args.mask and (not args.note_details or not indices <= {40, 65, 67}):
         raise RuntimeError("Reviewed note masks require --note-details and actual visual review")
-    if args.mask_revision != 1 and (not args.mask or indices != {67}):
-        raise RuntimeError("Only source-67 supports non-default mask revisions")
+    if args.mask_revision != 1 and (not args.mask or not indices <= {40, 67}):
+        raise RuntimeError("Only source-40 or source-67 supports non-default mask revisions")
     mode = hd_proof.MASK_NOTE_MODE if args.mask else hd_proof.NOTE_DETAIL_MODE if args.note_details else MODE
     detail_entries = {}
     if args.note_details:
@@ -146,13 +160,7 @@ def main():
         if len(observations) != 1:
             raise RuntimeError(f"Expected one source observation for index {index}")
         observation = observations[0]
-        background_prompt = observation["background_prompt"].strip()
-        legacy_alpha = "use a neutral working matte only outside that silhouette for the opaque RGB pass; invent no interior backdrop, halo or smoke, and restore the source alpha afterward."
-        native_alpha = "produce genuine native transparency directly; do not use a working matte or defer alpha restoration; invent no interior backdrop, halo or smoke."
-        if legacy_alpha in background_prompt:
-            background_prompt = background_prompt.replace(legacy_alpha, native_alpha)
-        if any(term in background_prompt for term in ("working matte only outside", "opaque RGB pass", "restore the source alpha afterward")):
-            raise RuntimeError(f"Legacy opaque-pass alpha wording requires explicit reconciliation for index {index}")
+        background_prompt = native_background_prompt(observation["background_prompt"].strip(), index)
         reasons = " ".join(decision["remaining_reasons"])
         detail_prompt = ""
         if detail is not None:
@@ -161,15 +169,19 @@ def main():
         if mask is not None:
             if args.mask_revision == 3:
                 mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. The first transparent rectangle covers the upper-right overly long gray-mark group and the nearby blank paper; the second covers the incorrect vertical tab and the paper/exterior margin needed to restore its original position. Keep the upper-left group and both lower-row groups unchanged. Within the first region restore ONE compact irregular upper-right gray-mark group, with source-relative length comparable to the upper-left group, not a much longer continuous bar and not an extra middle group. Restore exactly TWO upper-row groups in total, with source-relative spacing, and keep the lower paper blank. Within the second region use Image2 and Image4 to restore the compact horizontal right-edge tab, wider than its visible height, near the note's vertical middle with substantial blank paper between it and the upper gray marks. Do not leave a tall vertical rectangle or place the tab immediately below the writing. Do not redraw or move the person, clothing, collar, photographic frame or backing. Retain original paper colour, texture and lighting. The mask does not redefine the original card exterior alpha or authorize removing backing; preserve genuine transparency outside the complete card/frame/note silhouette except the actual compact tab.\n\n"
-            elif args.mask_revision == 2:
+            elif args.mask_revision == 2 and index == 67:
                 mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its two transparent rectangles cover only the extra independent upper-middle gray bar and the oversized right-edge tab with narrow margins. Remove only that extra upper-middle bar and restore the local blank paper texture. Keep the upper row's left and right groups and the lower row's two existing groups; do not regenerate those other groups or the lower blank paper. Use Image2 and Image4 to restore the original compact near-square right-edge tab at its source position and scale, not an elongated tall stepped block, clip, tear or fold. Do not redraw or move the person, clothing, collar, photographic frame or backing. Retain original paper colour, texture and lighting. The mask does not redefine the original card exterior alpha or authorize removing backing; preserve genuine transparency outside the complete card/frame/note silhouette except the actual compact tab.\n\n"
+            elif (index, args.mask_revision) == (40, 2):
+                mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its one transparent rectangle covers only the incorrect lower note row with a narrow paper margin. Do not regenerate the two acceptable upper groups, strict left-profile person, clothing, collar, photographic frame/backplate, correct right-edge tab or blank lower paper. Within that region use Image2 and Image4 to restore exactly TWO lower-row groups with the source's SHORT lower-left group and LONGER lower-right group, their irregular source-scale shapes and compact footprint. Do not retain the current long-left/short-right relationship, substitute generic dots or invent readable writing. Retain original paper colour, texture and lighting. The mask does not redefine the original card exterior alpha or authorize removing backing; preserve the genuine native exterior transparency and opaque person, photographic backing and note interior.\n\n"
             elif index == 40:
                 mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its two transparent rectangles cover only the incorrect upper and lower note-mark groups with narrow paper margins. Do not regenerate the strict left-profile person, clothing, collar, photographic frame/backplate, existing correct right-edge tab or blank lower paper. Within those regions use Image2 and Image4 to restore exactly TWO separated source-scale irregular gray-mark groups in EACH row, with original relative lengths and spacing, not repeated dots, short dashes, long bars or newly readable writing. Retain original paper colour, texture and lighting. The mask does not redefine the original card exterior alpha or authorize removing backing; return genuine native transparency outside the complete original card/frame/note silhouette and preserve the opaque person, photographic backing and note interior.\n\n"
             elif index == 65:
                 mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its two transparent rectangles cover only the existing wrong upper and lower note-mark rows with a narrow paper margin. Do not regenerate the person, photographic frame/backplate, restored right-edge tab or blank lower paper. Within those two regions use Image2 and Image4 to restore the source-scale compact irregular gray marks, their relative lengths and spacing, without generic ovals, dots, long continuous bars, extra groups or newly readable writing. Retain the original paper colour, texture and lighting outside the actual source marks. This editing mask does not redefine the card's exterior alpha or authorize removing backing.\n\n"
             else:
                 mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its three transparent rectangles cover only the two incorrect note-mark rows and the missing small right-edge tab with narrow margins. Do not regenerate the person, photographic frame/backplate or blank lower paper. Within the marked note rows use Image2 and Image4 to restore TWO separated source-scale irregular gray-mark groups in EACH row, with original relative lengths and spacing, not generic ovals, long bars or invented writing. Restore the small dark right-edge tab at its source position and scale, not a large tear, clip or fold. Retain original paper colour, texture and lighting. The mask does not redefine the original card exterior alpha or authorize removing backing; preserve genuine transparency outside the complete card/frame/note silhouette except the actual compact tab.\n\n"
-        if args.mask_revision == 3:
+        if (index, args.mask_revision) == (40, 2):
+            note_contract = "The current target has TWO acceptable upper note groups; preserve them unchanged. Its lower-left group is too long and its lower-right group is too short. Restore exactly TWO lower-row groups with the source's SHORT lower-left group and LONGER lower-right group, irregular source-scale shapes and compact spacing, as shown in Image2 and Image4. Do not swap the source-relative lengths, redraw other note groups, spread writing into blank paper or invent readable text. Preserve the correct right-edge tab and genuine native exterior transparency.\n\n"
+        elif args.mask_revision == 3:
             note_contract = "The current target has TWO upper gray-mark groups, but its upper-right group is too long. Retain the upper-left group and both lower groups. Restore a compact irregular upper-right group with source-relative length comparable to the upper-left group and no extra middle group. The source tab is a compact horizontal protrusion, wider than its visible height, near the note's vertical middle with substantial blank paper between it and the upper marks. Restore that source-relative shape and position, not a tall vertical rectangle immediately below the writing. Do not redraw other note marks, spread writing into blank paper or invent readable text.\n\n"
         elif args.mask_revision == 2:
             note_contract = "The source has TWO separated irregular gray-mark groups in the upper row and TWO in the lower row. The current target has an extra independent upper-middle bar; remove that bar, retain the other two upper groups and retain both lower groups unchanged. The current right-edge tab is too tall and stepped; restore the original compact near-square tab outline and position. Do not redraw the other note marks, spread writing into blank paper or invent readable text.\n\n"

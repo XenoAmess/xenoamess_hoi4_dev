@@ -8,6 +8,7 @@ from unittest.mock import patch
 from PIL import Image, ImageDraw
 
 from runtime import high131_hd_proof as hd_proof
+from runtime import high131_prepare_hd_repairs as hd_repairs
 from runtime import high131_prepare_note_masks as prepare
 from runtime import high131_run_repairs as repairs
 from runtime import high131_verify_records as verify
@@ -299,6 +300,7 @@ class NoteMaskInputTests(unittest.TestCase):
             progress = read_json(prepare.EXPERIMENT / 'progress.json')
             progress['entries'] = [row for row in progress['entries'] if row['source_sha256'] == key]
             self.assertEqual(len(progress['entries']), 1)
+            progress['entries'][0].update(status='rejected_latest_attempt', current_decision='rejected_for_production', current_review={'review_output_sha256': digest})
             write_json(experiment / 'progress.json', progress)
             with patch.object(prepare, 'EXPERIMENT', experiment), patch.object(sys, 'argv', ['high131_prepare_note_masks.py', '--index', '40']):
                 prepare.main()
@@ -309,6 +311,82 @@ class NoteMaskInputTests(unittest.TestCase):
             self.assertEqual(manifest['opaque_pixels'], 2048 * 2048 - 331 * 71 - 331 * 66)
             self.assertEqual(manifest['status'], 'pending_actual_mask_review')
             self.assertTrue(all(rect[2] < 1500 for rect in manifest['rects']))
+            for field, sha_field in (('mask_file', 'mask_sha256'), ('preview_file', 'preview_sha256')):
+                self.assertEqual(file_sha256(ROOT / manifest[field]), manifest[sha_field])
+            with Image.open(ROOT / manifest['mask_file']) as image:
+                histogram = image.getchannel('A').histogram()
+            self.assertEqual(sum(histogram[1:255]), 0)
+            self.assertEqual(histogram[0] + histogram[255], 2048 * 2048)
+
+    def test_native_alpha_reconciles_exact_reviewed_legacy_sentences(self):
+        source40 = 'Use a neutral working matte only outside the full card silhouette for the opaque RGB pass, add no interior backdrop, halo or smoke, and restore source alpha afterward.'
+        converted = hd_repairs.native_background_prompt(source40, 40)
+        self.assertIn('genuine native transparency directly', converted)
+        self.assertIn('do not use a working matte', converted)
+        self.assertNotIn('working matte only outside', converted)
+        self.assertNotIn('opaque RGB pass', converted)
+        self.assertNotIn('restore source alpha afterward', converted)
+        legacy67 = 'use a neutral working matte only outside that silhouette for the opaque RGB pass; invent no interior backdrop, halo or smoke, and restore the source alpha afterward.'
+        self.assertEqual(hd_repairs.native_background_prompt(legacy67, 67), converted)
+        with self.assertRaisesRegex(RuntimeError, 'index 52'):
+            hd_repairs.native_background_prompt('For the opaque RGB pass use a neutral working matte only outside the whole card silhouette; restore source alpha afterward.', 52)
+
+    def test_source40_revision2_binds_new_target_and_preserves_v1(self):
+        key = '2a6394fc8d1b68a7150b114a47923cac16e60e4931cd49ba82ac2f4982355b79'
+        targets = {1: '493566c0afaf43189ac8bf81aada993296c9be38cbe5b19530979e71878303da', 2: '67702ef31da9485a80946f230d4e40a754249e93ce707a015f48ec689a620f67'}
+        with tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:
+            experiment = Path(directory)
+            shutil.copyfile(prepare.EXPERIMENT / 'scope.json', experiment / 'scope.json')
+            progress = read_json(prepare.EXPERIMENT / 'progress.json')
+            progress['entries'] = [row for row in progress['entries'] if row['source_sha256'] == key]
+            self.assertEqual(len(progress['entries']), 1)
+            for revision in (1, 2):
+                progress['entries'][0].update(status='rejected_latest_attempt', current_decision='rejected_for_production', current_review={'review_output_sha256': targets[revision]})
+                write_json(experiment / 'progress.json', progress)
+                with patch.object(prepare, 'EXPERIMENT', experiment), patch.object(sys, 'argv', ['high131_prepare_note_masks.py', '--index', '40', '--revision', str(revision)]):
+                    prepare.main()
+                suffix = hd_proof.mask_revision_suffix(revision)
+                manifest = read_json(experiment / f'note-mask-40{suffix}.json')
+                self.assertEqual(manifest['index'], 40)
+                self.assertEqual(manifest['revision'], revision)
+                self.assertEqual(manifest['target_sha256'], targets[revision])
+                self.assertEqual(manifest['rects'], prepare.MASK_RECTANGLES[(40, revision)])
+                self.assertEqual(manifest['status'], 'pending_actual_mask_review')
+                self.assertEqual(file_sha256(prepare.MASTER_DIR / f'{targets[revision]}.png'), targets[revision])
+                for field, sha_field in (('mask_file', 'mask_sha256'), ('preview_file', 'preview_sha256')):
+                    self.assertEqual(file_sha256(ROOT / manifest[field]), manifest[sha_field])
+                with Image.open(ROOT / manifest['mask_file']) as image:
+                    histogram = image.getchannel('A').histogram()
+                self.assertEqual(histogram[0], manifest['transparent_pixels'])
+                self.assertEqual(histogram[255], manifest['opaque_pixels'])
+                self.assertEqual(sum(histogram[1:255]), 0)
+                if revision == 2:
+                    self.assertEqual(manifest['rects'], [[1080, 1100, 1410, 1190]])
+                    self.assertEqual(manifest['transparent_pixels'], 331 * 91)
+                    self.assertIn('short lower-left group and a longer lower-right', manifest['official_contract'])
+                    self.assertEqual(file_sha256(experiment / 'review-masks' / f'{key}-note-mask.png'), '848aee352d5a4c3abeb58e83071af3444f4d2ce4e3d6b73faca27bc4dc85bfa8')
+
+    def test_source52_mask_binds_reviewed_target_and_preserves_tab(self):
+        key = '581dd8fc38811eeca36e65fcfb5093d743744adbcb44be6f160e63af7e450b90'
+        digest = 'bbc6cb1af07dfa23d425cce276376bce095c29c13b2eeab43701c1e78468aa52'
+        with tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:
+            experiment = Path(directory)
+            shutil.copyfile(prepare.EXPERIMENT / 'scope.json', experiment / 'scope.json')
+            progress = read_json(prepare.EXPERIMENT / 'progress.json')
+            progress['entries'] = [row for row in progress['entries'] if row['source_sha256'] == key]
+            self.assertEqual(len(progress['entries']), 1)
+            progress['entries'][0].update(status='rejected_latest_attempt', current_decision='rejected_for_production', current_review={'review_output_sha256': digest})
+            write_json(experiment / 'progress.json', progress)
+            with patch.object(prepare, 'EXPERIMENT', experiment), patch.object(sys, 'argv', ['high131_prepare_note_masks.py', '--index', '52']):
+                prepare.main()
+            manifest = read_json(experiment / 'note-mask-52.json')
+            self.assertEqual(manifest['index'], 52)
+            self.assertEqual(manifest['target_sha256'], digest)
+            self.assertEqual(manifest['rects'], [[1140, 1070, 1470, 1145], [1140, 1150, 1470, 1225]])
+            self.assertEqual(manifest['transparent_pixels'], 2 * 331 * 76)
+            self.assertEqual(manifest['opaque_pixels'], 2048 * 2048 - 2 * 331 * 76)
+            self.assertEqual(manifest['status'], 'pending_actual_mask_review')
+            self.assertTrue(all(rect[2] < 1600 for rect in manifest['rects']))
             for field, sha_field in (('mask_file', 'mask_sha256'), ('preview_file', 'preview_sha256')):
                 self.assertEqual(file_sha256(ROOT / manifest[field]), manifest[sha_field])
             with Image.open(ROOT / manifest['mask_file']) as image:

@@ -10,6 +10,7 @@ from unittest.mock import patch
 from PIL import Image
 
 from runtime import high131_record_review as recorder
+from runtime import high131_status as status
 from tools.common import file_sha256, write_json
 
 
@@ -155,6 +156,15 @@ class High131RecordReviewTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "RGB working master"):
             self.record(self.fixture(derived=False))
         self.assertFalse((self.experiment / "review-test.json").exists())
+
+
+    def test_current_attempt_review_uses_timestamp_not_discovery_order(self):
+        older = {'reviewed_at_utc': '2026-10-25T19:59:37+00:00', 'review': 'review-recovery-old.json'}
+        newer = {'reviewed_at_utc': '2026-10-27T10:40:12+00:00', 'review': 'review-hd-new.json'}
+        for reviews in ([older, newer], [newer, older]):
+            with self.subTest(reviews=reviews):
+                self.assertIs(status.latest_attempt_review(reviews), newer)
+        self.assertIsNone(status.latest_attempt_review([]))
 
 
 if __name__ == "__main__":

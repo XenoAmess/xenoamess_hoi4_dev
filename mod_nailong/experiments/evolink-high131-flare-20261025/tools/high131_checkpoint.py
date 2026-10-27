@@ -18,6 +18,24 @@ from mod_nailong.tools.master_files import sync_git
 
 EXPERIMENT = ROOT / "mod_nailong/experiments/evolink-high131-flare-20261025"
 MASTER_DIR = ROOT / "mod_nailong/assets/generated_fullsize"
+CHECKPOINT_STAGE_PATHS = (
+    "mod_nailong/README.md",
+    "mod_nailong/docs/portrait-generation-and-repair-methodology.md",
+    "mod_nailong/experiments/evolink-high131-flare-20261025",
+    "mod_nailong/data/fullsize-files.json",
+    "tests/test_high131_record_review.py",
+    "tests/test_high131_run_batch.py",
+    "tests/test_high131_prepare_card_repairs.py",
+    "tests/test_high131_run_repairs.py",
+    "tests/test_scoped_readback_checkpoint.py",
+    "tests/test_high131_verify_records.py",
+    "tests/test_high131_note_details.py",
+    "tests/test_high131_note_masks.py",
+    "tests/test_high131_checkpoint.py",
+    "tests/test_evolink_skill_client.py",
+    "skills/evolink-imagegen/scripts/evolink_image.py",
+    "tools/production_checkpoint_publish.py",
+)
 
 
 def git(*args, cwd=ROOT, data=None):
@@ -31,6 +49,11 @@ def git(*args, cwd=ROOT, data=None):
     if result.returncode:
         raise RuntimeError(result.stdout.decode("utf-8", "replace") + "\n" + result.stderr.decode("utf-8", "replace"))
     return result.stdout
+
+
+def stage_checkpoint(worktree, master_paths):
+    paths = (*CHECKPOINT_STAGE_PATHS, *master_paths)
+    git("add", "--pathspec-from-file=-", "--pathspec-file-nul", cwd=worktree, data=("\0".join(paths) + "\0").encode("utf-8"))
 
 
 def windows_io_root(path):
@@ -230,6 +253,7 @@ def main():
         "/tests/test_high131_verify_records.py",
         "/tests/test_high131_note_details.py",
         "/tests/test_high131_note_masks.py",
+        "/tests/test_high131_checkpoint.py",
         "/tests/test_evolink_skill_client.py",
         "/skills/evolink-imagegen/scripts/evolink_image.py",
         "/tools/production_checkpoint_publish.py",
@@ -260,6 +284,7 @@ def main():
         "tests/test_high131_verify_records.py",
         "tests/test_high131_note_details.py",
         "tests/test_high131_note_masks.py",
+        "tests/test_high131_checkpoint.py",
         "tests/test_evolink_skill_client.py",
         "skills/evolink-imagegen/scripts/evolink_image.py",
         "tools/production_checkpoint_publish.py",
@@ -306,27 +331,7 @@ def main():
     new_original_bytes = sum(synced["outputs"][digest]["bytes"] for digest in digests)
     assert new_original_bytes <= budget["this_write_peak_estimate_bytes"], "Checkpoint exceeds its scoped physical-write estimate"
     ordered = sorted(paths)
-    git(
-        "add",
-        "--",
-        "mod_nailong/README.md",
-        "mod_nailong/docs/portrait-generation-and-repair-methodology.md",
-        "mod_nailong/experiments/evolink-high131-flare-20261025",
-        "mod_nailong/data/fullsize-files.json",
-        "tests/test_high131_record_review.py",
-        "tests/test_high131_run_batch.py",
-        "tests/test_high131_prepare_card_repairs.py",
-        "tests/test_high131_run_repairs.py",
-        "tests/test_scoped_readback_checkpoint.py",
-        "tests/test_high131_verify_records.py",
-        "tests/test_high131_note_details.py",
-        "tests/test_high131_note_masks.py",
-        "tests/test_evolink_skill_client.py",
-        "skills/evolink-imagegen/scripts/evolink_image.py",
-        "tools/production_checkpoint_publish.py",
-        *master_paths,
-        cwd=worktree,
-    )
+    stage_checkpoint(worktree, master_paths)
     git("diff", "--cached", "--check", cwd=worktree)
     staged = set(git("diff", "--cached", "--name-only", cwd=worktree).decode().splitlines())
     assert staged <= paths

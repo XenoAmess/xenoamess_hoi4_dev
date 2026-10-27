@@ -18,6 +18,7 @@ MASK_RECTANGLES = {
     (67, 2): [[1370, 990, 1510, 1090], [1810, 1120, 1950, 1430]],
     (67, 3): [[1370, 980, 1730, 1110], [1790, 1100, 1960, 1490]],
     (40, 1): [[1080, 1025, 1410, 1095], [1080, 1105, 1410, 1170]],
+    (40, 2): [[1080, 1100, 1410, 1190]],
 }
 
 
@@ -64,7 +65,9 @@ def main():
     preview.save(preview_path)
     alpha = mask.getchannel("A")
     histogram = alpha.histogram()
-    if (args.index, args.revision) == (67, 3):
+    if (args.index, args.revision) == (40, 2):
+        contract = "PNG alpha<255 marks only the incorrect lower note row to regenerate; alpha=255 preserves the two upper groups, strict-profile person, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore a short lower-left group and a longer lower-right group, with genuine native exterior transparency retained."
+    elif (args.index, args.revision) == (67, 3):
         contract = "PNG alpha<255 marks only the overly long upper-right gray-mark region and the incorrect vertical tab with its required position margin; alpha=255 preserves the upper-left group, both lower-row groups, person, photographic frame/backplate and all other pixels. Restore a compact upper-right group and a horizontal tab near the note's vertical middle."
     elif (args.index, args.revision) == (67, 2):
         contract = "PNG alpha<255 marks only the extra independent upper-middle gray bar and the oversized right-edge tab to regenerate; alpha=255 preserves the person, photographic frame/backplate, other note-mark groups and all other pixels. Restore the compact near-square source tab, not a tall stepped block."

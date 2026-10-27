@@ -11,6 +11,11 @@ from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now
 EXPERIMENT = ROOT / "mod_nailong/experiments/evolink-high131-flare-20261025"
 
 
+def latest_attempt_review(reviews):
+    ordered = sorted(reviews, key=lambda row: row["reviewed_at_utc"])
+    return ordered[-1] if ordered else None
+
+
 def load_nonperson_exceptions(scope):
     path = EXPERIMENT / "nonperson-scope-decision.json"
     if not path.exists():
@@ -112,7 +117,7 @@ def main():
         for attempt in sorted(attempts, key=lambda value: int(value.split("-")[1])):
             result = attempts[attempt]
             attempt_reviews = sorted(reviews.get(key, {}).get(attempt, []), key=lambda row: row["reviewed_at_utc"])
-            review = attempt_reviews[-1] if attempt_reviews else None
+            review = latest_attempt_review(attempt_reviews)
             record = {**result, "reviews": attempt_reviews}
             attempt_history.append(record)
             current = record
@@ -131,7 +136,7 @@ def main():
             review = None
         else:
             attempt_reviews = reviews.get(key, {}).get(current["attempt"], [])
-            review = attempt_reviews[-1] if attempt_reviews else None
+            review = latest_attempt_review(attempt_reviews)
             decision = review["decision"] if review else "returned_pending_visual_review"
             if review is None:
                 status = "returned_pending_visual_review"
