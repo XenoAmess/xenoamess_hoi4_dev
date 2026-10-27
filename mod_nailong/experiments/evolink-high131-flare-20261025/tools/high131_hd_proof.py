@@ -16,6 +16,12 @@ NOTE_MASK_DIR = "mod_nailong/experiments/evolink-high131-flare-20261025/review-m
 SOURCE_DETAIL_METHOD = "source-crop-resize-nearest-v1"
 
 
+def mask_revision_suffix(revision):
+    if type(revision) is not int or revision < 1:
+        raise RuntimeError("Mask revision must be a positive integer")
+    return "" if revision == 1 else f"-v{revision}"
+
+
 def require(condition, message):
     if not condition:
         raise RuntimeError(message)

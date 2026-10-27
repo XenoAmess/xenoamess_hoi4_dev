@@ -23,6 +23,7 @@ def main():
     parser.add_argument("--index", action="append", type=int)
     parser.add_argument("--note-details", action="store_true")
     parser.add_argument("--mask", action="store_true")
+    parser.add_argument("--mask-revision", type=int, default=1)
     args = parser.parse_args()
     if not re.fullmatch(r"[0-9a-f]{40}", args.remote_commit):
         raise RuntimeError("Expected a full lowercase remote commit")
@@ -33,6 +34,8 @@ def main():
         raise RuntimeError("Only the actually reviewed pilot note references for 65 and 67 are eligible for four-input repair")
     if args.mask and (not args.note_details or not indices <= {65, 67}):
         raise RuntimeError("Reviewed note masks for 65 or 67 require --note-details and actual visual review")
+    if args.mask_revision != 1 and (not args.mask or indices != {67}):
+        raise RuntimeError("Only source-67 has an authorized second mask revision")
     mode = hd_proof.MASK_NOTE_MODE if args.mask else hd_proof.NOTE_DETAIL_MODE if args.note_details else MODE
     detail_entries = {}
     if args.note_details:
@@ -111,12 +114,15 @@ def main():
         mask = None
         mask_url = None
         if args.mask:
-            manifest_path = EXPERIMENT / f"note-mask-{index}.json"
+            revision_suffix = hd_proof.mask_revision_suffix(args.mask_revision)
+            manifest_path = EXPERIMENT / f"note-mask-{index}{revision_suffix}.json"
             manifest = read_json(manifest_path)
             if manifest.get("schema") != "high131-note-inpainting-mask-v1" or manifest.get("status") != "mask_visually_verified":
                 raise RuntimeError(f"Mask for index {index} still requires actual visual review")
             if not manifest.get("reviewer") or not manifest.get("reviewed_at_utc") or manifest.get("machine_id") != machine_id():
                 raise RuntimeError(f"Mask review for index {index} lacks reviewer, time or machine binding")
+            if manifest.get("revision", 1) != args.mask_revision:
+                raise RuntimeError(f"Mask revision for index {index} differs from the requested revision")
             if manifest.get("index") != index or manifest.get("source_sha256") != key or manifest.get("source_png_sha256") != source["converted_png_sha256"]:
                 raise RuntimeError(f"Mask for index {index} is bound to another source")
             if manifest.get("target_sha256") != digest or manifest.get("role") != "inpainting-mask" or manifest.get("not_generated_or_game_payload") is not True:
@@ -152,10 +158,16 @@ def main():
             detail_prompt = "Image4 is only a nearest-neighbor enlarged view of Image2's actual note region, provided to make the source's small gray-mark shapes and right-edge tab easier to inspect. It is not a generated image and not an instruction to enlarge the note or imitate enlarged pixels. Image2 remains the authority for composition, card scale, backing and source alpha. Compare only the irregular group shapes, relative lengths and compact footprint; do not invent readable text or replace the person.\n\n"
         mask_prompt = ""
         if mask is not None:
-            if index == 65:
+            if args.mask_revision == 2:
+                mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its two transparent rectangles cover only the extra independent upper-middle gray bar and the oversized right-edge tab with narrow margins. Remove only that extra upper-middle bar and restore the local blank paper texture. Keep the upper row's left and right groups and the lower row's two existing groups; do not regenerate those other groups or the lower blank paper. Use Image2 and Image4 to restore the original compact near-square right-edge tab at its source position and scale, not an elongated tall stepped block, clip, tear or fold. Do not redraw or move the person, clothing, collar, photographic frame or backing. Retain original paper colour, texture and lighting. The mask does not redefine the original card exterior alpha or authorize removing backing; preserve genuine transparency outside the complete card/frame/note silhouette except the actual compact tab.\n\n"
+            elif index == 65:
                 mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its two transparent rectangles cover only the existing wrong upper and lower note-mark rows with a narrow paper margin. Do not regenerate the person, photographic frame/backplate, restored right-edge tab or blank lower paper. Within those two regions use Image2 and Image4 to restore the source-scale compact irregular gray marks, their relative lengths and spacing, without generic ovals, dots, long continuous bars, extra groups or newly readable writing. Retain the original paper colour, texture and lighting outside the actual source marks. This editing mask does not redefine the card's exterior alpha or authorize removing backing.\n\n"
             else:
                 mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its three transparent rectangles cover only the two incorrect note-mark rows and the missing small right-edge tab with narrow margins. Do not regenerate the person, photographic frame/backplate or blank lower paper. Within the marked note rows use Image2 and Image4 to restore TWO separated source-scale irregular gray-mark groups in EACH row, with original relative lengths and spacing, not generic ovals, long bars or invented writing. Restore the small dark right-edge tab at its source position and scale, not a large tear, clip or fold. Retain original paper colour, texture and lighting. The mask does not redefine the original card exterior alpha or authorize removing backing; preserve genuine transparency outside the complete card/frame/note silhouette except the actual compact tab.\n\n"
+        if args.mask_revision == 2:
+            note_contract = "The source has TWO separated irregular gray-mark groups in the upper row and TWO in the lower row. The current target has an extra independent upper-middle bar; remove that bar, retain the other two upper groups and retain both lower groups unchanged. The current right-edge tab is too tall and stepped; restore the original compact near-square tab outline and position. Do not redraw the other note marks, spread writing into blank paper or invent readable text.\n\n"
+        else:
+            note_contract = "The exact original note has TWO separated irregular gray-mark groups in its upper note row and TWO separated irregular gray-mark groups in its lower row. Restore exactly TWO source-scale irregular groups in EACH row, with the original relative lengths, spacing and compact footprint. They are not generic repeated dots, uniform short dashes, long horizontal bars, extra groups or newly readable writing. Keep the lower paper blank outside the original marks and retain the original small dark right-edge tab.\n\n"
         prompt = (
             "Use case: precise-object-edit. Image1 is the actual raw-HD mascot edit target with output SHA256 "
             + digest
@@ -163,7 +175,7 @@ def main():
             + detail_prompt
             + mask_prompt
             + "ACTUAL OBSERVED CORRECTION: " + reasons + "\n\n"
-            + "The exact original note has TWO separated irregular gray-mark groups in its upper note row and TWO separated irregular gray-mark groups in its lower row. Restore exactly TWO source-scale irregular groups in EACH row, with the original relative lengths, spacing and compact footprint. They are not generic repeated dots, uniform short dashes, long horizontal bars, extra groups or newly readable writing. Keep the lower paper blank outside the original marks and retain the original small dark right-edge tab.\n\n"
+            + note_contract
             + "Preserve every already-correct part of Image1: the yellow compact mascot identity, green-ringed black eyes, exactly one source-appropriate mouth, source-visible hair, brows and facial hair, headgear, clothing, decorations, expression, head pose, crop and lighting. Do not replace the person with a human or a generic mascot. Preserve the short broad fitted neck and correct collar without pinching, floating cloth or a cream bib.\n\n"
             + "SOURCE-VISIBLE CONTRACT FROM IMAGE2:\n"
             + observation["source_features_prompt"].strip() + "\n"

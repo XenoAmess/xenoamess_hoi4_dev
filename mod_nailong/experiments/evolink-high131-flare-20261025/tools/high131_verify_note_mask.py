@@ -22,11 +22,15 @@ def main():
     parser = argparse.ArgumentParser(description="Verify a visually reviewed HIGH note mask at an immutable public commit; no image-generation call.")
     parser.add_argument("--commit", required=True)
     parser.add_argument("--index", type=int, required=True)
+    parser.add_argument("--revision", type=int, default=1)
     args = parser.parse_args()
     if not re.fullmatch(r"[0-9a-f]{40}", args.commit):
         raise RuntimeError("Expected a full lowercase immutable commit")
     if args.index not in {65, 67}:
         raise RuntimeError("Only the actually reviewed source-65 or source-67 note masks are eligible")
+    if args.revision != 1 and args.index != 67:
+        raise RuntimeError("Only source-67 has an authorized second mask revision")
+    revision_suffix = hd_proof.mask_revision_suffix(args.revision)
     proof_path = ROOT / f"runtime/high131-hd-target-readback-{args.commit}.json"
     proof = read_json(proof_path)
     if proof.get("schema") != hd_proof.TARGET_PROOF_SCHEMA or proof.get("status") not in {"verified", "failed"}:
@@ -55,12 +59,14 @@ def main():
         current = {row["source_sha256"]: row for row in read_json(EXPERIMENT / "progress.json")["entries"]}[key]
         if current["status"] != "rejected_latest_attempt" or current["current_decision"] != "rejected_for_production":
             raise RuntimeError("The mask target is not a current SHA-bound rejected output")
-        manifest_path = EXPERIMENT / f"note-mask-{args.index}.json"
+        manifest_path = EXPERIMENT / f"note-mask-{args.index}{revision_suffix}.json"
         manifest = read_json(manifest_path)
         if manifest.get("schema") != "high131-note-inpainting-mask-v1" or manifest.get("status") != "mask_visually_verified":
             raise RuntimeError("The mask requires actual visual review")
         if manifest.get("machine_id") != machine_id() or not manifest.get("reviewer") or not manifest.get("reviewed_at_utc"):
             raise RuntimeError("The mask review lacks its machine, reviewer or time")
+        if manifest.get("revision", 1) != args.revision:
+            raise RuntimeError("The mask manifest revision differs from the requested revision")
         if manifest.get("index") != args.index or manifest.get("source_sha256") != key or manifest.get("source_png_sha256") != source["converted_png_sha256"]:
             raise RuntimeError("The mask is bound to another source")
         target_digest = current["current_review"]["review_output_sha256"]
