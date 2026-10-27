@@ -20,9 +20,9 @@ def main():
     parser.add_argument("--index", action="append", type=int, required=True)
     args = parser.parse_args()
     indices = sorted(set(args.index))
-    if not indices or not set(indices) <= {65, 67}:
-        raise RuntimeError("Only the actually reviewed pilot note regions for 65 and 67 are currently eligible")
-    manifest_path = EXPERIMENT / "note-detail-sources.json"
+    if not indices or (indices != [40] and not set(indices) <= {65, 67}):
+        raise RuntimeError("Only the reviewed source-40 note region or pilot note regions for 65 and 67 are eligible")
+    manifest_path = EXPERIMENT / ("note-detail-sources-40.json" if indices == [40] else "note-detail-sources.json")
     if manifest_path.exists():
         raise RuntimeError(f"Refusing to overwrite the source-detail manifest: {manifest_path}")
     scope = {row["index"]: row for row in json.loads((EXPERIMENT / "scope.json").read_text(encoding="utf-8"))["entries"]}

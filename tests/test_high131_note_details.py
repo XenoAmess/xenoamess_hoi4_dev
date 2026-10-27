@@ -1,4 +1,6 @@
 from pathlib import Path
+import shutil
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -6,9 +8,10 @@ from unittest.mock import patch
 from PIL import Image
 
 from runtime import high131_hd_proof as hd_proof
+from runtime import high131_prepare_note_details as prepare_details
 from runtime import high131_run_repairs as repairs
 from runtime import high131_verify_records as verify
-from tools.common import ROOT, file_sha256, machine_id, write_json
+from tools.common import ROOT, file_sha256, machine_id, read_json, write_json
 
 
 class NoteDetailInputTests(unittest.TestCase):
@@ -124,6 +127,32 @@ class NoteDetailInputTests(unittest.TestCase):
         self.proof['targets'][digest] = record
         with self.assertRaisesRegex(RuntimeError, 'Source-detail pixels'):
             hd_proof.validate_remote_reference(self.proof, self.commit, self.detail, digest, self.source, root=self.root)
+
+    def test_source40_uses_separate_exact_derivative_manifest(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:
+            experiment = Path(directory)
+            shutil.copyfile(prepare_details.EXPERIMENT / 'scope.json', experiment / 'scope.json')
+            old_manifest = prepare_details.EXPERIMENT / 'note-detail-sources.json'
+            old_sha = file_sha256(old_manifest)
+            with patch.object(prepare_details, 'EXPERIMENT', experiment), patch.object(sys, 'argv', ['high131_prepare_note_details.py', '--index', '40']):
+                prepare_details.main()
+            manifest = read_json(experiment / 'note-detail-sources-40.json')
+            self.assertEqual(manifest['status'], 'pending_actual_derivative_review')
+            self.assertFalse((experiment / 'note-detail-sources.json').exists())
+            self.assertEqual(file_sha256(old_manifest), old_sha)
+            self.assertEqual(len(manifest['entries']), 1)
+            entry = manifest['entries'][0]
+            self.assertEqual(entry['index'], 40)
+            self.assertEqual(entry['source_sha256'], '2a6394fc8d1b68a7150b114a47923cac16e60e4931cd49ba82ac2f4982355b79')
+            self.assertEqual(entry['source_png_sha256'], 'ee8a5d9d492a7ecaf1c04b63401b2fc893bc5bac9ad2ef91915275619167cf02')
+            self.assertFalse(entry['derivative_reviewed'])
+            detail_path = ROOT / entry['path']
+            self.assertEqual(file_sha256(detail_path), entry['sha256'])
+            with Image.open(ROOT / entry['source_png']) as source, Image.open(detail_path) as detail:
+                expected = source.convert('RGBA').crop(entry['crop_rect']).resize(detail.size, Image.Resampling.NEAREST)
+                self.assertEqual(detail.convert('RGBA').tobytes(), expected.tobytes())
+                self.assertEqual(detail.size, (528, 720))
+                self.assertEqual(detail.mode, 'RGBA')
 
 
 if __name__ == '__main__':

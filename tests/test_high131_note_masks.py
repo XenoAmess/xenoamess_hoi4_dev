@@ -290,6 +290,32 @@ class NoteMaskInputTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, 'candidates and revisions'):
                     prepare.main()
 
+    def test_source40_mask_binds_rgb_target_and_preserves_tab(self):
+        key = '2a6394fc8d1b68a7150b114a47923cac16e60e4931cd49ba82ac2f4982355b79'
+        digest = '493566c0afaf43189ac8bf81aada993296c9be38cbe5b19530979e71878303da'
+        with tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:
+            experiment = Path(directory)
+            shutil.copyfile(prepare.EXPERIMENT / 'scope.json', experiment / 'scope.json')
+            progress = read_json(prepare.EXPERIMENT / 'progress.json')
+            progress['entries'] = [row for row in progress['entries'] if row['source_sha256'] == key]
+            self.assertEqual(len(progress['entries']), 1)
+            write_json(experiment / 'progress.json', progress)
+            with patch.object(prepare, 'EXPERIMENT', experiment), patch.object(sys, 'argv', ['high131_prepare_note_masks.py', '--index', '40']):
+                prepare.main()
+            manifest = read_json(experiment / 'note-mask-40.json')
+            self.assertEqual(manifest['target_sha256'], digest)
+            self.assertEqual(manifest['rects'], [[1080, 1025, 1410, 1095], [1080, 1105, 1410, 1170]])
+            self.assertEqual(manifest['transparent_pixels'], 331 * 71 + 331 * 66)
+            self.assertEqual(manifest['opaque_pixels'], 2048 * 2048 - 331 * 71 - 331 * 66)
+            self.assertEqual(manifest['status'], 'pending_actual_mask_review')
+            self.assertTrue(all(rect[2] < 1500 for rect in manifest['rects']))
+            for field, sha_field in (('mask_file', 'mask_sha256'), ('preview_file', 'preview_sha256')):
+                self.assertEqual(file_sha256(ROOT / manifest[field]), manifest[sha_field])
+            with Image.open(ROOT / manifest['mask_file']) as image:
+                histogram = image.getchannel('A').histogram()
+            self.assertEqual(sum(histogram[1:255]), 0)
+            self.assertEqual(histogram[0] + histogram[255], 2048 * 2048)
+
 
 if __name__ == '__main__':
     unittest.main()
