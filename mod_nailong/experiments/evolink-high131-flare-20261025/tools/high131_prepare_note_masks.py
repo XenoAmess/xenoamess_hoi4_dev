@@ -11,15 +11,18 @@ from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now
 
 EXPERIMENT = ROOT / "mod_nailong/experiments/evolink-high131-flare-20261025"
 MASTER_DIR = ROOT / "mod_nailong/assets/generated_fullsize"
-MASK_RECTANGLES = [[1180, 950, 1600, 1055], [1170, 1065, 1610, 1160]]
+MASK_RECTANGLES = {
+    65: [[1180, 950, 1600, 1055], [1170, 1065, 1610, 1160]],
+    67: [[1160, 940, 1770, 1050], [1150, 1055, 1770, 1160], [1740, 1140, 1940, 1390]],
+}
 
 
 def main():
     parser = argparse.ArgumentParser(description="Prepare an inpainting mask and visual review overlay for one rejected note; no target pixels are replaced.")
     parser.add_argument("--index", type=int, required=True)
     args = parser.parse_args()
-    if args.index != 65:
-        raise RuntimeError("Only the actually reviewed pilot mask for source 65 is currently authorized")
+    if args.index not in MASK_RECTANGLES:
+        raise RuntimeError("Only the actually reviewed note-mask candidates for 65 and 67 are eligible")
     scope = {row["index"]: row for row in read_json(EXPERIMENT / "scope.json")["entries"]}
     progress = {row["source_sha256"]: row for row in read_json(EXPERIMENT / "progress.json")["entries"]}
     source = scope[args.index]
@@ -35,11 +38,12 @@ def main():
         target = opened.convert("RGBA")
         if opened.size != (2048, 2048):
             raise RuntimeError(f"Unexpected pilot target size: {opened.size}")
+    rectangles = MASK_RECTANGLES[args.index]
     mask = Image.new("RGBA", target.size, (0, 0, 0, 255))
     overlay = Image.new("RGBA", target.size, (0, 0, 0, 0))
     mask_draw = ImageDraw.Draw(mask)
     overlay_draw = ImageDraw.Draw(overlay)
-    for rectangle in MASK_RECTANGLES:
+    for rectangle in rectangles:
         mask_draw.rectangle(rectangle, fill=(0, 0, 0, 0))
         overlay_draw.rectangle(rectangle, fill=(255, 0, 0, 90))
     preview = Image.alpha_composite(target, overlay)
@@ -71,7 +75,7 @@ def main():
         "preview_sha256": file_sha256(preview_path),
         "size": list(mask.size),
         "mode": mask.mode,
-        "rects": MASK_RECTANGLES,
+        "rects": rectangles,
         "coordinate_convention": "Pillow rectangle [left, top, right, bottom], with right and bottom included.",
         "alpha_extrema": list(alpha.getextrema()),
         "transparent_pixels": histogram[0],
@@ -79,7 +83,7 @@ def main():
         "role": "inpainting-mask",
         "not_generated_or_game_payload": True,
         "no_generated_master_pixels_modified": True,
-        "official_contract": "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves all other pixels, including the restored tab.",
+        "official_contract": "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves all other pixels, including the restored tab." if args.index == 65 else "PNG alpha<255 marks only the two incorrect note-mark rows and missing right-edge tab to regenerate; alpha=255 preserves the person, photographic frame/backplate and all other pixels. Keep true exterior transparency except the source's compact tab.",
         "reviewed_at_utc": None,
         "reviewer": None,
     })

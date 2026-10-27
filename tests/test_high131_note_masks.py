@@ -1,4 +1,6 @@
 from pathlib import Path
+import shutil
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -6,9 +8,10 @@ from unittest.mock import patch
 from PIL import Image, ImageDraw
 
 from runtime import high131_hd_proof as hd_proof
+from runtime import high131_prepare_note_masks as prepare
 from runtime import high131_run_repairs as repairs
 from runtime import high131_verify_records as verify
-from tools.common import ROOT, file_sha256, machine_id, write_json
+from tools.common import ROOT, file_sha256, machine_id, read_json, write_json
 
 
 class NoteMaskInputTests(unittest.TestCase):
@@ -201,6 +204,37 @@ class NoteMaskInputTests(unittest.TestCase):
         self.proof['complete_archive_verified'] = True
         with self.assertRaisesRegex(RuntimeError, 'target-scoped proof'):
             self.validate_mask()
+
+    def test_source67_preparation_binds_rejected_target_and_review_regions(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:
+            experiment = Path(directory)
+            shutil.copyfile(prepare.EXPERIMENT / 'scope.json', experiment / 'scope.json')
+            shutil.copyfile(prepare.EXPERIMENT / 'progress.json', experiment / 'progress.json')
+            with patch.object(prepare, 'EXPERIMENT', experiment), patch.object(sys, 'argv', ['high131_prepare_note_masks.py', '--index', '67']):
+                prepare.main()
+            manifest = read_json(experiment / 'note-mask-67.json')
+            key = '322c66462794b3abc2eadf075a7cfed79a583a9b5c3457d17e70359edafeb469'
+            target = prepare.MASTER_DIR / 'b8aca87eb31dbd9ad81f6324697b096006c07b52a882f3a6c40b438b7a78c284.png'
+            self.assertEqual(manifest['index'], 67)
+            self.assertEqual(manifest['source_sha256'], key)
+            self.assertEqual(manifest['target_sha256'], 'b8aca87eb31dbd9ad81f6324697b096006c07b52a882f3a6c40b438b7a78c284')
+            self.assertEqual(manifest['status'], 'pending_actual_mask_review')
+            self.assertEqual(manifest['rects'], prepare.MASK_RECTANGLES[67])
+            self.assertEqual(len(manifest['rects']), 3)
+            self.assertEqual(manifest['size'], [2048, 2048])
+            self.assertEqual(manifest['mode'], 'RGBA')
+            self.assertEqual(manifest['alpha_extrema'], [0, 255])
+            self.assertEqual(file_sha256(target), manifest['target_sha256'])
+            mask_path = ROOT / manifest['mask_file']
+            preview_path = ROOT / manifest['preview_file']
+            self.assertEqual(file_sha256(mask_path), manifest['mask_sha256'])
+            self.assertEqual(file_sha256(preview_path), manifest['preview_sha256'])
+            with Image.open(mask_path) as image:
+                histogram = image.getchannel('A').histogram()
+            self.assertEqual(histogram[0], manifest['transparent_pixels'])
+            self.assertEqual(histogram[255], manifest['opaque_pixels'])
+            self.assertEqual(sum(histogram[1:255]), 0)
+            self.assertEqual(histogram[0] + histogram[255], 2048 * 2048)
 
 
 if __name__ == '__main__':

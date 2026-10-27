@@ -31,8 +31,8 @@ def main():
         raise RuntimeError("Only reviewed HIGH note sources are eligible; 60 and 117 remain unresolved")
     if args.note_details and not indices <= {65, 67}:
         raise RuntimeError("Only the actually reviewed pilot note references for 65 and 67 are eligible for four-input repair")
-    if args.mask and (not args.note_details or indices != {65}):
-        raise RuntimeError("The pilot mask requires --index 65 --note-details and its actual visual review")
+    if args.mask and (not args.note_details or not indices <= {65, 67}):
+        raise RuntimeError("Reviewed note masks for 65 or 67 require --note-details and actual visual review")
     mode = hd_proof.MASK_NOTE_MODE if args.mask else hd_proof.NOTE_DETAIL_MODE if args.note_details else MODE
     detail_entries = {}
     if args.note_details:
@@ -152,7 +152,10 @@ def main():
             detail_prompt = "Image4 is only a nearest-neighbor enlarged view of Image2's actual note region, provided to make the source's small gray-mark shapes and right-edge tab easier to inspect. It is not a generated image and not an instruction to enlarge the note or imitate enlarged pixels. Image2 remains the authority for composition, card scale, backing and source alpha. Compare only the irregular group shapes, relative lengths and compact footprint; do not invent readable text or replace the person.\n\n"
         mask_prompt = ""
         if mask is not None:
-            mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its two transparent rectangles cover only the existing wrong upper and lower note-mark rows with a narrow paper margin. Do not regenerate the person, photographic frame/backplate, restored right-edge tab or blank lower paper. Within those two regions use Image2 and Image4 to restore the source-scale compact irregular gray marks, their relative lengths and spacing, without generic ovals, dots, long continuous bars, extra groups or newly readable writing. Retain the original paper colour, texture and lighting outside the actual source marks. This editing mask does not redefine the card's exterior alpha or authorize removing backing.\n\n"
+            if index == 65:
+                mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its two transparent rectangles cover only the existing wrong upper and lower note-mark rows with a narrow paper margin. Do not regenerate the person, photographic frame/backplate, restored right-edge tab or blank lower paper. Within those two regions use Image2 and Image4 to restore the source-scale compact irregular gray marks, their relative lengths and spacing, without generic ovals, dots, long continuous bars, extra groups or newly readable writing. Retain the original paper colour, texture and lighting outside the actual source marks. This editing mask does not redefine the card's exterior alpha or authorize removing backing.\n\n"
+            else:
+                mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its three transparent rectangles cover only the two incorrect note-mark rows and the missing small right-edge tab with narrow margins. Do not regenerate the person, photographic frame/backplate or blank lower paper. Within the marked note rows use Image2 and Image4 to restore TWO separated source-scale irregular gray-mark groups in EACH row, with original relative lengths and spacing, not generic ovals, long bars or invented writing. Restore the small dark right-edge tab at its source position and scale, not a large tear, clip or fold. Retain original paper colour, texture and lighting. The mask does not redefine the original card exterior alpha or authorize removing backing; preserve genuine transparency outside the complete card/frame/note silhouette except the actual compact tab.\n\n"
         prompt = (
             "Use case: precise-object-edit. Image1 is the actual raw-HD mascot edit target with output SHA256 "
             + digest

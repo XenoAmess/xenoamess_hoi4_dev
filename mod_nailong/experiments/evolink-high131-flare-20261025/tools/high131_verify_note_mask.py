@@ -25,8 +25,8 @@ def main():
     args = parser.parse_args()
     if not re.fullmatch(r"[0-9a-f]{40}", args.commit):
         raise RuntimeError("Expected a full lowercase immutable commit")
-    if args.index != 65:
-        raise RuntimeError("Only the actually reviewed source-65 pilot mask is eligible")
+    if args.index not in {65, 67}:
+        raise RuntimeError("Only the actually reviewed source-65 or source-67 note masks are eligible")
     proof_path = ROOT / f"runtime/high131-hd-target-readback-{args.commit}.json"
     proof = read_json(proof_path)
     if proof.get("schema") != hd_proof.TARGET_PROOF_SCHEMA or proof.get("status") not in {"verified", "failed"}:
