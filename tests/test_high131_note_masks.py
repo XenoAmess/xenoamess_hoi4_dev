@@ -217,6 +217,7 @@ class NoteMaskInputTests(unittest.TestCase):
         targets = {
             1: 'b8aca87eb31dbd9ad81f6324697b096006c07b52a882f3a6c40b438b7a78c284',
             2: 'edcd862ece4a33b8af56b5a8afcd27af88244fdaff9850e79c3a8f2aa462fc77',
+            3: '7da660fb19276eb4686ed9a2bfb02542fc40738cfa0ec9a527889cefd6b236a7',
         }
         with tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:
             experiment = Path(directory)
@@ -224,7 +225,7 @@ class NoteMaskInputTests(unittest.TestCase):
             progress = read_json(prepare.EXPERIMENT / 'progress.json')
             progress['entries'] = [row for row in progress['entries'] if row['source_sha256'] == key]
             self.assertEqual(len(progress['entries']), 1)
-            for revision in (1, 2):
+            for revision in (1, 2, 3):
                 progress['entries'][0].update(
                     status='rejected_latest_attempt',
                     current_decision='rejected_for_production',
@@ -266,7 +267,7 @@ class NoteMaskInputTests(unittest.TestCase):
                         f'{key}-note-mask.png': file_sha256(mask_path),
                         f'{key}-note-mask-preview.png': file_sha256(preview_path),
                     }
-                else:
+                elif revision == 2:
                     self.assertEqual(manifest['rects'], [[1370, 990, 1510, 1090], [1810, 1120, 1950, 1430]])
                     self.assertEqual(manifest['transparent_pixels'], 141 * 101 + 141 * 311)
                     self.assertEqual(manifest['opaque_pixels'], 2048 * 2048 - 141 * 101 - 141 * 311)
@@ -274,7 +275,18 @@ class NoteMaskInputTests(unittest.TestCase):
                     for name, digest in original_v1.items():
                         path = experiment / name if name.endswith('.json') else experiment / 'review-masks' / name
                         self.assertEqual(file_sha256(path), digest)
-            with patch.object(prepare, 'EXPERIMENT', experiment), patch.object(sys, 'argv', ['high131_prepare_note_masks.py', '--index', '67', '--revision', '3']):
+                if revision == 3:
+                    self.assertEqual(manifest['rects'], [[1370, 980, 1730, 1110], [1790, 1100, 1960, 1490]])
+                    self.assertEqual(manifest['transparent_pixels'], 361 * 131 + 171 * 391)
+                    self.assertEqual(manifest['opaque_pixels'], 2048 * 2048 - 361 * 131 - 171 * 391)
+                    self.assertIn('horizontal tab', manifest['official_contract'])
+                    for name, digest in original_v1.items():
+                        path = experiment / name if name.endswith('.json') else experiment / 'review-masks' / name
+                        self.assertEqual(file_sha256(path), digest)
+                    v2 = read_json(experiment / 'note-mask-67-v2.json')
+                    self.assertEqual(v2['target_sha256'], targets[2])
+                    self.assertEqual(file_sha256(experiment / 'review-masks' / f'{key}-note-mask-v2.png'), 'dfe99bbc5f93b62101fa075786d6b4202efd02871072c31f97b931ca54551159')
+            with patch.object(prepare, 'EXPERIMENT', experiment), patch.object(sys, 'argv', ['high131_prepare_note_masks.py', '--index', '67', '--revision', '4']):
                 with self.assertRaisesRegex(RuntimeError, 'candidates and revisions'):
                     prepare.main()
 
