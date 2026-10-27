@@ -19,6 +19,7 @@ MASK_RECTANGLES = {
     (67, 3): [[1370, 980, 1730, 1110], [1790, 1100, 1960, 1490]],
     (40, 1): [[1080, 1025, 1410, 1095], [1080, 1105, 1410, 1170]],
     (40, 2): [[1080, 1100, 1410, 1190]],
+    (52, 1): [[1140, 1070, 1470, 1145], [1140, 1150, 1470, 1225]],
 }
 
 
@@ -73,6 +74,8 @@ def main():
         contract = "PNG alpha<255 marks only the extra independent upper-middle gray bar and the oversized right-edge tab to regenerate; alpha=255 preserves the person, photographic frame/backplate, other note-mark groups and all other pixels. Restore the compact near-square source tab, not a tall stepped block."
     elif args.index == 40:
         contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the strict-profile person, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row and genuine native exterior transparency in the new output."
+    elif args.index == 52:
+        contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the capped person, clothing, collar, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row while retaining genuine native exterior transparency."
     elif args.index == 65:
         contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves all other pixels, including the restored tab."
     else:
