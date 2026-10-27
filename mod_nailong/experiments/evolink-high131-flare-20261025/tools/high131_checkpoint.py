@@ -56,6 +56,126 @@ def stage_checkpoint(worktree, master_paths):
     git("add", "--pathspec-from-file=-", "--pathspec-file-nul", cwd=worktree, data=("\0".join(paths) + "\0").encode("utf-8"))
 
 
+def merge_fullsize_index(ours, theirs, expected_digest, master_dir):
+    ours_outputs = ours.get("outputs")
+    theirs_outputs = theirs.get("outputs")
+    if not isinstance(ours_outputs, dict) or not isinstance(theirs_outputs, dict):
+        raise RuntimeError("Fullsize index outputs must be objects")
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_digest):
+        raise RuntimeError("Expected a complete original SHA256 for the conflict resolution")
+    missing = set(theirs_outputs) - set(ours_outputs)
+    if missing != {expected_digest}:
+        raise RuntimeError(f"Unexpected index additions; refusing to choose a side: {sorted(missing)[:5]}")
+    row = theirs_outputs[expected_digest]
+    source = Path(master_dir) / f"{expected_digest}.png"
+    if row.get("sha256", expected_digest) != expected_digest or row.get("path") != f"mod_nailong/assets/generated_fullsize/{expected_digest}.png":
+        raise RuntimeError("The added original has an invalid path or SHA binding")
+    if file_sha256(source) != expected_digest or source.stat().st_size != row.get("bytes"):
+        raise RuntimeError("The added raw PNG differs from its archived bytes")
+    from PIL import Image
+    with Image.open(source) as image:
+        if list(image.size) != row.get("size") or image.mode != row.get("mode"):
+            raise RuntimeError("The added raw PNG dimensions or mode differ from its index row")
+    outputs = {**ours_outputs, expected_digest: row}
+    return {**ours, "outputs": outputs, "count": len(outputs), "original_png_bytes": sum(item["bytes"] for item in outputs.values())}
+
+
+def finish_index_conflict_resolution(worktree, original_commit, expected_digest, merged, resumed):
+    relative = "mod_nailong/data/fullsize-files.json"
+    final = git("rev-parse", "HEAD", cwd=worktree).decode().strip()
+    if git("status", "--porcelain", cwd=worktree).strip():
+        raise RuntimeError("Resolved worktree still has uncommitted changes")
+    parent = git("rev-parse", "HEAD^", cwd=worktree).decode().strip()
+    original_paths = set(git("diff", "--name-only", f"{original_commit}^", original_commit, cwd=worktree).decode().splitlines())
+    for path in original_paths - {relative}:
+        before = git("rev-parse", f"{original_commit}:{path}", cwd=worktree).decode().strip()
+        after = git("rev-parse", f"{final}:{path}", cwd=worktree).decode().strip()
+        if before != after:
+            raise RuntimeError(f"Resolved commit changed an unrelated HIGH blob: {path}")
+    committed = json.loads(git("show", f"{final}:{relative}", cwd=worktree).decode("utf-8"))
+    if committed != merged:
+        raise RuntimeError("Resolved commit differs from the verified union index")
+    blob = git("hash-object", str(worktree / relative), cwd=worktree).decode().strip()
+    if git("ls-tree", final, "--", relative, cwd=worktree).decode().strip() != f"100644 blob {blob}\t{relative}":
+        raise RuntimeError("Resolved index bytes differ from the committed index")
+    receipt = {
+        "schema": "high131-index-conflict-resolution-v1",
+        "machine_id": machine_id(),
+        "completed_at_utc": utc_now(),
+        "status": "resolved_ready_for_scoped_publication",
+        "original_snapshot_commit": original_commit,
+        "resolved_commit": final,
+        "parent_commit": parent,
+        "worktree": worktree.relative_to(ROOT).as_posix(),
+        "merged_index": relative,
+        "index_sha256": file_sha256(worktree / relative),
+        "added_original_digests": [expected_digest],
+        "merged_output_count": merged["count"],
+        "merged_original_png_bytes": merged["original_png_bytes"],
+        "original_snapshot_blobs_unchanged_except_merged_index": True,
+        "main_worktree_and_LOW_generated_manifest_not_modified": True,
+        "existing_resolved_commit_revalidated": resumed,
+        "new_local_commits_created_by_this_call": 0 if resumed else 1,
+        "complete_archive_verified": False,
+        "new_image_generation_calls": 0,
+        "next_step": "Use ordinary fast-forward publication of resolved_commit with a HIGH-scoped readback pointer; do not force push.",
+    }
+    receipt_path = ROOT / f"runtime/high131-index-conflict-resolution-{final}.json"
+    if receipt_path.exists():
+        raise RuntimeError(f"Refusing to overwrite an existing conflict-resolution receipt: {receipt_path}")
+    from runtime.high131_io import write_json as write_json_with_retry
+    write_json_with_retry(receipt_path, receipt)
+    return {"status": receipt["status"], "commit": final, "parent_commit": parent, "receipt": receipt_path.relative_to(ROOT).as_posix()}
+
+
+def resolve_index_conflict(worktree, original_commit, expected_digest):
+    worktree = Path(worktree).resolve()
+    sync_root = (ROOT / "runtime/production-sync").resolve()
+    worktree.relative_to(sync_root)
+    if worktree == sync_root or not worktree.is_dir() or worktree.is_symlink() or worktree.is_junction():
+        raise RuntimeError("Expected a real isolated rebase worktree")
+    if not re.fullmatch(r"[0-9a-f]{40}", original_commit):
+        raise RuntimeError("Expected the full original snapshot commit")
+    actual_worktree = Path(git("rev-parse", "--show-toplevel", cwd=worktree).decode().strip()).resolve()
+    if actual_worktree != worktree:
+        raise RuntimeError("Conflict resolution is limited to the expected worktree")
+    git("merge-base", "--is-ancestor", f"{original_commit}^", "HEAD", cwd=worktree)
+    relative = "mod_nailong/data/fullsize-files.json"
+    rebase_states = []
+    for name in ("rebase-merge", "rebase-apply"):
+        state = Path(git("rev-parse", "--git-path", name, cwd=worktree).decode().strip())
+        rebase_states.append(state if state.is_absolute() else worktree / state)
+    resumed = not any(state.exists() for state in rebase_states)
+    if resumed:
+        if git("rev-parse", "--verify", "ORIG_HEAD", cwd=worktree).decode().strip() != original_commit:
+            raise RuntimeError("The completed rebase belongs to another snapshot")
+        remote = json.loads(git("show", f"HEAD^:{relative}", cwd=worktree).decode("utf-8"))
+        snapshot = json.loads(git("show", f"{original_commit}:{relative}", cwd=worktree).decode("utf-8"))
+        base = json.loads(git("show", f"{original_commit}^:{relative}", cwd=worktree).decode("utf-8"))
+    else:
+        if git("rev-parse", "--verify", "REBASE_HEAD", cwd=worktree).decode().strip() != original_commit:
+            raise RuntimeError("The rebase belongs to another snapshot")
+        conflicts = set(git("diff", "--name-only", "--diff-filter=U", cwd=worktree).decode().splitlines())
+        if conflicts != {relative}:
+            raise RuntimeError(f"Refusing to resolve unrelated conflicts: {sorted(conflicts)}")
+        remote, snapshot, base = (
+            json.loads(git("show", f":{stage}:{relative}", cwd=worktree).decode("utf-8"))
+            for stage in (2, 3, 1)
+        )
+    merged = merge_fullsize_index(remote, snapshot, expected_digest, MASTER_DIR)
+    if not set(base.get("outputs", {})) <= set(merged["outputs"]):
+        raise RuntimeError("The merged index would drop a base output")
+    if not resumed:
+        from runtime.high131_io import write_json as write_json_with_retry
+        write_json_with_retry(worktree / relative, merged)
+        git("add", "--sparse", "--", relative, cwd=worktree)
+        git("diff", "--cached", "--check", cwd=worktree)
+        if git("diff", "--name-only", "--diff-filter=U", cwd=worktree).strip():
+            raise RuntimeError("Index conflict remains unresolved")
+        git("-c", "core.editor=true", "rebase", "--continue", cwd=worktree)
+    return finish_index_conflict_resolution(worktree, original_commit, expected_digest, merged, resumed)
+
+
 def windows_io_root(path):
     if os.name != "nt" or str(path).startswith("\\\\?\\"):
         return path
@@ -171,8 +291,11 @@ def validate_remote_recovery(parent, approved, previous_snapshot, published_pref
 
 
 def main():
+    if len(sys.argv) == 5 and sys.argv[1] == "resolve-index":
+        print(json.dumps(resolve_index_conflict(*sys.argv[2:5]), ensure_ascii=True), flush=True)
+        return
     if len(sys.argv) not in (2, 4):
-        raise SystemExit("usage: high131_checkpoint.py BATCH [PREVIOUS_SNAPSHOT PUBLISHED_PREFIX]")
+        raise SystemExit("usage: high131_checkpoint.py BATCH [PREVIOUS_SNAPSHOT PUBLISHED_PREFIX] | resolve-index WORKTREE ORIGINAL_COMMIT EXPECTED_DIGEST")
     batch = sys.argv[1]
     assert re.fullmatch(r"[A-Za-z0-9-]+", batch)
     previous_snapshot = sys.argv[2] if len(sys.argv) == 4 else "b4af5f5e03bf5db62564d66685c9b8d208eed6bf"

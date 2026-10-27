@@ -2,10 +2,13 @@ import contextlib
 import io
 import json
 from pathlib import Path
+import shutil
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
+from runtime import high131_prepare_hd_repairs as hd_prompt
 from runtime import high131_run_repairs as repairs
 from tools.common import file_sha256, write_json
 
@@ -393,6 +396,84 @@ class LaterRepairArtifactTests(unittest.TestCase):
                     with self.assertRaises(repairs.batch.BatchError) as caught:
                         repairs.validate_repair_binding({"repair_preparation_sha256": "test", "progress_sha256": "test"}, state)
                 self.assertEqual(caught.exception.status, "repair_input_mismatch")
+
+
+class HDRepairPromptTests(unittest.TestCase):
+    def prepare_mask_prompt(self, index, key, previous_attempt, mask_name):
+        source_experiment = hd_prompt.EXPERIMENT
+        attempt = f'external-{int(previous_attempt[-2:]) + 1:02}'
+        with tempfile.TemporaryDirectory(dir=repairs.batch.ROOT / 'runtime') as directory:
+            experiment = Path(directory)
+            (experiment / 'prompts').mkdir()
+            for name in ('scope.json', 'prepared.json', 'output-masters.json', f'note-detail-sources-{index}.json', mask_name):
+                shutil.copyfile(source_experiment / name, experiment / name)
+            details = json.loads((experiment / f'note-detail-sources-{index}.json').read_text(encoding='utf-8'))
+            detail = details['entries'][0]
+            detail_file = experiment / 'review-source-details' / Path(detail['path']).name
+            detail_file.parent.mkdir(parents=True)
+            shutil.copyfile(repairs.batch.ROOT / detail['path'], detail_file)
+            detail['path'] = detail_file.relative_to(repairs.batch.ROOT).as_posix()
+            write_json(experiment / f'note-detail-sources-{index}.json', details)
+            mask = json.loads((experiment / mask_name).read_text(encoding='utf-8'))
+            mask_file = experiment / 'review-masks' / Path(mask['mask_file']).name
+            mask_file.parent.mkdir(parents=True)
+            shutil.copyfile(repairs.batch.ROOT / mask['mask_file'], mask_file)
+            mask['mask_file'] = mask_file.relative_to(repairs.batch.ROOT).as_posix()
+            write_json(experiment / mask_name, mask)
+            progress = json.loads((source_experiment / 'progress.json').read_text(encoding='utf-8'))
+            current = next(row for row in progress['entries'] if row['source_sha256'] == key)
+            current['attempts_returned'] = [row for row in current['attempts_returned'] if row['attempt'] <= previous_attempt]
+            current['status'] = 'rejected_latest_attempt'
+            current['current_decision'] = 'rejected_for_production'
+            current['current_review'] = current['attempts_returned'][-1]['reviews'][-1]
+            write_json(experiment / 'progress.json', progress)
+            preparation = json.loads((source_experiment / 'card-repair-preparation.json').read_text(encoding='utf-8'))
+            preparation['entries'] = [row for row in preparation['entries'] if (row['source_sha256'], row['attempt']) != (key, attempt)]
+            write_json(experiment / 'card-repair-preparation.json', preparation)
+            old_prompt = experiment / 'outputs' / f'{key}-{previous_attempt[-2:]}.prompt.txt'
+            old_prompt.parent.mkdir(parents=True)
+            shutil.copyfile(source_experiment / 'outputs' / f'{key}-{previous_attempt[-2:]}.prompt.txt', old_prompt)
+            argv = [
+                'high131_prepare_hd_repairs.py', '--remote-commit', 'f8521add92e65e4ffd94818b7e085cae0cfbde41',
+                '--readback', 'runtime/test-mask-prompt-proof.json', '--index', str(index), '--note-details', '--mask',
+                '--mask-revision', '3' if index == 52 else '1',
+            ]
+            with (
+                patch.object(hd_prompt, 'EXPERIMENT', experiment),
+                patch.object(sys, 'argv', argv),
+                patch.object(hd_prompt.hd_proof, 'load_remote_proof', return_value=({}, {})),
+                patch.object(hd_prompt.hd_proof, 'validate_remote_target', return_value='target-url'),
+                patch.object(hd_prompt.hd_proof, 'validate_remote_reference', return_value='detail-url'),
+                patch.object(hd_prompt.hd_proof, 'validate_remote_mask', return_value='mask-url'),
+            ):
+                hd_prompt.main()
+            prompt_path = experiment / 'prompts' / f'{key}-{attempt[-2:]}.txt'
+            prompt = prompt_path.read_text(encoding='utf-8')
+            preparation = json.loads((experiment / 'card-repair-preparation.json').read_text(encoding='utf-8'))
+            row = next(row for row in preparation['entries'] if (row['source_sha256'], row['attempt']) == (key, attempt))
+            self.assertEqual(file_sha256(prompt_path), row['prompt_sha256'])
+            return prompt
+
+    def test_source52_revision3_repairs_both_upper_groups_and_preserves_tab(self):
+        prompt = self.prepare_mask_prompt(
+            52, '581dd8fc38811eeca36e65fcfb5093d743744adbcb44be6f160e63af7e450b90', 'external-07', 'note-mask-52-v3.json',
+        )
+        self.assertIn('one transparent rectangle covers only the incorrect upper note row', prompt)
+        self.assertIn('restore exactly TWO compact irregular upper gray-mark groups', prompt)
+        self.assertIn('correct right-edge tab', prompt)
+        self.assertNotIn('Keep the upper-left group', prompt)
+        self.assertNotIn('second covers the incorrect vertical tab', prompt)
+
+    def test_source53_mask_preserves_corrected_pose_and_restores_note_groups(self):
+        prompt = self.prepare_mask_prompt(
+            53, '54b4ec4ae9b53cd9fdb29065ddafcd8fea67e1d360023c1d6ae55dc6e2e4162b', 'external-06', 'note-mask-53.json',
+        )
+        self.assertIn('one transparent rectangle covers only the two incorrect note-mark rows', prompt)
+        self.assertIn('corrected viewer-right person', prompt)
+        self.assertIn('restore exactly TWO separated source-scale irregular gray-mark groups in EACH row', prompt)
+        self.assertIn('not repeated uniform pills', prompt)
+        self.assertIn('correct right-edge tab', prompt)
+        self.assertNotIn('POSE CORRECTION REQUIRED', prompt)
 
 
 if __name__ == "__main__":

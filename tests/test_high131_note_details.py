@@ -203,6 +203,29 @@ class NoteDetailInputTests(unittest.TestCase):
                 self.assertEqual(detail.size, (528, 720))
                 self.assertEqual(detail.mode, 'RGBA')
 
+    def test_source54_uses_separate_exact_derivative_manifest(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:
+            experiment = Path(directory)
+            shutil.copyfile(prepare_details.EXPERIMENT / 'scope.json', experiment / 'scope.json')
+            with patch.object(prepare_details, 'EXPERIMENT', experiment), patch.object(sys, 'argv', ['high131_prepare_note_details.py', '--index', '54']):
+                prepare_details.main()
+            manifest = read_json(experiment / 'note-detail-sources-54.json')
+            self.assertEqual(manifest['status'], 'pending_actual_derivative_review')
+            self.assertFalse((experiment / 'note-detail-sources.json').exists())
+            self.assertEqual(len(manifest['entries']), 1)
+            entry = manifest['entries'][0]
+            self.assertEqual(entry['index'], 54)
+            self.assertEqual(entry['source_sha256'], '5770c09b8367c798fe5be23ae82ac30a4f162f41fa0e58da70b29bb757e3e59f')
+            self.assertEqual(entry['source_png_sha256'], '2c04998175267168b3f14bb1ede29ef61c1be022e2c680caabbf222daa887d2d')
+            self.assertFalse(entry['derivative_reviewed'])
+            detail_path = ROOT / entry['path']
+            self.assertEqual(file_sha256(detail_path), entry['sha256'])
+            with Image.open(ROOT / entry['source_png']) as source, Image.open(detail_path) as detail:
+                expected = source.convert('RGBA').crop(entry['crop_rect']).resize(detail.size, Image.Resampling.NEAREST)
+                self.assertEqual(detail.convert('RGBA').tobytes(), expected.tobytes())
+                self.assertEqual(detail.size, (528, 720))
+                self.assertEqual(detail.mode, 'RGBA')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -22,6 +22,8 @@ MASK_RECTANGLES = {
     (52, 1): [[1140, 1070, 1470, 1145], [1140, 1150, 1470, 1225]],
     (52, 2): [[1140, 1070, 1470, 1145]],
     (52, 3): [[1140, 1070, 1560, 1145]],
+    (53, 1): [[1200, 1050, 1620, 1180]],
+    (54, 1): [[1100, 1040, 1600, 1125], [1100, 1135, 1600, 1210]],
 }
 
 
@@ -80,6 +82,10 @@ def main():
         contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the strict-profile person, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row and genuine native exterior transparency in the new output."
     elif args.index == 52:
         contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the capped person, clothing, collar, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row while retaining genuine native exterior transparency."
+    elif args.index == 53:
+        contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the corrected viewer-right person, cap, hair and brows, clothing, collar, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row while retaining genuine native exterior transparency."
+    elif args.index == 54:
+        contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the viewer-right person, hair, clothing, collar, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row while retaining genuine native exterior transparency."
     elif args.index == 65:
         contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves all other pixels, including the restored tab."
     else:
