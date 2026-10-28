@@ -1,0 +1,23 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "started_at_utc": "2026-10-28T06:49:20.296910+00:00",
+  "pid": 18772,
+  "original_preflight_audit": "mod_nailong/data/production-checkpoint-failures/20261028-v34-first-fullsize-index-rebase.json",
+  "original_preflight_audit_sha256": "3b2746c20708b8e34ac67be0fa484b770b08a4a60050119b74359f96b5900f88",
+  "source_code": "import sys,time,os,json\nfrom pathlib import Path\nimport psutil\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,utc_now,machine_id\nsource=ROOT/'runtime/recover-v34-first-index-and-publication-20261028.py';original=ROOT/'mod_nailong/data/production-checkpoint-failures/20261028-v34-first-fullsize-index-rebase.json';r=read_json(original);assert r['status']=='prepared'\nassert not (ROOT/'runtime/production-sync/v34-first-index-recovery-20261028').exists() and not (ROOT/'runtime/v34-first-index-generated-20261028').exists()\nr.update(status='stopped_before_git_mutation_live_publish_lock',actual_exit_code=1,observed_at_utc=utc_now(),failure='Exclusive production-publish.lock already existed before Git mutation; no rebase, push or primary adoption was reached.');write_json(original,r)\naudit=ROOT/'mod_nailong/data/production-checkpoint-failures/20261028-v34-first-live-lock-wait.json';assert not audit.exists();a={'machine_id':machine_id(),'started_at_utc':utc_now(),'pid':os.getpid(),'original_preflight_audit':original.relative_to(ROOT).as_posix(),'original_preflight_audit_sha256':file_sha256(original),'source_code':Path(__file__).read_text(encoding='utf-8'),'scope':'Wait bounded1200 seconds for verified live publication owner; no lock deletion or image replay. Then execute distinct unexecuted Git-only recovery draft.'};write_json(audit,a)\nlimit=time.monotonic()+1200;lock=ROOT/'runtime/production-publish.lock'\nwhile lock.exists():\n owner=read_json(lock);pid=owner.get('process_id',owner.get('pid'));assert isinstance(pid,int) and psutil.pid_exists(pid),'Stale/unknown lock requires inspection'\n a.update(last_wait_at_utc=utc_now(),last_live_lock=owner);write_json(audit,a);assert time.monotonic()<limit,'Live publication lock exceeded bounded wait';time.sleep(10)\ns=source.read_text(encoding='utf-8').replace('20261028-v34-first-fullsize-index-rebase.json','20261028-v34-first-fullsize-index-rebase-retry1.json');target=ROOT/'runtime/recover-v34-first-index-and-publication-retry1-20261028.py';assert not target.exists();compile(s,str(target),'exec');target.write_text(s,encoding='utf-8',newline='\\n');a.update(status='lock_released_distinct_recovery_started',released_at_utc=utc_now(),actual_recovery_source=target.relative_to(ROOT).as_posix(),actual_recovery_source_sha256=file_sha256(target));write_json(audit,a)\nexec(compile(s,str(target),'exec'),{'__file__':str(target),'__name__':'__main__'})\n",
+  "scope": "Wait bounded1200 seconds for verified live publication owner; no lock deletion or image replay. Then execute distinct unexecuted Git-only recovery draft.",
+  "last_wait_at_utc": "2026-10-28T06:54:02.522793+00:00",
+  "last_live_lock": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "process_id": 20980,
+    "acquired_at_utc": "2026-10-28T06:44:32.018032+00:00",
+    "token": "6fe7b30acf6c4b1ab32f3cf71a52715f",
+    "batch": "high131-checkpoint23-20261028",
+    "original_commit": null,
+    "final_commit": null
+  },
+  "status": "lock_released_distinct_recovery_started",
+  "released_at_utc": "2026-10-28T06:54:12.775315+00:00",
+  "actual_recovery_source": "runtime/recover-v34-first-index-and-publication-retry1-20261028.py",
+  "actual_recovery_source_sha256": "d78f5e1ec13e3c5ec316345607898985a2521a6309637f5dc913590a72954db1"
+}
