@@ -8,6 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 from runtime import high131_import as importer
+from runtime import high131_model_policy as model_policy
 from tools.common import ROOT, file_sha256, machine_id, write_json
 from mod_nailong.tools.art_contract import portrait_ready
 
@@ -37,7 +38,9 @@ class ImportFixture:
                      "generated_output_required": False, "original_assets_retained": True, "canonical_generated_row_must_not_be_fabricated": True,
                      "prior_visual_review": f"{exp}/nonperson-scope-review.json", "entries": []}
         for index in range(1, 132):
-            key = hashlib.sha256(f"source-{index}".encode()).hexdigest()
+            key = model_policy.NANO_KEY if index == 65 else hashlib.sha256(f"source-{index}".encode()).hexdigest()
+            if index == 65:
+                write_json(root / model_policy.AUTHORIZATION, json.loads((ROOT / model_policy.AUTHORIZATION).read_text(encoding="utf-8")))
             source_relative = f"runtime/references/{key}.png"
             source_path = root / source_relative
             cls.png(source_path, (12, 34, 56, 255 if index == 4 else 250))
@@ -55,7 +58,8 @@ class ImportFixture:
                                              "source_alpha_extrema": source_alpha, "observed_subject": "No person"})
                 continue
             derived = index in (1, 10)
-            stem = f"{key}-01"
+            stem = f"{key}-{'07' if index == 65 else '01'}"
+            attempt = "external-07" if index == 65 else "external-01"
             prompt = f"Complete actual synthetic request for source {index}\n"
             prompt_relative = f"{exp}/prompts/{stem}.txt"
             cls.text(root / prompt_relative, prompt)
@@ -85,10 +89,15 @@ class ImportFixture:
             task = {"task_id": f"task-test-{index}"}
             result = {"task_id": task["task_id"], "sha256": base_sha, "bytes": base_path.stat().st_size, "downloaded_at_utc": "2026-10-28T00:00:00+00:00", "png_signature_verified": True}
             execution = {"schema": "naiwa-evolink-high131-execution-v1", "machine_id": machine_id(), "index": index, "source_sha256": key,
-                         "attempt": "external-01", "status": "completed", "started_at_utc": "2026-10-27T23:00:00+00:00", "finished_at_utc": "2026-10-28T00:00:00+00:00", "exit_code": 0,
+                         "attempt": attempt, "status": "completed", "started_at_utc": "2026-10-27T23:00:00+00:00", "finished_at_utc": "2026-10-28T00:00:00+00:00", "exit_code": 0,
                          "arguments": ["evolink_image.py", "--prompt-file", prompt_relative, "--output", base_relative, "--model", "gpt-image-2.5-flare", "--size", "1:1", "--resolution", "2K", "--quality", "high", "--background", "transparent", "--image-url", source_url, "--image-url", scope["mascot_reference"]["url"]],
                          "prompt_file": prompt_relative, "prompt_sha256": file_sha256(root / prompt_relative), "ordered_input_sha256": [source_sha, mascot_sha],
                          "output": base_relative, "output_sha256": base_sha, "task_id": task["task_id"], "result": result}
+            if index == 65:
+                request = {"endpoint": "https://api.evolink.ai/v1/images/generations", "model": model_policy.NANO_MODEL,
+                           "prompt": prompt, "size": "1:1", "image_urls": [source_url, scope["mascot_reference"]["url"]], "quality": "2K"}
+                execution["arguments"][6] = model_policy.NANO_MODEL
+                del execution["arguments"][11:15]
             if index == 2:
                 target = root / "mod_nailong/assets/generated_fullsize/target.png"
                 cls.png(target, (9, 8, 7, 255))
@@ -121,7 +130,7 @@ class ImportFixture:
             if index == 8:
                 log_relative = f"{exp}/logs/{stem}-resume1.log"
                 cls.text(root / log_relative, "Manual recovery of the same task\n")
-                recovery = {"schema": "naiwa-evolink-high131-execution-recovery-v1", "machine_id": machine_id(), "source_sha256": key, "attempt": "external-01",
+                recovery = {"schema": "naiwa-evolink-high131-execution-recovery-v1", "machine_id": machine_id(), "source_sha256": key, "attempt": attempt,
                             "recorded_at_utc": "2026-10-28T00:02:00+00:00", "initial_execution": execution_relative, "initial_execution_sha256": file_sha256(root / execution_relative),
                             "initial_failure": "Polling failed without an output", "recovery_action": "Resume only the existing task ID with the original archived prompt/request/output path. No new generation POST, new task, changed prompt or changed ordered inputs.",
                             "task_id": task["task_id"], "same_task_id_verified": True, "new_generation_post_created": False, "resume_log": log_relative, "resume_log_sha256": file_sha256(root / log_relative),
@@ -131,7 +140,7 @@ class ImportFixture:
                 log_relative = f"{exp}/logs/{stem}-retrieve1.log"
                 cls.text(root / log_relative, "Existing task retrieved without another generation\n")
                 recovery = {"schema": "naiwa-evolink-high131-existing-task-retrieval-v1", "machine_id": machine_id(), "index": index, "source_sha256": key,
-                            "attempt": "external-01", "status": "completed", "started_at_utc": "2026-10-28T00:01:00+00:00",
+                            "attempt": attempt, "status": "completed", "started_at_utc": "2026-10-28T00:01:00+00:00",
                             "prior_execution": execution_relative, "prior_execution_sha256": file_sha256(root / execution_relative), "task_id": task["task_id"],
                             "request_sha256": sidecars["request"][1], "prompt_sha256": execution["prompt_sha256"], "new_generation_tasks_created": 0,
                             "command": ["python", "evolink_image.py", "--task-id", task["task_id"], "--output", base_relative], "log": log_relative,
@@ -149,7 +158,7 @@ class ImportFixture:
                                      "prompt": f"{exp}/outputs/{stem}.prompt.txt", "prompt_sha256": file_sha256(root / prompt_relative),
                                      "request": sidecars["request"][0], "request_sha256": sidecars["request"][1], "result": sidecars["result"][0], "result_sha256": sidecars["result"][1]}]}
             write_json(root / evidence_relative, evidence)
-            decision = {"source_sha256": key, "attempt": "external-01-alpha-repaired-bilinear" if derived else "external-01", "task_id": task["task_id"], "prompt_sha256": execution["prompt_sha256"],
+            decision = {"source_sha256": key, "attempt": "external-01-alpha-repaired-bilinear" if derived else attempt, "task_id": task["task_id"], "prompt_sha256": execution["prompt_sha256"],
                         "output": output_relative, "output_sha256": output_sha, "size": size, "mode": mode, "source_alpha_extrema": source_alpha, "returned_alpha_extrema": alpha,
                         "decision": "approved_for_production", "rgb_art_approved": True, "hair_features": {"policy": "hair-features-v1", "status": "approved"},
                         "collar_fit": {"policy": "collar-fit-v1", "status": "approved"}, "positive_observation": "Actual visible source features retained",
@@ -165,7 +174,7 @@ class ImportFixture:
             if index == 4:
                 decision["native_alpha_accepted"] = None
                 decision["visible_limitations"] = ["Fine details remain limited by the source"]
-            review = {"schema": "naiwa-evolink-experiment-manual-review-v1", "machine_id": machine_id(), "model": "gpt-image-2.5-flare", "reviewed_at_utc": "2026-10-28T01:00:00+00:00",
+            review = {"schema": "naiwa-evolink-experiment-manual-review-v1", "machine_id": machine_id(), "model": model_policy.NANO_MODEL if index == 65 else "gpt-image-2.5-flare", "reviewed_at_utc": "2026-10-28T01:00:00+00:00",
                       "reviewer": "Synthetic reviewer actually viewed exact original, full raw and alpha evidence", "review_evidence": evidence_relative,
                       "review_evidence_sha256": file_sha256(root / evidence_relative), "review_sheet": sheet_relative, "review_sheet_sha256": file_sha256(root / sheet_relative),
                       "production_imported": False, "production_import_pending": True, "entries": [decision]}
@@ -185,7 +194,7 @@ class ImportFixture:
             write_json(root / review_relative, review)
             progress["entries"].append({"index": index, "source_sha256": key, "source_assets": [asset], "status": "approved_pending_import", "current_decision": "approved_for_production",
                                         "current_review": {"attempt": decision["attempt"], "decision": "approved_for_production", "reviewed_at_utc": review["reviewed_at_utc"], "review": review_relative, "review_sha256": file_sha256(root / review_relative)},
-                                        "attempts_returned": [{"attempt": "external-01", "output": base_relative, "output_sha256": base_sha, "task_id": task["task_id"], "downloaded_at_utc": result["downloaded_at_utc"],
+                                        "attempts_returned": [{"attempt": attempt, "output": base_relative, "output_sha256": base_sha, "task_id": task["task_id"], "downloaded_at_utc": result["downloaded_at_utc"],
                                                               "result": sidecars["result"][0], "result_sha256": sidecars["result"][1], "task": sidecars["task"][0], "task_sha256": sidecars["task"][1],
                                                               "prompt": f"{exp}/outputs/{stem}.prompt.txt", "prompt_sha256": execution["prompt_sha256"], "request": sidecars["request"][0], "request_sha256": sidecars["request"][1], "reviews": []}]})
             approved["entries"].append({"index": index, "source_sha256": key, "source_assets": [asset], "approved_attempt": decision["attempt"], "source_output": output_relative,

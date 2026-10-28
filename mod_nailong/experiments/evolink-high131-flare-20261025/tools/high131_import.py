@@ -11,6 +11,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from runtime.high131_io import write_json
+from runtime import high131_model_policy as model_policy
 from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now
 
 EXPERIMENT = "mod_nailong/experiments/evolink-high131-flare-20261025"
@@ -300,20 +301,34 @@ def validate_person(root, support_root, scope, progress, approved, generated):
     recovery = validate_execution_recovery(root, execution_relative, execution, approved, base_attempt, result["task_id"], proof, result) if execution is not None else None
     require(result.get("task_id") == task.get("task_id") == proof["task_id"] and result.get("sha256") == proof["generation_output_sha256"], f"Task/result binding mismatch for {key}")
     require(result.get("bytes") == parent_path.stat().st_size and result.get("png_signature_verified") is True and result.get("downloaded_at_utc"), f"Result is incomplete for {key}")
-    require(request.get("endpoint") == "https://api.evolink.ai/v1/images/generations" and request.get("model") == "gpt-image-2.5-flare" and request.get("n") == 1, f"Wrong generation route for {key}")
+    require(request.get("endpoint") == "https://api.evolink.ai/v1/images/generations", f"Wrong generation endpoint for {key}")
+    model = request.get("model")
+    method = model_policy.production_method(root, key, base_attempt, model)
+    if model == "gpt-image-2.5-flare":
+        require(request.get("n") == 1, f"Wrong generation route for {key}")
+    else:
+        for field in ("background", "n", "resolution", "mask_url"):
+            require(request.get(field) is None, f"Nano request contains a GPT-only field for {key}: {field}")
+        require(request.get("quality") in {"1K", "2K", "4K"}, f"Nano quality mapping mismatch for {key}")
     require(request.get("prompt") == prompt, f"Actual prompt differs from request for {key}")
     if execution is not None:
         frozen_prompt = bound_file(root, execution.get("prompt_file"), execution["prompt_sha256"])
         require(frozen_prompt.read_bytes().decode("utf-8") == prompt, f"Frozen prompt differs from client sidecar for {key}")
         arguments = execution["arguments"]
         require(Path(arguments[0]).name == "evolink_image.py", f"Unexpected generator for {key}")
-        for option, field in (("--model", "model"), ("--size", "size"), ("--resolution", "resolution"), ("--quality", "quality"), ("--background", "background")):
-            require(option_values(arguments, option) == [request[field]], f"Executed route differs for {key}: {option}")
+        if model == "gpt-image-2.5-flare":
+            for option, field in (("--model", "model"), ("--size", "size"), ("--resolution", "resolution"), ("--quality", "quality"), ("--background", "background")):
+                require(option_values(arguments, option) == [request[field]], f"Executed route differs for {key}: {option}")
+        else:
+            require(option_values(arguments, "--model") == [model] and option_values(arguments, "--size") == [request["size"]], f"Executed Nano model/size mismatch for {key}")
+            require(option_values(arguments, "--resolution") == [request["quality"]], f"Executed Nano resolution mapping mismatch for {key}")
+            for option in ("--background", "--mask-url", "--quality"):
+                require(not option_values(arguments, option), f"Executed Nano request contains a GPT-only option for {key}: {option}")
     inputs = actual_inputs(root, support_root, scope, source, execution, request)
     alpha_repair = None
     if derived:
         require(decision.get("source_alpha_repair_performed") is True or (decision.get("rgb_unchanged") is True and decision.get("alpha_matches_resized_source") is True), f"Missing alpha derivation declaration for {key}")
-        require(decision.get("alpha_repair_method") == ALPHA_METHOD or review.get("model") in {METHOD + " + " + ALPHA_METHOD, "gpt-image-2.5-flare + " + ALPHA_METHOD}, f"Alpha method declaration mismatch for {key}")
+        require(decision.get("alpha_repair_method") == ALPHA_METHOD or review.get("model") in {method + " + " + ALPHA_METHOD, "gpt-image-2.5-flare + " + ALPHA_METHOD}, f"Alpha method declaration mismatch for {key}")
         require(decision.get("parent_output", proof["generation_output"]) == proof["generation_output"] and decision.get("parent_output_sha256") == proof["generation_output_sha256"] and decision.get("parent_task_id") == result["task_id"], f"Alpha parent mismatch for {key}")
         raw = None
         if review.get("alpha_repair_receipt") is not None:
@@ -354,7 +369,7 @@ def validate_person(root, support_root, scope, progress, approved, generated):
         require(decision.get("source_alpha_repair_performed") is False, f"Native RGBA is mislabeled as derived for {key}")
     return {
         "index": approved["index"], "source_sha256": key, "source_assets": source["source_assets"],
-        "attempt": approved["approved_attempt"], "task_id": result["task_id"], "method": METHOD + (" + " + ALPHA_METHOD if derived else ""),
+        "attempt": approved["approved_attempt"], "task_id": result["task_id"], "method": method + (" + " + ALPHA_METHOD if derived else ""),
         "prompt_file": execution["prompt_file"] if execution is not None else proof["prompt"], "prompt_sha256": proof["prompt_sha256"], "prompt": prompt,
         "request": proof["request"], "request_sha256": proof["request_sha256"], "result": proof["result"], "result_sha256": proof["result_sha256"],
         "execution": execution_relative, "execution_sha256": file_sha256(project_path(root, execution_relative)) if execution_relative else None,
@@ -458,11 +473,11 @@ def production_import_completed(root, key, review, row=None):
     try:
         if any(marker.get(field) != value for field, value in required.items()) or not portrait_ready(row):
             return False
-        if row.get("method", "").split(" + ")[0] != METHOD or file_sha256(project_path(root, row["generated_fullsize_image"])) != row["generated_fullsize_sha256"]:
+        journal = evidence_json(root, row["request_journal"])["attempts"][-1]
+        if row.get("method") != journal.get("method") or file_sha256(project_path(root, row["generated_fullsize_image"])) != row["generated_fullsize_sha256"]:
             return False
         if file_sha256(project_path(root, review["review"])) != review["review_sha256"]:
             return False
-        journal = evidence_json(root, row["request_journal"])["attempts"][-1]
         return (journal.get("external_task_id") == review.get("task_id") and journal.get("external_review") == review["review"]
                 and journal.get("external_review_sha256") == review["review_sha256"] and journal.get("status") == "approved"
                 and journal.get("fullsize_sha256") == row["generated_fullsize_sha256"] and journal.get("output_sha256") == row["image_sha256"])

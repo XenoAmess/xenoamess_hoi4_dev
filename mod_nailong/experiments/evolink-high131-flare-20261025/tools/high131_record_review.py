@@ -8,6 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from runtime import high131_model_policy as model_policy
 from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now, write_json
 
 EXPERIMENT = ROOT / "mod_nailong/experiments/evolink-high131-flare-20261025"
@@ -103,6 +104,9 @@ def main():
             raise RuntimeError("Derived attempt/evidence path mismatch")
     else:
         raise RuntimeError("Unsupported attempt form")
+    request_model = request.get("model", "gpt-image-2.5-flare")
+    if request_model != "gpt-image-2.5-flare":
+        model_policy.require_nano(ROOT, key, derived_attempt.group(1) if derived_attempt else attempt, request_model)
     if not isinstance(draft.get("reviewer"), str) or len(draft["reviewer"]) < 50:
         raise RuntimeError("Record the actual viewing and verification performed")
     for field in ("positive_observation", "alpha_decision", "visible_limitations"):
@@ -133,7 +137,7 @@ def main():
     body = {
         "schema": "naiwa-evolink-experiment-manual-review-v1",
         "machine_id": machine_id(),
-        "model": "gpt-image-2.5-flare",
+        "model": request_model,
         "reviewed_at_utc": utc_now(),
         "reviewer": draft["reviewer"],
         "review_evidence": relative_path(evidence_path),

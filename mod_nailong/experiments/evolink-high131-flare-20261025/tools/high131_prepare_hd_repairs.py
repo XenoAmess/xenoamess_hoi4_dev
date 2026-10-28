@@ -7,6 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from runtime import high131_hd_proof as hd_proof
+from runtime import high131_model_policy as model_policy
 from runtime.high131_io import write_json
 from runtime.high131_prepare_card_repairs import revise_undispatched_prompt
 from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now
@@ -91,7 +92,10 @@ def main():
         if not match or decision["decision"] != "rejected_for_production":
             raise RuntimeError(f"Index {index} needs an ordinary rejected external attempt")
         previous_number = int(match.group(1))
-        number = previous_number + 1
+        nano = model_policy.authorized_nano(ROOT, key, model_policy.NANO_ATTEMPT, model_policy.NANO_MODEL)
+        if nano and (index != 65 or args.mask or not args.note_details):
+            raise RuntimeError("Source-65 Nano Banana 2.1 requires four ordered inputs and does not support the GPT mask parameter")
+        number = 7 if nano else previous_number + 1
         attempt = f"external-{number:02}"
         digest = decision["output_sha256"]
         if review_reference.get("review_output_sha256") != digest:
@@ -242,7 +246,7 @@ def main():
             "prompt_file": prompt_path.relative_to(ROOT).as_posix(),
             "prompt_sha256": prompt_sha,
             "output": f"mod_nailong/experiments/evolink-high131-flare-20261025/outputs/{key}-{number:02}.png",
-            "model": route["model"],
+            "model": model_policy.NANO_MODEL if nano else route["model"],
             "background": "transparent",
             "size": route["size"],
             "resolution": route["resolution"],
@@ -258,6 +262,16 @@ def main():
             "image_urls": [target_url, route["image_urls"][0], route["image_urls"][1]],
             "ordered_input_sha256": [digest, source["converted_png_sha256"], scope["mascot_reference"]["sha256"]],
         }
+        if nano:
+            row["model_authorization"] = model_policy.AUTHORIZATION
+            row["protocol"] = {
+                "quality_from_resolution": "2K",
+                "background_parameter_sent": False,
+                "n_parameter_sent": False,
+                "gpt_resolution_parameter_sent": False,
+                "mask_parameter_sent": False,
+                "one_image_per_request": True,
+            }
         if detail is not None:
             row["ordered_inputs"].append("exact source-note crop enlarged by nearest-neighbor for visual reference only")
             row["image_urls"].append(detail_url)

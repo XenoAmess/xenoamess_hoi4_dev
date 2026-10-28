@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from runtime import high131_run_batch as batch
 from runtime import high131_hd_proof as hd_proof
+from runtime import high131_model_policy as model_policy
 
 ROOT = batch.ROOT
 EXPERIMENT = batch.EXPERIMENT
@@ -290,6 +291,8 @@ def validate_repair_binding(context, state):
     for name in ROUTE_FIELDS:
         if hd_edit and name == "background":
             continue
+        if name == "model" and model_policy.authorized_nano(batch.ROOT, state.get("key"), entry.get("attempt"), entry.get("model")):
+            continue
         if repair.get(name) != original.get(name) or entry.get(name) != original.get(name):
             raise batch.BatchError(
                 "repair_route_mismatch",
@@ -428,8 +431,12 @@ def repair_state(context, repair):
     output = batch.project_path(repair.get("output"), OUTPUTS_DIR)
     if prompt_path.stem != stem or output.stem != stem or output.suffix.lower() != ".png":
         raise batch.BatchError("invalid_input", f"Repair prompt/output must use the frozen {stem} stem")
-    previous_number = number - 1
-    previous_attempt = f"external-{previous_number:02}"
+    if model_policy.authorized_nano(batch.ROOT, key, repair.get("attempt"), repair.get("model")):
+        previous_number = 5
+        previous_attempt = "external-05"
+    else:
+        previous_number = number - 1
+        previous_attempt = f"external-{previous_number:02}"
     previous_prompt_path = batch.project_path(repair.get("previous_prompt"), OUTPUTS_DIR)
     review_path = batch.project_path(repair.get("review"), EXPERIMENT)
     mode = repair.get("repair_input_mode")
@@ -444,6 +451,7 @@ def repair_state(context, repair):
     }
     if mode is not None:
         entry.update({
+            "model": repair.get("model"),
             "image_urls": repair.get("image_urls"),
             "ordered_input_sha256": repair.get("ordered_input_sha256"),
             "background": repair.get("background"),
