@@ -1,0 +1,21 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-28T04:47:18.161403+00:00",
+  "actual_builtin_cell": "1754",
+  "actual_result": {
+    "windows": 36,
+    "requests": 36,
+    "PNG_returns": 35,
+    "moderation_refusals": 1,
+    "display_bytes": 278133,
+    "status": "safe_boundary"
+  },
+  "actual_store_finished_at_utc": "2026-10-28T04:43:46.944Z",
+  "original_cutoff_utc": "2026-10-28T04:43:42.164503+00:00",
+  "review_groups": 7,
+  "approved_outputs": 24,
+  "rejected_outputs": 4,
+  "last_source_observation_completed_at_utc": "2026-10-28T04:44:52.392050+00:00",
+  "scope": "Actual builtin collected terminal, owner released, old cutoff unchanged. Last observed source group8 queued after old generation end, so it is next-phase supply only. Attempted root claim after cutoff failed at phase precondition with no assignment/approval; phase counters and deadline unchanged. New finite owner and root phase do not replay old calls or reset per-source history. No stricter invoke-time cutoff or continuous root activity is claimed.",
+  "source_code": "import sys,json\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,utc_now,machine_id\nsource=ROOT/'runtime/prepare-low-v33-base-20261028.py';s=source.read_text(encoding='utf-8').replace('v32','OLD_VERSION').replace('v33','v34').replace('OLD_VERSION','v33')\ns=s.replace(\"state['completed_windows']==4\",\"state['completed_windows']==36\").replace(\"{'calls':4,'PNG_returns':3,'errors':1}\",\"{'calls':36,'PNG_returns':35,'errors':1}\")\ns=s.replace('cell1741','cell1754').replace('4calls3PNG1terminal_connection_error','36calls35PNG1moderation_refusal').replace('starts from prior builtin helpers; unexecuted draft to be patched and rebound before claim','uses byte-identical tested V33 builtin helper source functions')\ntarget=ROOT/'runtime/prepare-low-v34-base-20261028.py';assert not target.exists();compile(s,str(target),'exec');target.write_text(s,encoding='utf-8',newline='\\n');exec(compile(s,str(target),'exec'),{'__file__':str(target),'__name__':'__main__'})\nfrozen=ROOT/'docs/handoffs/2026-10-28-low-v34-helper-sources.json';parent=ROOT/'docs/handoffs/2026-10-28-low-v33-helper-sources.json';assert read_json(frozen)['sources']==read_json(parent)['sources']\ntemplate=ROOT/'runtime/start-root-review-v33-20261028-template.py';s=template.read_text(encoding='utf-8').replace('v32','OLD_VERSION').replace('v33','v34').replace('OLD_VERSION','v33').replace(\"old['completed_groups']==0\",\"old['completed_groups']==7\").replace('previous calls4','previous calls36')\nt=ROOT/'runtime/start-root-review-v34-20261028-template.py';assert not t.exists();compile(s,str(t),'exec');t.write_text(s,encoding='utf-8',newline='\\n')\nsource=ROOT/'runtime/resume-low-v33-actual-invocation-20261028.js';s=source.read_text(encoding='utf-8').replace('v33','v34');t=ROOT/'runtime/resume-low-v34-actual-invocation-20261028.js';assert not t.exists();t.write_text(s,encoding='utf-8',newline='\\n')\nauditp=ROOT/'mod_nailong/data/production-resumptions/20261028-v33-finite-phase-end.json';assert not auditp.exists()\nwrite_json(auditp,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'actual_builtin_cell':'1754','actual_result':{'windows':36,'requests':36,'PNG_returns':35,'moderation_refusals':1,'display_bytes':278133,'status':'safe_boundary'},'actual_store_finished_at_utc':'2026-10-28T04:43:46.944Z','original_cutoff_utc':'2026-10-28T04:43:42.164503+00:00','review_groups':7,'approved_outputs':24,'rejected_outputs':4,'last_source_observation_completed_at_utc':'2026-10-28T04:44:52.392050+00:00','scope':'Actual builtin collected terminal, owner released, old cutoff unchanged. Last observed source group8 queued after old generation end, so it is next-phase supply only. Attempted root claim after cutoff failed at phase precondition with no assignment/approval; phase counters and deadline unchanged. New finite owner and root phase do not replay old calls or reset per-source history. No stricter invoke-time cutoff or continuous root activity is claimed.','source_code':Path(__file__).read_text(encoding='utf-8')})\nprint(json.dumps({'frozen_sources_unchanged':True,'audit':auditp.relative_to(ROOT).as_posix()}))\n"
+}
