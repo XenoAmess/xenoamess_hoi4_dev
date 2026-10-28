@@ -475,6 +475,32 @@ class HDRepairPromptTests(unittest.TestCase):
         self.assertIn('correct right-edge tab', prompt)
         self.assertNotIn('POSE CORRECTION REQUIRED', prompt)
 
+    def test_source57_mask_limits_changes_to_current_note_defect(self):
+        prompt = self.prepare_mask_prompt(
+            57, '8f53dc26bec02a7f1a6a617afb171d49e221fad8227b265d94e7384ce17f4bd0', 'external-04', 'note-mask-57.json',
+        )
+        self.assertIn('one transparent rectangle covers only the two incorrect note-mark rows', prompt)
+        self.assertIn('bald-crowned person', prompt)
+        self.assertIn('not repeated uniform short dashes', prompt)
+        self.assertIn('correct right-edge tab', prompt)
+        self.assertNotIn('Remove the added crown hair', prompt)
+        self.assertNotIn('long metallic clip', prompt)
+
+    def test_source61_through64_prompts_preserve_source_specific_people(self):
+        cases = {
+            61: ('5a160dd1e47d2a76dbf153ecf70fed66d73f3dfe21958a284cec3f4971fbfc74', 'white-capped person'),
+            62: ('55e631c3aaedeef562ccccf0e31ebd55de03e25b719c3ac197e677f30ecb3675', 'headscarf'),
+            63: ('bccaf19c78294b83dc4ab613b8e019a23e77702e342deb376e787b16b0c12336', 'gray-haired person'),
+            64: ('f54980009f57be78a2a931afeb1aad7251b370a8c6ca677164a7198c584cbf7d', 'viewer-right person'),
+        }
+        for index, (key, person) in cases.items():
+            with self.subTest(index=index):
+                prompt = self.prepare_mask_prompt(index, key, 'external-04', f'note-mask-{index}.json')
+                self.assertIn('one transparent rectangle covers only the two incorrect note-mark rows', prompt)
+                self.assertIn(person, prompt)
+                self.assertIn('restore exactly TWO separated source-scale irregular gray-mark groups in EACH row', prompt)
+                self.assertIn('correct right-edge tab', prompt)
+
 
 if __name__ == "__main__":
     unittest.main()

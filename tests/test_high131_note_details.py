@@ -226,6 +226,58 @@ class NoteDetailInputTests(unittest.TestCase):
                 self.assertEqual(detail.size, (528, 720))
                 self.assertEqual(detail.mode, 'RGBA')
 
+    def test_source57_uses_separate_exact_derivative_manifest(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:
+            experiment = Path(directory)
+            shutil.copyfile(prepare_details.EXPERIMENT / 'scope.json', experiment / 'scope.json')
+            with patch.object(prepare_details, 'EXPERIMENT', experiment), patch.object(sys, 'argv', ['high131_prepare_note_details.py', '--index', '57']):
+                prepare_details.main()
+            manifest = read_json(experiment / 'note-detail-sources-57.json')
+            self.assertEqual(manifest['status'], 'pending_actual_derivative_review')
+            self.assertFalse((experiment / 'note-detail-sources.json').exists())
+            entry = manifest['entries'][0]
+            self.assertEqual(entry['index'], 57)
+            self.assertEqual(entry['source_sha256'], '8f53dc26bec02a7f1a6a617afb171d49e221fad8227b265d94e7384ce17f4bd0')
+            self.assertEqual(entry['source_png_sha256'], 'd3c019f195ffc26c36aaaa1a3bcb2d12e619f75a7bdeae3e9efa2231d3e9a578')
+            self.assertFalse(entry['derivative_reviewed'])
+            detail_path = ROOT / entry['path']
+            self.assertEqual(file_sha256(detail_path), entry['sha256'])
+            with Image.open(ROOT / entry['source_png']) as source, Image.open(detail_path) as detail:
+                expected = source.convert('RGBA').crop(entry['crop_rect']).resize(detail.size, Image.Resampling.NEAREST)
+                self.assertEqual(detail.convert('RGBA').tobytes(), expected.tobytes())
+                self.assertEqual(detail.size, (528, 720))
+                self.assertEqual(detail.mode, 'RGBA')
+
+    def test_source61_through64_exact_derivative_manifests(self):
+        keys = {
+            61: '5a160dd1e47d2a76dbf153ecf70fed66d73f3dfe21958a284cec3f4971fbfc74',
+            62: '55e631c3aaedeef562ccccf0e31ebd55de03e25b719c3ac197e677f30ecb3675',
+            63: 'bccaf19c78294b83dc4ab613b8e019a23e77702e342deb376e787b16b0c12336',
+            64: 'f54980009f57be78a2a931afeb1aad7251b370a8c6ca677164a7198c584cbf7d',
+        }
+        scope = read_json(prepare_details.EXPERIMENT / 'scope.json')
+        for index, key in keys.items():
+            with self.subTest(index=index), tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:
+                experiment = Path(directory)
+                shutil.copyfile(prepare_details.EXPERIMENT / 'scope.json', experiment / 'scope.json')
+                with patch.object(prepare_details, 'EXPERIMENT', experiment), patch.object(sys, 'argv', ['high131_prepare_note_details.py', '--index', str(index)]):
+                    prepare_details.main()
+                manifest = read_json(experiment / f'note-detail-sources-{index}.json')
+                self.assertEqual(manifest['status'], 'pending_actual_derivative_review')
+                entry = manifest['entries'][0]
+                source = next(row for row in scope['entries'] if row['index'] == index)
+                self.assertEqual(entry['index'], index)
+                self.assertEqual(entry['source_sha256'], key)
+                self.assertEqual(entry['source_png_sha256'], source['converted_png_sha256'])
+                self.assertFalse(entry['derivative_reviewed'])
+                detail_path = ROOT / entry['path']
+                self.assertEqual(file_sha256(detail_path), entry['sha256'])
+                with Image.open(ROOT / entry['source_png']) as original, Image.open(detail_path) as detail:
+                    expected = original.convert('RGBA').crop(entry['crop_rect']).resize(detail.size, Image.Resampling.NEAREST)
+                    self.assertEqual(detail.convert('RGBA').tobytes(), expected.tobytes())
+                    self.assertEqual(detail.size, (528, 720))
+                    self.assertEqual(detail.mode, 'RGBA')
+
 
 if __name__ == '__main__':
     unittest.main()

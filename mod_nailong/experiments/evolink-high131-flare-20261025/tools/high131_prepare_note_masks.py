@@ -24,6 +24,11 @@ MASK_RECTANGLES = {
     (52, 3): [[1140, 1070, 1560, 1145]],
     (53, 1): [[1200, 1050, 1620, 1180]],
     (54, 1): [[1100, 1040, 1600, 1125], [1100, 1135, 1600, 1210]],
+    (57, 1): [[1150, 1030, 1490, 1150]],
+    (61, 1): [[1050, 930, 1490, 1120]],
+    (62, 1): [[1120, 920, 1590, 1110]],
+    (63, 1): [[1050, 920, 1340, 1090]],
+    (64, 1): [[1130, 1030, 1590, 1260]],
 }
 
 
@@ -86,6 +91,16 @@ def main():
         contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the corrected viewer-right person, cap, hair and brows, clothing, collar, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row while retaining genuine native exterior transparency."
     elif args.index == 54:
         contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the viewer-right person, hair, clothing, collar, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row while retaining genuine native exterior transparency."
+    elif args.index == 57:
+        contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the bald-crowned person, side/back hair, brows, suit, shirt collar and tie, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row while retaining genuine native exterior transparency."
+    elif args.index == 61:
+        contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the white-capped person, dark brows, navy uniform and collar insignia, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row while retaining genuine native exterior transparency."
+    elif args.index == 62:
+        contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the headscarf, hair and brows, purple garment and pearl necklace, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row while retaining genuine native exterior transparency."
+    elif args.index == 63:
+        contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the gray-haired person, glasses, moustache and beard, suit, shirt collar and tie, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row while retaining genuine native exterior transparency."
+    elif args.index == 64:
+        contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the viewer-right person, short dark hair and brows, tunic, gold collar insignia and tie, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row while retaining genuine native exterior transparency."
     elif args.index == 65:
         contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves all other pixels, including the restored tab."
     else:
