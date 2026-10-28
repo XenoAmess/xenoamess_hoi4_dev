@@ -32,6 +32,7 @@ CHECKPOINT_STAGE_PATHS = (
     "tests/test_high131_note_details.py",
     "tests/test_high131_note_masks.py",
     "tests/test_high131_checkpoint.py",
+    "tests/test_high131_import.py",
     "tests/test_evolink_skill_client.py",
     "skills/evolink-imagegen/scripts/evolink_image.py",
     "tools/production_checkpoint_publish.py",
@@ -342,6 +343,7 @@ def main():
         "high131_source_detail.py",
         "high131_transport_split.py",
         "verify-production-commit.py",
+        "high131_import.py",
         "high131_checkpoint.py",
     ]
     for name in tools:
@@ -377,6 +379,7 @@ def main():
         "/tests/test_high131_note_details.py",
         "/tests/test_high131_note_masks.py",
         "/tests/test_high131_checkpoint.py",
+        "/tests/test_high131_import.py",
         "/tests/test_evolink_skill_client.py",
         "/skills/evolink-imagegen/scripts/evolink_image.py",
         "/tools/production_checkpoint_publish.py",
@@ -408,6 +411,7 @@ def main():
         "tests/test_high131_note_details.py",
         "tests/test_high131_note_masks.py",
         "tests/test_high131_checkpoint.py",
+    "tests/test_high131_import.py",
         "tests/test_evolink_skill_client.py",
         "skills/evolink-imagegen/scripts/evolink_image.py",
         "tools/production_checkpoint_publish.py",

@@ -15,7 +15,7 @@ def main():
     progress = read_json(EXPERIMENT / "progress.json")
     entries = []
     for source in progress["entries"]:
-        if source["status"] != "approved_pending_import":
+        if source["status"] not in {"approved_pending_import", "approved_imported"}:
             continue
         key = source["source_sha256"]
         current = source["attempts_returned"][-1]
@@ -56,8 +56,8 @@ def main():
             "review": review["review"],
             "review_sha256": review["review_sha256"],
             "reviewed_at_utc": review["reviewed_at_utc"],
-            "production_imported": False,
-            "production_import_pending": True,
+            "production_imported": source["status"] == "approved_imported",
+            "production_import_pending": source["status"] == "approved_pending_import",
         })
     entries.sort(key=lambda row: row["index"])
     target = EXPERIMENT / "approved-masters.json"

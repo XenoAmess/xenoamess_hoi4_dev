@@ -101,11 +101,14 @@ def main():
                 "reviewed_at_utc": body["reviewed_at_utc"],
                 "review": path.relative_to(ROOT).as_posix(),
                 "review_sha256": file_sha256(path),
+                "task_id": entry.get("task_id", entry.get("parent_task_id")),
                 "review_output": entry.get("output"),
                 "review_output_sha256": entry.get("output_sha256"),
                 "generated_fullsize_image": entry.get("generated_fullsize_image"),
                 "generated_fullsize_sha256": entry.get("generated_fullsize_sha256"),
             })
+    generated = read_json(ROOT / "mod_nailong/data/generated.json")["portraits"]
+    from runtime.high131_import import production_import_completed
     rows = []
     counts = collections.Counter()
     for source in scope["entries"]:
@@ -141,7 +144,7 @@ def main():
             if review is None:
                 status = "returned_pending_visual_review"
             elif decision == "approved_for_production":
-                status = "approved_pending_import"
+                status = "approved_imported" if production_import_completed(ROOT, key, review, generated.get(key)) else "approved_pending_import"
             else:
                 status = "rejected_latest_attempt"
         counts[status] += 1

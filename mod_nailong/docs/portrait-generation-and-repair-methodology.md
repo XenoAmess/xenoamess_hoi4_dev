@@ -186,6 +186,16 @@ cmd.exe /c python mod_nailong/tools/repair_outer_alpha.py --source runtime/refer
 5. 用 `master_archive.py sync-git` 和 `audit-git` 核对所有当前、历史及实验母版，再用 `verify-tree` 验证真实 Git blob；推送后还要匿名读回固定 commit 的 PNG 字节。
 6. 只提交本任务文件，保留其他来源、旧回执和未决状态，不为提高完成数而误批。
 
+### HIGH131 的外部生成正式导入门禁
+
+HIGH131 的 EvoLink 实验批准不能直接当成正式生产记录。先用 `cmd.exe /c python runtime/high131_import.py --check` 校验 127 个不同人物来源及 4 个登记的非人物例外；任何未决来源、错误 SHA、缺失输入、错误 task/result 或缺失 hair-features-v1、collar-fit-v1、可见 Alpha 人工批准都会在正式写入前拒绝。当前 123/127 的检查失败是真实门禁结果，不是导入成功。
+
+只有全部门禁通过后，才可在干净的隔离 Git 工作区运行 `cmd.exe /c python runtime/high131_import.py --apply --worktree <隔离工作区> --batch <批次> --readback <父提交完整读回.json>`。`--readback` 必须包含父提交的逐图原始字节证明和对应 Git blob，不能用只有总数的摘要代替。工具复用 `portraits.py` 的技术预览和高清母版保存，保留真实 EvoLink method、完整 prompt、实际有序输入、task、result、execution 和人工审图链，追加外部 attempt，不重置旧拒绝或累计重试次数。普通原生 RGBA、完全不透明的 RGB 返回与 `source-alpha-resize-bilinear-rgb-unchanged-v1` 派生分别记录，不能把 Alpha 派生说成一次生成。
+
+早期记录可能没有 execution 文件或对照页字段，只可从仍然完整的 request/prompt/task/result/evidence 核验，并在新日志中明确标记缺失边界。已有 task 的 `retrieve`/`resume` 回执必须证明同 task 和未创建新任务；只有同 task 结果而没有恢复回执的旧记录须标为 `same_task_result_without_retrieval_receipt`，不得声称已证明零新增调用。旧审图省略的字段不能用猜测补齐，必须由真实回执、父 SHA 和实际像素继续验证；没有独立 Alpha receipt 的旧记录只能在源图、父图、输出和直接像素派生证明完整时接受，并明确 `receipt=null`。
+
+四个非人物例外保留原图且不伪造生成行。导入器不把自身当作美术审批，也不完成构建、完整发布或 HOI4 实机验收；后续构建须显式处理这些原图例外。`approved_imported` 只在当前母版、审批、请求日志和正式记录相互匹配时生成；`--check`、实验批准或 preview 均不能冒充上述完成条件。
+
 常用验证命令：
 
 ```text
