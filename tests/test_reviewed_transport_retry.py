@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from tools.common import read_json,write_json,file_sha256,machine_id
-from tools.prepare_reviewed_transport_retry import prepare_transport_retry,CONNECTION_ERROR
+from tools.prepare_reviewed_transport_retry import prepare_transport_retry,CONNECTION_ERROR,NETWORK_ERROR
 
 class ReviewedTransportRetryTests(unittest.TestCase):
  def setUp(self):
@@ -54,5 +54,38 @@ class ReviewedTransportRetryTests(unittest.TestCase):
    j=read_json(self.journal);j['attempts'][-1][field]=1;write_json(self.journal,j)
    with self.assertRaises(AssertionError):self.run_prepare()
    del j['attempts'][-1][field];write_json(self.journal,j)
+ def test_explicit_returned_network_error_is_also_terminal_transport(self):
+  j=read_json(self.journal);j['attempts'][-1]['error']=NETWORK_ERROR+'\n';write_json(self.journal,j)
+  self.error.write_text(NETWORK_ERROR+'\n',encoding='utf-8',newline='\n')
+  d=read_json(self.dispatch);d['actual_error_sha256']=file_sha256(self.error);write_json(self.dispatch,d)
+  self.config['failed_dispatch_sha256']=file_sha256(self.dispatch)
+  self.assertEqual(self.run_prepare()['prepared'],1)
+ def make_original_case(self):
+  self.actual.update(references=self.refs[1:],original=self.refs[1]);write_json(self.snapshot,self.actual)
+  self.config['ordered_viewed_inputs']=self.config['ordered_viewed_inputs'][1:]
+  self.config['actual_request_snapshot_sha256']=file_sha256(self.snapshot)
+  d=read_json(self.dispatch);d.update(actual_request_snapshot_sha256=file_sha256(self.snapshot),input_sha256=self.shas[1:]);write_json(self.dispatch,d)
+  self.config['failed_dispatch_sha256']=file_sha256(self.dispatch)
+  j=read_json(self.journal);a=j['attempts'][-1];a.update(edit_existing=False,inputs=[{'role':'original source portrait','raw_sha256':self.key,'converted_png_sha256':self.shas[1]},{'role':'user mascot reference','path':self.reference.relative_to(self.root).as_posix(),'sha256':self.shas[2]}]);a['actual_request_verification'].update(actual_request_snapshot_sha256=file_sha256(self.snapshot),input_sha256=self.shas[1:]);write_json(self.journal,j)
+  write_json(self.root/'mod_nailong/data/generated.json',{'portraits':{}})
+ def test_unreturned_original_can_retry_exactly_once_without_an_edit_target(self):
+  self.make_original_case();before=copy.deepcopy(read_json(self.journal)['attempts'][-1])
+  self.assertEqual(self.run_prepare()['prepared'],1)
+  self.assertEqual(read_json(self.journal)['attempts'][-2],before)
+  self.assertEqual(read_json(self.root/'runtime/production-transport-jobs.json'),[self.actual])
+ def test_original_retry_cannot_replace_a_previous_return_or_change_source_identity(self):
+  for alteration in ('returned','source'):
+   with self.subTest(alteration=alteration):
+    self.make_original_case();j=read_json(self.journal)
+    if alteration=='returned':j['attempts'][0]['fullsize_sha256']='b'*64
+    else:j['attempts'][-1]['inputs'][0]['raw_sha256']='b'*64
+    write_json(self.journal,j)
+    with self.assertRaises(AssertionError):self.run_prepare()
+    j['attempts'][0].pop('fullsize_sha256',None);write_json(self.journal,j)
+ def test_other_or_ambiguous_errors_are_not_transport_retry_authorization(self):
+  for error in ['request timed out; outcome unknown','image generation failed: server error','moderation_blocked '+NETWORK_ERROR]:
+   with self.subTest(error=error):
+    j=read_json(self.journal);j['attempts'][-1]['error']=error;write_json(self.journal,j)
+    with self.assertRaises(AssertionError):self.run_prepare()
 
 if __name__=='__main__':unittest.main()

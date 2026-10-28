@@ -1,0 +1,23 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-28T23:03:18.202Z",
+  "tag": "rollingb278",
+  "actual_failure_receipt": {
+    "chunk_id": "e54a43",
+    "wall_time_seconds": 0.3199215,
+    "exit_code": 1,
+    "original_token_count": 496,
+    "output": "Traceback (most recent call last):\r\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\root-review-slot-b-finalize-v38-20261025.py\", line 17, in <module>\r\n    write_json(target,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'operator':'Codex root in existing b slot; b agent stopped','report':done['report'],'report_sha256':file_sha256(report),'counts':body['counts'],'slot_completion':receipt.relative_to(ROOT).as_posix(),'slot_completion_sha256':file_sha256(receipt),'actual_review_config':read_json(config),'config_sha256':file_sha256(config),'independent_ordered_builtin_binding':read_json(proof),'binding_proof_sha256':file_sha256(proof),'targeted_actual_pixel_details':read_json(detail) if detail.exists() else [],'finite_phase_after_completion':phase,'finalizer_source':{'path':Path(__file__).relative_to(ROOT).as_posix(),'sha256':file_sha256(Path(__file__)),'source':Path(__file__).read_text(encoding='utf-8')},'scope':'Actual root observations/decisions, no automatic approval or new slot. Stage/global/complete already succeeded once. Sole running builtin producer applies decisions between imports; all original/raw PNGs remain unchanged.'})\r\n                                                                                                                                                                                                                                                                                                                                                                                                                                                     ~~~~~~~~~^^^^^^^\r\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\common.py\", line 129, in read_json\r\n    with _open_json_reader(path) as stream:\r\n         ~~~~~~~~~~~~~~~~~^^^^^^\r\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\common.py\", line 111, in _open_json_reader\r\n    raise ctypes.WinError(ctypes.get_last_error())\r\nFileNotFoundError: [WinError 2] 系统找不到指定的文件。\r\n"
+  },
+  "successful_prior_steps": [
+    "review staged",
+    "global art inbox queued",
+    "slot completed and available"
+  ],
+  "phase_at_failure": {
+    "completed_groups": 17,
+    "current_tag": "rollingb278",
+    "current_kind": "portrait"
+  },
+  "scope": "Old finalizer retained the original proof folder after the independent verifier began using an explicitly preserved v2 proof folder. Failure occurred while building the audit before any phase write; no completed-group increment or handover file persisted. Keep staged decisions and slot receipt; resume only failed finalizer with actual v2 proof path. No image replay or repeat staging."
+}

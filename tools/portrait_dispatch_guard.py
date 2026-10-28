@@ -1,5 +1,5 @@
 """Defer known same-person variants after a service refusal, retaining distinct people."""
-import sys,json
+import sys,json,re
 from functools import lru_cache
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
@@ -10,7 +10,7 @@ from tools.common import ROOT,read_json,write_json,utc_now,machine_id
 @lru_cache(maxsize=16384)
 def surname(path):
  stem=Path(path).stem.lower()
- if 'generic' in stem:return None
+ if 'generic' in stem or re.search(r'(?:^|_)ace_[fm]_\d+$',stem):return None
  parts=stem.split('_')
  # Outfit/role suffixes are not surnames. Treating every *_civil image
  # as one person wrongly held Calles after a different Avila portrait.

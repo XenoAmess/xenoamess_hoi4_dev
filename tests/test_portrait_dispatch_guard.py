@@ -24,6 +24,20 @@ class PortraitDispatchGuardTest(unittest.TestCase):
         first=entry('portrait_USA_william_halsey_jr_small.dds')
         self.assertEqual('halsey_jr',surname(first['paths'][0]))
         self.assertFalse(same_service_family('first','other',first,entry('portrait_USA_douglas_mcarthur_small.dds')))
+    def test_unnamed_ace_gender_and_index_are_not_person_names(self):
+        male=entry('gfx/aces/DEN_ace_m_0.dds')
+        other=entry('gfx/aces/southamerican_ace_m_0.dds')
+        self.assertIsNone(surname(male['paths'][0]))
+        self.assertIsNone(surname(other['paths'][0]))
+        self.assertFalse(same_service_family('one','two',male,other))
+        self.assertFalse(same_service_family('one','two',entry('western_european_ace_f_0.dds'),entry('eastern_european_ace_f_1.dds')))
+    def test_actual_identity_of_unnamed_aces_and_named_ace_variants_stays_held(self):
+        first=entry('DEN_ace_m_0.dds','real_native_character')
+        other=entry('southamerican_ace_m_0.dds','real_native_character')
+        self.assertTrue(same_service_family('one','two',first,other))
+        self.assertTrue(same_service_family('same','same',entry('ace_m_0.dds'),entry('ace_m_1.dds')))
+        self.assertEqual(surname('ace_hans_philipp.dds'),'philipp')
+        self.assertTrue(same_service_family('one','two',entry('ace_hans_philipp.dds'),entry('portrait_hans_philipp_small.dds')))
     def test_ordinals_and_titles_are_not_person_names_by_themselves(self):
         wilhelm=entry('portrait_GER_wilhelm_ii.dds')
         self.assertFalse(same_service_family('one','two',wilhelm,entry('portrait_BEL_leopold_ii.dds')))

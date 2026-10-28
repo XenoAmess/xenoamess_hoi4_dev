@@ -1,4 +1,4 @@
-"""Prepare one reviewed exact retry after a definite connection error, once only."""
+"""Prepare one reviewed exact retry after a definite transport error, once only."""
 import argparse
 import copy
 import hashlib
@@ -11,6 +11,8 @@ from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_no
 from mod_nailong.tools.prepare_ready_art_reviews import service_held_keys
 
 CONNECTION_ERROR='image generation failed: connection failed: error sending request'
+NETWORK_ERROR='image generation failed: network error: error sending request'
+TERMINAL_TRANSPORT_ERRORS=frozenset({CONNECTION_ERROR,NETWORK_ERROR})
 
 def prepare_transport_retry(root,batch,index,config):
     root=Path(root)
@@ -22,7 +24,7 @@ def prepare_transport_retry(root,batch,index,config):
     journal_path=root/f'mod_nailong/data/generation-requests/{key}.json'
     journal=read_json(journal_path);last=journal['attempts'][-1]
     assert last['status']=='failed' and last['number']==config['failed_attempt_number']
-    assert last['error'].strip()==CONNECTION_ERROR,'Only the explicit returned connection error is accepted'
+    assert last['error'].strip() in TERMINAL_TRANSPORT_ERRORS,'Only the two explicit returned transport errors are accepted'
     assert not any(a.get('transport_retry_of_attempt') for a in journal['attempts']),'At most one reviewed transport retry; never automatic loops'
     assert not last.get('retry_of_attempt'),'Service-refused request chains retain their cooldown path'
     priority=read_json(root/'mod_nailong/data/production-priority.json')['sources']
@@ -56,9 +58,16 @@ def prepare_transport_retry(root,batch,index,config):
     assert [v['path'] for v in viewed]==actual['references']
     assert all(v['actually_viewed'] is True for v in viewed)
     assert [file_sha256(Path(p)) for p in actual['references']]==[v['sha256'] for v in viewed]==expected==ledger['input_sha256']==verification['input_sha256']
-    row=read_json(root/'mod_nailong/data/generated.json')['portraits'][key]
-    assert row['review']=='rejected' and row['generated_fullsize_sha256']==expected[0]
-    assert file_sha256(root/row['generated_fullsize_image'])==expected[0]
+    row=read_json(root/'mod_nailong/data/generated.json')['portraits'].get(key)
+    if last.get('edit_existing',True):
+        assert row and row['review']=='rejected' and row['generated_fullsize_sha256']==expected[0]
+        assert file_sha256(root/row['generated_fullsize_image'])==expected[0]
+    else:
+        assert row is None,'Original transport retry must not replace a returned image'
+        assert not any(a.get('fullsize_sha256') or a.get('fullsize_image') for a in journal['attempts'])
+        assert len(expected)==2 and last['inputs'][0]['role']=='original source portrait'
+        assert last['inputs'][0]['raw_sha256']==key
+        assert Path(actual['references'][0]).resolve()==Path(actual['original']).resolve()
     plan_path=root/'runtime/after128-continuous-plan.json';plan=read_json(plan_path)
     assert len(plan['batches'])==index
     output=root/f'runtime/production-{batch}-jobs.json';assert not output.exists()
