@@ -194,7 +194,7 @@ HIGH131 的 EvoLink 实验批准不能直接当成正式生产记录。先用 `c
 
 早期记录可能没有 execution 文件或对照页字段，只可从仍然完整的 request/prompt/task/result/evidence 核验，并在新日志中明确标记缺失边界。已有 task 的 `retrieve`/`resume` 回执必须证明同 task 和未创建新任务；只有同 task 结果而没有恢复回执的旧记录须标为 `same_task_result_without_retrieval_receipt`，不得声称已证明零新增调用。旧审图省略的字段不能用猜测补齐，必须由真实回执、父 SHA 和实际像素继续验证；没有独立 Alpha receipt 的旧记录只能在源图、父图、输出和直接像素派生证明完整时接受，并明确 `receipt=null`。
 
-四个非人物例外保留原图且不伪造生成行。导入器不把自身当作美术审批，也不完成构建、完整发布或 HOI4 实机验收；后续构建须显式处理这些原图例外。`approved_imported` 只在当前母版、审批、请求日志和正式记录相互匹配时生成；`--check`、实验批准或 preview 均不能冒充上述完成条件。
+四个非人物例外保留原图且不伪造生成行。`build_release.py` 按 `runtime/source-index.json` 中的真实原版文件及 catalog SHA 保留其原始字节，保持既有 DLC 路径优先级，不重编码或缩小，并在 manifest 登记例外及决定回执。仅含这些例外的 preview 必须显式标记为不完整验证包，不能冒充正式交付或实机验收。导入器不把自身当作美术审批，也不完成构建、完整发布或 HOI4 实机验收；`approved_imported` 只在当前母版、审批、请求日志和正式记录相互匹配时生成；`--check`、实验批准或 preview 均不能冒充上述完成条件。
 
 常用验证命令：
 

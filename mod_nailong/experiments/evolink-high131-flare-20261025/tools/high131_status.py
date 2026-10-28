@@ -16,8 +16,10 @@ def latest_attempt_review(reviews):
     return ordered[-1] if ordered else None
 
 
-def load_nonperson_exceptions(scope):
-    path = EXPERIMENT / "nonperson-scope-decision.json"
+def load_nonperson_exceptions(scope, root=None):
+    root = root or ROOT
+    experiment = root / "mod_nailong/experiments/evolink-high131-flare-20261025"
+    path = experiment / "nonperson-scope-decision.json"
     if not path.exists():
         return {}, None
     body = read_json(path)
@@ -29,8 +31,8 @@ def load_nonperson_exceptions(scope):
     assert body["generated_output_required"] is False
     assert body["original_assets_retained"] is True
     assert body["canonical_generated_row_must_not_be_fabricated"] is True
-    prior = ROOT / body["prior_visual_review"]
-    assert prior.parent == EXPERIMENT
+    prior = root / body["prior_visual_review"]
+    assert prior.parent == experiment
     prior_entries = read_json(prior)["entries"]
     scope_by_key = {row["source_sha256"]: row for row in scope["entries"]}
     exceptions = {}
@@ -43,13 +45,13 @@ def load_nonperson_exceptions(scope):
         assert source["source_png"] == row["source_png"]
         assert source["source_alpha_extrema"] == row["source_alpha_extrema"]
         assert source["converted_png_sha256"] == row["source_png_sha256"]
-        assert file_sha256(ROOT / row["source_png"]) == row["source_png_sha256"]
+        assert file_sha256(root / row["source_png"]) == row["source_png_sha256"]
         assert row["observed_subject"]
         assert key not in exceptions
         exceptions[key] = row
     assert {row["source_sha256"] for row in prior_entries} == set(exceptions)
     assert len(exceptions) == 4
-    return exceptions, {"path": path.relative_to(ROOT).as_posix(), "sha256": file_sha256(path)}
+    return exceptions, {"path": path.relative_to(root).as_posix(), "sha256": file_sha256(path)}
 
 
 def main():

@@ -1,4 +1,4 @@
-"""Build a deterministic, image-only HOI4 mod from reviewed generated art."""
+"""Build a deterministic, image-only HOI4 mod from reviewed art and registered original non-person exceptions."""
 from __future__ import annotations
 
 import argparse
@@ -37,15 +37,36 @@ def validation_sample_keys(catalog, generated, count, packages=None):
     return sorted({a['source_sha256'] for a in profile_assets(catalog,packages).values()
                    if ready(generated.get(a['source_sha256'],{}))})[:count]
 
+def nonperson_scope():
+    from runtime.high131_status import load_nonperson_exceptions
+    scope=read_json(MOD/'experiments/evolink-high131-flare-20261025/scope.json')
+    return load_nonperson_exceptions(scope,root=ROOT)
+
+
+def original_nonperson_bytes(asset):
+    source=read_json(ROOT/'runtime/source-index.json').get(asset['id'])
+    if source is None:raise SystemExit(f'Original non-person asset is absent from source-index: {asset["id"]}')
+    if source.get('member'):
+        with zipfile.ZipFile(source['path']) as archive:raw=archive.read(source['member'])
+    else:raw=Path(source['path']).read_bytes()
+    if sha256(raw)!=asset['source_sha256']:raise SystemExit(f'Original non-person asset SHA256 mismatch: {asset["id"]}')
+    with Image.open(io.BytesIO(raw)) as image:
+        if list(image.size)!=asset['size']:raise SystemExit(f'Original non-person asset size mismatch: {asset["id"]}')
+    return raw
+
+
 def payload(preview=False, packages=None, validation_keys=None, sink=None):
     catalog=read_json(MOD/"data/catalog.json")
     generated=read_json(MOD/"data/generated.json")["portraits"]
-    missing=[a for a in catalog["assets"] if a["source_sha256"] not in generated or not ready(generated[a["source_sha256"]])]
+    exceptions,exception_receipt=nonperson_scope()
+    for key in exceptions:
+        if key in generated:raise SystemExit(f'Non-person exception must not have a generated row: {key}')
+    missing=[a for a in catalog["assets"] if a["source_sha256"] not in exceptions and (a["source_sha256"] not in generated or not ready(generated[a["source_sha256"]]))]
     if not preview and missing:
         raise SystemExit(f"RELEASE BLOCKED: {len(missing)} of {len(catalog['assets'])} source textures not generated/reviewed; use --preview for an explicitly incomplete development package")
     if not preview and catalog["unresolved_references"]:
         raise SystemExit(f"RELEASE BLOCKED: {len(catalog['unresolved_references'])} unresolved baseline character references need analysis")
-    if not generated:raise SystemExit("No generated art available")
+    if not generated and not exceptions:raise SystemExit("No generated art available")
     # Product build profile is explicit. Higher numbered DLC wins shared texture paths;
     # preserve every distinct variant as a generation input, never flatten the inventory.
     selected=profile_assets(catalog,packages)
@@ -61,6 +82,7 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None):
     qualification=read_json(qualification_file) if qualification_file.exists() else {'status':'unqualified'}
     if not preview and qualification.get('status')!='qualified_for_release':
         raise SystemExit('RELEASE BLOCKED: fullsize portrait display compatibility remains unqualified; actual GUI overflow must be resolved and evidenced before release')
+    originals={a['id']:original_nonperson_bytes(a) for a in selected.values() if a['source_sha256'] in exceptions}
     files={}
     file_records=[]
     def emit(name,data):
@@ -69,13 +91,20 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None):
         else:sink(name,data)
     # Lossless fullsize DDS can be much larger than the old native-size preview.
     # Keep routine checks within the already observed bounded-write allowance.
-    estimate=sum(4*generated[a['source_sha256']]['generated_fullsize_size'][0]*generated[a['source_sha256']]['generated_fullsize_size'][1]+128 for a in selected.values() if a['source_sha256'] in generated and ready(generated[a['source_sha256']]))
+    estimate=sum(4*generated[a['source_sha256']]['generated_fullsize_size'][0]*generated[a['source_sha256']]['generated_fullsize_size'][1]+128 for a in selected.values() if a['source_sha256'] in generated and ready(generated[a['source_sha256']]))+sum(len(raw) for raw in originals.values())
     if estimate>256*1024*1024:
         raise SystemExit('Fullsize staging exceeds the bounded 256 MiB check/export allowance; use an explicit preview validation subset for routine checks. A full export needs shared-policy heavy-write admission before increasing this bound.')
     bindings=[]
     profile_missing=[]
     for asset in sorted(selected.values(),key=lambda a:a['path']):
         key=asset["source_sha256"]
+        path=PurePosixPath(asset["path"])
+        if path.is_absolute() or ".." in path.parts or not path.as_posix().startswith("gfx/"):raise SystemExit("Invalid virtual texture path")
+        if key in exceptions:
+            data=originals[asset['id']]
+            emit(path.as_posix(),data)
+            bindings.append({'path':path.as_posix(),'package':asset['package'],'source_sha256':key,'sha256':sha256(data),'size':asset['size'],'original_game_size':asset['size'],'fullsize_master_sha256':None,'resized':False,'resolution_policy':'original-game-file-bytes-preserved','preserved_original_nonperson_exception':True})
+            continue
         if key not in generated or not ready(generated[key]):
             profile_missing.append(asset["id"])
             continue
@@ -83,8 +112,6 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None):
         if not row.get('generated_fullsize_image') or not row.get('generated_fullsize_sha256'):raise SystemExit('Missing original fullsize master; no silent low-resolution fallback')
         source=ROOT/row['generated_fullsize_image']
         if file_sha256(source)!=row['generated_fullsize_sha256']:raise SystemExit(f'Fullsize master checksum mismatch: {source}')
-        path=PurePosixPath(asset["path"])
-        if path.is_absolute() or ".." in path.parts or not path.as_posix().startswith("gfx/"):raise SystemExit("Invalid virtual texture path")
         stream=io.BytesIO()
         with Image.open(source) as image:
             published_size=list(image.size)
@@ -103,7 +130,7 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None):
     if "remote_file_id" in descriptor or "replace_path" in descriptor:raise SystemExit("Invalid descriptor")
     if preview:descriptor=descriptor.replace("(Development)","(INCOMPLETE PREVIEW)")
     emit('descriptor.mod',descriptor.encode('utf-8'))
-    return files,{"schema":"naiwa-release-manifest-v2","archive_filename":"gangnailongxin.zip","preview":preview,"art_complete":not missing,"game_version":catalog["game_version"],"catalog_sha256":file_sha256(MOD/"data/catalog.json"),"source_textures":len(catalog["assets"]),"generated_unique_images":len(generated),"selected_profile":sorted(packages) if packages is not None else "all-installed-catalog-packages; highest DLC numeric ID on shared paths","unresolved_baseline_references":len(catalog["unresolved_references"]),"profile_missing_texture_count":len(profile_missing),'texture_resolution_policy':'original fullsize master; no pre-downscale','validation_source_keys':sorted(validation_keys) if validation_keys is not None else None,'validation_scope':'selected development subset only' if validation_keys is not None else 'entire selected profile',"bindings":bindings,"files":sorted(file_records,key=lambda r:r['path'])}
+    return files,{"schema":"naiwa-release-manifest-v2","archive_filename":"gangnailongxin.zip","preview":preview,"art_complete":not missing,"game_version":catalog["game_version"],"catalog_sha256":file_sha256(MOD/"data/catalog.json"),"source_textures":len(catalog["assets"]),"generated_unique_images":len(generated),"selected_profile":sorted(packages) if packages is not None else "all-installed-catalog-packages; highest DLC numeric ID on shared paths","unresolved_baseline_references":len(catalog["unresolved_references"]),"profile_missing_texture_count":len(profile_missing),'texture_resolution_policy':'original fullsize master; no pre-downscale; registered non-person exceptions preserve original file bytes','validation_source_keys':sorted(validation_keys) if validation_keys is not None else None,'validation_scope':'selected development subset only' if validation_keys is not None else 'entire selected profile',"preserved_original_nonperson_exceptions":sorted(row['index'] for row in exceptions.values()),"nonperson_scope_decision":exception_receipt,"bindings":bindings,"files":sorted(file_records,key=lambda r:r['path'])}
 
 def build(output,preview=False,packages=None,validation_keys=None):
     if output.exists():raise SystemExit("Output already exists; choose a fresh --output path")
