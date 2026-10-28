@@ -76,8 +76,12 @@ def write_json(path: Path, value) -> None:
         try:
             _replace_json(temporary, path)
             break
-        except PermissionError:
-            if delay is None:
+        except OSError as error:
+            # ReplaceFileW error1175 leaves both original names intact, so
+            # retrying this same candidate is safe (unlike1176/1177).
+            # https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-replacefilew
+            retryable = isinstance(error, PermissionError) or getattr(error, 'winerror', None) == 1175
+            if not retryable or delay is None:
                 raise
             time.sleep(delay)
 

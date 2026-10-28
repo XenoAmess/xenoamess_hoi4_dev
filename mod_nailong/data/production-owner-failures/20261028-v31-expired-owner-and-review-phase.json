@@ -1,0 +1,38 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-28T01:30:13.645477+00:00",
+  "actual_failed_cell": "1731 terminal error collected",
+  "stopped_owner": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v31",
+    "next_index": 1346,
+    "after_window": "resume-20261025-large-logical-queue-v31-window1345-network-reconciled",
+    "status": "stopped_at_safe_boundary",
+    "created_at_utc": "2026-10-27T18:32:09.821546+00:00",
+    "completed_windows": 1,
+    "completed_source_requests": 1,
+    "updated_at_utc": "2026-10-28T01:27:24.370406+00:00",
+    "last_local_reconciliation": "mod_nailong/data/production-owner-failures/20261028-v31-window1345-network-reconciliation.json",
+    "reason": "expired_original_cutoff_after_terminal_connection_error_accounted_once",
+    "stopped_at_utc": "2026-10-28T01:30:12.523614+00:00"
+  },
+  "root_phase": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v31",
+    "operator": "Codex root in existing b slot",
+    "created_at_utc": "2026-10-28T01:17:12.045346+00:00",
+    "deadline_utc": "2026-10-27T20:32:09.821546+00:00",
+    "max_groups": 16,
+    "completed_groups": 0,
+    "current_tag": null,
+    "current_kind": null,
+    "completed": [],
+    "previous_phase": "runtime/root-b-review-v30-phase.json",
+    "previous_phase_sha256": "092c798e31bc7e6aa94b29e7f272d43688f941000f46267e9fe1d73a74264c98",
+    "previous_end": "runtime/root-b-review-v30-ended.json",
+    "previous_end_sha256": "609c38333953ab8ee12b12800bc6b52bf92bbc8b54d516c757f94967fa2f8900",
+    "scope": "Same root, single existing b slot, new finite phase only after actual prior generation safe end. No spawned agent, successor agent or new review slot."
+  },
+  "scope": "Actual request failed18:33:32UTC and execution stopped18:33:42UTC. Later root startup at01:17UTC accepted stale durable running metadata and created an already-expired review phase; it claimed no output review. Original source allocation contains no image call and remains pending manual observation. Expired metadata did not prove a live producer. Error was accounted exactly once, preserving original stopped receipt and input/prompt bytes; old owner stopped after accounting terminal completion, without replay or deadline extension.",
+  "source_code": "import re,subprocess,sys\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,utc_now,machine_id\nstate=read_json(ROOT/'runtime/rolling-production/resume-20261025-large-logical-queue-v31.json')\nassert state['status']=='stopped_at_safe_boundary' and state['completed_windows']==state['completed_source_requests']==1 and state['next_index']==1346\nassert not (ROOT/'runtime/rolling-production/owner.json').exists()\nphase=read_json(ROOT/'runtime/root-b-review-v31-phase.json')\nassert phase['completed_groups']==0 and phase['current_tag'] is None\naudit=ROOT/'mod_nailong/data/production-owner-failures/20261028-v31-expired-owner-and-review-phase.json'\nassert not audit.exists()\nwrite_json(audit,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'actual_failed_cell':'1731 terminal error collected','stopped_owner':state,'root_phase':phase,\n 'scope':'Actual request failed18:33:32UTC and execution stopped18:33:42UTC. Later root startup at01:17UTC accepted stale durable running metadata and created an already-expired review phase; it claimed no output review. Original source allocation contains no image call and remains pending manual observation. Expired metadata did not prove a live producer. Error was accounted exactly once, preserving original stopped receipt and input/prompt bytes; old owner stopped after accounting terminal completion, without replay or deadline extension.',\n 'source_code':Path(__file__).read_text(encoding='utf-8')})\ncode=(ROOT/'runtime/prepare-low-v31-20261027.py').read_text(encoding='utf-8')\ncode=re.sub(r'v30|v31',lambda m:{'v30':'v31','v31':'v32'}[m.group()],code)\ncode=code.replace(\"state['completed_windows']==36\",\"state['completed_windows']==1\")\ncode=code.replace(\"{'calls': 36, 'PNG_returns': 36, 'errors': 0}\",\"{'calls':1,'PNG_returns':0,'errors':1}\")\ncode=code.replace('cell1677','cell1731').replace('36calls36PNG0errors','1call0PNG1terminal_connection_error')\ncode=code.replace('2026-10-27-low-v32','2026-10-28-low-v32').replace('20261027-low-v32','20261028-low-v32')\ntarget=ROOT/'runtime/prepare-low-v32-20261028.py';assert not target.exists();compile(code,str(target),'exec');target.write_text(code,encoding='utf-8',newline='\\n')\ncode=(ROOT/'runtime/start-root-review-v31-20261027-template.py').read_text(encoding='utf-8')\ncode=re.sub(r'v30|v31',lambda m:{'v30':'v31','v31':'v32'}[m.group()],code)\ncode=code.replace(\"old['completed_groups']==10\",\"old['completed_groups']==0\").replace('previous calls36','previous calls1').replace(\"'previous_root_groups':10\",\"'previous_root_groups':0\")\ncode=code.replace('20261027-low-v32','20261028-low-v32')\ntarget2=ROOT/'runtime/start-root-review-v32-20261028-template.py';assert not target2.exists();compile(code,str(target2),'exec');target2.write_text(code,encoding='utf-8',newline='\\n')\nresult=subprocess.run([sys.executable,'-X','utf8',str(target)],cwd=ROOT);assert result.returncode==0\n"
+}

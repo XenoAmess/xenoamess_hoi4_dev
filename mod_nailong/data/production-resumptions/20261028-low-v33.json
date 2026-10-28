@@ -1,0 +1,54 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "prepared_at_utc": "2026-10-28T02:42:41.791386+00:00",
+  "previous_actual_state": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v32",
+    "next_index": 1350,
+    "after_window": "resume-20261025-large-logical-queue-v32-window1349-network-reconciled",
+    "status": "stopped_at_safe_boundary",
+    "created_at_utc": "2026-10-28T01:32:18.055822+00:00",
+    "completed_windows": 4,
+    "completed_source_requests": 4,
+    "updated_at_utc": "2026-10-28T02:18:51.366932+00:00",
+    "last_local_reconciliation": "mod_nailong/data/production-owner-failures/20261028-v32-window1349-network-reconciliation.json",
+    "reason": "terminal_connection_error_accounted_once_no_source_replay",
+    "stopped_at_utc": "2026-10-28T02:37:10.478272+00:00"
+  },
+  "previous_actual_call_results": {
+    "calls": 4,
+    "PNG_returns": 3,
+    "errors": 1
+  },
+  "previous_last_window_gate": {
+    "ready": true,
+    "window_id": "resume-20261025-large-logical-queue-v32-window1349-network-reconciled",
+    "machine_id": "bf-202609141645-5434332d4d",
+    "receipt": "mod_nailong/data/production-window-timings/resume-20261025-large-logical-queue-v32-window1349-network-reconciled-completed.json",
+    "observed_at_utc": "2026-10-28T02:42:41.767127+00:00"
+  },
+  "spec": {
+    "runId": "resume-20261025-large-logical-queue-v33",
+    "startIndex": 1350,
+    "afterWindow": "resume-20261025-large-logical-queue-v32-window1349-network-reconciled",
+    "maxCalls": 64,
+    "maxPreviewBytes": 6553600,
+    "maxRunSeconds": 7200
+  },
+  "helper_sources": "docs/handoffs/2026-10-28-low-v33-helper-sources.json",
+  "helper_sources_sha256": "ddd84636f4ffe9137574f368c0f2918b06f16c68dc0ee0828ae389172d04999d",
+  "remaining_prepared_windows": 0,
+  "free_bytes_observed": 386285420544,
+  "image_calls": 0,
+  "retention_review_utc_unchanged": "2026-10-29T10:30:00Z",
+  "scope": "Actual builtin cell1741 collected at terminal safe boundary,4calls3PNG1terminal_connection_error, owner released. New finite continuation starts from prior builtin helpers; unexecuted draft to be patched and rebound before claim, no image replay or old deadline/counter reset. Actual invocation/preparation/finish times retained; no stricter invoke-time cutoff claimed.",
+  "source_code": "import json,sys,shutil\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom tools.rolling_production_queue import validate_prepared,no_calling\nfrom tools.production_window_gate import inspect_window\nold='resume-20261025-large-logical-queue-v32';new='resume-20261025-large-logical-queue-v33';folder=ROOT/'runtime/rolling-production';state=read_json(folder/(old+'.json'))\nassert state['status']=='stopped_at_safe_boundary' and state['completed_source_requests']==state['completed_windows']==4\nassert state['machine_id']==machine_id() and not (folder/'owner.json').exists() and (folder/(old+'-released-owner.json')).exists()\nassert not (folder/(new+'.json')).exists();no_calling(ROOT);gate=inspect_window(ROOT,state['after_window'],machine_id());assert gate['ready'],gate\nplan=read_json(ROOT/'runtime/after128-continuous-plan.json')['batches']\nfor item in plan[state['next_index']:]:validate_prepared(ROOT,item)\nevents=[e for p in (ROOT/'mod_nailong/data/production-window-timings').glob(old+'-window*-completed.json') for e in read_json(p)['events'] if e['phase']=='image_resolved']\ncounts={'calls':len(events),'PNG_returns':sum(not e.get('error') for e in events),'errors':sum(bool(e.get('error')) for e in events)};assert counts=={'calls':4,'PNG_returns':3,'errors':1}\nspec={'runId':new,'startIndex':state['next_index'],'afterWindow':state['after_window'],'maxCalls':64,'maxPreviewBytes':6553600,'maxRunSeconds':7200}\nspecp=ROOT/'runtime/resume-low-v33-spec-20261027.json';assert not specp.exists();write_json(specp,spec)\nsource=ROOT/'docs/handoffs/2026-10-28-low-v32-helper-sources.json';frozen=ROOT/'docs/handoffs/2026-10-28-low-v33-helper-sources.json';assert not frozen.exists()\nbody=read_json(source);body.update(frozen_before_new_owner_claim_at_utc=utc_now(),unchanged_from={'path':source.relative_to(ROOT).as_posix(),'sha256':file_sha256(source)});write_json(frozen,body)\ntarget=ROOT/'mod_nailong/data/production-resumptions/20261028-low-v33.json';assert not target.exists()\nwrite_json(target,{'machine_id':machine_id(),'prepared_at_utc':utc_now(),'previous_actual_state':state,'previous_actual_call_results':counts,'previous_last_window_gate':gate,'spec':spec,'helper_sources':frozen.relative_to(ROOT).as_posix(),'helper_sources_sha256':file_sha256(frozen),'remaining_prepared_windows':len(plan)-state['next_index'],'free_bytes_observed':shutil.disk_usage(ROOT).free,'image_calls':0,'retention_review_utc_unchanged':'2026-10-29T10:30:00Z','scope':'Actual builtin cell1741 collected at terminal safe boundary,4calls3PNG1terminal_connection_error, owner released. New finite continuation starts from prior builtin helpers; unexecuted draft to be patched and rebound before claim, no image replay or old deadline/counter reset. Actual invocation/preparation/finish times retained; no stricter invoke-time cutoff claimed.','source_code':Path(__file__).read_text(encoding='utf-8')})\nprint(json.dumps({'spec':spec,'actual_previous_results':counts,'remaining_prepared_windows':len(plan)-state['next_index'],'free_GiB':round(shutil.disk_usage(ROOT).free/2**30,2)}),flush=True)\n",
+  "unexecuted_draft_helper_sources_sha256": "011ef0214aca1f3a8b17ddcff96aecb008b5a925129baa92ceebb4fe71c4932e",
+  "control_change": {
+    "prepared_at_utc": "2026-10-28T02:42:41.800813+00:00",
+    "unexecuted_draft_sha256": "011ef0214aca1f3a8b17ddcff96aecb008b5a925129baa92ceebb4fe71c4932e",
+    "policy_module": "tools/builtin_transport_policy.cjs",
+    "policy_module_sha256": "5b840044090dc87a348747f9d04eb181181b32498bd4e2c3ac1d847f94c2fa6c",
+    "scope": "After durable returned and fail completion only, known terminal connection errors continue other distinct sources; third consecutive transport error stops. No failed-source replay. Moderation rules and logical/window gates unchanged. Unknown/auth failures stop."
+  }
+}

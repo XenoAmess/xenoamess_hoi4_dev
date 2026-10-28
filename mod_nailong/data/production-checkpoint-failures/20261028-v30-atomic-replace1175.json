@@ -1,0 +1,95 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-28T02:48:06.828787+00:00",
+  "actual_subprocess_exit_code": 1,
+  "original_publisher": {
+    "path": "runtime/resume-low-20261025/publisher-resume-20261025-large-logical-queue-v30.json",
+    "sha256": "a5f63921ce6af5cc033710d51c106af364fa3be4075da4897801a784d60beee8",
+    "exact": {
+      "machine_id": "bf-202609141645-5434332d4d",
+      "pid": 16464,
+      "run_id": "resume-20261025-large-logical-queue-v30",
+      "started_at_utc": "2026-10-27T16:33:27.465291+00:00",
+      "production_created_at_utc": "2026-10-27T16:07:21.625203+00:00",
+      "original_deadline_utc": "2026-10-27T22:37:21.625203+00:00",
+      "checkpoints": [
+        {
+          "batch": "resumed-low-v30-auto-1-20261025",
+          "commit": "14aec0b857cdd7515570d368fdd75f9a575bc7d7",
+          "completed_requests_at_snapshot": 16,
+          "new_original_PNGs": 43
+        }
+      ],
+      "scope": "Finite Git-only successor after the prior publisher actually finished/released its unique lock. No generation, output approval, canonical writes or image request replay. Normal LOW snapshots, fast-forward pushes and exact pinned original-byte verification.",
+      "status": "stopped_requires_reconciliation_no_image_replay",
+      "last_checkpoint_requests": 16,
+      "observed_at_utc": "2026-10-27T17:50:08.543787+00:00",
+      "last_completed_requests": 29,
+      "last_commit": "14aec0b857cdd7515570d368fdd75f9a575bc7d7",
+      "error": "Traceback (most recent call last):\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\low-scoped-publisher-following-run-incremental-20261026.py\", line 37, in <module>\n    persist(status='waiting_for_next_16_completed_requests',last_completed_requests=calls,last_checkpoint_requests=last);time.sleep(20);continue\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\runtime\\low-scoped-publisher-following-run-incremental-20261026.py\", line 24, in persist\n    def persist(**kw):state.update(kw,observed_at_utc=utc_now());write_json(state_path,state)\n                                                                 ~~~~~~~~~~^^^^^^^^^^^^^^^^^^\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\common.py\", line 77, in write_json\n    _replace_json(temporary, path)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"C:\\workspace\\xenoamess_hoi4_dev\\tools\\common.py\", line 63, in _replace_json\n    raise ctypes.WinError(error)\nOSError: [WinError 1175] 无法删除要被替换的文件。\n"
+    }
+  },
+  "failure": "Windows ReplaceFileW error1175 while persisting waiting state; no second snapshot or image replay",
+  "first_checkpoint_verified": {
+    "fixed_commit": "14aec0b857cdd7515570d368fdd75f9a575bc7d7",
+    "new_original_PNGs": 43,
+    "own_cumulative_verified_original_PNGs": 859,
+    "actual_readback": {
+      "machine_id": "bf-202609141645-5434332d4d",
+      "commit": "14aec0b857cdd7515570d368fdd75f9a575bc7d7",
+      "started_at_utc": "2026-10-27T17:19:55.563535+00:00",
+      "process_id": 20620,
+      "status": "verified",
+      "local_tree_validation": {
+        "method": "Prior actual SHA256/size proof reused only after exact immutable blob/path/size match; every new Git PNG streamed and SHA256/size verified",
+        "prior_commit": "c31746182dc8107663580331813869b48b638666",
+        "prior_local_proof_sha256": "970258885a686b70e9aab66c10a035f1fd4d45dc95b189941ebe31d4a663177e",
+        "prior_actual_verified_at_utc": "2026-10-26T19:59:49.145614+00:00",
+        "reused_local_byte_proofs": 6971,
+        "new_streamed_Git_PNGs": 197,
+        "new_streamed_Git_bytes": 405688406,
+        "source_code": "\"\"\"Reuse immutable prior local byte proofs; still verify remote tree and new raw bytes.\"\"\"\nimport sys,os,json,hashlib,subprocess,traceback\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom mod_nailong.tools import master_git_remote as remote\nbase='c31746182dc8107663580331813869b48b638666';commit,batch=sys.argv[1:3]\ncommit=subprocess.check_output(['git','rev-parse',commit+'^{commit}'],cwd=ROOT,text=True).strip()\nprior=read_json(ROOT/f'runtime/high131-local-tree-proofs/{base}.json');assert prior['status']=='verified' and prior['machine_id']==machine_id() and prior['commit']==base\nold_index=json.loads(subprocess.check_output(['git','show',base+':mod_nailong/data/fullsize-files.json'],cwd=ROOT))\nassert set(prior['blobs'])==set(old_index['outputs'])\ndef verified_tree(actual_commit='HEAD',root=ROOT,index=None):\n assert actual_commit==commit and index is not None\n assert all(index['outputs'].get(k)==v for k,v in old_index['outputs'].items()),'Prior indexed originals changed'\n rows=subprocess.check_output(['git','ls-tree','-r','-l',commit,'--','mod_nailong/assets/generated_fullsize'],cwd=ROOT).decode().splitlines()\n tree={}\n for row in rows:\n  meta,path=row.split('\\t',1);mode,kind,blob,size=meta.split();tree[path]=(kind,blob,int(size))\n blobs={};pending=[]\n for digest,entry in sorted(index['outputs'].items()):\n  kind,blob,size=tree[entry['path']];assert kind=='blob' and size==entry['bytes']\n  if digest in prior['blobs']:\n   assert blob==prior['blobs'][digest];blobs[digest]=blob\n  else:pending.append((digest,entry,blob))\n process=subprocess.Popen(['git','cat-file','--batch'],cwd=ROOT,stdin=subprocess.PIPE,stdout=subprocess.PIPE)\n try:\n  for digest,entry,expected in pending:\n   process.stdin.write((commit+':'+entry['path']+'\\n').encode());process.stdin.flush();head=process.stdout.readline().decode().split();assert head==[expected,'blob',str(entry['bytes'])]\n   sha=hashlib.sha256();left=entry['bytes']\n   while left:\n    block=process.stdout.read(min(left,1048576));assert block;sha.update(block);left-=len(block)\n   assert process.stdout.read(1)==b'\\n' and sha.hexdigest()==digest;blobs[digest]=expected\n finally:process.stdin.close();process.stdout.close();assert process.wait()==0\n assert len(blobs)==index['count']\n receipt['local_tree_validation']={'method':'Prior actual SHA256/size proof reused only after exact immutable blob/path/size match; every new Git PNG streamed and SHA256/size verified','prior_commit':base,'prior_local_proof_sha256':file_sha256(ROOT/f'runtime/high131-local-tree-proofs/{base}.json'),'prior_actual_verified_at_utc':prior['verified_at_utc'],'reused_local_byte_proofs':len(blobs)-len(pending),'new_streamed_Git_PNGs':len(pending),'new_streamed_Git_bytes':sum(e['bytes'] for _,e,_ in pending),'source_code':Path(__file__).read_text(encoding='utf-8')}\n return commit,blobs\nremote.verify_tree=verified_tree\nreceipt={'machine_id':machine_id(),'commit':commit,'started_at_utc':utc_now(),'process_id':os.getpid(),'status':'running'};out=ROOT/f'runtime/master-readback-{batch}.json';write_json(out,receipt)\nlock=ROOT/'runtime/master-git-readback.lock';fd=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY);os.write(fd,str(os.getpid()).encode());os.close(fd)\ntry:\n result=remote.verify_remote(commit);receipt.update(status='verified',distinct_outputs=result['distinct_outputs'],original_png_bytes=result['original_png_bytes'],completed_at_utc=utc_now())\nexcept BaseException:receipt.update(status='failed',error=traceback.format_exc(),completed_at_utc=utc_now());raise\nfinally:\n write_json(out,receipt);assert lock.read_text()==str(os.getpid());lock.unlink()\n"
+      },
+      "distinct_outputs": 7168,
+      "original_png_bytes": 14819065167,
+      "completed_at_utc": "2026-10-27T17:21:44.411276+00:00"
+    },
+    "proof_sha256": "f14e5aa2938c976fae7a9ad9625f8beafd3a13e610dec75227c2e71f59e71d35"
+  },
+  "remaining_V30_original_PNGs_not_yet_delivered_at_this_audit": 20,
+  "V32_additional_original_PNGs_not_yet_delivered_at_this_audit": 3,
+  "scope": "Close old failed finite publisher only after terminal subprocess, absent owner lock and original deadline expiration. Preserve all counters/deadline/error history. Fresh publisher must perform remaining raw-byte delivery; no remaining delivery claimed here.",
+  "control_fix": {
+    "files": [
+      {
+        "path": "tools/common.py",
+        "sha256": "07f3e6bee427910d7f398b35dc9ab3e6e41cce0736213cf5e2656b8f9739a0fa"
+      },
+      {
+        "path": "tests/test_common_atomic_write.py",
+        "sha256": "749e419fd501bf78d66e7d3670c89584ee7c170b86fbe304a963d12dd1b3f60f"
+      },
+      {
+        "path": "tools/builtin_transport_policy.cjs",
+        "sha256": "5b840044090dc87a348747f9d04eb181181b32498bd4e2c3ac1d847f94c2fa6c"
+      },
+      {
+        "path": "tests/test_builtin_transport_policy.cjs",
+        "sha256": "fba01653d3283957c9547bd7e1e9e08729126e910419951c99cb76b0e87324ae"
+      },
+      {
+        "path": "tests/test_builtin_terminal_transport_flow.cjs",
+        "sha256": "16ac9c5bb6c35e5798e0eafebb24df17605e4f549f9221c52d8d0d0c93931a01"
+      },
+      {
+        "path": "docs/handoffs/2026-10-28-low-v33-helper-sources.json",
+        "sha256": "ddd84636f4ffe9137574f368c0f2918b06f16c68dc0ee0828ae389172d04999d"
+      }
+    ],
+    "test_record": "mod_nailong/data/production-resumptions/20261028-low-v33-control-tests.json",
+    "test_record_sha256": "e8690b19b30b935c36a56d09df06798c2278f573dadb06c5fa2594bdb07d14b2",
+    "official_source": "https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-replacefilew",
+    "scope": "1175 alone added to existing bounded local atomic-write retry. Other errors propagate; no generation retry."
+  },
+  "source_code": "import json,sys,subprocess\nfrom pathlib import Path\nfrom datetime import datetime,timezone\nimport psutil\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nrun='resume-20261025-large-logical-queue-v30';folder=ROOT/'runtime/resume-low-20261025';p=folder/('publisher-'+run+'.json');s=read_json(p)\nassert s['status']=='stopped_requires_reconciliation_no_image_replay' and not psutil.pid_exists(s['pid'])\nassert not (folder/'publisher.lock').exists();assert datetime.now(timezone.utc)>datetime.fromisoformat(s['original_deadline_utc'])\nbatch='resumed-low-v30-auto-1-20261025';pub=read_json(ROOT/f'runtime/checkpoint-{batch}.json');proofp=ROOT/f'runtime/master-readback-{batch}.json';proof=read_json(proofp)\nassert pub['status']=='committed_pushed_and_originals_verified' and proof['status']=='verified'\ncommit='14aec0b857cdd7515570d368fdd75f9a575bc7d7'\nassert proof['commit']==s['last_commit']==s['checkpoints'][0]['commit']==commit\nassert s['checkpoints'][0]['new_original_PNGs']==43\nsubprocess.run(['git','merge-base','--is-ancestor',commit,'HEAD'],cwd=ROOT,check=True)\noriginal={'path':p.relative_to(ROOT).as_posix(),'sha256':file_sha256(p),'exact':s.copy()}\ntestp=ROOT/'mod_nailong/data/production-resumptions/20261028-low-v33-control-tests.json';tests=read_json(testp)\nassert all(x['status']=='fulfilled' and x['value']['exit_code']==0 for x in tests['results'])\nfiles=['tools/common.py','tests/test_common_atomic_write.py','tools/builtin_transport_policy.cjs','tests/test_builtin_transport_policy.cjs','tests/test_builtin_terminal_transport_flow.cjs','docs/handoffs/2026-10-28-low-v33-helper-sources.json']\nauditp=ROOT/'mod_nailong/data/production-checkpoint-failures/20261028-v30-atomic-replace1175.json';assert not auditp.exists()\naudit={'machine_id':machine_id(),'observed_at_utc':utc_now(),'actual_subprocess_exit_code':1,'original_publisher':original,'failure':'Windows ReplaceFileW error1175 while persisting waiting state; no second snapshot or image replay','first_checkpoint_verified':{'fixed_commit':commit,'new_original_PNGs':43,'own_cumulative_verified_original_PNGs':859,'actual_readback':proof,'proof_sha256':file_sha256(proofp)},'remaining_V30_original_PNGs_not_yet_delivered_at_this_audit':20,'V32_additional_original_PNGs_not_yet_delivered_at_this_audit':3,'scope':'Close old failed finite publisher only after terminal subprocess, absent owner lock and original deadline expiration. Preserve all counters/deadline/error history. Fresh publisher must perform remaining raw-byte delivery; no remaining delivery claimed here.','control_fix':{'files':[{'path':x,'sha256':file_sha256(ROOT/x)} for x in files],'test_record':testp.relative_to(ROOT).as_posix(),'test_record_sha256':file_sha256(testp),'official_source':'https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-replacefilew','scope':'1175 alone added to existing bounded local atomic-write retry. Other errors propagate; no generation retry.'},'source_code':Path(__file__).read_text(encoding='utf-8')}\nwrite_json(auditp,audit)\ns.update(status='finished_at_owner_boundary_or_original_deadline',finished_at_utc=utc_now(),reconciliation=auditp.relative_to(ROOT).as_posix(),reconciliation_sha256=file_sha256(auditp),closure_reason='terminal_failure_reconciled_after_original_deadline_no_remaining_delivery_claim');write_json(p,s)\nrecordp=ROOT/'mod_nailong/data/production-resumptions/20261028-v30-first-publication-reconciled.json';assert not recordp.exists()\nwrite_json(recordp,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'fixed_commit':commit,'checkpoint_requests':16,'new_original_PNGs':43,'carried_original_PNGs':27,'V30_original_PNGs':16,'own_cumulative_verified_original_PNGs':859,'actual_verified_readback':proof,'actual_verified_readback_sha256':file_sha256(proofp),'scope':'Only immutable delivered checkpoint; V30 remaining20 and V32 additional3 still pending delivery at this audit. No game-display/release claim.'})\nprint(json.dumps({'publisher_closed':True,'first_originals_verified':43,'own_cumulative_verified':859,'carry_pending':23}))\n"
+}

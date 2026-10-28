@@ -1,0 +1,9 @@
+# Windows atomic JSON publication
+
+Observed on machine `bf-202609141645-5434332d4d`, 2026-10-27 through 2026-10-28 UTC: the finite LOW Git publisher exited while writing its waiting state because `ReplaceFileW` returned Windows error 1175. Its first checkpoint had already been pushed and its original PNG bytes verified; this state-write failure did not invalidate that proof. The remaining PNGs still require a later checkpoint.
+
+Microsoft documents error 1175 (`ERROR_UNABLE_TO_REMOVE_REPLACED`) as leaving both files with their original names. `tools/common.py` now applies the existing bounded backoff to this specific error, retaining the same candidate JSON bytes until atomic replacement succeeds. This retries local metadata publication only. The existing `PermissionError` handling remains; errors 1176, 1177 and unrelated I/O errors propagate immediately because their file outcomes differ. [Official ReplaceFileW documentation](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-replacefilew).
+
+Five offline tests verify old-file preservation, identical candidate bytes, bounded exhaustion, immediate propagation of other errors and the existing sharing-error recovery. The production failure and first-checkpoint proof are preserved in `mod_nailong/data/production-checkpoint-failures/20261028-v30-atomic-replace1175.json`.
+
+Separately, V33's frozen builtin producer accounts a known terminal connection error in both returned/error ledgers before allowing another distinct source. It stops after three consecutive connection failures, on unknown/authentication failures, or when accounting fails. A successful image resets the counter. It never automatically replays the failed source. Ten offline Node tests cover the classifier and actual frozen producer ordering. This control change does not alter prompt bytes, input order, service-refusal cooldowns or HIGH gates.

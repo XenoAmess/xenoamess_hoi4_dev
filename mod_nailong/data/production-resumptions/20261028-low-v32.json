@@ -1,0 +1,46 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "prepared_at_utc": "2026-10-28T01:30:34.560856+00:00",
+  "previous_actual_state": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v31",
+    "next_index": 1346,
+    "after_window": "resume-20261025-large-logical-queue-v31-window1345-network-reconciled",
+    "status": "stopped_at_safe_boundary",
+    "created_at_utc": "2026-10-27T18:32:09.821546+00:00",
+    "completed_windows": 1,
+    "completed_source_requests": 1,
+    "updated_at_utc": "2026-10-28T01:27:24.370406+00:00",
+    "last_local_reconciliation": "mod_nailong/data/production-owner-failures/20261028-v31-window1345-network-reconciliation.json",
+    "reason": "expired_original_cutoff_after_terminal_connection_error_accounted_once",
+    "stopped_at_utc": "2026-10-28T01:30:12.523614+00:00"
+  },
+  "previous_actual_call_results": {
+    "calls": 1,
+    "PNG_returns": 0,
+    "errors": 1
+  },
+  "previous_last_window_gate": {
+    "ready": true,
+    "window_id": "resume-20261025-large-logical-queue-v31-window1345-network-reconciled",
+    "machine_id": "bf-202609141645-5434332d4d",
+    "receipt": "mod_nailong/data/production-window-timings/resume-20261025-large-logical-queue-v31-window1345-network-reconciled-completed.json",
+    "observed_at_utc": "2026-10-28T01:30:34.128579+00:00"
+  },
+  "spec": {
+    "runId": "resume-20261025-large-logical-queue-v32",
+    "startIndex": 1346,
+    "afterWindow": "resume-20261025-large-logical-queue-v31-window1345-network-reconciled",
+    "maxCalls": 64,
+    "maxPreviewBytes": 6553600,
+    "maxRunSeconds": 7200
+  },
+  "helper_sources": "docs/handoffs/2026-10-28-low-v32-helper-sources.json",
+  "helper_sources_sha256": "acbdaf4b7682d44c95ca72846a7823a49f691febedbbb21ce4c7e1b426c742c8",
+  "remaining_prepared_windows": 4,
+  "free_bytes_observed": 386054606848,
+  "image_calls": 0,
+  "retention_review_utc_unchanged": "2026-10-29T10:30:00Z",
+  "scope": "Actual builtin cell1731 collected at terminal safe boundary,1call0PNG1terminal_connection_error, owner released. New finite continuation uses byte-identical tested builtin helper sources, no image replay or old deadline/counter reset. Actual invocation/preparation/finish times retained; no stricter invoke-time cutoff claimed.",
+  "source_code": "import json,sys,shutil\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom tools.rolling_production_queue import validate_prepared,no_calling\nfrom tools.production_window_gate import inspect_window\nold='resume-20261025-large-logical-queue-v31';new='resume-20261025-large-logical-queue-v32';folder=ROOT/'runtime/rolling-production';state=read_json(folder/(old+'.json'))\nassert state['status']=='stopped_at_safe_boundary' and state['completed_source_requests']==state['completed_windows']==1\nassert state['machine_id']==machine_id() and not (folder/'owner.json').exists() and (folder/(old+'-released-owner.json')).exists()\nassert not (folder/(new+'.json')).exists();no_calling(ROOT);gate=inspect_window(ROOT,state['after_window'],machine_id());assert gate['ready'],gate\nplan=read_json(ROOT/'runtime/after128-continuous-plan.json')['batches']\nfor item in plan[state['next_index']:]:validate_prepared(ROOT,item)\nevents=[e for p in (ROOT/'mod_nailong/data/production-window-timings').glob(old+'-window*-completed.json') for e in read_json(p)['events'] if e['phase']=='image_resolved']\ncounts={'calls':len(events),'PNG_returns':sum(not e.get('error') for e in events),'errors':sum(bool(e.get('error')) for e in events)};assert counts=={'calls':1,'PNG_returns':0,'errors':1}\nspec={'runId':new,'startIndex':state['next_index'],'afterWindow':state['after_window'],'maxCalls':64,'maxPreviewBytes':6553600,'maxRunSeconds':7200}\nspecp=ROOT/'runtime/resume-low-v32-spec-20261027.json';assert not specp.exists();write_json(specp,spec)\nsource=ROOT/'docs/handoffs/2026-10-27-low-v31-helper-sources.json';frozen=ROOT/'docs/handoffs/2026-10-28-low-v32-helper-sources.json';assert not frozen.exists()\nbody=read_json(source);body.update(frozen_before_new_owner_claim_at_utc=utc_now(),unchanged_from={'path':source.relative_to(ROOT).as_posix(),'sha256':file_sha256(source)});write_json(frozen,body)\ntarget=ROOT/'mod_nailong/data/production-resumptions/20261028-low-v32.json';assert not target.exists()\nwrite_json(target,{'machine_id':machine_id(),'prepared_at_utc':utc_now(),'previous_actual_state':state,'previous_actual_call_results':counts,'previous_last_window_gate':gate,'spec':spec,'helper_sources':frozen.relative_to(ROOT).as_posix(),'helper_sources_sha256':file_sha256(frozen),'remaining_prepared_windows':len(plan)-state['next_index'],'free_bytes_observed':shutil.disk_usage(ROOT).free,'image_calls':0,'retention_review_utc_unchanged':'2026-10-29T10:30:00Z','scope':'Actual builtin cell1731 collected at terminal safe boundary,1call0PNG1terminal_connection_error, owner released. New finite continuation uses byte-identical tested builtin helper sources, no image replay or old deadline/counter reset. Actual invocation/preparation/finish times retained; no stricter invoke-time cutoff claimed.','source_code':Path(__file__).read_text(encoding='utf-8')})\nprint(json.dumps({'spec':spec,'actual_previous_results':counts,'remaining_prepared_windows':len(plan)-state['next_index'],'free_GiB':round(shutil.disk_usage(ROOT).free/2**30,2)}),flush=True)\n"
+}
