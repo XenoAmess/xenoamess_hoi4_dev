@@ -105,6 +105,67 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID acb18740-3e29-40d8-8718-a318e5cbed7f.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-26T04:39:37.452525+00:00"
+    },
+    {
+      "number": 3,
+      "status": "generated_pending_visual_review",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image1 is the actual raw-HD mascot edit target. Image2 is the exact original game portrait/card and sole authority for visible features. Image3 is the user mascot identity reference.\nActual observed correction: Raw shows separate raised brown upper lip and pale pink-orange lower lip around narrow slit. Simplify into single mascot opening retaining serious expression. Preserve short glossy black side-part hair/dark brows/smooth clean chin, black coat/cream thin-striped open pointed shirt/loose burgundy tie, front crop/pose/light/full blue background. Keep broad fitted collar/neck, no human nose or flesh ears. Fine shirt weave unresolved; matte/raw opaque no holes.\nKeep all unrelated source-visible hairstyle and hair colour, eyebrows and exact fine facial-hair state, glasses, headgear when actually present, clothes/neckwear, badges/buttons/straps, expression, gaze, pose, crop and lighting. Source-visible eyebrows remain distinct independent brows; never erase them to copy the identity reference smooth forehead or merge them into head hair. Smooth golden-yellow compact round mascot head with green-ringed black eyes and exactly ONE small mouth at the actual original mouth position. If a moustache is present, that one mouth is below it: never add a second grey slit, beak, nose or default mascot lip above the moustache. No human skin/nose/ears, broad invented facial-hair band or hat replacing real hair.\nOnly when the original actually has a photograph frame/note, retain that entire tilted frame and overlapping paper, opaque photographic backing and true exterior alpha outside the complete original card. Copy the actual original note markings as required visual shapes: preserve their original number of row/groups, compact footprint, placement and dark contrast. Keep original blank paper blank outside that footprint. Do not erase original marks, replace them with random stains or dots, spread writing over the page or invent extra rows. These existing indistinct marks are required original image content, not a request for newly readable words. A standalone full portrait retains its entire original painted backdrop and must not acquire a new photo frame or note. Preserve genuine original transparency only where it really exists. Dark cloth stays fully opaque. Short broad fitted neck with rounded chin immediately meeting actual garment, preserve its open/closed state and do not add a neck column, separate roll, cream bib or floating collar. The exact original controls mouth opening, smile shape and source-visible tooth edge; do not import the mascot reference closed grey lip over an open source mouth. Keep full raw-HD detail, resolution and original aspect ratio; no newly invented readable text, extra note writing beyond the actual original footprint, watermark, new symbols, people or panels.\nOutput background: the exact original was visually verified to be a COMPLETE rectangular painted portrait, with no fully transparent source pixels. Its small original alpha variation does not establish an exterior figure cutout. Preserve the entire original background colour, texture, lighting and crop to all four canvas edges. Return a fully opaque rectangular image, alpha 255 throughout the originally opaque backdrop and subject, including hair, glasses, dark clothing and corners. Do not copy an incorrect target cutout mask or partial transparency. No transparent backdrop, fog, see-through fabric, haze, halo or invented frame/note. Keep every unrelated source feature unchanged.",
+      "prompt_file": "mod_nailong/assets/prompts/520a3a24531b20b5a3351c8c15cc46ac1f9829b2b09739c858d587075b039eb1-003.txt",
+      "prompt_sha256": "2e4b9308cb76db55c457a9fc8b6380cba66d4627d9e2e1e7ef4c674df1ac0179",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/85a499f4307eb052b02dcbcc39a271366c6fd2aeceec84918a57a6dfea7444bb.png",
+          "sha256": "85a499f4307eb052b02dcbcc39a271366c6fd2aeceec84918a57a6dfea7444bb",
+          "derived_game_image_sha256": "6aaafb5a48a5df84fce9ad98a90769e28b04467aaed2f07d9097801b399b3a3b"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "520a3a24531b20b5a3351c8c15cc46ac1f9829b2b09739c858d587075b039eb1",
+          "converted_png_sha256": "e700dcb259fe9a03d2e821fa07746ca13d92b8e61b9aadbacd16ada57e1a126b"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-28T20:52:25.026223+00:00",
+      "original_alpha_extrema": [
+        252,
+        255
+      ],
+      "transparent_background": false,
+      "alpha_prompt_policy": "source-manually-verified-opaque-canvas-v1",
+      "opaque_canvas_reason": "Actually viewed complete exact original gfx/leaders/scientists/generic_scientists/portrait_generic_asia_male_01.dds on SHA-bound fresh HIGH fresh-observed-20261026T004246-b-453436a7 input pages, including full painted background in all four corners. Converted PNG SHA256 e700dcb259fe9a03d2e821fa07746ca13d92b8e61b9aadbacd16ada57e1a126b, original alpha extrema [252, 255]. This individual original is a complete opaque painted rectangular canvas; retain it with fully opaque subject/clothing. No figure-cutout exterior exists. Not a global alpha threshold or frozen retry change.",
+      "retry_of_attempt": 2,
+      "retry_root_attempt": 2,
+      "cooldown_retry_number": 1,
+      "cooldown_not_before_utc": "2026-10-26T12:39:38.058005+00:00",
+      "cooldown_retry_tool_transparent_background": false,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-28T20:52:46.004420+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "89cd8b8dc2a10d728e2d10ef86a88b57444bb4c8fcac6617dcfec91741ca4afb",
+        "prompt_sha256": "2e4b9308cb76db55c457a9fc8b6380cba66d4627d9e2e1e7ef4c674df1ac0179",
+        "input_sha256": [
+          "85a499f4307eb052b02dcbcc39a271366c6fd2aeceec84918a57a6dfea7444bb",
+          "e700dcb259fe9a03d2e821fa07746ca13d92b8e61b9aadbacd16ada57e1a126b",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": false
+      },
+      "generated_at_utc": "2026-10-28T20:53:51.569659+00:00",
+      "fullsize_sha256": "10f052cbff79234c6f0ba1321a533b743cda80200fbe48c23c092975917ade8e",
+      "fullsize_image": "mod_nailong/assets/generated_fullsize/10f052cbff79234c6f0ba1321a533b743cda80200fbe48c23c092975917ade8e.png",
+      "output": "mod_nailong/assets/portraits/520a3a24531b20b5a3351c8c15cc46ac1f9829b2b09739c858d587075b039eb1.png",
+      "output_sha256": "b53793186c71d9e4bb3429a8a052bef102bef6884c3eb3eddfbef30fbe0a9149"
     }
   ]
 }
