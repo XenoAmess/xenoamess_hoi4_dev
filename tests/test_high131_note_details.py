@@ -10,6 +10,7 @@ from PIL import Image
 from runtime import high131_hd_proof as hd_proof
 from runtime import high131_prepare_note_details as prepare_details
 from runtime import high131_run_repairs as repairs
+from runtime import high131_verify_note_details as verify_details
 from runtime import high131_verify_records as verify
 from tools.common import ROOT, file_sha256, machine_id, read_json, write_json
 

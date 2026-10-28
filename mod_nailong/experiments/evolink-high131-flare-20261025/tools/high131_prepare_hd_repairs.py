@@ -13,7 +13,7 @@ from tools.common import ROOT, file_sha256, machine_id, read_json, utc_now
 
 EXPERIMENT = ROOT / "mod_nailong/experiments/evolink-high131-flare-20261025"
 MODE = "raw-hd-edit-v1"
-NOTE_INDICES = (40, 52, 53, 54, 57, 61, 62, 63, 64, 65, 67)
+NOTE_INDICES = (40, 52, 53, 54, 57, 60, 61, 62, 63, 64, 65, 67)
 
 
 def native_background_prompt(background_prompt, index):
@@ -43,17 +43,17 @@ def main():
         raise RuntimeError("Expected a full lowercase remote commit")
     indices = set(args.index or NOTE_INDICES)
     if not indices <= set(NOTE_INDICES):
-        raise RuntimeError("Only reviewed HIGH note sources are eligible; 60 and 117 remain unresolved")
-    if args.note_details and not indices <= {40, 52, 53, 54, 57, 61, 62, 63, 64, 65, 67}:
-        raise RuntimeError("Only reviewed source-40, source-52, source-53, source-54, source-57, source-61 through source-64, source-65 or source-67 note references are eligible for four-input repair")
-    if args.mask and (not args.note_details or not indices <= {40, 52, 53, 54, 57, 61, 62, 63, 64, 65, 67}):
+        raise RuntimeError("Only reviewed HIGH note sources are eligible")
+    if args.note_details and not indices <= {40, 52, 53, 54, 57, 60, 61, 62, 63, 64, 65, 67}:
+        raise RuntimeError("Only reviewed source-40, source-52, source-53, source-54, source-57, source-60, source-61 through source-64, source-65 or source-67 note references are eligible for four-input repair")
+    if args.mask and (not args.note_details or not indices <= {40, 52, 53, 54, 57, 60, 61, 62, 63, 64, 65, 67}):
         raise RuntimeError("Reviewed note masks require --note-details and actual visual review")
     if args.mask_revision != 1 and (not args.mask or not indices <= {40, 52, 67}):
         raise RuntimeError("Only source-40, source-52 or source-67 supports non-default mask revisions")
     mode = hd_proof.MASK_NOTE_MODE if args.mask else hd_proof.NOTE_DETAIL_MODE if args.note_details else MODE
     detail_entries = {}
     if args.note_details:
-        detail_manifest_path = EXPERIMENT / (f"note-detail-sources-{next(iter(indices))}.json" if indices in ({40}, {52}, {53}, {54}, {57}, {61}, {62}, {63}, {64}) else "note-detail-sources.json")
+        detail_manifest_path = EXPERIMENT / (f"note-detail-sources-{next(iter(indices))}.json" if indices in ({40}, {52}, {53}, {54}, {57}, {60}, {61}, {62}, {63}, {64}) else "note-detail-sources.json")
         detail_manifest = read_json(detail_manifest_path)
         if detail_manifest.get("status") != "source_derivatives_visually_verified":
             raise RuntimeError("Source-detail references still require actual derivative review")
@@ -193,6 +193,8 @@ def main():
                 mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its one transparent rectangle covers only the two incorrect note-mark rows with a narrow paper margin. Do not regenerate the gray-haired person with glasses, moustache and beard, suit, white shirt collar and dark tie, photographic frame/backplate, correct right-edge tab or blank lower paper. Within that region use Image2 and Image4 to restore exactly TWO separated source-scale irregular gray-mark groups in EACH row, with original relative lengths and spacing, not repeated dots, uniform short dashes, long bars or newly readable writing. Retain original paper colour, texture and lighting. The mask does not redefine the original card exterior alpha or authorize removing backing; preserve genuine native exterior transparency and opaque person, photographic backing and note interior.\n\n"
             elif index == 64:
                 mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its one transparent rectangle covers only the two incorrect note-mark rows with a narrow paper margin. Do not regenerate the viewer-right person, short dark hair and brows, tunic, gold collar insignia and dark tie, photographic frame/backplate, correct right-edge tab or blank lower paper. Within that region use Image2 and Image4 to restore exactly TWO separated source-scale irregular gray-mark groups in EACH row, with original relative lengths and spacing, not repeated dots, uniform short dashes, long bars or newly readable writing. Retain original paper colour, texture and lighting. The mask does not redefine the original card exterior alpha or authorize removing backing; preserve genuine native exterior transparency and opaque person, photographic backing and note interior.\n\n"
+            elif index == 60:
+                mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its two transparent rectangles cover only the two incorrect note-mark rows with narrow paper margins. Do not regenerate the capped person, dark brows, clothing, collar, photographic frame/backplate, correct right-edge tab or blank lower paper. Within those regions use Image2 and Image4 to restore exactly TWO separated source-scale irregular gray-mark groups in EACH row, with original relative lengths and spacing, not uniform bars, repeated dots or newly readable writing. Retain original paper colour, texture and lighting. The mask does not redefine the original card exterior alpha or authorize removing backing; preserve genuine native exterior transparency and opaque person, photographic backing and note interior.\n\n"
             elif index == 65:
                 mask_prompt = "MASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its two transparent rectangles cover only the existing wrong upper and lower note-mark rows with a narrow paper margin. Do not regenerate the person, photographic frame/backplate, restored right-edge tab or blank lower paper. Within those two regions use Image2 and Image4 to restore the source-scale compact irregular gray marks, their relative lengths and spacing, without generic ovals, dots, long continuous bars, extra groups or newly readable writing. Retain the original paper colour, texture and lighting outside the actual source marks. This editing mask does not redefine the card's exterior alpha or authorize removing backing.\n\n"
             else:

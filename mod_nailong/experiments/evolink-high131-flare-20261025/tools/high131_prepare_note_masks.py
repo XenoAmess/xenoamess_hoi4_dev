@@ -25,6 +25,7 @@ MASK_RECTANGLES = {
     (53, 1): [[1200, 1050, 1620, 1180]],
     (54, 1): [[1100, 1040, 1600, 1125], [1100, 1135, 1600, 1210]],
     (57, 1): [[1150, 1030, 1490, 1150]],
+    (60, 1): [[1120, 970, 1650, 1065], [1120, 1075, 1620, 1155]],
     (61, 1): [[1050, 930, 1490, 1120]],
     (62, 1): [[1120, 920, 1590, 1110]],
     (63, 1): [[1050, 920, 1340, 1090]],
@@ -101,6 +102,8 @@ def main():
         contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the gray-haired person, glasses, moustache and beard, suit, shirt collar and tie, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row while retaining genuine native exterior transparency."
     elif args.index == 64:
         contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the viewer-right person, short dark hair and brows, tunic, gold collar insignia and tie, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly two source-scale irregular groups in each row while retaining genuine native exterior transparency."
+    elif args.index == 60:
+        contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves the capped person, dark brows, clothing, collar, photographic frame/backplate, correct right-edge tab, lower blank paper and all other pixels. Restore exactly TWO separated irregular gray-mark groups in EACH row, not uniform bars, while retaining genuine native exterior transparency."
     elif args.index == 65:
         contract = "PNG alpha<255 marks only the two incorrect note-mark rows to regenerate; alpha=255 preserves all other pixels, including the restored tab."
     else:
