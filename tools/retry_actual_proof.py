@@ -18,8 +18,9 @@ def digest_text(value):return hashlib.sha256(value.encode('utf-8')).hexdigest()
 def event_time(event):return datetime.fromisoformat(event['timestamp'].replace('Z','+00:00'))
 
 def validate_legacy_archive(root,key,attempt,archive):
- assert archive['schema'] in {'naiwa-recovered-actual-request-v1','naiwa-recovered-cached-actual-request-v1'}
- cached=archive['schema']=='naiwa-recovered-cached-actual-request-v1'
+ assert archive['schema'] in {'naiwa-recovered-actual-request-v1','naiwa-recovered-cached-actual-request-v1','naiwa-recovered-low-cached-actual-request-v2'}
+ low_cached=archive['schema']=='naiwa-recovered-low-cached-actual-request-v2'
+ cached=archive['schema'] in {'naiwa-recovered-cached-actual-request-v1','naiwa-recovered-low-cached-actual-request-v2'}
  assert archive['machine_id']==attempt['machine_id']==machine_id()
  assert archive['source_sha256']==key and archive['failed_attempt']==attempt['number']
  assert archive['actual_recorded_before_call'] is False,'Recovery must not impersonate pre-call recording'
@@ -34,7 +35,10 @@ def validate_legacy_archive(root,key,attempt,archive):
  exported=events['pre_call_job'];item=exported['payload']['item']
  assert exported['payload']['type']=='item_completed' and item['type']=='CommandExecution' and item['status']=='completed'
  if cached:
-  from tools.legacy_cached_request import validate_cached_job
+  if low_cached:
+   from tools.legacy_low_request import validate_cached_job
+  else:
+   from tools.legacy_cached_request import validate_cached_job
   job=validate_cached_job(key,archive,events)
  else:
   assert digest_text(caller['input']) in LEGACY_DIRECT_FORWARDERS,'Unreviewed dispatcher contract'
@@ -47,15 +51,19 @@ def validate_legacy_archive(root,key,attempt,archive):
  assert ext['revisedPrompt']==job['prompt']==attempt['prompt']
  assert digest_text(job['prompt'])==attempt['prompt_sha256']==file_sha256(root/attempt['prompt_file'])
  assert (root/attempt['prompt_file']).read_text(encoding='utf-8')==job['prompt']
- refusal_event=events['refusal_receipt'];refusal=refusal_event['payload']['item']
- assert refusal['type']=='FileChange' and refusal['status']=='completed'
- errors=[v['content'] for path,v in refusal['changes'].items() if key in path and v['type']=='add']
- assert len(errors)==1 and 'moderation_blocked' in errors[0]
- request_ids=re.findall(r'request ID ([0-9a-f-]{36})',attempt['error'])
- assert len(request_ids)==1 and request_ids[0] in errors[0],'Refusal receipt belongs to another call'
- assert event_time(exported)<event_time(ext_event)<=event_time(refusal_event) and event_time(dispatch)<event_time(ext_event)
- if not cached:assert event_time(dispatch)<event_time(exported)
- assert event_time(refusal_event)<=datetime.fromisoformat(attempt['observed_at_utc'].replace('Z','+00:00'))
+ if low_cached:
+  from tools.legacy_low_request import validate_refusal
+  validate_refusal(key,attempt,events)
+ else:
+  refusal_event=events['refusal_receipt'];refusal=refusal_event['payload']['item']
+  assert refusal['type']=='FileChange' and refusal['status']=='completed'
+  errors=[v['content'] for path,v in refusal['changes'].items() if key in path and v['type']=='add']
+  assert len(errors)==1 and 'moderation_blocked' in errors[0]
+  request_ids=re.findall(r'request ID ([0-9a-f-]{36})',attempt['error'])
+  assert len(request_ids)==1 and request_ids[0] in errors[0],'Refusal receipt belongs to another call'
+  assert event_time(exported)<event_time(ext_event)<=event_time(refusal_event) and event_time(dispatch)<event_time(ext_event)
+  if not cached:assert event_time(dispatch)<event_time(exported)
+  assert event_time(refusal_event)<=datetime.fromisoformat(attempt['observed_at_utc'].replace('Z','+00:00'))
  expected=[];references=[]
  for source in attempt['inputs']:
   if source.get('path'):
