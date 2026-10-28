@@ -588,6 +588,69 @@ class NoteMaskInputTests(unittest.TestCase):
                 self.assertEqual(sum(histogram[1:255]), 0)
                 self.assertEqual(histogram[0] + histogram[255], 2048 * 2048)
 
+    def test_source60_readback_uses_its_reviewed_mask_and_detail_manifests(self):
+        key = 'a' * 64
+        source_relative = self.source.relative_to(self.root).as_posix()
+        detail_relative = self.detail.relative_to(self.root).as_posix()
+        write_json(self.experiment / 'scope.json', {'entries': [{
+            'index': 60, 'source_sha256': key, 'source_png': source_relative,
+            'converted_png_sha256': self.source_sha,
+        }]})
+        write_json(self.experiment / 'progress.json', {'entries': [{
+            'source_sha256': key, 'status': 'rejected_latest_attempt',
+            'current_decision': 'rejected_for_production',
+            'current_review': {'review_output_sha256': self.raw_sha},
+        }]})
+        write_json(self.experiment / 'note-detail-sources-60.json', {'entries': [{
+            'index': 60, 'source_sha256': key, 'source_png_sha256': self.source_sha,
+            'path': detail_relative, 'sha256': self.detail_sha,
+        }]})
+        mask_manifest = self.experiment / 'note-mask-60.json'
+        self.manifest['index'] = 60
+        write_json(mask_manifest, self.manifest)
+        self.proof['targets'][self.mask_sha].update(
+            mask_manifest=mask_manifest.relative_to(self.root).as_posix(),
+            mask_manifest_sha256=file_sha256(mask_manifest),
+        )
+        self.raw = self.raw.with_name(f'{self.raw_sha}.png')
+        shutil.copyfile(self.raw.parent / 'raw.png', self.raw)
+        self.proof['targets'][self.raw_sha].update(
+            path=self.raw.relative_to(self.root).as_posix(),
+            url=self.remote_url(self.raw.relative_to(self.root).as_posix()),
+        )
+        proof_path = self.root / f'runtime/high131-hd-target-readback-{self.commit}.json'
+        write_json(proof_path, self.proof)
+
+        def fake_git(*args):
+            if args[0] == 'ls-remote':
+                return self.commit + '\trefs/heads/master'
+            if args[0] == 'hash-object':
+                return 'b' * 40
+            if args[0] == 'ls-tree':
+                return f'100644 blob {"b" * 40}\t{args[-1]}'
+            self.assertEqual(args, ('fetch', 'origin'))
+            return ''
+
+        with (
+            patch.object(verify_mask, 'ROOT', self.root),
+            patch.object(verify_mask, 'EXPERIMENT', self.experiment),
+            patch.object(verify_mask, 'MASK_DIR', self.experiment / 'review-masks'),
+            patch.object(verify_mask, 'git', side_effect=fake_git),
+            patch.object(verify_mask.subprocess, 'run') as merge_base,
+            patch.object(verify_mask.requests, 'get') as get,
+            patch.object(sys, 'argv', ['high131_verify_note_mask.py', '--commit', self.commit, '--index', '60']),
+        ):
+            merge_base.return_value.returncode = 0
+            response = get.return_value.__enter__.return_value
+            response.iter_content.return_value = iter([self.mask.read_bytes()])
+            verify_mask.main()
+        proof = read_json(proof_path)
+        self.assertEqual(proof['status'], 'verified')
+        self.assertEqual(proof['mask_verification_indices'], [60])
+        self.assertEqual(proof['targets'][self.mask_sha]['target_sha256'], self.raw_sha)
+        self.assertEqual(self.validate_mask(), self.mask_url)
+        get.assert_called_once()
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -584,6 +584,71 @@ def unresolved_hold(state):
     }
 
 
+def authorized_repost_hold(state):
+    hold = unresolved_hold(state)
+    previous_execution = batch.read_json(state["execution"])
+    number = attempt_number(state["entry"]["attempt"]) + 1
+    attempt = f"external-{number:02}"
+    authorization_path = batch.EXPERIMENT / "authorized-repost-20261028.json"
+    authorization = batch.read_json(authorization_path)
+    relative_authorization = batch.relative_path(authorization_path)
+    if (
+        authorization.get("schema") != "high131-authorized-repost-v1"
+        or authorization.get("machine_id") != batch.machine_id()
+        or authorization.get("allowed_new_attempts", {}).get(str(state["index"])) != attempt
+        or authorization.get("one_new_attempt_per_source") is not True
+        or authorization.get("preserve_full_prompt_input_order_bytes_and_route") is not True
+        or authorization.get("executor") != "Kimi"
+    ):
+        raise batch.BatchError("unresolved_repost_requires_reconciliation", "No exact user-authorized repost covers this unresolved request")
+    stem = f"{state['key']}-{number:02}"
+    execution_path = state["execution"].with_name(stem + ".json")
+    request_path = state["request"].with_name(stem + ".request.json")
+    result_path = state["result"].with_name(stem + ".result.json")
+    output_path = state["output"].with_name(stem + ".png")
+    execution = batch.read_json(execution_path)
+    request = batch.read_json(request_path)
+    proof = completed_output(output_path, result_path)
+    if proof is None:
+        raise batch.BatchError("authorized_repost_result_missing", "The explicitly authorized repost lacks its completed returned output")
+    expected = {
+        "index": state["index"], "source_sha256": state["key"], "attempt": attempt,
+        "status": "completed", "repost_authorization": relative_authorization,
+        "previous_attempt": state["entry"]["attempt"],
+        "previous_execution": batch.relative_path(state["execution"]),
+        "previous_execution_sha256": hold["execution_sha256"],
+        "previous_request": batch.relative_path(state["request"]),
+        "previous_request_sha256": hold["request_sha256"],
+        "new_attempt_not_old_task_recovery": True,
+        "possible_duplicate_billing_acknowledged": True,
+        "new_generation_tasks_created": 1, "one_new_attempt_limit": 1,
+        "prompt_sha256": previous_execution.get("prompt_sha256"),
+        "ordered_input_sha256": previous_execution.get("ordered_input_sha256"),
+        "output": batch.relative_path(output_path),
+        "output_sha256": proof["output_sha256"], "result": proof["result"],
+        "task_id": proof["result"]["task_id"],
+    }
+    for field, value in expected.items():
+        if execution.get(field) != value:
+            raise batch.BatchError("authorized_repost_binding_mismatch", f"Authorized repost field differs: {field}")
+    if batch.file_sha256(request_path) != hold["request_sha256"] or request != batch.read_json(state["request"]):
+        raise batch.BatchError("authorized_repost_binding_mismatch", "The authorized repost changed the original request")
+    return {
+        **hold,
+        "reason": "authorized_repost_returned_historical_request_remains_unresolved",
+        "authorized_repost_receipt": relative_authorization,
+        "authorized_repost_receipt_sha256": batch.file_sha256(authorization_path),
+        "authorized_repost_attempt": attempt,
+        "authorized_repost_execution": batch.relative_path(execution_path),
+        "authorized_repost_execution_sha256": batch.file_sha256(execution_path),
+        "authorized_repost_task_id": proof["result"]["task_id"],
+        "authorized_repost_output_sha256": proof["output_sha256"],
+        "historical_task_id_not_fabricated": True,
+        "historical_output_or_old_task_recovery_claimed": False,
+        "new_generation_tasks_created_by_this_reconciliation": 0,
+    }
+
+
 def collect_repairs(context, limit, only_indices=None, acknowledged_holds=None):
     acknowledged_holds = acknowledged_holds or set()
     selected = []
@@ -609,8 +674,8 @@ def collect_repairs(context, limit, only_indices=None, acknowledged_holds=None):
                 skipped.append(skip_row(state, reason))
                 continue
             if action == "stop":
-                if reason == "pending_request_requires_manual_check" and state["index"] in acknowledged_holds:
-                    skipped.append(unresolved_hold(state))
+                if reason == "pending_request_requires_manual_check":
+                    skipped.append(unresolved_hold(state) if state["index"] in acknowledged_holds else authorized_repost_hold(state))
                     continue
                 raise batch.BatchError(reason, batch.stop_message(reason))
 

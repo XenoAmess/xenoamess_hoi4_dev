@@ -56,6 +56,75 @@ class High131RunRepairsTests(unittest.TestCase):
         self.assertFalse(hold["completion_claimed"])
         self.assertFalse(hold["retry_or_resume_attempted"])
 
+    def prepare_authorized_repost(self):
+        root = repairs.batch.ROOT
+        patch.object(repairs.batch, 'EXPERIMENT', root / 'experiment').start()
+        self.execution.update(prompt_sha256='b' * 64, ordered_input_sha256=['source', 'mascot'])
+        write_json(self.state['execution'], self.execution)
+        authorization_path = root / 'experiment/authorized-repost-20261028.json'
+        write_json(authorization_path, {
+            'schema': 'high131-authorized-repost-v1',
+            'machine_id': repairs.batch.machine_id(),
+            'allowed_new_attempts': {'60': 'external-05'},
+            'one_new_attempt_per_source': True,
+            'preserve_full_prompt_input_order_bytes_and_route': True,
+            'executor': 'Kimi',
+        })
+        stem = f'{self.key}-05'
+        output = self.state['output'].with_name(stem + '.png')
+        output.write_bytes(repairs.batch.PNG_SIGNATURE)
+        result = {
+            'task_id': 'authorized-repost-task', 'sha256': file_sha256(output),
+            'bytes': output.stat().st_size, 'downloaded_at_utc': '2026-01-02T00:00:00Z',
+            'png_signature_verified': True,
+        }
+        write_json(self.state['result'].with_name(stem + '.result.json'), result)
+        self.state['request'].with_name(stem + '.request.json').write_bytes(self.state['request'].read_bytes())
+        execution = {
+            'index': 60, 'source_sha256': self.key, 'attempt': 'external-05',
+            'status': 'completed',
+            'repost_authorization': 'experiment/authorized-repost-20261028.json',
+            'previous_attempt': 'external-04',
+            'previous_execution': self.state['execution'].relative_to(root).as_posix(),
+            'previous_execution_sha256': file_sha256(self.state['execution']),
+            'previous_request': self.state['request'].relative_to(root).as_posix(),
+            'previous_request_sha256': file_sha256(self.state['request']),
+            'new_attempt_not_old_task_recovery': True,
+            'possible_duplicate_billing_acknowledged': True,
+            'new_generation_tasks_created': 1, 'one_new_attempt_limit': 1,
+            'prompt_sha256': 'b' * 64, 'ordered_input_sha256': ['source', 'mascot'],
+            'output': output.relative_to(root).as_posix(), 'output_sha256': result['sha256'],
+            'task_id': result['task_id'], 'result': result,
+        }
+        write_json(self.state['execution'].with_name(stem + '.json'), execution)
+        return authorization_path
+
+    def test_authorized_repost_releases_only_new_dispatch_gate(self):
+        self.prepare_authorized_repost()
+        hold = repairs.authorized_repost_hold(self.state)
+        self.assertEqual(hold['reason'], 'authorized_repost_returned_historical_request_remains_unresolved')
+        self.assertEqual(hold['authorized_repost_task_id'], 'authorized-repost-task')
+        self.assertFalse(hold['completion_claimed'])
+        self.assertFalse(hold['historical_output_or_old_task_recovery_claimed'])
+        self.assertEqual(repairs.batch.read_json(self.state['execution'])['status'], 'failed')
+        context = {'repair_entries': [{'source_sha256': self.key, 'attempt': 'external-04'}]}
+        with (
+            patch.object(repairs, 'repair_state', return_value=self.state),
+            patch.object(repairs.batch, 'artifact_action', return_value=('stop', 'pending_request_requires_manual_check')),
+        ):
+            selected, skipped, failed = repairs.collect_repairs(context, 1, only_indices={60})
+        self.assertEqual((selected, failed), ([], []))
+        self.assertEqual(len(skipped), 1)
+        self.assertEqual(skipped[0]['authorized_repost_attempt'], 'external-05')
+
+    def test_unrelated_or_missing_authorized_repost_keeps_hold(self):
+        authorization_path = self.prepare_authorized_repost()
+        authorization = repairs.batch.read_json(authorization_path)
+        authorization['allowed_new_attempts']['60'] = 'external-06'
+        write_json(authorization_path, authorization)
+        with self.assertRaisesRegex(repairs.batch.BatchError, 'No exact user-authorized repost'):
+            repairs.authorized_repost_hold(self.state)
+
     def test_task_record_blocks_hold(self):
         write_json(self.state["task"], {"task_id": "existing-task"})
         with self.assertRaisesRegex(repairs.batch.BatchError, "repair hold requires"):

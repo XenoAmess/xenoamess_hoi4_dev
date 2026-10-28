@@ -30,15 +30,15 @@ def main():
     if not re.fullmatch(r"[0-9a-f]{40}", args.commit):
         raise RuntimeError("Expected a full lowercase immutable commit")
     indices = sorted(set(args.index))
-    if not indices or (indices not in ([40], [52], [53], [54], [57], [61], [62], [63], [64]) and not set(indices) <= {65, 67}):
-        raise RuntimeError("Only reviewed source-40, source-52, source-53, source-54, source-57 or source-61 through source-64 note references or pilot note references for 65 and 67 are eligible")
+    if not indices or (indices not in ([40], [52], [53], [54], [57], [60], [61], [62], [63], [64]) and not set(indices) <= {65, 67}):
+        raise RuntimeError("Only reviewed source-40, source-52, source-53, source-54, source-57, source-60 or source-61 through source-64 note references or pilot note references for 65 and 67 are eligible")
     proof_path = ROOT / f"runtime/high131-hd-target-readback-{args.commit}.json"
     proof = read_json(proof_path)
     if proof.get("schema") != "high131-hd-target-readback-v1" or proof.get("status") != "verified":
         raise RuntimeError("Verify the current rejected raw-HD targets before adding detail references")
     if proof.get("commit") != args.commit or proof.get("machine_id") != machine_id() or proof.get("complete_archive_verified") is not False:
         raise RuntimeError("The raw-HD target proof does not match this machine, commit and scoped boundary")
-    manifest_path = EXPERIMENT / (f"note-detail-sources-{indices[0]}.json" if indices in ([40], [52], [53], [54], [57], [61], [62], [63], [64]) else "note-detail-sources.json")
+    manifest_path = EXPERIMENT / (f"note-detail-sources-{indices[0]}.json" if indices in ([40], [52], [53], [54], [57], [60], [61], [62], [63], [64]) else "note-detail-sources.json")
     manifest = read_json(manifest_path)
     if manifest.get("schema") != "naiwa-high131-note-detail-sources-v1" or manifest.get("status") != "source_derivatives_visually_verified":
         raise RuntimeError("Source-detail references require actual visual review of the derivative")

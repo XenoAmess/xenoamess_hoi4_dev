@@ -26,8 +26,8 @@ def main():
     args = parser.parse_args()
     if not re.fullmatch(r"[0-9a-f]{40}", args.commit):
         raise RuntimeError("Expected a full lowercase immutable commit")
-    if args.index not in {40, 52, 53, 54, 57, 61, 62, 63, 64, 65, 67}:
-        raise RuntimeError("Only actually reviewed source-40, source-52, source-53, source-54, source-57, source-61 through source-64, source-65 or source-67 note masks are eligible")
+    if args.index not in {40, 52, 53, 54, 57, 60, 61, 62, 63, 64, 65, 67}:
+        raise RuntimeError("Only actually reviewed source-40, source-52, source-53, source-54, source-57, source-60, source-61 through source-64, source-65 or source-67 note masks are eligible")
     if args.revision != 1 and args.index not in {40, 52, 67}:
         raise RuntimeError("Only source-40, source-52 or source-67 supports non-default mask revisions")
     revision_suffix = hd_proof.mask_revision_suffix(args.revision)
@@ -77,7 +77,7 @@ def main():
         source_path = ROOT / source["source_png"]
         if file_sha256(source_path) != source["converted_png_sha256"]:
             raise RuntimeError("The exact original source bytes changed")
-        detail_manifest_path = EXPERIMENT / (f"note-detail-sources-{args.index}.json" if args.index in {40, 52, 53, 54, 57, 61, 62, 63, 64} else "note-detail-sources.json")
+        detail_manifest_path = EXPERIMENT / (f"note-detail-sources-{args.index}.json" if args.index in {40, 52, 53, 54, 57, 60, 61, 62, 63, 64} else "note-detail-sources.json")
         details = {row["index"]: row for row in read_json(detail_manifest_path)["entries"]}
         detail = details[args.index]
         if detail["source_sha256"] != key or detail["source_png_sha256"] != source["converted_png_sha256"]:

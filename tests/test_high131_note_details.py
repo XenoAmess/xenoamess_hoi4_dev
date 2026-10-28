@@ -249,8 +249,9 @@ class NoteDetailInputTests(unittest.TestCase):
                 self.assertEqual(detail.size, (528, 720))
                 self.assertEqual(detail.mode, 'RGBA')
 
-    def test_source61_through64_exact_derivative_manifests(self):
+    def test_source60_through64_exact_derivative_manifests(self):
         keys = {
+            60: 'bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5',
             61: '5a160dd1e47d2a76dbf153ecf70fed66d73f3dfe21958a284cec3f4971fbfc74',
             62: '55e631c3aaedeef562ccccf0e31ebd55de03e25b719c3ac197e677f30ecb3675',
             63: 'bccaf19c78294b83dc4ab613b8e019a23e77702e342deb376e787b16b0c12336',
@@ -278,6 +279,60 @@ class NoteDetailInputTests(unittest.TestCase):
                     self.assertEqual(detail.convert('RGBA').tobytes(), expected.tobytes())
                     self.assertEqual(detail.size, (528, 720))
                     self.assertEqual(detail.mode, 'RGBA')
+
+    def test_source60_readback_uses_its_reviewed_detail_manifest(self):
+        key = 'a' * 64
+        source_relative = self.source.relative_to(self.root).as_posix()
+        detail_relative = self.detail.relative_to(self.root).as_posix()
+        write_json(self.detail.parent.parent / 'scope.json', {'entries': [{
+            'index': 60, 'source_sha256': key, 'source_png': source_relative,
+            'converted_png_sha256': self.source_sha,
+        }]})
+        write_json(self.detail.parent.parent / 'note-detail-sources-60.json', {
+            'schema': 'naiwa-high131-note-detail-sources-v1',
+            'status': 'source_derivatives_visually_verified',
+            'entries': [{
+                'index': 60, 'source_sha256': key, 'source_png': source_relative,
+                'source_png_sha256': self.source_sha, 'crop_rect': self.rect, 'scale': self.scale,
+                'method': 'source-crop-resize-nearest-v1', 'path': detail_relative,
+                'sha256': self.detail_sha, 'size': [528, 720], 'mode': 'RGBA',
+                'role': 'source-note-detail-reference', 'not_generated_or_game_payload': True,
+                'derivative_reviewed': True, 'reviewer': 'Actual visual review fixture',
+                'reviewed_at_utc': '2026-01-01T00:00:00Z',
+            }],
+        })
+        proof_path = self.root / f'runtime/high131-hd-target-readback-{self.commit}.json'
+        shutil.copyfile(self.root / 'runtime/proof.json', proof_path)
+
+        def fake_git(*args):
+            if args[0] == 'ls-remote':
+                return self.commit + '\trefs/heads/master'
+            if args[0] == 'hash-object':
+                return 'b' * 40
+            if args[0] == 'ls-tree':
+                return f'100644 blob {"b" * 40}\t{args[-1]}'
+            self.assertEqual(args, ('fetch', 'origin'))
+            return ''
+
+        with (
+            patch.object(verify_details, 'ROOT', self.root),
+            patch.object(verify_details, 'EXPERIMENT', self.detail.parent.parent),
+            patch.object(verify_details, 'DETAIL_DIR', self.detail.parent.parent / 'review-source-details'),
+            patch.object(verify_details, 'git', side_effect=fake_git),
+            patch.object(verify_details.subprocess, 'run') as merge_base,
+            patch.object(verify_details.requests, 'get') as get,
+            patch.object(sys, 'argv', ['high131_verify_note_details.py', '--commit', self.commit, '--index', '60']),
+        ):
+            merge_base.return_value.returncode = 0
+            response = get.return_value.__enter__.return_value
+            response.iter_content.return_value = iter([self.detail.read_bytes()])
+            verify_details.main()
+        proof = read_json(proof_path)
+        self.assertEqual(proof['status'], 'verified')
+        self.assertEqual(proof['detail_reference_indices'], [60])
+        self.assertEqual(proof['targets'][self.detail_sha]['sha256'], self.detail_sha)
+        self.assertTrue(proof['source_detail_manifest'].endswith('note-detail-sources-60.json'))
+        get.assert_called_once()
 
 
 if __name__ == '__main__':
