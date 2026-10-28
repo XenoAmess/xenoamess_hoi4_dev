@@ -1,0 +1,32 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-28T11:36:48.673902+00:00",
+  "fixed_commit": "9aba1bf70015714ef429912ff50ceefa1d568175",
+  "checkpoint_requests": 6,
+  "new_original_PNGs": 8,
+  "own_cumulative_verified_original_PNGs": 948,
+  "actual_verified_readback": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "commit": "9aba1bf70015714ef429912ff50ceefa1d568175",
+    "started_at_utc": "2026-10-28T11:35:44.960016+00:00",
+    "process_id": 17912,
+    "status": "verified",
+    "local_tree_validation": {
+      "method": "Prior actual SHA256/size proof reused only after exact immutable blob/path/size match; every new Git PNG streamed and SHA256/size verified",
+      "prior_commit": "c31746182dc8107663580331813869b48b638666",
+      "prior_local_proof_sha256": "970258885a686b70e9aab66c10a035f1fd4d45dc95b189941ebe31d4a663177e",
+      "prior_actual_verified_at_utc": "2026-10-26T19:59:49.145614+00:00",
+      "reused_local_byte_proofs": 6971,
+      "new_streamed_Git_PNGs": 295,
+      "new_streamed_Git_bytes": 625068260,
+      "source_code": "\"\"\"Reuse immutable prior local byte proofs; still verify remote tree and new raw bytes.\"\"\"\nimport sys,os,json,hashlib,subprocess,traceback\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom mod_nailong.tools import master_git_remote as remote\nbase='c31746182dc8107663580331813869b48b638666';commit,batch=sys.argv[1:3]\ncommit=subprocess.check_output(['git','rev-parse',commit+'^{commit}'],cwd=ROOT,text=True).strip()\nprior=read_json(ROOT/f'runtime/high131-local-tree-proofs/{base}.json');assert prior['status']=='verified' and prior['machine_id']==machine_id() and prior['commit']==base\nold_index=json.loads(subprocess.check_output(['git','show',base+':mod_nailong/data/fullsize-files.json'],cwd=ROOT))\nassert set(prior['blobs'])==set(old_index['outputs'])\ndef verified_tree(actual_commit='HEAD',root=ROOT,index=None):\n assert actual_commit==commit and index is not None\n assert all(index['outputs'].get(k)==v for k,v in old_index['outputs'].items()),'Prior indexed originals changed'\n rows=subprocess.check_output(['git','ls-tree','-r','-l',commit,'--','mod_nailong/assets/generated_fullsize'],cwd=ROOT).decode().splitlines()\n tree={}\n for row in rows:\n  meta,path=row.split('\\t',1);mode,kind,blob,size=meta.split();tree[path]=(kind,blob,int(size))\n blobs={};pending=[]\n for digest,entry in sorted(index['outputs'].items()):\n  kind,blob,size=tree[entry['path']];assert kind=='blob' and size==entry['bytes']\n  if digest in prior['blobs']:\n   assert blob==prior['blobs'][digest];blobs[digest]=blob\n  else:pending.append((digest,entry,blob))\n process=subprocess.Popen(['git','cat-file','--batch'],cwd=ROOT,stdin=subprocess.PIPE,stdout=subprocess.PIPE)\n try:\n  for digest,entry,expected in pending:\n   process.stdin.write((commit+':'+entry['path']+'\\n').encode());process.stdin.flush();head=process.stdout.readline().decode().split();assert head==[expected,'blob',str(entry['bytes'])]\n   sha=hashlib.sha256();left=entry['bytes']\n   while left:\n    block=process.stdout.read(min(left,1048576));assert block;sha.update(block);left-=len(block)\n   assert process.stdout.read(1)==b'\\n' and sha.hexdigest()==digest;blobs[digest]=expected\n finally:process.stdin.close();process.stdout.close();assert process.wait()==0\n assert len(blobs)==index['count']\n receipt['local_tree_validation']={'method':'Prior actual SHA256/size proof reused only after exact immutable blob/path/size match; every new Git PNG streamed and SHA256/size verified','prior_commit':base,'prior_local_proof_sha256':file_sha256(ROOT/f'runtime/high131-local-tree-proofs/{base}.json'),'prior_actual_verified_at_utc':prior['verified_at_utc'],'reused_local_byte_proofs':len(blobs)-len(pending),'new_streamed_Git_PNGs':len(pending),'new_streamed_Git_bytes':sum(e['bytes'] for _,e,_ in pending),'source_code':Path(__file__).read_text(encoding='utf-8')}\n return commit,blobs\nremote.verify_tree=verified_tree\nreceipt={'machine_id':machine_id(),'commit':commit,'started_at_utc':utc_now(),'process_id':os.getpid(),'status':'running'};out=ROOT/f'runtime/master-readback-{batch}.json';write_json(out,receipt)\nlock=ROOT/'runtime/master-git-readback.lock';fd=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY);os.write(fd,str(os.getpid()).encode());os.close(fd)\ntry:\n result=remote.verify_remote(commit);receipt.update(status='verified',distinct_outputs=result['distinct_outputs'],original_png_bytes=result['original_png_bytes'],completed_at_utc=utc_now())\nexcept BaseException:receipt.update(status='failed',error=traceback.format_exc(),completed_at_utc=utc_now());raise\nfinally:\n write_json(out,receipt);assert lock.read_text()==str(os.getpid());lock.unlink()\n"
+    },
+    "distinct_outputs": 7266,
+    "original_png_bytes": 15038445021,
+    "completed_at_utc": "2026-10-28T11:36:48.493328+00:00"
+  },
+  "actual_verified_readback_sha256": "4b5373394c5e4fb47bf69b478164fc0ebdad064e83ff43c005a58453f39f4656",
+  "original_failed_readback_path": "runtime/master-readback-resumed-low-v35-auto-1-20261025.json",
+  "original_failed_readback_sha256": "7e5d2be0fa0017ee2df2aa8fedd2ddd0b0d9c154313b8a0ff5d62d5a52afc258",
+  "scope": "Own cumulative940+8=948: V34 remaining3 original PNGs plus all5 V35 returned PNGs. One V35 terminal network failure produced no PNG. Concurrent HIGH additions excluded; no art-approval or game-display claim. V35 owner safely ended; its original publisher deadline remains unchanged."
+}
