@@ -1,0 +1,45 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "prepared_at_utc": "2026-10-28T20:37:38.608566+00:00",
+  "previous_actual_state": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v37",
+    "next_index": 1483,
+    "after_window": "resume-20261025-large-logical-queue-v37-window1482",
+    "status": "stopped_at_safe_boundary",
+    "created_at_utc": "2026-10-28T16:34:41.260003+00:00",
+    "completed_windows": 55,
+    "completed_source_requests": 55,
+    "updated_at_utc": "2026-10-28T20:34:45.147893+00:00",
+    "reason": "bounded_transport_or_run_duration",
+    "stopped_at_utc": "2026-10-28T20:34:55.796452+00:00"
+  },
+  "previous_actual_call_results": {
+    "calls": 55,
+    "PNG_returns": 39,
+    "errors": 16
+  },
+  "previous_last_window_gate": {
+    "ready": true,
+    "window_id": "resume-20261025-large-logical-queue-v37-window1482",
+    "machine_id": "bf-202609141645-5434332d4d",
+    "receipt": "mod_nailong/data/production-window-timings/resume-20261025-large-logical-queue-v37-window1482-completed.json",
+    "observed_at_utc": "2026-10-28T20:37:38.553313+00:00"
+  },
+  "spec": {
+    "runId": "resume-20261025-large-logical-queue-v38",
+    "startIndex": 1483,
+    "afterWindow": "resume-20261025-large-logical-queue-v37-window1482",
+    "maxCalls": 64,
+    "maxPreviewBytes": 6553600,
+    "maxRunSeconds": 14400
+  },
+  "helper_sources": "docs/handoffs/2026-10-28-low-v38-helper-sources.json",
+  "helper_sources_sha256": "fcdd19b5690774c4b533d989f5cd4bf513028eba9c0ce3c1d3203ebb4dac3ce2",
+  "remaining_prepared_windows": 0,
+  "free_bytes_observed": 365785055232,
+  "image_calls": 0,
+  "retention_review_utc_unchanged": "2026-10-29T10:30:00Z",
+  "scope": "Actual builtin cell1918 collected at terminal safe boundary after55 calls; original owner released. New finite continuation uses byte-identical tested helpers with fresh4h/64-call/32-review-group bounds, without extending old bounds or replaying any image call. Continue pending-output visual review and allowed art repairs, plus manually reviewed unchanged eligible LOW service retries; HIGH refused retries remain skipped in this execution. Root b260 final matte and2 approvals/2 rejections were staged after original V37 cutoff and await next sole-producer boundary.",
+  "source_code": "import json,sys,shutil\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom tools.rolling_production_queue import validate_prepared,no_calling\nfrom tools.production_window_gate import inspect_window\nold='resume-20261025-large-logical-queue-v37';new='resume-20261025-large-logical-queue-v38'\nfolder=ROOT/'runtime/rolling-production';state=read_json(folder/(old+'.json'))\nassert state['status']=='stopped_at_safe_boundary' and state['completed_source_requests']==state['completed_windows']==55\nassert state['machine_id']==machine_id() and not (folder/'owner.json').exists() and (folder/(old+'-released-owner.json')).exists()\nassert not (folder/(new+'.json')).exists();no_calling(ROOT)\ngate=inspect_window(ROOT,state['after_window'],machine_id());assert gate['ready'],gate\nphase=read_json(ROOT/'runtime/root-b-review-v37-phase.json')\nassert phase['current_tag'] is None and phase['completed_groups']==20\nplan=read_json(ROOT/'runtime/after128-continuous-plan.json')['batches']\nfor item in plan[state['next_index']:]:validate_prepared(ROOT,item)\nevents=[e for p in (ROOT/'mod_nailong/data/production-window-timings').glob(old+'-window*-completed.json') for e in read_json(p)['events'] if e['phase']=='image_resolved']\ncounts={'calls':len(events),'PNG_returns':sum(not e.get('error') for e in events),'errors':sum(bool(e.get('error')) for e in events)}\nassert counts['calls']==55 and counts['PNG_returns']+counts['errors']==55\nspec={'runId':new,'startIndex':state['next_index'],'afterWindow':state['after_window'],'maxCalls':64,'maxPreviewBytes':6553600,'maxRunSeconds':14400}\nspecp=ROOT/'runtime/resume-low-v38-spec-20261028.json';assert not specp.exists();write_json(specp,spec)\nsource=ROOT/'docs/handoffs/2026-10-28-low-v37-helper-sources.json'\nfrozen=ROOT/'docs/handoffs/2026-10-28-low-v38-helper-sources.json';assert not frozen.exists()\nbody=read_json(source);body.update(frozen_before_new_owner_claim_at_utc=utc_now(),unchanged_from={'path':source.relative_to(ROOT).as_posix(),'sha256':file_sha256(source)})\nwrite_json(frozen,body);assert read_json(frozen)['sources']==read_json(source)['sources']\ntarget=ROOT/'mod_nailong/data/production-resumptions/20261028-low-v38.json';assert not target.exists()\nwrite_json(target,{'machine_id':machine_id(),'prepared_at_utc':utc_now(),'previous_actual_state':state,\n 'previous_actual_call_results':counts,'previous_last_window_gate':gate,'spec':spec,\n 'helper_sources':frozen.relative_to(ROOT).as_posix(),'helper_sources_sha256':file_sha256(frozen),\n 'remaining_prepared_windows':len(plan)-state['next_index'],'free_bytes_observed':shutil.disk_usage(ROOT).free,\n 'image_calls':0,'retention_review_utc_unchanged':'2026-10-29T10:30:00Z',\n 'scope':'Actual builtin cell1918 collected at terminal safe boundary after55 calls; original owner released. New finite continuation uses byte-identical tested helpers with fresh4h/64-call/32-review-group bounds, without extending old bounds or replaying any image call. Continue pending-output visual review and allowed art repairs, plus manually reviewed unchanged eligible LOW service retries; HIGH refused retries remain skipped in this execution. Root b260 final matte and2 approvals/2 rejections were staged after original V37 cutoff and await next sole-producer boundary.',\n 'source_code':Path(__file__).read_text(encoding='utf-8')})\ns=(ROOT/'runtime/start-root-review-v37-20261028-template.py').read_text(encoding='utf-8').replace('v36','OLD_VERSION').replace('v37','v38').replace('OLD_VERSION','v37')\ns=s.replace(\"old['completed_groups']==9\",\"old['completed_groups']==20\").replace('previous calls10','previous calls55').replace(\"'previous_root_groups':9\",\"'previous_root_groups':20\")\nt=ROOT/'runtime/start-root-review-v38-20261028-template.py';assert not t.exists();compile(s,str(t),'exec');t.write_text(s,encoding='utf-8',newline='\\n')\ns=(ROOT/'runtime/resume-low-v37-actual-invocation-20261028.js').read_text(encoding='utf-8').replace('v37','v38')\nt=ROOT/'runtime/resume-low-v38-actual-invocation-20261028.js';assert not t.exists();t.write_text(s,encoding='utf-8',newline='\\n')\nend=ROOT/'mod_nailong/data/production-resumptions/20261028-v37-finite-phase-end.json';assert not end.exists()\nwrite_json(end,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'actual_builtin_cell':'1918',\n 'actual_result':{'requests':55,'windows':55,'PNG_returns':counts['PNG_returns'],'errors':counts['errors'],'display_bytes':306598,'status':'safe_boundary'},\n 'actual_store_finished_at_utc':'2026-10-28T20:34:56.038Z','original_cutoff_utc':'2026-10-28T20:34:41.260003+00:00',\n 'review_groups':20,'last_review_after_cutoff':'rollingb260','last_review_after_cutoff_counts':{'approved':2,'rejected':2},\n 'scope':'Actual builtin terminal collected, owner released. b260 final matte observation and2 approvals/2 rejections were staged after cutoff and were not applied by V37. New phase uses fresh finite bounds without resetting source retry histories. No game-display validation.',\n 'source_code':Path(__file__).read_text(encoding='utf-8')})\nprint(json.dumps({'spec':spec,'actual_previous_results':counts,'remaining_prepared_windows':len(plan)-state['next_index'],\n 'source_functions_unchanged':True,'free_GiB':round(shutil.disk_usage(ROOT).free/2**30,2)}),flush=True)\n"
+}
