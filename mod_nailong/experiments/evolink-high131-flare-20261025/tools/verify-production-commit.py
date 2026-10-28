@@ -14,9 +14,19 @@ def scoped_readback_checkpoint():
     candidate.relative_to((ROOT / 'runtime').resolve())
     if candidate == master_git_remote.CHECKPOINT:
         raise ValueError('Scoped readback must not replace the shared checkpoint pointer')
-    if not candidate.exists() and master_git_remote.CHECKPOINT.is_file():
-        candidate.parent.mkdir(parents=True, exist_ok=True)
-        candidate.write_bytes(master_git_remote.CHECKPOINT.read_bytes())
+    if not candidate.exists():
+        seed = master_git_remote.CHECKPOINT
+        if os.environ.get('XAR_HIGH131_TREE_CACHE') == '1':
+            configured_seed = os.environ.get('XAR_HIGH131_READBACK_SEED')
+            if not configured_seed:
+                raise ValueError('HIGH first readback requires XAR_HIGH131_READBACK_SEED within runtime')
+            seed = (ROOT / configured_seed).resolve()
+            seed.relative_to((ROOT / 'runtime').resolve())
+            if seed == master_git_remote.CHECKPOINT:
+                raise ValueError('HIGH seed must not be the shared checkpoint pointer')
+        if seed.is_file():
+            candidate.parent.mkdir(parents=True, exist_ok=True)
+            candidate.write_bytes(seed.read_bytes())
     return candidate
 
 

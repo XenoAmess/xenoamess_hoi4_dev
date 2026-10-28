@@ -28,6 +28,24 @@ class ScopedReadbackCheckpointTests(unittest.TestCase):
             self.assertEqual(scoped.read_text(encoding='utf-8'), '{"prior_verified_outputs": true}')
             self.assertEqual(seed.read_text(encoding='utf-8'), '{"prior_verified_outputs": true}')
 
+    def test_high_first_readback_requires_and_uses_explicit_high_seed(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / 'runtime') as directory:
+            shared = Path(directory) / 'shared.json'
+            seed = Path(directory) / 'high-seed.json'
+            scoped = Path(directory) / 'nested' / 'checkpoint.json'
+            shared.write_text('{"owner": "shared"}', encoding='utf-8')
+            seed.write_text('{"owner": "HIGH"}', encoding='utf-8')
+            environment = {'XAR_READBACK_CHECKPOINT': str(scoped), 'XAR_HIGH131_TREE_CACHE': '1'}
+            with patch.object(module.master_git_remote, 'CHECKPOINT', shared), patch.dict(os.environ, environment, clear=False):
+                os.environ.pop('XAR_HIGH131_READBACK_SEED', None)
+                with self.assertRaisesRegex(ValueError, 'XAR_HIGH131_READBACK_SEED'):
+                    module.scoped_readback_checkpoint()
+                self.assertFalse(scoped.exists())
+                with patch.dict(os.environ, {'XAR_HIGH131_READBACK_SEED': str(seed)}):
+                    self.assertEqual(module.scoped_readback_checkpoint(), scoped)
+            self.assertEqual(scoped.read_text(encoding='utf-8'), '{"owner": "HIGH"}')
+            self.assertEqual(shared.read_text(encoding='utf-8'), '{"owner": "shared"}')
+
     def test_missing_override_uses_legacy_behavior(self):
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop('XAR_READBACK_CHECKPOINT', None)
