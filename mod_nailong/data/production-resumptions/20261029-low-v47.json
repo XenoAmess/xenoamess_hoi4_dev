@@ -1,0 +1,16 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "prepared_at_utc": "2026-10-29T11:08:08.610929+00:00",
+  "status": "prepared_not_started",
+  "spec": {
+    "runId": "resume-20261025-large-logical-queue-v47",
+    "startIndex": 1584,
+    "afterWindow": "resume-20261029-cooldown186-recovered-one-window",
+    "maxCalls": 24,
+    "maxPreviewBytes": 2097152,
+    "maxRunSeconds": 3600
+  },
+  "actual_invocation_source": "(async()=>{\nconst read=async cmd=>{let r=await tools.exec_command({cmd,shell:\"cmd.exe\",login:false,max_output_tokens:24000});let output=r.output||\"\";while(r.session_id){r=await tools.write_stdin({session_id:r.session_id,chars:\"\",yield_time_ms:1000,max_output_tokens:24000});output+=r.output||\"\";}if(r.exit_code!==0)throw Error(JSON.stringify(r));return output;};\nconst spec=JSON.parse(await read(\"type runtime\\\\resume-low-v47-spec-20261029.json\"));\nconst frozen=JSON.parse(await read(\"type docs\\\\handoffs\\\\2026-10-29-low-v47-helper-sources.json\"));\nconst terminalTransportDecision=eval(\"(\"+frozen.sources.transport_policy+\")\");\nlet terminalNetworkFailureStreak=0;\nconst logical=eval(\"(\"+frozen.sources.logical+\")\"),window=eval(\"(\"+frozen.sources.window+\")\"),producer=eval(\"(\"+frozen.sources.producer+\")\");\nconst adapt=(plan,options)=>window(plan,{...options,producer,logicalBoundary:true});\nstore(\"low_v47_actual_state\",{status:\"starting\",started_at_utc:new Date().toISOString(),spec});\ntry{const result=await logical(spec,{producer:adapt});store(\"low_v47_actual_state\",{status:\"finished\",observed_at_utc:new Date().toISOString(),spec,result});text(result);}catch(error){store(\"low_v47_actual_state\",{status:\"stopped_requires_reconciliation\",observed_at_utc:new Date().toISOString(),spec,error:String(error)});throw error;}\n\n})()\n",
+  "actual_invocation_sha256": "be3203597477aa9b82f421ed0a2975f6578b8f90c71f9dfb5d30decfc22fa607",
+  "frozen_sources_sha256": "a357a489a0902b01619812e99b9a0238079ed520faefc392a30676a535f5edc0"
+}

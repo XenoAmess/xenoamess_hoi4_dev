@@ -1,4 +1,4 @@
-"""Plan up to eight unchanged retries, eight hours after each service refusal."""
+"""Plan exact retries with source-scoped, recorded user wait overrides."""
 from datetime import datetime,timedelta,timezone
 from pathlib import Path
 import argparse
@@ -24,7 +24,22 @@ def policy():
         assert frozen['additional_retries_per_selected_source']==1 and frozen['preserve_consumed_counts'] is True
         assert {e['source_sha256'] for e in frozen['sources']}==set(grant['source_keys'])
         assert all(e['retries_used_at_authorization']==8 and e['additional_authorized_cooldown_retries']==1 and e['max_cooldown_retries_after_authorization']==9 for e in frozen['sources'])
+    for grant in settings.get('source_scoped_cooldown_waivers',[]):
+        assert grant['cooldown_hours']==0 and grant['preserve_consumed_counts'] is True
+        path=(ROOT/grant['authorization_manifest']).resolve()
+        assert path.is_relative_to((MOD/'data/retry-cooldown-waivers').resolve())
+        assert file_sha256(path)==grant['authorization_manifest_sha256']
+        frozen=read_json(path)
+        assert frozen['authorization_id']==grant['authorization_id'] and frozen['source_keys']==grant['source_keys']
+        assert frozen['effective_at_utc']==grant['effective_at_utc'] and frozen['user_instruction_quote']
+        priority=read_json(MOD/'data/production-priority.json')['sources']
+        assert len(set(grant['source_keys']))==len(grant['source_keys']) and all(not priority[k]['high_priority'] for k in grant['source_keys'])
     return settings
+
+def wait_waiver(settings,key):
+    grants=[g for g in settings.get('source_scoped_cooldown_waivers',[]) if key in g['source_keys']]
+    assert len(grants)<=1,'Do not silently stack wait overrides'
+    return grants[0] if grants else None
 
 def refresh_refusal(entry, latest, settings, *, source_key=None):
     """Migrate an exhausted old allowance without resetting consumed calls."""
@@ -35,8 +50,15 @@ def refresh_refusal(entry, latest, settings, *, source_key=None):
     observed=latest.get('observed_at_utc')
     if not observed:return
     deadline=(datetime.fromisoformat(observed.replace('Z','+00:00'))+timedelta(hours=settings['cooldown_hours'])).isoformat()
-    # Never weaken a previously conservative lower bound or an existing CD.
-    if datetime.fromisoformat(entry['not_before_utc'])>datetime.fromisoformat(deadline):deadline=entry['not_before_utc']
+    grant=wait_waiver(settings,source_key)
+    if grant:
+        previous=entry['not_before_utc']
+        default_deadline=deadline
+        deadline=max(datetime.fromisoformat(observed.replace('Z','+00:00')),datetime.fromisoformat(grant['effective_at_utc'])).isoformat()
+        if entry.get('cooldown_wait_authorization_id')!=grant['authorization_id']:
+            entry.setdefault('wait_override_history',[]).append({'machine_id':machine_id(),'recorded_at_utc':utc_now(),'authorization_id':grant['authorization_id'],'authorization_manifest_sha256':grant['authorization_manifest_sha256'],'previous_not_before_utc':previous,'consumed_retries_unchanged':entry['retries_used'],'scope':'User cancelled this LOW source project wait. Historical refusal/default8h deadline preserved; no tool/content/quota override.'})
+        entry.update(cooldown_wait_authorization_id=grant['authorization_id'],default_eight_hour_not_before_utc=default_deadline)
+    elif datetime.fromisoformat(entry['not_before_utc'])>datetime.fromisoformat(deadline):deadline=entry['not_before_utc']
     old_state=entry['state']
     new_state='cooling_down' if entry['retries_used']<limit else 'retry_limit_reached'
     if old_state=='retry_limit_reached' and new_state=='cooling_down':
@@ -93,6 +115,8 @@ def sync():
                      'cooldown_hours':settings['cooldown_hours'],'max_cooldown_retries_per_source':settings['max_cooldown_retries_per_source']}
     if settings.get('source_scoped_extra_retry_rounds'):
         queue['policy']['source_scoped_extra_retry_rounds']=settings['source_scoped_extra_retry_rounds']
+    if settings.get('source_scoped_cooldown_waivers'):
+        queue['policy']['source_scoped_cooldown_waivers']=settings['source_scoped_cooldown_waivers']
     write_json(QUEUE,queue)
     return queue
 
@@ -146,6 +170,10 @@ def claim(key):
         'retry_root_attempt':root['number'],'cooldown_retry_number':retry_number,
         'cooldown_not_before_utc':entry['not_before_utc'],'cooldown_retry_tool_transparent_background':transparent,
         'eligibility_confirmed_by':'Codex reviewed allowed request and tool conditions before --confirm-eligible'}
+    grant=wait_waiver(settings,key)
+    if grant:
+        attempt['cooldown_wait_authorization']={k:grant[k] for k in ['authorization_id','authorization_manifest','authorization_manifest_sha256','effective_at_utc','cooldown_hours']}
+        attempt['default_eight_hour_not_before_utc']=entry.get('default_eight_hour_not_before_utc')
     if retry_number>settings['max_cooldown_retries_per_source']:
         grant=extra_retry_authorization(settings,key);assert grant
         attempt['source_scoped_extra_retry_authorization']={k:grant[k] for k in ['authorization_id','authorization_manifest','authorization_manifest_sha256','additional_retries_per_selected_source']}

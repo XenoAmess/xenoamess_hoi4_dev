@@ -60,6 +60,46 @@ class ImageRetryGuards(unittest.TestCase):
         self.assertEqual(read_json(retries.QUEUE)['sources'][self.key]['retries_used'], 0)
         self.assertEqual(len(read_json(self.journal)['attempts']), 1)
 
+    def authorize_immediate_wait(self):
+        FixedClock.instant = datetime(2026, 10, 16, 17, tzinfo=timezone.utc)
+        data=read_json(self.journal)
+        data['attempts'][0].update(error='moderation_blocked: retained refusal',observed_at_utc='2026-10-16T10:00:00+00:00')
+        write_json(self.journal,data)
+        write_json(self.mod/'data/production-priority.json',{'sources':{self.key:{'high_priority':False}}})
+        manifest=self.mod/'data/retry-cooldown-waivers/test-low.json'
+        grant={'authorization_id':'test-low-immediate','source_keys':[self.key],'effective_at_utc':FixedClock.instant.isoformat(),'cooldown_hours':0,'preserve_consumed_counts':True}
+        write_json(manifest,dict(grant,user_instruction_quote='Cancel the remaining LOW project wait'))
+        grant.update(authorization_manifest=manifest.relative_to(self.root).as_posix(),authorization_manifest_sha256=file_sha256(manifest))
+        settings=read_json(self.mod/'data/image-retry-policy.json');settings['source_scoped_cooldown_waivers']=[grant];write_json(self.mod/'data/image-retry-policy.json',settings)
+        return manifest
+
+    def test_explicit_low_wait_override_keeps_original_deadline_and_inputs(self):
+        self.authorize_immediate_wait();retries.claim(self.key)
+        entry=read_json(retries.QUEUE)['sources'][self.key]
+        self.assertEqual(entry['retries_used'],1)
+        self.assertEqual(entry['wait_override_history'][0]['previous_not_before_utc'],'2026-10-16T18:00:00+00:00')
+        self.assertEqual(entry['default_eight_hour_not_before_utc'],'2026-10-16T18:00:00+00:00')
+        self.assertEqual(read_json(self.root/'runtime/cooldown-retry-job.json')['prompt'],self.prompt)
+        self.assertEqual(read_json(self.journal)['attempts'][-1]['cooldown_wait_authorization']['authorization_id'],'test-low-immediate')
+
+    def test_wait_override_never_resets_or_extends_eight_retry_allowance(self):
+        self.authorize_immediate_wait()
+        for ordinal in range(1,9):
+            retries.claim(self.key)
+            self.assertEqual(read_json(retries.QUEUE)['sources'][self.key]['retries_used'],ordinal)
+            self.refuse_latest();FixedClock.instant+=timedelta(seconds=1)
+        with self.assertRaisesRegex(SystemExit,'Retry limit reached'):retries.claim(self.key)
+        self.assertEqual(len(read_json(self.journal)['attempts']),9)
+
+    def test_override_does_not_change_other_sources_and_changed_manifest_stops(self):
+        manifest=self.authorize_immediate_wait();settings=retries.policy()
+        entry={'retries_used':0,'state':'cooling_down','not_before_utc':'2026-10-16T18:00:00+00:00'}
+        latest={'number':1,'status':'failed','error':'moderation_blocked','observed_at_utc':'2026-10-16T10:00:00+00:00'}
+        retries.refresh_refusal(entry,latest,settings,source_key='b'*64)
+        self.assertEqual(entry['not_before_utc'],'2026-10-16T18:00:00+00:00')
+        manifest.write_text('{}',encoding='utf-8')
+        with self.assertRaises(AssertionError):retries.claim(self.key)
+
     def test_due_request_preserves_bytes_and_consumes_exactly_once(self):
         retries.claim(self.key)
         job = read_json(self.root / 'runtime/cooldown-retry-job.json')
