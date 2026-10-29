@@ -215,6 +215,67 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID db8ae32c-baff-4872-9753-e3fb57dc52cf. safety_violations=[abuse].\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-24T15:54:32.787379+00:00"
+    },
+    {
+      "number": 6,
+      "status": "approved",
+      "method": "EvoLink gpt-image-2.5-flare",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image1 is the actual raw-HD mascot edit target with output SHA256 2a99ee81dc7f04d0c87cd8f3802ed3d383d5238438723baa551463a850707ffe. Image2 is the exact original game portrait/card and sole authority for the original visible features and note shapes. Image3 is the user mascot identity reference.\n\nImage4 is only a nearest-neighbor enlarged view of Image2's actual note region, provided to make the source's small gray-mark shapes and right-edge tab easier to inspect. It is not a generated image and not an instruction to enlarge the note or imitate enlarged pixels. Image2 remains the authority for composition, card scale, backing and source alpha. Compare only the irregular group shapes, relative lengths and compact footprint; do not invent readable text or replace the person.\n\nMASK CONTRACT: A separate same-size RGBA PNG mask accompanies this request; it is not Image5 and not another ordered reference image. Mask alpha<255 pixels are the only permitted regeneration regions, and alpha=255 pixels must be preserved. Its two transparent rectangles cover only the two incorrect note-mark rows with narrow paper margins. Do not regenerate the capped person, dark brows, clothing, collar, photographic frame/backplate, correct right-edge tab or blank lower paper. Within those regions use Image2 and Image4 to restore exactly TWO separated source-scale irregular gray-mark groups in EACH row, with original relative lengths and spacing, not uniform bars, repeated dots or newly readable writing. Retain original paper colour, texture and lighting. The mask does not redefine the original card exterior alpha or authorize removing backing; preserve genuine native exterior transparency and opaque person, photographic backing and note interior.\n\nACTUAL OBSERVED CORRECTION: The source requires TWO separated irregular gray-mark groups in EACH of the two rows. The returned note instead has a long uniform upper-left bar, a shorter upper-right bar and a long uniform lower-left bar, without the required separated irregular lower-right group. Group count, shapes and compact source-relative footprint are still incorrect.\n\nThe exact original note has TWO separated irregular gray-mark groups in its upper note row and TWO separated irregular gray-mark groups in its lower row. Restore exactly TWO source-scale irregular groups in EACH row, with the original relative lengths, spacing and compact footprint. They are not generic repeated dots, uniform short dashes, long horizontal bars, extra groups or newly readable writing. Keep the lower paper blank outside the original marks and retain the original small dark right-edge tab.\n\nPreserve every already-correct part of Image1: the yellow compact mascot identity, green-ringed black eyes, exactly one source-appropriate mouth, source-visible hair, brows and facial hair, headgear, clothing, decorations, expression, head pose, crop and lighting. Do not replace the person with a human or a generic mascot. Preserve the short broad fitted neck and correct collar without pinching, floating cloth or a cream bib.\n\nSOURCE-VISIBLE CONTRACT FROM IMAGE2:\nPreserve the dark gray-green peaked cap with two silver-toned front insignia elements (small upper badge and larger lower wreath/cockade), silver braid and glossy black visor; hairline and most sideburns are covered. Keep dark brows, a clean-shaven smooth chin, no moustache/beard and no glasses. Preserve the dark field-gray high-collared tunic with two pale-gray rectangular collar tabs and a dark central collar opening; no tie is visible and the chest is note-occluded.\nStatic bust portrait with the head in three-quarter view facing viewer right, eyes gazing right and a stern closed-mouth expression. Preserve the upright shoulders, tight original crop and right-side note occlusion. Keep the directional frontal-left light and strong but detail-preserving visor shadow.\nThe dark neutral gray-olive rectangle is a real opaque photographic backplate with subtle mottling and a thin dark frame; lock its color, brightness and texture. Preserve the real cream note at right with its existing faint mark groups, blank areas, edges and shadow. Only the exterior around the whole card/note silhouette is transparent: produce genuine native transparency directly; do not use a working matte or defer alpha restoration; invent no interior backdrop, halo or smoke. Keep body, clothing, frame and note opaque.\nReturn genuine native transparency only outside the complete original card/frame/note silhouette. Preserve the opaque photographic backing and every subject, garment, frame and note interior; no working matte, halo, smoke, interior holes or invented scene. Do not invent readable text, extra note rows, people, symbols or comparison panels. Keep the full returned detail and original composition; no watermark.\nThe exact tiny cap/collar insignia motifs and note glyphs are not readable at 65x67.",
+      "prompt_file": "mod_nailong/experiments/evolink-high131-flare-20261025/prompts/bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5-06.txt",
+      "prompt_sha256": "9d3c213db09550f2bb399322b7fc1ea5e78a2db775dedd7769dcb9ffcc2819de",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/2a99ee81dc7f04d0c87cd8f3802ed3d383d5238438723baa551463a850707ffe.png",
+          "sha256": "2a99ee81dc7f04d0c87cd8f3802ed3d383d5238438723baa551463a850707ffe",
+          "url": "https://raw.githubusercontent.com/XenoAmess/xenoamess_hoi4_dev/f1eed617358deed4b7215552e41e88eb2c3102a0/mod_nailong/assets/generated_fullsize/2a99ee81dc7f04d0c87cd8f3802ed3d383d5238438723baa551463a850707ffe.png"
+        },
+        {
+          "role": "original source portrait",
+          "path": "runtime/references/bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5.png",
+          "raw_sha256": "bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5",
+          "converted_png_sha256": "3abc6f247cbbf63f0201649974be91f1df70e2c2b70b22a544de8476abf01895",
+          "url": "https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/download/evolink-high131-source-20261025/bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5.png"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976",
+          "url": "https://raw.githubusercontent.com/XenoAmess/xenoamess_hoi4_dev/a539d87d41f2865bf41ba22432dd67cace308ae5/mod_nailong/assets/reference/naiwa.png"
+        },
+        {
+          "role": "source-note-detail-reference",
+          "path": "mod_nailong/experiments/evolink-high131-flare-20261025/review-source-details/bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5-note-nearest16.png",
+          "sha256": "fbc734e65d3b7d282fd1e4110d15b124a66755757dd32febd708daa7b73d0d58",
+          "url": "https://raw.githubusercontent.com/XenoAmess/xenoamess_hoi4_dev/f1eed617358deed4b7215552e41e88eb2c3102a0/mod_nailong/experiments/evolink-high131-flare-20261025/review-source-details/bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5-note-nearest16.png",
+          "source_png_sha256": "3abc6f247cbbf63f0201649974be91f1df70e2c2b70b22a544de8476abf01895",
+          "not_generated_or_game_payload": true
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-28T17:55:52.341028+00:00",
+      "generated_at_utc": "2026-10-28T17:58:22.943005+00:00",
+      "fullsize_sha256": "58f796d1e04e156b4974cddb6638de4b69367cf984d1fa74820aa7d77304d439",
+      "fullsize_image": "mod_nailong/assets/generated_fullsize/58f796d1e04e156b4974cddb6638de4b69367cf984d1fa74820aa7d77304d439.png",
+      "output": "mod_nailong/assets/portraits/bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5.png",
+      "output_sha256": "2779ba70c099dc0e3cb53c78f9e3198db368b9efd5725f2f30b8e99149b30b50",
+      "external_task_id": "task-unified-1793210156-cgm8x8j1",
+      "external_execution": "mod_nailong/experiments/evolink-high131-flare-20261025/executions/bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5-06.json",
+      "external_execution_sha256": "f5a620b06352fd714bb9f709af62fd60d6ad281de6239e1b3b0f3be79513e79b",
+      "external_request": "mod_nailong/experiments/evolink-high131-flare-20261025/outputs/bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5-06.request.json",
+      "external_request_sha256": "eed2929481a8634ac1ed2dde9c3908ecf7c1c2aa6e471f8955de4c198e85d952",
+      "external_result": "mod_nailong/experiments/evolink-high131-flare-20261025/outputs/bcaa3e223619109671f12979fec27463cdeaee669f9f86fdf665ca50fb3a5bf5-06.result.json",
+      "external_result_sha256": "b4789d842419ef567f42091c71d8d74829e353b869791b4db7a408d24ff166cf",
+      "external_review": "mod_nailong/experiments/evolink-high131-flare-20261025/review-hd60-repair-06-agent.json",
+      "external_review_sha256": "c43afafe1a6d0c9e40d17f9c8881f0f27ab5a49e0aa460f78df98a10c6a18842",
+      "external_evidence": "mod_nailong/experiments/evolink-high131-flare-20261025/review-hd60-repair-06-agent-evidence.json",
+      "external_evidence_sha256": "a3bf52e5613c28be2c665fd0bc1f4bfd3f118c29cb7be486d320fece3c87a120",
+      "external_reviewer": "Kimi actually viewed the exact 65x67 original and its independently enlarged source-note derivative, the complete unchanged 2048x2048 external-06 raw PNG, the native-resolution note crop at x=1030,y=900,width=820,height=600, and the full white/cyan/source-alpha/return-alpha comparison. Checked the two note rows, irregular group shapes, right-edge tab, brows, cap, clothing, collar, frame, alpha, and the task/prompt/request/result bindings before approving this exact output SHA.",
+      "recovery_status": "direct_completed_execution",
+      "reviewed_at_utc": "2026-10-28T18:20:22.054331+00:00",
+      "review": "approved"
     }
   ]
 }
