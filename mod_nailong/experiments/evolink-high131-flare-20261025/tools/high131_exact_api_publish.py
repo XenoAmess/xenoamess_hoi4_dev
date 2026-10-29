@@ -116,9 +116,20 @@ def import_paths(target):
             *(f"mod_nailong/data/generation-requests/{key}.json" for key in keys)}
 
 
+def api_endpoint(endpoint):
+    if endpoint.startswith("repos/"):
+        return endpoint
+    if endpoint.startswith(("git/", "compare/")):
+        return f"repos/{REPOSITORY}/{endpoint}"
+    return endpoint
+
+
 class Api:
     def __init__(self, runner=None):
         self.runner = runner or self._run_gh
+
+    def request(self, endpoint, method, payload, timeout):
+        return self.runner(api_endpoint(endpoint), method, payload, timeout)
 
     @staticmethod
     def _run_gh(endpoint, method, payload, timeout):
@@ -143,7 +154,7 @@ class Api:
         last_error = None
         for attempt in range(3):
             try:
-                body = self.runner(endpoint, "GET", None, 120)
+                body = self.request(endpoint, "GET", None, 120)
                 if expected_sha is not None:
                     require(body.get("sha") == expected_sha, f"Remote object SHA mismatch: {endpoint}")
                 return body
@@ -168,7 +179,7 @@ class Api:
         last_error = None
         for attempt in range(3):
             try:
-                body = self.runner(endpoint, "POST", payload, 300)
+                body = self.request(endpoint, "POST", payload, 300)
                 require(body.get("sha") == expected_sha, f"Created object SHA differs from the local object: {endpoint}")
                 return body
             except subprocess.TimeoutExpired as error:
@@ -299,7 +310,7 @@ class ExactApiPublisher:
         if not self.require_publication_parent(remote):
             return False
         try:
-            result = self.api.runner("git/refs/heads/master", "PATCH", {"sha": self.target, "force": False}, 120)
+            result = self.api.request("git/refs/heads/master", "PATCH", {"sha": self.target, "force": False}, 120)
             require(result.get("ref") == "refs/heads/master" and result.get("object", {}).get("sha") == self.target, "GitHub ref update did not confirm the exact target")
         except (ApiError, subprocess.TimeoutExpired) as error:
             observed = self.remote_master()

@@ -34,8 +34,11 @@ class FakeApi:
         self.posts.append((endpoint, payload, expected_sha))
         return {"sha": "0" * 40 if endpoint == "git/trees" and self.mismatch_tree else expected_sha}
 
+    def request(self, endpoint, method, payload, timeout):
+        return self.runner(publish.api_endpoint(endpoint), method, payload, timeout)
+
     def runner(self, endpoint, method, payload, timeout):
-        if endpoint == "git/refs/heads/master" and method == "PATCH":
+        if endpoint == "repos/XenoAmess/xenoamess_hoi4_dev/git/refs/heads/master" and method == "PATCH":
             self.patches.append(payload)
             self.remote = TARGET
             return {"ref": "refs/heads/master", "object": {"sha": TARGET}}
@@ -104,13 +107,13 @@ class ExactApiPublishTests(unittest.TestCase):
             calls.append((endpoint, method))
             if method == "POST" and sum(item[1] == "POST" for item in calls) == 1:
                 raise publish.ApiError("TLS handshake timeout", transient=True)
-            if method == "GET" and endpoint == "git/blobs/" + expected:
+            if method == "GET" and endpoint == "repos/XenoAmess/xenoamess_hoi4_dev/git/blobs/" + expected:
                 return {"sha": expected}
             raise AssertionError((endpoint, method))
         with patch.object(publish.time, "sleep"):
             result = publish.Api(runner).post_json("git/blobs", {"content": "YQ==", "encoding": "base64"}, expected)
         self.assertEqual(result["sha"], expected)
-        self.assertEqual(calls, [("git/blobs", "POST"), ("git/blobs/" + expected, "GET")])
+        self.assertEqual(calls, [("repos/XenoAmess/xenoamess_hoi4_dev/git/blobs", "POST"), ("repos/XenoAmess/xenoamess_hoi4_dev/git/blobs/" + expected, "GET")])
         calls = []
         def forbidden(endpoint, method, payload, timeout):
             calls.append((endpoint, method))
