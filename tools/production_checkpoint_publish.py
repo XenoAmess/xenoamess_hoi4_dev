@@ -63,7 +63,7 @@ try:
     if contains_fixed(observed):
      receipt.update(push_stdout='Transport command failed but fresh remote read proves the fixed commit is present.',remote_presence_verified_at_utc=utc_now());break
     write_json(out,receipt)
-    if attempt==2 or not any(term in str(error) for term in ['curl 55','RPC failed','Connection was reset','SSL_ERROR_SYSCALL']):raise
+    if attempt==2 or not any(term in str(error) for term in ['curl 55','RPC failed','Connection was reset','Recv failure','SSL_ERROR_SYSCALL','schannel','Failed to connect to github.com']):raise
     time.sleep(2)
  observed=remote_head()
  if observed!=commit:run('git','merge-base','--is-ancestor',commit,observed,timeout=30)
