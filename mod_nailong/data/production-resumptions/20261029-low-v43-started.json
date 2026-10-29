@@ -1,0 +1,109 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-29T05:51:06.346872+00:00",
+  "actual_builtin_cell": 2377,
+  "actual_owner_state": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v43",
+    "next_index": 1578,
+    "after_window": "resume-20261025-large-logical-queue-v42-window1577",
+    "status": "running",
+    "created_at_utc": "2026-10-29T05:50:49.034404+00:00",
+    "completed_windows": 0,
+    "completed_source_requests": 0
+  },
+  "actual_original_deadline_utc": "2026-10-29T06:20:49.034404+00:00",
+  "previous_root_phase_end": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "closed_at_utc": "2026-10-29T05:51:06.302619+00:00",
+    "old_phase_sha256": "b3908a0252843bf74bd4aa818502c31344dacce03dfae6351c43f14dfa56cf37",
+    "old_phase_exact": {
+      "machine_id": "bf-202609141645-5434332d4d",
+      "run_id": "resume-20261025-large-logical-queue-v42",
+      "operator": "Codex root in existing b slot",
+      "created_at_utc": "2026-10-29T04:45:47.045182+00:00",
+      "deadline_utc": "2026-10-29T05:38:14.493311+00:00",
+      "max_groups": 16,
+      "completed_groups": 1,
+      "current_tag": null,
+      "current_kind": null,
+      "completed": [
+        {
+          "tag": "rollingb297",
+          "report": "mod_nailong/data/resumed-20261024-rollingb297-agent-review.json",
+          "report_sha256": "a6ed6e26a17eaccb7aa458fef133cecc701394b05042bcd22a40ccae5e451ae9",
+          "completed_at_utc": "2026-10-29T05:16:20.193947+00:00"
+        }
+      ],
+      "previous_phase": "runtime/root-b-review-v41-phase.json",
+      "previous_phase_sha256": "efe213bf3e2373de48d10446366a4f28d6d78e65a7ac1d0092f010e3467d18c2",
+      "previous_end": "runtime/root-b-review-v41-ended.json",
+      "scope": "New finite phase after actual prior safe terminal, no delegation/new slot/bound extension.",
+      "allocated_at_utc": "2026-10-29T04:46:02.406028+00:00",
+      "updated_at_utc": "2026-10-29T05:16:21.642950+00:00"
+    },
+    "actual_production_stop": {
+      "machine_id": "bf-202609141645-5434332d4d",
+      "run_id": "resume-20261025-large-logical-queue-v42",
+      "next_index": 1578,
+      "after_window": "resume-20261025-large-logical-queue-v42-window1577",
+      "status": "stopped_at_safe_boundary",
+      "created_at_utc": "2026-10-29T04:38:14.493311+00:00",
+      "completed_windows": 4,
+      "completed_source_requests": 4,
+      "updated_at_utc": "2026-10-29T05:22:04.570666+00:00",
+      "reason": "bounded_transport_or_run_duration",
+      "stopped_at_utc": "2026-10-29T05:38:20.186101+00:00"
+    },
+    "scope": "All one actually claimed group complete. Old phase bytes/deadline/counters unchanged. Prior builtin terminal collected and owner released."
+  },
+  "new_root_phase": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "run_id": "resume-20261025-large-logical-queue-v43",
+    "operator": "Codex root in existing b slot",
+    "created_at_utc": "2026-10-29T05:51:06.307150+00:00",
+    "deadline_utc": "2026-10-29T06:20:49.034404+00:00",
+    "max_groups": 16,
+    "completed_groups": 0,
+    "current_tag": null,
+    "current_kind": null,
+    "completed": [],
+    "previous_phase": "runtime/root-b-review-v42-phase.json",
+    "previous_phase_sha256": "b3908a0252843bf74bd4aa818502c31344dacce03dfae6351c43f14dfa56cf37",
+    "previous_end": "runtime/root-b-review-v42-ended.json",
+    "scope": "New finite phase after actual prior safe terminal, no delegation/new slot/bound extension."
+  },
+  "root_helpers": [
+    {
+      "path": "runtime/root-review-slot-b-next-v43-20261025.py",
+      "sha256": "89a9e122d563b48814a28e03bc5fd85a8f4f31d0943bc10d537f646dbd7a9a76",
+      "source": "\"\"\"Guard and normally allocate the existing b slot to root; no extra reviewer.\"\"\"\nimport json,sys\nfrom datetime import datetime,timezone\nfrom pathlib import Path\nfrom PIL import Image\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\nfrom tools.fresh_source_observation_queue import claim as fresh_claim\nfrom tools.portrait_review_queue import wait_for_claim\nphase_path=ROOT/'runtime/root-b-review-v43-phase.json';phase=read_json(phase_path)\nassert phase['machine_id']==machine_id() and phase['current_tag'] is None\nassert phase['completed_groups']<phase['max_groups'] and datetime.now(timezone.utc)<datetime.fromisoformat(phase['deadline_utc'].replace('Z','+00:00'))\nrun=phase['run_id'];assert read_json(ROOT/'runtime/rolling-production/owner.json')=={'run_id':run,'machine_id':machine_id()}\nassert read_json(ROOT/f'runtime/rolling-production/{run}.json')['status']=='running'\nassert not (ROOT/'runtime/rolling-review-queue/handoff-stop.json').exists() and not (ROOT/f'runtime/rolling-production/{run}-stop-requested.json').exists()\nassert read_json(ROOT/'runtime/rolling-review-queue/slot-b.json')['status']=='available'\nallocation=fresh_claim(ROOT,'b')\nif allocation.get('ready'):\n views=[]\n for item in allocation['sources']:\n  with Image.open(item['original']) as opened:image=opened.convert('RGBA')\n  target=ROOT/f'runtime/{allocation[\"tag\"]}-{item[\"key\"][:8]}-root-nearest4.png'\n  assert not target.exists();image.resize((image.width*4,image.height*4),Image.Resampling.NEAREST).save(target)\n  views.append({'key':item['key'],'path':item['original'],'sha256':item['original_png_sha256'],'size':list(image.size),'alpha_extrema':list(image.getchannel('A').getextrema()),'nearest_path':str(target),'nearest_sha256':file_sha256(target)})\n allocation.update(views=views,mascot_reference_sha256=file_sha256(ROOT/'mod_nailong/assets/reference/naiwa.png'));kind='originals'\nelse:\n assert not allocation.get('stop_requested')\n allocation=wait_for_claim('b',0);kind='portrait'\nif allocation.get('ready'):\n phase.update(current_tag=allocation['tag'],current_kind=kind,allocated_at_utc=utc_now());write_json(phase_path,phase)\nprint(json.dumps({'kind':kind,'allocation':allocation,'finite_phase':phase},ensure_ascii=True))\n"
+    },
+    {
+      "path": "runtime/root-review-slot-b-next-v43-compact-20261025.py",
+      "sha256": "7ffa95ab96733b6e5755211d3baee65f50c97ca5314046079158a1054f801d60",
+      "source": "import json,subprocess,sys\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,write_json\nr=subprocess.run([sys.executable,'-X','utf8',str(ROOT/'runtime/root-review-slot-b-next-v43-20261025.py')],cwd=ROOT,capture_output=True,text=True,encoding='utf-8',errors='replace')\nassert r.returncode==0,(r.stdout,r.stderr)\nd=json.loads(r.stdout);write_json(ROOT/'runtime/root-b-last-allocation-v43.json',d)\nphase=d.pop('finite_phase',{})\nprint(json.dumps({**d,'finite_phase_summary':{k:phase.get(k) for k in ['deadline_utc','completed_groups','current_kind','current_tag']}},ensure_ascii=True))\n"
+    },
+    {
+      "path": "runtime/root-review-slot-b-verify-v43-actual-alpha-v2-20261028.py",
+      "sha256": "f66bec134c89da8f3c8fbb76b3e2cc60303ae6349345a20830d2eb42f5ee548f",
+      "source": "\"\"\"Independent current source/raw/ordered builtin request verification, no approval.\"\"\"\nimport hashlib,json,re,sys\nfrom pathlib import Path\nfrom PIL import Image\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\ntag=sys.argv[1];assert re.fullmatch(r'rollingb[0-9]+',tag)\nslot=read_json(ROOT/'runtime/rolling-review-queue/slot-b.json');assert slot['status']=='assigned' and slot['tag']==tag and slot['machine_id']==machine_id()\nowner=read_json(ROOT/'runtime/rolling-production/owner.json');assert owner=={'run_id':'resume-20261025-large-logical-queue-v43','machine_id':machine_id()}\nassert read_json(ROOT/f'runtime/rolling-production/{owner[\"run_id\"]}.json')['status']=='running'\nassert not (ROOT/'runtime/rolling-review-queue/handoff-stop.json').exists() and not (ROOT/f'runtime/rolling-production/{owner[\"run_id\"]}-stop-requested.json').exists()\nmanifest=ROOT/slot['manifest'];assert file_sha256(manifest)==slot['manifest_sha256']\nout=ROOT/f'runtime/root-review-slot-b/{tag}-actual-alpha-v2';out.mkdir(parents=True,exist_ok=False)\nentries=[];reference=ROOT/'mod_nailong/assets/reference/naiwa.png';reference_sha=file_sha256(reference)\nrows=read_json(ROOT/'mod_nailong/data/generated.json')['portraits']\nfor page in read_json(manifest)['pages']:\n assert file_sha256(Path(page['path']))==page['sha256']\n for e in page['entries']:\n  key=e['source_sha256'];source=ROOT/f'runtime/references/{key}.png';raw=ROOT/e['generated_fullsize_image'];row=rows[key]\n  assert file_sha256(source)==e['original_png_sha256'] and file_sha256(raw)==e['generated_fullsize_sha256']==row['generated_fullsize_sha256']\n  assert file_sha256(ROOT/row['image'])==e['image_sha256']==row['image_sha256']\n  journal=ROOT/row['request_journal'];a=next(v for v in read_json(journal)['attempts'] if v['number']==e['attempt_number'])\n  assert a['method']=='built-in imagegen' and a['fullsize_sha256']==e['generated_fullsize_sha256']\n  dispatch=ROOT/f'runtime/production-queue/dispatch/{key}-{a[\"number\"]:03}.json';d=read_json(dispatch)\n  assert d['status']=='returned_image' and d['returned_image_sha256']==e['generated_fullsize_sha256']\n  snapshot=Path(d['actual_request_snapshot_file']);assert file_sha256(snapshot)==d['actual_request_snapshot_sha256']==a['actual_request_verification']['actual_request_snapshot_sha256']\n  s=read_json(snapshot);assert s['key']==key and s['prompt']==a['prompt'] and hashlib.sha256(s['prompt'].encode('utf-8')).hexdigest()==d['prompt_sha256']==a['prompt_sha256']\n  verification=a['actual_request_verification']\n  assert isinstance(s['transparent'],bool) and s['transparent']==verification['transparent_background']\n  assert verification['actual_recorded_before_call'] is True and verification['machine_id']==machine_id()\n  if 'transparent_background' in a:assert s['transparent']==a['transparent_background']\n  paths=s.get('references',s.get('referenced_image_paths',[]));ordered=[file_sha256(Path(p)) for p in paths]\n  assert ordered==d['input_sha256']==verification['input_sha256'] and ordered[-1]==reference_sha and e['original_png_sha256'] in ordered\n  assert file_sha256(Path(d['returned_image']))==e['generated_fullsize_sha256']\n  with Image.open(source) as im:si=im.convert('RGBA')\n  with Image.open(raw) as im:ri=im.convert('RGBA')\n  nearest=out/f'{e[\"index\"]}-source-nearest4.png';si.resize((si.width*4,si.height*4),Image.Resampling.NEAREST).save(nearest)\n  def stats(im):\n   alpha=im.getchannel('A');hist=alpha.histogram()\n   return {'size':list(im.size),'alpha_extrema':list(alpha.getextrema()),'alpha_counts_252_255':{str(k):hist[k] for k in [252,253,254,255]}}\n  entries.append({**e,'source_image':source.relative_to(ROOT).as_posix(),'source_stats':stats(si),'raw_stats':stats(ri),'source_nearest4':nearest.relative_to(ROOT).as_posix(),'source_nearest4_sha256':file_sha256(nearest),'journal_sha256':file_sha256(journal),'dispatch_sha256':file_sha256(dispatch),'actual_snapshot_sha256':file_sha256(snapshot),'exact_prompt_sha256':a['prompt_sha256'],'ordered_input_sha256':ordered,'transparent':s['transparent'],'journal_top_level_alpha_present':('transparent_background' in a),'actual_pre_call_alpha_verified':True,'retained_builtin_cache_sha256':file_sha256(Path(d['returned_image'])),'binding_verified':True})\ntarget=out/'verified-binding.json'\nwrite_json(target,{'machine_id':machine_id(),'verified_at_utc':utc_now(),'observer':'Codex root, existing b slot takeover; no new reviewer slot','manifest':slot['manifest'],'manifest_sha256':file_sha256(manifest),'reference_sha256':reference_sha,'entries':entries,'scope':'Fresh independent byte/request verification only. Actual pre-call snapshot alpha must equal the actual_request_verification alpha and machine, with the top-level journal alpha checked additionally when present. Legacy retry clones may lack the redundant top-level field; no assumed flag or journal rewriting. No visual decision or canonical write. Root must actually view required original/raw/matte evidence independently.'})\nprint(json.dumps({'proof':target.relative_to(ROOT).as_posix(),'proof_sha256':file_sha256(target),'entries':len(entries),'all_ordered_builtin_bindings_verified':True,'raw_alpha_extrema':[e['raw_stats']['alpha_extrema'] for e in entries]},ensure_ascii=True))\n"
+    },
+    {
+      "path": "runtime/root-review-slot-b-finalize-v43-actual-alpha-v2-20261028.py",
+      "sha256": "9ae465f494622ce9936ad3335b1359a6696b7e6c052cae6eff11a46cd8e78bba",
+      "source": "\"\"\"Count a normally completed root b group and preserve its exact evidence.\"\"\"\nimport json,re,sys\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\ntag=sys.argv[1];assert re.fullmatch(r'rollingb[0-9]+',tag)\nreceipt=ROOT/f'mod_nailong/data/production-review-slot-completions/{tag}.json';done=read_json(receipt)\nassert done['status']=='reviewed_and_staged' and done['machine_id']==machine_id()\nreport=ROOT/done['report'];body=read_json(report);assert file_sha256(report)==done['report_sha256']\nslot=read_json(ROOT/'runtime/rolling-review-queue/slot-b.json');assert slot['status']=='available' and slot['last_report']==done['report']\nphase_path=ROOT/'runtime/root-b-review-v43-phase.json';phase=read_json(phase_path);assert phase['current_tag']==tag and phase['current_kind']=='portrait' and phase['completed_groups']<phase['max_groups']\ntarget=ROOT/f'mod_nailong/data/production-review-handovers/20261025-root-{tag}.json';assert not target.exists()\nproof=ROOT/f'runtime/root-review-slot-b/{tag}-actual-alpha-v2/verified-binding.json';config=ROOT/done['config']\nphase['completed_groups']+=1;phase.update(current_tag=None,current_kind=None,updated_at_utc=utc_now())\nphase.setdefault('completed',[]).append({'tag':tag,'report':done['report'],'report_sha256':file_sha256(report),'completed_at_utc':done['completed_at_utc']})\ndetail=proof.parent/'actual-detail-crops.json'\nwrite_json(target,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'operator':'Codex root in existing b slot; b agent stopped','report':done['report'],'report_sha256':file_sha256(report),'counts':body['counts'],'slot_completion':receipt.relative_to(ROOT).as_posix(),'slot_completion_sha256':file_sha256(receipt),'actual_review_config':read_json(config),'config_sha256':file_sha256(config),'independent_ordered_builtin_binding':read_json(proof),'binding_proof_sha256':file_sha256(proof),'targeted_actual_pixel_details':read_json(detail) if detail.exists() else [],'finite_phase_after_completion':phase,'finalizer_source':{'path':Path(__file__).relative_to(ROOT).as_posix(),'sha256':file_sha256(Path(__file__)),'source':Path(__file__).read_text(encoding='utf-8')},'scope':'Actual root observations/decisions, no automatic approval or new slot. Stage/global/complete already succeeded once. Sole running builtin producer applies decisions between imports; all original/raw PNGs remain unchanged.'})\nwrite_json(phase_path,phase)\nprint(json.dumps({'tag':tag,'counts':body['counts'],'completed_groups':phase['completed_groups'],'audit':target.relative_to(ROOT).as_posix()},ensure_ascii=True))\n"
+    },
+    {
+      "path": "runtime/read-root-b-source-allocation-v43-20261025.py",
+      "sha256": "e25da1a99f41131432d24b7765d76147ed5e5026cd0703e21c702f5e671096af",
+      "source": "import json,sys\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,file_sha256\nfrom PIL import Image\nphase=read_json(ROOT/'runtime/root-b-review-v43-phase.json');assert phase['current_kind']=='originals'\ntag=phase['current_tag'];p=ROOT/f'runtime/fresh-source-observations/allocations/{tag}.json';a=read_json(p)\nviews=[]\nfor s in a['sources']:\n src=Path(s['original']);near=ROOT/f'runtime/{tag}-{s[\"key\"][:8]}-root-nearest4.png'\n assert file_sha256(src)==s['original_png_sha256'] and near.is_file()\n with Image.open(src) as im:size=list(im.size);alpha=list(im.convert('RGBA').getchannel('A').getextrema())\n views.append({'key':s['key'],'path':str(src),'sha256':file_sha256(src),'size':size,'alpha_extrema':alpha,'nearest_path':str(near),'nearest_sha256':file_sha256(near)})\nprint(json.dumps({'tag':tag,'allocation':p.relative_to(ROOT).as_posix(),'allocation_sha256':file_sha256(p),'config':f'runtime/{tag}-observations.json','sources':a['sources'],'views':views,'created_at_utc':a['created_at_utc'],'mascot_reference_sha256':file_sha256(ROOT/'mod_nailong/assets/reference/naiwa.png')},ensure_ascii=True))\n"
+    },
+    {
+      "path": "runtime/root-review-slot-b-originals-finalize-v43-date-safe-20261026.py",
+      "sha256": "f42e88e95e1fc643047b2eaae0553a3abbd20ce70e8b6fe06847eb2aa75a7fdc",
+      "source": "\"\"\"Finish the root b finite-group bookkeeping after actual source completion.\"\"\"\nimport json,re,sys\nfrom pathlib import Path\nsys.path.insert(0,str(Path(__file__).resolve().parents[1]))\nfrom tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_now\ntag=sys.argv[1]\nassert re.fullmatch(r'fresh-observed-[0-9]{8}T[0-9]{6}-b-[0-9a-f]{8}',tag)\nphase_path=ROOT/'runtime/root-b-review-v43-phase.json';phase=read_json(phase_path)\nassert phase['machine_id']==machine_id() and phase['current_kind']=='originals' and phase['current_tag']==tag\nassert phase['completed_groups']<phase['max_groups']\nreceipt=ROOT/f'mod_nailong/data/production-fresh-observation-completions/{tag}.json';done=read_json(receipt)\nassert done['machine_id']==machine_id() and done['slot']=='b' and done['queued_originals']==4 and done['held_originals']==0\nassert done['image_calls']==0 and done['quota_claims']==0\nobservations=ROOT/done['observations'];assert file_sha256(observations)==done['observations_sha256']\ntarget=ROOT/f'mod_nailong/data/production-review-handovers/20261025-root-{tag}.json';assert not target.exists()\nphase['completed_groups']+=1;phase.update(current_tag=None,current_kind=None,updated_at_utc=utc_now())\nphase.setdefault('completed',[]).append({'tag':tag,'kind':'originals','completion':receipt.relative_to(ROOT).as_posix(),'completion_sha256':file_sha256(receipt),'completed_at_utc':done['completed_at_utc']})\nwrite_json(target,{'machine_id':machine_id(),'observed_at_utc':utc_now(),'operator':'Codex root in existing b slot; b agent stopped','completion':done,'completion_sha256':file_sha256(receipt),'actual_source_observations':read_json(observations),'finite_phase_after_completion':phase,'finalizer_source':{'path':Path(__file__).relative_to(ROOT).as_posix(),'sha256':file_sha256(Path(__file__)),'source':Path(__file__).read_text(encoding='utf-8')},'scope':'Source observation completion already succeeded once. Only finite root b phase bookkeeping is updated here; no art approval, image call, retry or canonical portrait mutation.'})\nwrite_json(phase_path,phase)\nprint(json.dumps({'tag':tag,'completed_groups':phase['completed_groups'],'audit':target.relative_to(ROOT).as_posix()},ensure_ascii=True))\n"
+    }
+  ],
+  "scope": "Actual builtin invocation running. Root uses only existing b slot; no colleague high work claimed."
+}

@@ -139,13 +139,15 @@ def allocate_exact_retry(root,state,runner=None,high_only=False):
     before=read_json(scheduler)
     assert before['machine_id']==state['machine_id'] and before['pending'] is None,'Pending retry batch requires explicit reconciliation'
     synchronize_retry_allowances(root,runner)
-    command=[sys.executable,'tools/retry_scheduler_next.py','--limit','8']
+    # Each bounded logical window owns one actual request and one retry batch.
+    command=[sys.executable,'tools/retry_scheduler_next.py','--limit','1']
     if high_only:command.append('--high-only')
     inspected=json.loads(run_checked(root,command+['--inspect-only'],runner).stdout)
     assert not inspected.get('pending_requires_reconciliation'),inspected
     if not inspected['count']:return None
+    assert inspected['count']==1,'A logical window must claim exactly one service retry'
     pending=json.loads(run_checked(root,command,runner).stdout)
-    assert pending['machine_id']==state['machine_id'] and 1<=pending['count']<=8
+    assert pending['machine_id']==state['machine_id'] and pending['count']==1
     assert pending['batch']=='cooldown-'+pending['numeric_id']
     assert read_json(scheduler)['pending']==pending
     assert file_sha256(root/pending['proof'])==pending['proof_sha256']

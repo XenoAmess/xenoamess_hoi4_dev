@@ -114,6 +114,118 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 230ad585-a5fb-48d1-92f0-f11945a88c90.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-28T23:00:26.151390+00:00"
+    },
+    {
+      "number": 4,
+      "status": "generated_rejected_visual_review",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Asset type: one HOI4 portrait correction. Image 1 is the generated yellow mascot portrait to edit. Image 2 is the original game portrait for visible source features only. Image 3 is the user mascot reference for yellow anatomy, large green-ringed black eyes and small horizontal mouth. Retain original visible hair, eyebrows, moustache/beard only where actually present in Image 2. No human skin, human nose or human ears. One portrait, original crop and aspect ratio, no new symbols, text, extra objects or comparison layout. Requested correction: Restore the original thin dark round eyeglasses visible in Image 2, worn on the face over the green-ringed eyes. The goggles on top of the flying helmet are separate and must remain. Keep the existing yellow mascot, dark curled hair, clean-shaven face, helmet, scarf, jacket, pose and fully transparent background otherwise unchanged.\nOutput alpha: keep a genuine fully transparent RGBA background outside the portrait silhouette. No painted gray backdrop, halo, studio gradient or rectangular plate. Retain the source's clothing, hair, headgear and portrait crop.",
+      "prompt_file": "mod_nailong/assets/prompts/b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7-004.txt",
+      "prompt_sha256": "a52efb448537cf31b1250455e39a4e3fb96a16b5aab15ea9607d6c1be7f81bfc",
+      "inputs": [
+        {
+          "role": "previous generated edit target",
+          "path": "mod_nailong/assets/legacy-before-hair/b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7-466c2429f0671178.png",
+          "sha256": "466c2429f0671178652388061547b709612fc97f1ef3c1aaae0430115d4119a5"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7",
+          "converted_png_sha256": "f4742456476dd672732236c6b92f40ddf31ff62a3e4f093507087ce07dafb290"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-29T07:24:15.964209+00:00",
+      "retry_of_attempt": 3,
+      "retry_root_attempt": 2,
+      "cooldown_retry_number": 2,
+      "cooldown_not_before_utc": "2026-10-29T07:00:26.151390+00:00",
+      "cooldown_retry_tool_transparent_background": true,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-29T07:24:32.884746+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "3d2e2c752d57261ed7ddaecae505ffe6b67f5b6fd1924a67e50ef828e03b7102",
+        "prompt_sha256": "a52efb448537cf31b1250455e39a4e3fb96a16b5aab15ea9607d6c1be7f81bfc",
+        "input_sha256": [
+          "466c2429f0671178652388061547b709612fc97f1ef3c1aaae0430115d4119a5",
+          "f4742456476dd672732236c6b92f40ddf31ff62a3e4f093507087ce07dafb290",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": true
+      },
+      "generated_at_utc": "2026-10-29T07:25:45.679616+00:00",
+      "fullsize_sha256": "9c4cd6e7f0c3cc21bd52d28cc2206213cb59ce2653c9fd4452cdc0746fb1e8c0",
+      "fullsize_image": "mod_nailong/assets/generated_fullsize/9c4cd6e7f0c3cc21bd52d28cc2206213cb59ce2653c9fd4452cdc0746fb1e8c0.png",
+      "output": "mod_nailong/assets/portraits/b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7.png",
+      "output_sha256": "dcd18c134025792e8779bb47abab262c65cf3a2b2a63bf5cdfc0638f8d10c3fb",
+      "review": "rejected",
+      "rejection_reason": "Root actually viewed every native source, nearest4 pixels, full returned PNG and white/cyan/alpha sheet. Ordered builtin bindings verified by runtime/root-review-slot-b/rollingb301-actual-alpha-v2/verified-binding.json SHA256 3659db1ce749eabdf2ab2cbe9a453faecb8fda7a7d01ef604e21ffb20d64b0e7. Mascot reference 766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976 actually viewed earlier in this root execution; reuse the exact unchanged byte-verified visual observation. Started 2026-10-29T07:29:02.550Z completed 2026-10-29T07:48:05.081Z. Actual raw numeric stats [{\"index\":1,\"size\":[1313,1198],\"alpha_extrema\":[0,255],\"alpha_counts_252_255\":{\"252\":420962,\"253\":374066,\"254\":693,\"255\":464}}]. Visible-alpha-v1 applied only after visual inspection of backing/body/hair/cloth/frame/note and collar fit. Simple shaded mouth edge also exists on mascot reference; it is not independently a fleshy human lip defect. Tiny unreadable source detail explicitly limited, never claimed proven. No invented unreadable tiny facial feature is used as a reason to generate. The visible long neck alone requires correction; a real successful service return precedes this independent art task. No game-display validation. Actually viewed exact tiny ace source/native+nearest4, complete raw9c4cd6e7 and white/cyan/alpha. Dark curled hair, leather flying helmet/top goggles and ear cups, dark scarf/leather shoulder strap, right-facing three-quarter crop and genuine exterior-only alpha remain. However a long upright yellow column continues from the small mouth/chin region down to the scarf, with almost straight narrow sides and no compact rounded chin-to-garment transition. The original scarf sits closely under the compact face. Shorten and broaden this neck transition so the rounded chin meets the scarf directly, retaining the helmet, goggles, hair, gaze and clothing/crop. The reference shaded upper mouth edge is acceptable, not a fleshy-lip defect. Exact tiny source brow strands and possible face-level spectacle fittings cannot be resolved and are explicit visible-source-differences-v1 evidence limits, not additional faults. Dark cloth/body remain opaque on both mattes; exterior alpha is appropriate. Neck geometry is the rejection.",
+      "reviewed_at_utc": "2026-10-29T07:53:22.366297+00:00"
+    },
+    {
+      "number": 5,
+      "status": "approved",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image1 is the actual raw-HD mascot edit target. Image2 is the exact original game portrait/card and sole authority for visible features. Image3 is the user mascot identity reference.\nActual observed correction: Actually viewed exact tiny ace source/native+nearest4, complete raw9c4cd6e7 and white/cyan/alpha. Dark curled hair, leather flying helmet/top goggles and ear cups, dark scarf/leather shoulder strap, right-facing three-quarter crop and genuine exterior-only alpha remain. However a long upright yellow column continues from the small mouth/chin region down to the scarf, with almost straight narrow sides and no compact rounded chin-to-garment transition. The original scarf sits closely under the compact face. Shorten and broaden this neck transition so the rounded chin meets the scarf directly, retaining the helmet, goggles, hair, gaze and clothing/crop. The reference shaded upper mouth edge is acceptable, not a fleshy-lip defect. Exact tiny source brow strands and possible face-level spectacle fittings cannot be resolved and are explicit visible-source-differences-v1 evidence limits, not additional faults. Dark cloth/body remain opaque on both mattes; exterior alpha is appropriate. Neck geometry is the rejection.\nKeep all unrelated source-visible hairstyle and hair colour, eyebrows and exact fine facial-hair state, glasses, headgear when actually present, clothes/neckwear, badges/buttons/straps, expression, gaze, pose, crop and lighting. Source-visible eyebrows remain distinct independent brows; never erase them to copy the identity reference smooth forehead or merge them into head hair. Smooth golden-yellow compact round mascot head with green-ringed black eyes and exactly ONE small mouth at the actual original mouth position. If a moustache is present, that one mouth is below it: never add a second grey slit, beak, nose or default mascot lip above the moustache. No human skin/nose/ears, broad invented facial-hair band or hat replacing real hair.\nOnly when the original actually has a photograph frame/note, retain that entire tilted frame and overlapping paper, opaque photographic backing and true exterior alpha outside the complete original card. Copy the actual original note markings as required visual shapes: preserve their original number of row/groups, compact footprint, placement and dark contrast. Keep original blank paper blank outside that footprint. Do not erase original marks, replace them with random stains or dots, spread writing over the page or invent extra rows. These existing indistinct marks are required original image content, not a request for newly readable words. A standalone full portrait retains its entire original painted backdrop and must not acquire a new photo frame or note. Preserve genuine original transparency only where it really exists. Dark cloth stays fully opaque. Short broad fitted neck with rounded chin immediately meeting actual garment, preserve its open/closed state and do not add a neck column, separate roll, cream bib or floating collar. The exact original controls mouth opening, smile shape and source-visible tooth edge; do not import the mascot reference closed grey lip over an open source mouth. Keep full raw-HD detail, resolution and original aspect ratio; no newly invented readable text, extra note writing beyond the actual original footprint, watermark, new symbols, people or panels.\nOutput alpha: preserve genuine transparent RGBA outside the original asset's outer silhouette. Retain all original opaque content, including any existing background or dark vignette that is part of this source; do not erase it into alpha holes. Where the original exterior is transparent, do not invent a new solid canvas, halo or studio backdrop. Retain source clothing, hair, headgear, lighting and portrait crop at full generated resolution. All originally OPAQUE subject surfaces must remain FULLY OPAQUE (alpha 255): yellow head/body, hair, beard, dark or black clothing, coat lapels, collar, tie, buttons and decorations. Dark cloth is colored material, not transparent background. Never fade garment interiors into semi-transparent patches, holes, white haze or see-through fabric. Keep any genuine source outer-edge alpha falloff only at that actual exterior boundary; preserve actual source transparency rather than making the subject itself translucent.",
+      "prompt_file": "mod_nailong/assets/prompts/b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7-005.txt",
+      "prompt_sha256": "1a85f942df16874f20cd9df8c74946501c2800c7191af2e2a057a28d0e432f61",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/9c4cd6e7f0c3cc21bd52d28cc2206213cb59ce2653c9fd4452cdc0746fb1e8c0.png",
+          "sha256": "9c4cd6e7f0c3cc21bd52d28cc2206213cb59ce2653c9fd4452cdc0746fb1e8c0",
+          "derived_game_image_sha256": "dcd18c134025792e8779bb47abab262c65cf3a2b2a63bf5cdfc0638f8d10c3fb"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7",
+          "converted_png_sha256": "f4742456476dd672732236c6b92f40ddf31ff62a3e4f093507087ce07dafb290"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-29T07:53:45.095650+00:00",
+      "original_alpha_extrema": [
+        0,
+        255
+      ],
+      "transparent_background": true,
+      "alpha_prompt_policy": "source-content-v3-opaque-body",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-29T07:54:09.673784+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "8c0bce70d6ee04cfdf1056b670711e30c88f57c48ac2ec64d905f76e9e564505",
+        "prompt_sha256": "1a85f942df16874f20cd9df8c74946501c2800c7191af2e2a057a28d0e432f61",
+        "input_sha256": [
+          "9c4cd6e7f0c3cc21bd52d28cc2206213cb59ce2653c9fd4452cdc0746fb1e8c0",
+          "f4742456476dd672732236c6b92f40ddf31ff62a3e4f093507087ce07dafb290",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": true
+      },
+      "generated_at_utc": "2026-10-29T07:56:37.712149+00:00",
+      "fullsize_sha256": "12c0c97a551142f5b17f6f64593f77d0462d0efe7a95105eeb36452bbe18e287",
+      "fullsize_image": "mod_nailong/assets/generated_fullsize/12c0c97a551142f5b17f6f64593f77d0462d0efe7a95105eeb36452bbe18e287.png",
+      "output": "mod_nailong/assets/portraits/b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7.png",
+      "output_sha256": "f47d95e7bb003719c8920d1a976d1c89f5b651dee7de2952c071f6ad0ab15439",
+      "reviewed_at_utc": "2026-10-29T08:46:54.262709+00:00",
+      "review": "approved"
     }
   ]
 }

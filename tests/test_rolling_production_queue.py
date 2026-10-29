@@ -63,6 +63,13 @@ class LogicalQueueTests(unittest.TestCase):
    commands.append(command);return SimpleNamespace(returncode=0,stdout=json.dumps({'count':0}),stderr='')
   self.assertIsNone(allocate_exact_retry(self.root,{'machine_id':'m','run_id':'run','next_index':0},runner))
   self.assertEqual(len(commands),1);self.assertIn('--inspect-only',commands[0])
+ def test_unexpected_multiple_retry_selection_stops_before_quota_claim(self):
+  scheduler=self.root/'runtime/retry-scheduler/state.json';write_json(scheduler,{'machine_id':'m','pending':None});commands=[]
+  def runner(command):
+   commands.append(command);return SimpleNamespace(returncode=0,stdout=json.dumps({'count':2}),stderr='')
+  with self.assertRaisesRegex(AssertionError,'exactly one'):
+   allocate_exact_retry(self.root,{'machine_id':'m','run_id':'run','next_index':0},runner)
+  self.assertEqual(len(commands),1);self.assertIsNone(read_json(scheduler)['pending'])
  def test_exact_retry_uses_original_batch_and_finishes_before_cursor_advance(self):
   scheduler=self.root/'runtime/retry-scheduler/state.json';write_json(scheduler,{'machine_id':'m','pending':None})
   write_json(self.root/'runtime/after128-continuous-plan.json',{'batches':[]})
@@ -86,6 +93,7 @@ class LogicalQueueTests(unittest.TestCase):
   self.assertEqual(read_json(self.root/'runtime/after128-continuous-plan.json')['batches'],[item])
   finish_exact_retry(self.root,state,runner);self.assertEqual(state['next_index'],0)
   self.assertEqual(len(commands),4)
+  for command in commands[:2]:self.assertEqual(command[2:4],['--limit','1'])
  def test_partial_claim_stops_and_cannot_claim_again(self):
   scheduler=self.root/'runtime/retry-scheduler/state.json';write_json(scheduler,{'machine_id':'m','pending':{'batch':'cooldown-087'}})
   def runner(command):self.fail('Pending claim must never be selected again')

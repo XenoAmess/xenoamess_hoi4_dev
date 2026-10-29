@@ -27,6 +27,8 @@ def claim_candidates(batch,proof):
  candidates=read_json(proof);jobs=[];preflight=[]
  # Resolve all transport fields before consuming the first source allowance.
  for c in candidates:
+  assert isinstance(c.get('source'),str) and c['source'],'Missing source routing metadata; no quota claimed'
+  assert isinstance(c.get('original'),str) and c['original'] in c.get('references',[]),'Missing original routing metadata; no quota claimed'
   assert c['original_actual_prompt_verified']
   if c.get('requires_manual_policy_review'):assert c.get('policy_reviewed') is True,'Actual original inputs and prompt need manual policy review before any quota claim'
   q=read_json(ROOT/'mod_nailong/data/image-retry-queue.json')['sources'][c['key']]
