@@ -8,6 +8,7 @@ import hashlib
 import re
 import subprocess
 import sys
+import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT, machine_id, utc_now, write_json
@@ -34,6 +35,25 @@ def _git(*args, cwd=None):
     if result.returncode:
         raise RuntimeError(result.stdout + '\n' + result.stderr)
     return result.stdout.strip()
+
+
+def read_remote_master(retries=3):
+    if type(retries) is not int or retries < 1:
+        raise ValueError('Expected a positive remote-read retry limit')
+    transient = ('schannel', 'recv failure', 'connection was reset', 'failed to connect to github.com',
+                 'ssl_error_syscall', 'tls handshake timeout', 'unexpected eof', 'connection timed out')
+    for attempt in range(retries):
+        try:
+            commit = _git('ls-remote', 'origin', 'refs/heads/master', timeout=120).split()[0]
+        except (RuntimeError, subprocess.TimeoutExpired) as error:
+            retryable = isinstance(error, subprocess.TimeoutExpired) or any(term in str(error).lower() for term in transient)
+            if attempt + 1 == retries or not retryable:
+                raise
+            time.sleep(2 ** attempt)
+        else:
+            if not re.fullmatch(r'[0-9a-f]{40}', commit):
+                raise RuntimeError('Invalid remote master response')
+            return commit
 
 
 def _is_ancestor(older, newer):

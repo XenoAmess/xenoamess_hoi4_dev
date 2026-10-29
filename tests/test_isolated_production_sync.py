@@ -163,5 +163,21 @@ class IsolatedProductionSyncTests(unittest.TestCase):
             self.assertEqual(result['synchronized_commit'], commit)
 
 
+    def test_remote_head_retries_only_transient_read_failures(self):
+        responses = [RuntimeError('schannel: failed to receive handshake'), RuntimeError('Recv failure: Connection was reset'), 'c' * 40 + '\trefs/heads/master']
+        with patch.object(sync, '_git', side_effect=responses) as git, patch.object(sync.time, 'sleep') as sleep:
+            self.assertEqual(sync.read_remote_master(), 'c' * 40)
+        self.assertEqual(git.call_count, 3)
+        self.assertEqual(sleep.call_count, 2)
+        with patch.object(sync, '_git', side_effect=RuntimeError('Repository not found')) as git, patch.object(sync.time, 'sleep') as sleep:
+            with self.assertRaisesRegex(RuntimeError, 'Repository not found'):
+                sync.read_remote_master()
+        git.assert_called_once()
+        sleep.assert_not_called()
+        with patch.object(sync, '_git', return_value='not-a-commit'):
+            with self.assertRaisesRegex(RuntimeError, 'Invalid remote master'):
+                sync.read_remote_master()
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -3,7 +3,7 @@ import sys,os,subprocess,traceback,time,json
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from tools.common import ROOT,read_json,write_json,machine_id,utc_now
-from tools.isolated_production_sync import rebase_validated_commit,publication_identifier
+from tools.isolated_production_sync import rebase_validated_commit,publication_identifier,read_remote_master
 commit,batch=sys.argv[1:3]
 assert len(commit)==40 and all(c in '0123456789abcdef' for c in commit)
 out=ROOT/f'runtime/checkpoint-{batch}.json'
@@ -43,7 +43,7 @@ try:
     item.update(status='failed',completed_at_utc=utc_now(),error=str(error));write_json(out,receipt)
     if sync_attempt==2 or not any(t in str(error) for t in ['Connection was reset','Recv failure','RPC failed','SSL_ERROR_SYSCALL']):raise
     time.sleep(2)
- def remote_head():return run('git','ls-remote','origin','refs/heads/master',timeout=120).split()[0]
+ def remote_head():return read_remote_master()
  def contains_fixed(observed):
   if observed==commit:return True
   return subprocess.run(['git','merge-base','--is-ancestor',commit,observed],cwd=ROOT,capture_output=True,timeout=30).returncode==0
@@ -65,7 +65,7 @@ try:
     write_json(out,receipt)
     if attempt==2 or not any(term in str(error) for term in ['curl 55','RPC failed','Connection was reset','SSL_ERROR_SYSCALL']):raise
     time.sleep(2)
- observed=run('git','ls-remote','origin','refs/heads/master',timeout=120).split()[0]
+ observed=remote_head()
  if observed!=commit:run('git','merge-base','--is-ancestor',commit,observed,timeout=30)
  receipt.update(status='committed_and_pushed',pushed_at_utc=receipt.get('pushed_at_utc') or utc_now(),remote_master_observed=observed)
  write_json(out,receipt)
