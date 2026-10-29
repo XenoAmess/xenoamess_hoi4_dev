@@ -1,0 +1,35 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "observed_at_utc": "2026-10-29T00:02:56.517211+00:00",
+  "actual_builtin_cell": "2242",
+  "prior_actual_builtin_cell_terminal_collected": "2066",
+  "status": "bounded_continuation_actually_started_same_owner",
+  "bounded_resume": "docs/handoffs/2026-10-28-low-v38-bounded-resume.json",
+  "bounded_resume_sha256": "7a6a8305ef463c79b24d474ebbd5dbfe9168ecc77448d4b44fb822d931ef7cf5",
+  "actual_admission": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "admitted_at_utc": "2026-10-29T00:01:06.190840+00:00",
+    "original_run_state": {
+      "machine_id": "bf-202609141645-5434332d4d",
+      "run_id": "resume-20261025-large-logical-queue-v38",
+      "next_index": 1531,
+      "after_window": "resume-20261025-large-logical-queue-v38-window1530",
+      "status": "running",
+      "created_at_utc": "2026-10-28T20:39:07.641401+00:00",
+      "completed_windows": 48,
+      "completed_source_requests": 48,
+      "updated_at_utc": "2026-10-28T23:25:10.295498+00:00"
+    },
+    "original_absolute_deadline_utc": "2026-10-29T00:39:07.641401+00:00",
+    "remaining_call_bound": 16,
+    "scope": "Actual prior builtin cell2066 terminal failure collected. Its rejection preceded window-start persistence and any new dispatch. Reuse exact existing owner and cursor; no claim reset, quota reset or bound/deadline extension."
+  },
+  "actual_invocation": "runtime/resume-low-v38-reconciled-actual-invocation-20261028.js",
+  "actual_invocation_sha256": "b31916446374edccf817de63be467eb67af209f40544f01d606cd99c32628861",
+  "actual_invocation_source": "(async()=>{\nconst read=async cmd=>{let r=await tools.exec_command({cmd,shell:\"cmd.exe\",login:false,max_output_tokens:24000});let output=r.output||\"\";while(r.session_id){r=await tools.write_stdin({session_id:r.session_id,chars:\"\",yield_time_ms:1000,max_output_tokens:24000});output+=r.output||\"\";}if(r.exit_code!==0)throw Error(JSON.stringify(r));return output;};\nconst spec=JSON.parse(await read(\"type runtime\\\\resume-low-v38-reconciled-spec-20261028.json\"));\nconst frozen=JSON.parse(await read(\"type docs\\\\handoffs\\\\2026-10-28-low-v38-helper-sources.json\"));\nconst recovery=JSON.parse(await read(\"type docs\\\\handoffs\\\\2026-10-28-low-v38-bounded-resume.json\"));\nconst terminalTransportDecision=eval(\"(\"+frozen.sources.transport_policy+\")\");\nlet terminalNetworkFailureStreak=0;\nconst logical=eval(\"(\"+recovery.sources.logical+\")\"),window=eval(\"(\"+frozen.sources.window+\")\"),producer=eval(\"(\"+frozen.sources.producer+\")\");\nconst adapt=(plan,options)=>window(plan,{...options,producer,logicalBoundary:true});\nstore(\"low_v38_bounded_resume_actual_state\",{status:\"starting\",started_at_utc:new Date().toISOString(),spec,original_deadline_utc:recovery.original_bounds.deadline_utc});\ntry{const result=await logical(spec,{producer:adapt});store(\"low_v38_bounded_resume_actual_state\",{status:\"finished\",observed_at_utc:new Date().toISOString(),spec,result});text(result);}catch(error){store(\"low_v38_bounded_resume_actual_state\",{status:\"stopped_requires_reconciliation\",observed_at_utc:new Date().toISOString(),spec,error:String(error)});throw error;}\n})()\n",
+  "tests": {
+    "command": "python -X utf8 -m unittest tests.test_rolling_production_queue tests.test_idle_low_priority tests.test_production_plan_state",
+    "passed": 28
+  },
+  "scope": "Actual start and admission only, not a generated-output claim. Original48 completed requests, owner, cursor and original00:39:07 UTC deadline retained; remaining bound16, old conservative8-request loop reserve unchanged. Prepared original HIGH job bytes retained; no prior image replay."
+}

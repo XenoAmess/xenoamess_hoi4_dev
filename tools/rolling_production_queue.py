@@ -42,6 +42,34 @@ def validate_prepared(root,item):
         assert not (root/f"runtime/production-queue/dispatch/{j['key']}-{attempt['number']:03}.json").exists()
     return len(jobs)
 
+def split_current_prepared_window(root,state):
+    """Keep fresh/art jobs unchanged while making one request per logical window."""
+    no_calling(root)
+    path=root/'runtime/after128-continuous-plan.json';plan=read_json(path);index=state['next_index']
+    item=plan['batches'][index];jobs=read_json(root/item['jobs'])
+    if len(jobs)==1:return False
+    assert not item['batch'].startswith('cooldown-'),'Never split a claimed service-retry batch implicitly'
+    validate_prepared(root,item)
+    started=root/f"mod_nailong/data/production-window-timings/{state['run_id']}-window{index}-started.json"
+    assert not started.exists(),'A started window needs explicit result reconciliation'
+    receipt=root/f"mod_nailong/data/production-window-splits/{state['run_id']}-{index}.json"
+    assert not receipt.exists(),'Preserve a partial split; never replay blindly'
+    backup=root/f"runtime/window-split-recoveries/{state['run_id']}-{index}-original-plan.json"
+    assert not backup.exists();backup.parent.mkdir(parents=True,exist_ok=True);backup.write_bytes(path.read_bytes())
+    before=file_sha256(path);original_jobs_sha=file_sha256(root/item['jobs']);parts=[]
+    for number,job in enumerate(jobs,1):
+        batch=item['batch']+'-single'+str(number);output=root/f'runtime/production-{batch}-jobs.json'
+        assert not output.exists();write_json(output,[job]);parts.append({'batch':batch,'jobs':output.relative_to(root).as_posix()})
+    plan['batches'][index:index+1]=parts
+    original=read_json(backup)
+    assert plan['batches'][:index]==original['batches'][:index]
+    assert plan['batches'][index+len(parts):]==original['batches'][index+1:]
+    assert [read_json(root/p['jobs'])[0] for p in parts]==jobs
+    assert file_sha256(path)==before and file_sha256(root/item['jobs'])==original_jobs_sha
+    write_json(path,plan)
+    write_json(receipt,{'machine_id':state['machine_id'],'observed_at_utc':utc_now(),'run_id':state['run_id'],'index':index,'original_item':item,'original_jobs_sha256_unchanged':original_jobs_sha,'original_plan_backup':backup.relative_to(root).as_posix(),'original_plan_sha256':before,'split_parts':[dict(p,sha256=file_sha256(root/p['jobs'])) for p in parts],'plan_after_sha256':file_sha256(path),'scope':'Uncalled fresh/art batch metadata split only. Completed prefix, later prepared suffix, source order and every complete frozen job are unchanged. No journal mutation, call, retry claim, owner/cursor reset or bound extension.'})
+    return True
+
 def run_checked(root,command,runner=None):
     result=(runner(command) if runner else subprocess.run(command,cwd=root,capture_output=True,text=True,encoding='utf-8',errors='replace'))
     assert result.returncode==0,{'error':'Boundary stopped; preserve partial claims and never automatically replay','stdout':result.stdout,'stderr':result.stderr}
@@ -232,6 +260,8 @@ def next_item(root,state,runner=None):
             command=[sys.executable,'mod_nailong/tools/prepare_ready_art_reviews.py',batch,str(index),'--inbox']
             run_checked(root,command,runner)
         plan=read_json(root/'runtime/after128-continuous-plan.json')['batches']
+    split_current_prepared_window(root,state)
+    plan=read_json(root/'runtime/after128-continuous-plan.json')['batches']
     item=dict(plan[index]);count=validate_prepared(root,item)
     request=root/'runtime/rolling-production'/(state['run_id']+'-checkpoint-requested.json')
     if request.exists():

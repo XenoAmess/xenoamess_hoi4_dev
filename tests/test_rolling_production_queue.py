@@ -2,7 +2,7 @@ import tempfile,unittest,json
 from types import SimpleNamespace
 from pathlib import Path
 from tools.common import write_json,read_json,file_sha256
-from tools.rolling_production_queue import claim,validate_prepared,next_item,allocate_exact_retry,finish_exact_retry,refill_reviewed_backlog,merge_reviewed_retries,checkpoint_when_idle
+from tools.rolling_production_queue import claim,validate_prepared,next_item,allocate_exact_retry,finish_exact_retry,refill_reviewed_backlog,merge_reviewed_retries,checkpoint_when_idle,split_current_prepared_window
 
 class LogicalQueueTests(unittest.TestCase):
  def setUp(self):
@@ -20,6 +20,24 @@ class LogicalQueueTests(unittest.TestCase):
   item=self.job(1);j=self.root/('mod_nailong/data/generation-requests/'+'1'*64+'.json')
   body=read_json(j);body['attempts'][-1]['status']='generated_pending_visual_review';write_json(j,body)
   with self.assertRaisesRegex(AssertionError,'Already dispatched'):validate_prepared(self.root,item)
+ def test_multi_job_fresh_batch_is_split_without_changing_jobs_or_completed_prefix(self):
+  prefix=self.job(1);first=self.job(2);second=self.job(3);tail=self.job(4)
+  source=self.root/first['jobs'];jobs=read_json(source)+read_json(self.root/second['jobs']);write_json(source,jobs);before=source.read_bytes()
+  write_json(self.root/'runtime/after128-continuous-plan.json',{'batches':[prefix,first,tail]})
+  state=claim(self.root,'run',1,'prior','m');result=next_item(self.root,state);plan=read_json(self.root/'runtime/after128-continuous-plan.json')['batches']
+  self.assertEqual(result['requests'],1);self.assertEqual(plan[0],prefix);self.assertEqual(plan[-1],tail)
+  self.assertEqual([read_json(self.root/x['jobs'])[0] for x in plan[1:3]],jobs)
+  self.assertEqual(source.read_bytes(),before);self.assertEqual(state['next_index'],1)
+  self.assertFalse(split_current_prepared_window(self.root,state))
+ def test_claimed_service_batch_is_never_implicitly_split(self):
+  first=self.job(1);second=self.job(2);write_json(self.root/first['jobs'],read_json(self.root/first['jobs'])+read_json(self.root/second['jobs']));first['batch']='cooldown-087'
+  write_json(self.root/'runtime/after128-continuous-plan.json',{'batches':[first]});state=claim(self.root,'run',0,'prior','m')
+  with self.assertRaisesRegex(AssertionError,'service-retry'):split_current_prepared_window(self.root,state)
+ def test_started_multi_job_window_is_not_rewritten(self):
+  first=self.job(1);second=self.job(2);write_json(self.root/first['jobs'],read_json(self.root/first['jobs'])+read_json(self.root/second['jobs']))
+  write_json(self.root/'runtime/after128-continuous-plan.json',{'batches':[first]});state=claim(self.root,'run',0,'prior','m')
+  write_json(self.root/'mod_nailong/data/production-window-timings/run-window0-started.json',{'actual':'preserved'})
+  with self.assertRaisesRegex(AssertionError,'started window'):split_current_prepared_window(self.root,state)
  def test_even_prepared_status_cannot_replay_existing_dispatch_ledger(self):
   item=self.job(1);write_json(self.root/('runtime/production-queue/dispatch/'+'1'*64+'-001.json'),{'status':'returned_image'})
   with self.assertRaises(AssertionError):validate_prepared(self.root,item)
