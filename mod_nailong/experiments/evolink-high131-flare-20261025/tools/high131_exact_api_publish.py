@@ -8,6 +8,7 @@ from pathlib import Path, PurePosixPath
 import re
 import subprocess
 import sys
+import tempfile
 import time
 import uuid
 
@@ -125,11 +126,20 @@ def api_endpoint(endpoint):
 
 
 class Api:
-    def __init__(self, runner=None):
+    def __init__(self, runner=None, curl_runner=None, token=None):
         self.runner = runner or self._run_gh
+        self.curl_runner = curl_runner or self._run_curl
+        self.allow_curl_fallback = runner is None
+        self._token = token
 
     def request(self, endpoint, method, payload, timeout):
-        return self.runner(api_endpoint(endpoint), method, payload, timeout)
+        try:
+            return self.runner(api_endpoint(endpoint), method, payload, timeout)
+        except (ApiError, subprocess.TimeoutExpired) as error:
+            if not self.allow_curl_fallback or isinstance(error, ApiError) and not error.transient:
+                raise
+            self.runner = self.curl_runner
+            return self.runner(api_endpoint(endpoint), method, payload, timeout)
 
     @staticmethod
     def _run_gh(endpoint, method, payload, timeout):
@@ -144,6 +154,51 @@ class Api:
             status_match = re.search(r"HTTP\s+(\d{3})", detail)
             status = int(status_match.group(1)) if status_match else None
             transient = any(term in detail.lower() for term in ("tls handshake timeout", "unexpected eof", "connection reset", "connection was reset", "recv failure", "forcibly closed", "connection aborted", "broken pipe", "schannel", "connection timed out", "i/o timeout", "http 408", "http 500", "http 502", "http 503", "http 504"))
+            raise ApiError(detail, transient=transient, status=status)
+        try:
+            return json.loads(result.stdout)
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
+            raise ApiError(f"Invalid GitHub API JSON: {error}", transient=False) from error
+
+    def github_token(self):
+        if self._token is None:
+            try:
+                token = subprocess.check_output(["gh", "auth", "token"], text=True, encoding="utf-8", stderr=subprocess.PIPE).strip()
+            except subprocess.CalledProcessError as error:
+                raise ApiError("GitHub CLI authentication is unavailable", transient=False) from error
+            require(re.fullmatch(r"[A-Za-z0-9_]+", token) is not None, "Invalid GitHub token shape")
+            self._token = token
+        return self._token
+
+    def _run_curl(self, endpoint, method, payload, timeout):
+        token = self.github_token()
+        config = (f'header = "Authorization: Bearer {token}"\n'
+                  'header = "Accept: application/vnd.github+json"\n'
+                  'header = "X-GitHub-Api-Version: 2022-11-28"\n'
+                  'header = "User-Agent: high131-exact-object-publisher"\n').encode("ascii")
+        payload_path = None
+        try:
+            arguments = ["curl.exe", "--proto", "=https", "--request", method,
+                         "--url", f"https://api.github.com/{endpoint}", "--silent", "--show-error", "--fail-with-body",
+                         "--http1.1", "--connect-timeout", "20", "--max-time", str(timeout), "--config", "-"]
+            if payload is not None:
+                descriptor, name = tempfile.mkstemp(dir=ROOT / "runtime", prefix=".high131-api-", suffix=".json")
+                payload_path = Path(name)
+                with os.fdopen(descriptor, "wb") as stream:
+                    stream.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                arguments.extend(["--json", "@" + name])
+            result = subprocess.run(arguments, input=config, capture_output=True, timeout=timeout,
+                                    env={**os.environ, "HTTPS_PROXY": "http://127.0.0.1:10808", "HTTP_PROXY": "http://127.0.0.1:10808"})
+        finally:
+            if payload_path is not None:
+                payload_path.unlink(missing_ok=True)
+        if result.returncode:
+            detail = safe_error(result.stderr.decode("utf-8", errors="replace") + "\n" + result.stdout[:2000].decode("utf-8", errors="replace"))
+            match = re.search(r"\b(401|403|404|408|409|422|429|500|502|503|504)\b", detail)
+            status = int(match.group(1)) if match else None
+            transient = any(term in detail.lower() for term in ("tls", "timeout", "timed out", "connection reset", "connection was reset", "recv failure", "forcibly closed", "connection aborted", "broken pipe", "schannel", "unexpected eof", "http 408", "http 500", "http 502", "http 503", "http 504"))
             raise ApiError(detail, transient=transient, status=status)
         try:
             return json.loads(result.stdout)

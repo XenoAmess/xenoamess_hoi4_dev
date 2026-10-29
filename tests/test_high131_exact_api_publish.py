@@ -133,6 +133,41 @@ class ExactApiPublishTests(unittest.TestCase):
         self.assertEqual(run.call_count, 2)
         self.assertEqual(run.call_args_list[0].args[0][2], "repos/XenoAmess/xenoamess_hoi4_dev/git/ref/heads/master")
 
+    def test_curl_credentials_stay_out_of_arguments_and_tls_stays_enabled(self):
+        expected = "c" * 40
+        calls = []
+        def run(arguments, **kwargs):
+            calls.append((arguments, kwargs))
+            return publish.subprocess.CompletedProcess(arguments, 0, stdout=b'{"sha":"' + expected.encode() + b'"}', stderr=b"")
+        with patch.object(publish.subprocess, "run", side_effect=run):
+            result = publish.Api(token="fixture-token")._run_curl("git/blobs/" + expected, "GET", None, 120)
+        self.assertEqual(result["sha"], expected)
+        arguments, kwargs = calls[0]
+        self.assertNotIn("fixture-token", " ".join(arguments))
+        self.assertIn(b"fixture-token", kwargs["input"])
+        self.assertNotIn("--insecure", arguments)
+        self.assertEqual(kwargs["env"]["HTTPS_PROXY"], "http://127.0.0.1:10808")
+        self.assertEqual(arguments[-2:], ["--config", "-"])
+
+    def test_only_transient_failure_switches_to_verified_curl_transport(self):
+        calls = []
+        def curl(endpoint, method, payload, timeout):
+            calls.append((endpoint, method))
+            return {"object": {"sha": "c" * 40}}
+        api = publish.Api(token="fixture-token", curl_runner=curl)
+        def failed(*args):
+            raise publish.ApiError("TLS handshake timeout", transient=True)
+        api.runner = failed
+        result = api.request("git/ref/heads/master", "GET", None, 120)
+        self.assertEqual(result["object"]["sha"], "c" * 40)
+        self.assertEqual(calls, [("repos/XenoAmess/xenoamess_hoi4_dev/git/ref/heads/master", "GET")])
+        def forbidden(*args):
+            raise publish.ApiError("HTTP 403", transient=False, status=403)
+        api.runner = forbidden
+        with self.assertRaises(publish.ApiError):
+            api.request("git/ref/heads/master", "GET", None, 120)
+        self.assertEqual(len(calls), 1)
+
     def test_expected_base_does_not_compare_an_unpublished_target(self):
         publisher = object.__new__(publish.ExactApiPublisher)
         publisher.base, publisher.target = BASE, TARGET
