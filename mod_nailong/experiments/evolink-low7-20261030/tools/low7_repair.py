@@ -16,9 +16,9 @@ EXPERIMENT = ROOT / "mod_nailong/experiments/evolink-low7-20261030"
 REPAIR_PREPARATION = EXPERIMENT / "repair-preparation.json"
 REPAIR_PREPARED = EXPERIMENT / "repair-prepared.json"
 REPAIR_RELEASE = EXPERIMENT / "repair-input-release.json"
-batch.PREPARED_PATH = REPAIR_PREPARED
-batch.SCOPE_PATH = prepare.SCOPE
-batch.RELEASE_PATH = REPAIR_RELEASE
+REPAIR_BATCH_FIELDS = ("PREPARED_PATH", "SCOPE_PATH", "RELEASE_PATH")
+ORIGINAL_REPAIR_BATCH_STATE = {name: getattr(batch, name) for name in REPAIR_BATCH_FIELDS}
+REPAIR_BATCH_STATE = {"PREPARED_PATH": REPAIR_PREPARED, "SCOPE_PATH": prepare.SCOPE, "RELEASE_PATH": REPAIR_RELEASE}
 REVIEW = EXPERIMENT / "review-02-agent.json"
 TAG = "evolink-low7-repair-input-20261030"
 CORRECTIONS = {
@@ -271,4 +271,10 @@ def main():
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    for name, value in REPAIR_BATCH_STATE.items():
+        setattr(batch, name, value)
+    try:
+        raise SystemExit(main())
+    finally:
+        for name, value in ORIGINAL_REPAIR_BATCH_STATE.items():
+            setattr(batch, name, value)

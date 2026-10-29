@@ -16,13 +16,21 @@ EXPECTED_PARAMETERS = {
     "background": "opaque",
     "n": 1,
 }
-for name in ("ROOT", "EXPERIMENT", "PREPARED_PATH", "SCOPE_PATH", "RELEASE_PATH", "PROMPTS_DIR", "OUTPUTS_DIR", "LOGS_DIR", "EXECUTIONS_DIR"):
+BATCH_FIELDS = (
+    "ROOT", "EXPERIMENT", "PREPARED_PATH", "SCOPE_PATH", "RELEASE_PATH", "PROMPTS_DIR",
+    "OUTPUTS_DIR", "LOGS_DIR", "EXECUTIONS_DIR", "CLIENT_PATH", "collect_batch", "write_json_new",
+)
+ORIGINAL_BATCH_STATE = {name: getattr(batch, name) for name in BATCH_FIELDS}
+LOW7_BATCH_STATE = {}
+for name in BATCH_FIELDS[:9]:
     value = ROOT if name == "ROOT" else EXPERIMENT if name == "EXPERIMENT" else EXPERIMENT / {
         "PREPARED_PATH": "prepared.json", "SCOPE_PATH": "scope.json", "RELEASE_PATH": "input-release.json",
         "PROMPTS_DIR": "prompts", "OUTPUTS_DIR": "outputs", "LOGS_DIR": "logs", "EXECUTIONS_DIR": "executions",
     }[name]
     setattr(batch, name, value)
+    LOW7_BATCH_STATE[name] = value
 batch.CLIENT_PATH = ROOT / "skills/evolink-imagegen/scripts/evolink_image.py"
+LOW7_BATCH_STATE["CLIENT_PATH"] = batch.CLIENT_PATH
 original_collect_batch = batch.collect_batch
 
 
@@ -81,7 +89,22 @@ def write_json_new(path, value):
 original_write_json_new = batch.write_json_new
 batch.write_json_new = write_json_new
 batch.collect_batch = collect_batch
+LOW7_BATCH_STATE["write_json_new"] = write_json_new
+LOW7_BATCH_STATE["collect_batch"] = collect_batch
+
+
+def restore_shared_batch():
+    for name, value in ORIGINAL_BATCH_STATE.items():
+        setattr(batch, name, value)
+
+
+restore_shared_batch()
 
 
 if __name__ == "__main__":
-    raise SystemExit(batch.main())
+    for name, value in LOW7_BATCH_STATE.items():
+        setattr(batch, name, value)
+    try:
+        raise SystemExit(batch.main())
+    finally:
+        restore_shared_batch()

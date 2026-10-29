@@ -16,7 +16,7 @@ REPAIR_FIELDS = ("ROOT", "EXPERIMENT", "REPAIR_PATH", "PROGRESS_PATH", "OUTPUTS_
 ORIGINAL_REPAIR_STATE = {name: getattr(shared_repairs, name) for name in REPAIR_FIELDS}
 prepare = importlib.import_module("mod_nailong.experiments.evolink-low7-20261030.tools.low7_prepare")
 runner = importlib.import_module("mod_nailong.experiments.evolink-low7-20261030.tools.low7_run_batch")
-LOW7_BATCH_STATE = {name: getattr(shared_batch, name) for name in BATCH_FIELDS}
+LOW7_BATCH_STATE = dict(runner.LOW7_BATCH_STATE)
 
 
 class Low7PreparationTests(unittest.TestCase):
@@ -30,6 +30,13 @@ class Low7PreparationTests(unittest.TestCase):
             self.assertEqual(prepare.file_sha256(prompt_path), entry["prompt_sha256"])
             self.assertEqual(entry["builtin_retries_used"], 9)
             self.assertEqual(len(entry["reference_set"]), 3 if entry["index"] == 6 else 2)
+
+    def test_import_preserves_shared_batch_state(self):
+        for name, expected in ORIGINAL_BATCH_STATE.items():
+            self.assertEqual(getattr(shared_batch, name), expected)
+        importlib.import_module("mod_nailong.experiments.evolink-low7-20261030.tools.low7_repair")
+        for name, expected in ORIGINAL_BATCH_STATE.items():
+            self.assertEqual(getattr(shared_batch, name), expected)
 
     def test_navy2_preserves_rejected_hd_target_first(self):
         _auth, entries = prepare.validated_entries()
@@ -145,7 +152,7 @@ class Low7RepairTests(unittest.TestCase):
         self.assertEqual(archive["count"], len(archive["entries"]))
         self.assertIn(archive["formal_canonical_import_count"], {0, 7})
         if archive["formal_canonical_import_count"] == 7:
-            self.assertTrue(self.module.verify_import(prepare.ROOT, archive))
+            self.assertTrue(importlib.import_module("mod_nailong.experiments.evolink-low7-20261030.tools.low7_import").verify_import(prepare.ROOT, archive))
         for entry in archive["entries"]:
             master = prepare.ROOT / entry["generated_fullsize_image"]
             self.assertEqual(prepare.file_sha256(master), entry["generated_fullsize_sha256"])

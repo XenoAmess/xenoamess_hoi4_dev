@@ -119,7 +119,7 @@ def main():
         "remote_original_png_verification": "not_run",
         "permission_documents_modified": False, "codex_evolink_permission_changed": False,
         "unresolved_generation_tasks": 0, "hoi4_runtime_acceptance_claimed": False,
-        "scoped_tests": {"file": "tests/test_low7_evolink.py", "passed": 11},
+        "scoped_tests": {"file": "tests/test_low7_evolink.py", "passed": 12},
         "free_bytes_at_verification": shutil.disk_usage(ROOT).free,
         "entries": records,
     }

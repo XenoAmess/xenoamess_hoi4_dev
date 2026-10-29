@@ -62,7 +62,7 @@ def build_plan(worktree, support=ROOT):
     scope = read_json(path(support, f"{EXPERIMENT}/scope.json"))
     verification = read_json(path(support, "runtime/low7-evolink-20261030/final-verification.json"))
     require(verification["status"] in {"seven_sources_generated_reviewed_and_archived_pending_canonical_import_and_git_publication", "seven_sources_generated_reviewed_integrated_pending_publication"}, "Generation/art verification is incomplete")
-    require(verification["unresolved_generation_tasks"] == 0 and verification["scoped_tests"]["passed"] == 11, "Unresolved calls or tests remain")
+    require(verification["unresolved_generation_tasks"] == 0 and verification["scoped_tests"]["passed"] >= 12, "Unresolved calls or tests remain")
     require(approved["count"] == len(approved["entries"]) == scope["source_count"] == 7, "Scope must contain exactly seven approved sources")
     require(approved["formal_canonical_import_count"] == 0, "Input already claims canonical import")
     require(file_sha256(path(support, scope["handoff"])) == scope["handoff_sha256"], "Handoff binding changed")
