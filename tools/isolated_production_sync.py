@@ -44,7 +44,7 @@ def read_remote_master(retries=3):
                  'ssl_error_syscall', 'tls handshake timeout', 'unexpected eof', 'connection timed out')
     for attempt in range(retries):
         try:
-            commit = _git('ls-remote', 'origin', 'refs/heads/master', timeout=120).split()[0]
+            commit = _git('ls-remote', 'origin', 'refs/heads/master').split()[0]
         except (RuntimeError, subprocess.TimeoutExpired) as error:
             retryable = isinstance(error, subprocess.TimeoutExpired) or any(term in str(error).lower() for term in transient)
             if attempt + 1 == retries or not retryable:
