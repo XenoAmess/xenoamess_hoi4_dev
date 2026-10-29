@@ -556,6 +556,19 @@ class High131ImportTests(unittest.TestCase):
         self.assertEqual(git("show", "-s", "--format=%s", "HEAD"), "Checkpoint partial HIGH import")
         self.assertEqual(commit, git("rev-parse", "HEAD"))
 
+        generated = importer.read_json(self.root / importer.GENERATED)["portraits"]
+        first = plan["entries"][0]
+        relative = generated[first["source_sha256"]]["image"]
+        preview = self.root / relative
+        expected = preview.read_bytes()
+        git("sparse-checkout", "set", "--no-cone", "--no-sparse-index", "/mod_nailong/data/", "/mod_nailong/experiments/", "/mod_nailong/assets/reference/", "/mod_nailong/assets/generated_fullsize/")
+        preview.unlink(missing_ok=True)
+        self.assertEqual(importer.restore_missing_tracked_import_files(self.root, dict(plan, entries=plan["entries"][:1])), [relative])
+        self.assertEqual(preview.read_bytes(), expected)
+        self.assertEqual(file_sha256(preview), generated[first["source_sha256"]]["image_sha256"])
+        with self.assertRaisesRegex(importer.ImportGateError, "recovery HEAD"):
+            importer.restore_missing_tracked_import_files(self.root, plan)
+
     def test_partial_recovery_uses_its_verified_remote_parent(self):
         from unittest.mock import patch
 

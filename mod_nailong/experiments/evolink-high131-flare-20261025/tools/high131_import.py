@@ -744,7 +744,35 @@ def refresh_normalized_receipts(worktree, plan=None):
     return paths
 
 
+def restore_missing_tracked_import_files(worktree, plan):
+    worktree = Path(worktree).resolve()
+    generated = read_json(worktree / GENERATED)["portraits"]
+    entries = {entry["source_sha256"]: entry for entry in plan["entries"]}
+    restored = []
+    for relative in import_paths(plan):
+        target = worktree / relative
+        if accessible_path(target).is_file():
+            continue
+        result = subprocess.run(["git", "-c", "core.longpaths=true", "cat-file", "blob", f"HEAD:{relative}"], cwd=worktree, capture_output=True)
+        require(result.returncode == 0, f"Required HIGH file is absent from the worktree and recovery HEAD: {relative}")
+        accessible_path(target.parent).mkdir(parents=True, exist_ok=True)
+        accessible_path(target).write_bytes(result.stdout)
+        require(accessible_path(target).is_file() and accessible_path(target).read_bytes() == result.stdout, f"Tracked HIGH file restoration failed: {relative}")
+        key = Path(relative).stem
+        entry = entries.get(key)
+        if entry is not None:
+            row = generated.get(key)
+            if row is not None and row.get("image") == relative:
+                require(file_sha256(accessible_path(target)) == row["image_sha256"], f"Recovered preview differs from the approved SHA: {relative}")
+            reference = {"review": entry["review"], "review_sha256": entry["review_sha256"], "attempt": entry["attempt"], "task_id": entry["task_id"]}
+            require(production_import_completed(worktree, key, reference, row), f"Recovered import evidence is incomplete: {relative}")
+        restored.append(relative)
+    return restored
+
+
 def stage_and_commit(worktree, plan, message="Import reviewed HIGH131 portraits", partial=False):
+    if not partial:
+        restore_missing_tracked_import_files(worktree, plan)
     paths = import_paths(plan)
     if partial:
         paths = [relative for relative in paths if accessible_path(Path(worktree) / relative).is_file()]

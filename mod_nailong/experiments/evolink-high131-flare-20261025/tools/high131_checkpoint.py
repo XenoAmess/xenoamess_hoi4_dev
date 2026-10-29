@@ -364,6 +364,8 @@ def main():
         "high131_import.py",
         "high131_recover_parent.py",
         "high131_rebase_recovery.py",
+        "high131_complete_pending_import.py",
+        "high131_verify_final_import.py",
         "high131_checkpoint.py",
     ]
     for name in tools:
