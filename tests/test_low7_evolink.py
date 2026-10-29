@@ -4,8 +4,19 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch
 
+from runtime import high131_run_batch as shared_batch
+
+BATCH_FIELDS = (
+    "ROOT", "EXPERIMENT", "PREPARED_PATH", "SCOPE_PATH", "RELEASE_PATH", "PROMPTS_DIR",
+    "OUTPUTS_DIR", "LOGS_DIR", "EXECUTIONS_DIR", "CLIENT_PATH", "collect_batch", "write_json_new",
+)
+ORIGINAL_BATCH_STATE = {name: getattr(shared_batch, name) for name in BATCH_FIELDS}
+from runtime import high131_run_repairs as shared_repairs
+REPAIR_FIELDS = ("ROOT", "EXPERIMENT", "REPAIR_PATH", "PROGRESS_PATH", "OUTPUTS_DIR", "PROMPTS_DIR")
+ORIGINAL_REPAIR_STATE = {name: getattr(shared_repairs, name) for name in REPAIR_FIELDS}
 prepare = importlib.import_module("mod_nailong.experiments.evolink-low7-20261030.tools.low7_prepare")
 runner = importlib.import_module("mod_nailong.experiments.evolink-low7-20261030.tools.low7_run_batch")
+LOW7_BATCH_STATE = {name: getattr(shared_batch, name) for name in BATCH_FIELDS}
 
 
 class Low7PreparationTests(unittest.TestCase):
@@ -42,16 +53,11 @@ class Low7PreparationTests(unittest.TestCase):
 
 class Low7RunnerTests(unittest.TestCase):
     def setUp(self):
-        self.saved = {name: getattr(runner.batch, name) for name in (
-            "ROOT", "EXPERIMENT", "PREPARED_PATH", "SCOPE_PATH", "RELEASE_PATH", "PROMPTS_DIR",
-            "OUTPUTS_DIR", "LOGS_DIR", "EXECUTIONS_DIR", "CLIENT_PATH", "collect_batch", "write_json_new",
-        )}
-        runner.batch.PREPARED_PATH = prepare.EXPERIMENT / "prepared.json"
-        runner.batch.SCOPE_PATH = prepare.EXPERIMENT / "scope.json"
-        runner.batch.RELEASE_PATH = prepare.EXPERIMENT / "input-release.json"
+        for name, value in LOW7_BATCH_STATE.items():
+            setattr(runner.batch, name, value)
 
     def tearDown(self):
-        for name, value in self.saved.items():
+        for name, value in ORIGINAL_BATCH_STATE.items():
             setattr(runner.batch, name, value)
 
     def test_frozen_request_and_builtin_counters_pass_without_mutation(self):
@@ -110,7 +116,7 @@ class Low7RepairTests(unittest.TestCase):
         self.module.batch.RELEASE_PATH = self.module.REPAIR_RELEASE
 
     def tearDown(self):
-        for name, value in self.saved.items():
+        for name, value in ORIGINAL_BATCH_STATE.items():
             setattr(self.module.batch, name, value)
 
     def test_repair_keeps_target_source_and_mascot_order(self):
