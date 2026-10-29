@@ -8,6 +8,7 @@ from tools.common import ROOT,read_json,write_json,file_sha256,machine_id,utc_no
 from mod_nailong.tools.generation_requests import prepare
 from mod_nailong.tools.art_preparation_guard import validate_art_boundary
 from mod_nailong.tools.prepare_ready_art_reviews import service_held_keys
+from tools.accepted_retry_art import accepted_retry_art_proofs
 
 def prepare_replacements(root,batch,index,config,preparer=None):
     assert re.fullmatch(r'[A-Za-z0-9_-]+',batch)
@@ -17,7 +18,12 @@ def prepare_replacements(root,batch,index,config,preparer=None):
     output=root/f'runtime/production-{batch}-jobs.json';assert not output.exists(),'Never replay a partially prepared replacement'
     rows=read_json(root/'mod_nailong/data/generated.json')['portraits'];priority=read_json(root/'mod_nailong/data/production-priority.json')['sources'];failures=read_json(root/'mod_nailong/data/generation-failures.json')['attempts']
     keys=[c['source_sha256'] for c in config['sources']];assert len(set(keys))==len(keys)
-    assert not service_held_keys(keys,priority,failures),'Unresolved service family; no alternative request'
+    latest={key:read_json(root/rows[key]['request_journal'])['attempts'][-1] for key in keys}
+    # An exact retry that actually returned this rejected raw PNG has ended its
+    # service retry chain. Reuse the same strict proof as the ordinary art queue;
+    # all other unresolved service families still block a different request.
+    accepted=accepted_retry_art_proofs(root,rows,latest) if any(a.get('retry_of_attempt') for a in latest.values()) else {'proofs':{},'unavailable':{}}
+    assert not service_held_keys(keys,priority,failures,accepted['proofs']),'Unresolved service family; no alternative request'
     checked=[]
     for c in config['sources']:
         from tools.production_priority_gate import tier_allowed
@@ -33,6 +39,7 @@ def prepare_replacements(root,batch,index,config,preparer=None):
         families={f['source_sha256'] for a in history for f in a.get('deferred_service_families',[])}
         family_histories={other:read_json(root/f'mod_nailong/data/generation-requests/{other}.json')['attempts'] for other in families}
         boundary=validate_art_boundary(history,key,c['rejected_fullsize_sha256'],root/'runtime/production-queue/dispatch',failures,family_histories)
+        if key in accepted['proofs']:boundary['accepted_exact_retry_art_proof']=accepted['proofs'][key]
         checked.append((c,boundary))
     jobs=[];proof=[];preparer=preparer or prepare
     for c,boundary in checked:

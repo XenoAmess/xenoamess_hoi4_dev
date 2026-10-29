@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261025-large-logical-queue-v50-window1611",
+  "started_at_utc": "2026-10-29T12:25:36.606Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "low-terminal-recovery-20261029-4",
+      "jobs": "runtime/production-low-terminal-recovery-20261029-4-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-29T12:25:36.637Z",
+      "batch": "low-terminal-recovery-20261029-4"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:25:36.637Z",
+      "jobs_file": "runtime/production-low-terminal-recovery-20261029-4-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:25:36.637Z",
+      "command": "python runtime\\batch-keys.py runtime/production-low-terminal-recovery-20261029-4-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:25:36.898Z",
+      "command": "python runtime\\batch-keys.py runtime/production-low-terminal-recovery-20261029-4-jobs.json",
+      "elapsed_ms": 261,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:25:36.898Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:25:36.898Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-low-terminal-recovery-20261029-4-jobs.json --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc --output runtime\\dispatch-export\\low-terminal-recovery-20261029-4-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:25:37.324Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-low-terminal-recovery-20261029-4-jobs.json --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc --output runtime\\dispatch-export\\low-terminal-recovery-20261029-4-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.json",
+      "elapsed_ms": 426,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:25:37.324Z",
+      "command": "type runtime\\dispatch-export\\low-terminal-recovery-20261029-4-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:25:37.416Z",
+      "command": "type runtime\\dispatch-export\\low-terminal-recovery-20261029-4-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.json",
+      "elapsed_ms": 92,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:25:37.416Z",
+      "command": "python runtime\\guard-dispatch-family.py 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:25:37.820Z",
+      "command": "python runtime\\guard-dispatch-family.py 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc",
+      "elapsed_ms": 404,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:25:37.839Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\low-terminal-recovery-20261029-4-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.json --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:25:40.775Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\low-terminal-recovery-20261029-4-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.json --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc",
+      "elapsed_ms": 2936,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:25:40.775Z",
+      "key": "992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:26:14.384Z",
+      "key": "992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc",
+      "elapsed_ms": 33609,
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID e5086417-b9e9-4e08-b701-383e6d8dea05. safety_violations=[abuse].\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:26:14.522Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc --error-file runtime\\low-terminal-recovery-20261029-4-error-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:26:14.814Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc --error-file runtime\\low-terminal-recovery-20261029-4-error-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.txt",
+      "elapsed_ms": 292,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:26:14.814Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc --message-file runtime\\low-terminal-recovery-20261029-4-error-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:26:15.718Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc --message-file runtime\\low-terminal-recovery-20261029-4-error-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.txt",
+      "elapsed_ms": 904,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:26:15.718Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "low-terminal-recovery-20261029-4",
+      "observed_at_utc": "2026-10-29T12:26:15.718Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-29T12:26:15.718Z",
+      "batch": "low-terminal-recovery-20261029-4"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-29T12:26:15.718Z"
+}

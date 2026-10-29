@@ -20,7 +20,7 @@ def validate(root,config):
     journal=read_json(root/f'mod_nailong/data/generation-requests/{key}.json');a=journal['attempts'][-1]
     assert a['status']=='failed' and a['number']==config['failed_attempt_number'] and a['error'].strip() in ERRORS
     assert a.get('retry_of_attempt'),'Only an existing counted exact service chain is eligible'
-    assert not any(x.get('terminal_service_transport_retry_of_attempt') for x in journal['attempts']),'One reviewed terminal recovery per source; never automatic network loops'
+    assert not any(x.get('terminal_service_transport_retry_of_attempt')==a['number'] for x in journal['attempts']),'A returned terminal error may be recovered only once; never replay a claimed recovery'
     queue=read_json(root/'mod_nailong/data/image-retry-queue.json');q=queue['sources'][key]
     settings=image_retries.policy();grant=image_retries.wait_waiver(settings,key)
     assert grant and q['state']=='claimed_before_call' and q['retries_used']==config['consumed_retries_before'] and 0<q['retries_used']<retry_limit(settings,key)

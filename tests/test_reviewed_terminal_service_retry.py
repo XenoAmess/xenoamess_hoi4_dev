@@ -81,5 +81,14 @@ class TerminalServiceRecoveryTests(unittest.TestCase):
         subject.validate(self.root,self.config)
         flags['complete_prompt_actually_read']=False;write_json(path,pool);self.assert_no_mutation()
 
+    def test_prior_distinct_network_recovery_does_not_reset_or_block_lifetime_counter(self):
+        self.fixture();journal=read_json(self.journal);journal['attempts'][0]['terminal_service_transport_retry_of_attempt']=0;write_json(self.journal,journal)
+        subject.prepare(self.root,'test-recovery',0,self.config)
+        self.assertEqual(read_json(subject.image_retries.QUEUE)['sources'][self.key]['retries_used'],2)
+
+    def test_same_failed_attempt_recovery_cannot_be_prepared_twice(self):
+        self.fixture();journal=read_json(self.journal);journal['attempts'][0]['terminal_service_transport_retry_of_attempt']=2;write_json(self.journal,journal)
+        self.assert_no_mutation()
+
 
 if __name__=='__main__':unittest.main()

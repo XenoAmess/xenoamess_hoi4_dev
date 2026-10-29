@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261025-large-logical-queue-v50-window1624",
+  "started_at_utc": "2026-10-29T12:54:01.535Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "jobs": "runtime/production-low-v50-terminal-recovery-20261029-1-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-29T12:54:01.565Z",
+      "batch": "low-v50-terminal-recovery-20261029-1"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:54:01.565Z",
+      "jobs_file": "runtime/production-low-v50-terminal-recovery-20261029-1-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:54:01.565Z",
+      "command": "python runtime\\batch-keys.py runtime/production-low-v50-terminal-recovery-20261029-1-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:54:03.840Z",
+      "command": "python runtime\\batch-keys.py runtime/production-low-v50-terminal-recovery-20261029-1-jobs.json",
+      "elapsed_ms": 2275,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:54:03.840Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:54:03.840Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-low-v50-terminal-recovery-20261029-1-jobs.json --key 34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214 --output runtime\\dispatch-export\\low-v50-terminal-recovery-20261029-1-34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:54:08.290Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-low-v50-terminal-recovery-20261029-1-jobs.json --key 34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214 --output runtime\\dispatch-export\\low-v50-terminal-recovery-20261029-1-34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214.json",
+      "elapsed_ms": 4450,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:54:08.290Z",
+      "command": "type runtime\\dispatch-export\\low-v50-terminal-recovery-20261029-1-34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:54:09.074Z",
+      "command": "type runtime\\dispatch-export\\low-v50-terminal-recovery-20261029-1-34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214.json",
+      "elapsed_ms": 784,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:54:09.074Z",
+      "command": "python runtime\\guard-dispatch-family.py 34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:54:10.228Z",
+      "command": "python runtime\\guard-dispatch-family.py 34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214",
+      "elapsed_ms": 1154,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:54:10.265Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\low-v50-terminal-recovery-20261029-1-34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214.json --key 34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:54:30.204Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\low-v50-terminal-recovery-20261029-1-34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214.json --key 34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214",
+      "elapsed_ms": 19939,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:54:30.204Z",
+      "key": "34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:55:07.189Z",
+      "key": "34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214",
+      "elapsed_ms": 36985,
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 6bd0625f-cfa9-4b35-a36b-2a5a4c35d56d. safety_violations=[abuse].\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:55:07.433Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214 --error-file runtime\\low-v50-terminal-recovery-20261029-1-error-34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:55:11.047Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214 --error-file runtime\\low-v50-terminal-recovery-20261029-1-error-34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214.txt",
+      "elapsed_ms": 3614,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:55:11.047Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key 34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214 --message-file runtime\\low-v50-terminal-recovery-20261029-1-error-34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:55:21.026Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key 34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214 --message-file runtime\\low-v50-terminal-recovery-20261029-1-error-34e4fe5920a636af439cd8f10154dd6f113b4b2c3184df5d8d005f1049170214.txt",
+      "elapsed_ms": 9979,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:55:21.026Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "low-v50-terminal-recovery-20261029-1",
+      "observed_at_utc": "2026-10-29T12:55:21.026Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-29T12:55:21.026Z",
+      "batch": "low-v50-terminal-recovery-20261029-1"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-29T12:55:21.026Z"
+}

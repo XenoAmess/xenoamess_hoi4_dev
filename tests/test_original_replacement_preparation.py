@@ -1,4 +1,5 @@
 import tempfile,unittest
+from tests import test_accepted_retry_art as accepted_fixtures
 from pathlib import Path
 from tools.common import read_json,write_json,file_sha256,machine_id
 from tools.prepare_reviewed_original_replacements import prepare_replacements
@@ -50,5 +51,35 @@ class OriginalReplacementPreparationTests(unittest.TestCase):
  def test_cancelled_draft_without_actual_rejected_png_blocks_replacement(self):
   write_json(self.root/self.journal,{'attempts':[{'number':1,'status':'cancelled_before_generation'}]})
   with self.assertRaises(ValueError):prepare_replacements(self.root,'replacement',0,self.config,lambda *_a,**_k:self.fail('no rejected PNG'))
+
+class OriginalMethodAfterExactRetryTests(unittest.TestCase):
+ setUp=accepted_fixtures.AcceptedRetryArtTests.setUp
+ def configure(self):
+  report=self.root/'mod_nailong/data/review.json';write_json(report,{'machine_id':machine_id(),'decisions_staged':True,'decisions':[{'source_sha256':self.key,'decision':'rejected','generated_fullsize_sha256':self.a['fullsize_sha256']}]})
+  write_json(self.root/'mod_nailong/data/generated.json',{'portraits':self.rows})
+  write_json(self.root/'mod_nailong/data/production-priority.json',{'sources':{self.key:{'high_priority':True,'source_paths':['original.dds']}}})
+  write_json(self.root/'mod_nailong/data/generation-failures.json',{'attempts':[{'source_sha256':self.key,'status':'blocked'}]})
+  write_json(self.root/'runtime/after128-continuous-plan.json',{'batches':[]})
+  self.config={'machine_id':machine_id(),'sources':[{'source_sha256':self.key,'rejected_fullsize_sha256':self.a['fullsize_sha256'],'manual_review_report':report.relative_to(self.root).as_posix(),'manual_review_report_sha256':file_sha256(report),'replacement_reason':'Actual exact service retry succeeded, current rejected PNG requires original-based art method','prompt':'New art request after actual successful service return'}]}
+ def prepare(self,*args,**kwargs):
+  self.assertFalse(args[2]);history=read_json(self.journal)
+  history['attempts'].append({'number':3,'status':'prepared','edit_existing':False,'inputs':[{'role':'original source portrait'},{'role':'user mascot reference'}],'prompt_sha256':'f'*64});write_json(self.journal,history)
+  return {'key':self.key,'journal':self.journal.relative_to(self.root).as_posix(),'references':['source','mascot']}
+ def test_proved_success_releases_only_own_old_service_hold_for_new_art(self):
+  self.configure();result=prepare_replacements(self.root,'original-method',0,self.config,self.prepare)
+  proof=read_json(self.root/result['receipt'])['followups'][0]['preparation_boundary']['accepted_exact_retry_art_proof']
+  self.assertEqual(proof['accepted_attempt'],2);self.assertEqual(proof['retries_used_unchanged'],1)
+  self.assertEqual(read_json(self.root/'mod_nailong/data/image-retry-queue.json')['sources'][self.key]['retries_used'],1)
+ def test_unknown_call_cannot_release_old_hold(self):
+  self.configure();ledger=read_json(self.dispatch);ledger['status']='calling';write_json(self.dispatch,ledger)
+  with self.assertRaises(AssertionError):prepare_replacements(self.root,'original-method',0,self.config,lambda *_a,**_k:self.fail('unknown call'))
+ def test_latest_failed_request_still_cannot_change_art_method(self):
+  self.configure();journal=read_json(self.journal);journal['attempts'][-1]['status']='failed';write_json(self.journal,journal)
+  with self.assertRaises(AssertionError):prepare_replacements(self.root,'original-method',0,self.config,lambda *_a,**_k:self.fail('failed request altered'))
+ def test_other_unresolved_person_variant_remains_blocking(self):
+  self.configure();other='b'*64
+  write_json(self.root/'mod_nailong/data/production-priority.json',{'sources':{self.key:{'high_priority':True,'characters':['same-person'],'paths':['one.dds']},other:{'high_priority':True,'characters':['same-person'],'paths':['two.dds']}}})
+  write_json(self.root/'mod_nailong/data/generation-failures.json',{'attempts':[{'source_sha256':self.key,'status':'blocked'},{'source_sha256':other,'status':'blocked'}]})
+  with self.assertRaises(AssertionError):prepare_replacements(self.root,'original-method',0,self.config,lambda *_a,**_k:self.fail('other service family bypass'))
 
 if __name__=='__main__':unittest.main()
