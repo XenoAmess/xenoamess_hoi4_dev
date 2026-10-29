@@ -86,8 +86,10 @@ class ExactApiPublishTests(unittest.TestCase):
             else:
                 self.assertNotIn("content", entry)
         self.assertEqual(tree_call[2], details["tree"])
-        self.assertIn(("git/blobs", publish.git_text("rev-parse", TARGET + ":mod_nailong/data/generated.json")),
-                      {(call[0], call[2]) for call in api.posts})
+        manifest_sha = publish.git_text("rev-parse", TARGET + ":mod_nailong/data/generated.json")
+        blob_call = next(call for call in api.posts if call[0] == "git/blobs" and call[2] == manifest_sha)
+        self.assertEqual(blob_call[1]["encoding"], "utf-8")
+        self.assertEqual(blob_call[1]["content"], publish.git_bytes("show", TARGET + ":mod_nailong/data/generated.json").decode("utf-8"))
 
     def test_sha_mismatch_never_updates_reference(self):
         api = FakeApi(mismatch_tree=True)

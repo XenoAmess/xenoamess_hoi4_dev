@@ -333,7 +333,10 @@ class ExactApiPublisher:
             self.known_blobs.add(digest)
             self.save(last_blob_sha=digest, verified_blob_shas=sorted(self.known_blobs))
             return
-        created = self.api.post_json("git/blobs", {"content": base64.b64encode(payload).decode("ascii"), "encoding": "base64"}, digest)
+        body = ({"content": payload.decode("utf-8"), "encoding": "utf-8"}
+                if change["path"].endswith((".json", ".py", ".md", ".txt"))
+                else {"content": base64.b64encode(payload).decode("ascii"), "encoding": "base64"})
+        created = self.api.post_json("git/blobs", body, digest)
         require(created["sha"] == digest, f"Remote blob SHA mismatch: {change['path']}")
         self.known_blobs.add(digest)
         self.save(last_blob_sha=digest, verified_blob_shas=sorted(self.known_blobs))
