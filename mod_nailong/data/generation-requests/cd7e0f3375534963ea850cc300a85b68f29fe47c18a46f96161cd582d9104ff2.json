@@ -151,6 +151,71 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID c8501a2e-5e7e-49f5-9f02-f7be9d7613d4.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-29T04:09:25.770070+00:00"
+    },
+    {
+      "number": 4,
+      "status": "approved",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Source-feature priority: Image 1 controls the actual visible hair, eyebrow HAIR, facial hair and clothing. Image 2 controls mascot anatomy and identity only; its bare scalp or lack of eyebrows must not erase source-visible hair. Retain every clearly visible source eyebrow as colored HAIR in its actual shape, extent and color, not a yellow ridge, socket shadow or cap shadow. Keep the source hairstyle and any visible temple/side hair and beard extent. Features actually covered or absent in the source stay covered or absent. The rounded chin meets a VERY SHORT BROAD neck transition. Refit the existing neckline and lapels around the compact head while preserving their open/closed style; do not fill an open V with a long narrow yellow funnel.\nUse case: compositing. Image1 is the exact original game character portrait/card and sole source authority. Image2 is the user yellow mascot identity reference. Produce one independent full-resolution yellow mascot fusion preserving original composition and aspect ratio.\nActually viewed source-specific features: Standalone full painted rectangle. Actually viewed native and nearest4: distinct original of same older lean screen-left/upward man with short brown-grey combed-back parted/receding hair, separate brows and smooth chin; preserve narrow dark upper-lip line without inventing full moustache where individual hairs cannot be resolved. Blue-grey broad-lapel suit, light grey pointed shirt and prominent dark blue bow tie with pale fold strokes, no visible gold lapel pin in this original. Preserve bow tie and exact outfit differences, crop/light/full beige-grey backing and short broad mascot collar fit. Individual hair strokes and small bow folds unreadable.\nConvert the visible character anatomy to a smooth golden-yellow compact round mascot with green-ringed black eyes, retaining original hair/fur contour, brows and only actual source facial hair with exact extent, density and colour. Preserve all real accessories, headgear, clothing details, source head direction, gaze, pose, lighting and crop. Do not infer appearance from filename or biography. No human skin/nose/ears, new beard, hat, people, symbols or decorations.\nMatch the actual source mouth and expression: a somber downturned mouth remains visibly downturned, a small lip parting remains slightly open, and an open toothy or happy mouth remains open. Do not replace every mouth with the neutral grey reference wedge or an upward smile. Retain subtle asymmetry and brow mood.\nUse a compact round head with curved chin resting immediately at the source neckline through a VERY SHORT BROAD transition. Fit existing garment collar and shoulder lines to the mascot, preserving original open/closed fastening. No long yellow stalk, neck roll, pinched ring, floating collar, clipping or cream neck bib. Preserve actual bare/animal clothing state; do not invent a human garment where absent.\nStandalone source retains its COMPLETE original painted rectangular backdrop and all original subject/clothing through every edge, fully opaque. Only an original framed card retains that exact tilted frame, wholly opaque backing, cream overlapping note and genuine alpha outside the complete card silhouette. Keep original upper-note multirow markings in their actual position/footprint/contrast as indistinct dark strokes; never erase them into blank parchment, add extra writing or invent readable words/numbers. All original solid surfaces stay fully opaque. Keep full painterly detail and tool output resolution. One asset, no comparison board, new label, text or watermark.\nOutput background: the exact original was visually verified to be a COMPLETE rectangular painted portrait, with no fully transparent source pixels. Its small original alpha variation does not establish an exterior figure cutout. Preserve the entire original background colour, texture, lighting and crop to all four canvas edges. Return a fully opaque rectangular image, alpha 255 throughout the originally opaque backdrop and subject, including hair, glasses, dark clothing and corners. Do not copy an incorrect target cutout mask or partial transparency. No transparent backdrop, fog, see-through fabric, haze, halo or invented frame/note. Keep every unrelated source feature unchanged.",
+      "prompt_file": "mod_nailong/assets/prompts/cd7e0f3375534963ea850cc300a85b68f29fe47c18a46f96161cd582d9104ff2-004.txt",
+      "prompt_sha256": "b37509acea7c7568e83e4ad9e0e632ea71ab5ffec1521843023bf88c8400e63f",
+      "inputs": [
+        {
+          "role": "original source portrait",
+          "raw_sha256": "cd7e0f3375534963ea850cc300a85b68f29fe47c18a46f96161cd582d9104ff2",
+          "converted_png_sha256": "df9f6650950908853d458d19f17f4c935a1c9a620b785fe39fa950c4eaf94717"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": false,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-29T11:56:01.891529+00:00",
+      "original_alpha_extrema": [
+        255,
+        255
+      ],
+      "transparent_background": false,
+      "alpha_prompt_policy": "source-manually-verified-opaque-canvas-v1",
+      "opaque_canvas_reason": "Actually viewed complete exact original gfx/leaders/ITA/Portrait_Italy_Generic_2.dds on SHA-bound fresh HIGH fresh-observed-20261025T122157-b-8ed194b3 input pages, including full painted background in all four corners. Converted PNG SHA256 df9f6650950908853d458d19f17f4c935a1c9a620b785fe39fa950c4eaf94717, original alpha extrema [255, 255]. This individual original is a complete opaque painted rectangular canvas; retain it with fully opaque subject/clothing. No figure-cutout exterior exists. Not a global alpha threshold or frozen retry change.",
+      "feature_preservation_prompt_policy": "fresh-low-visible-features-v1",
+      "retry_of_attempt": 3,
+      "retry_root_attempt": 1,
+      "cooldown_retry_number": 3,
+      "cooldown_not_before_utc": "2026-10-29T11:02:08.988893+00:00",
+      "cooldown_retry_tool_transparent_background": false,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "cooldown_wait_authorization": {
+        "authorization_id": "20261029-remaining-low-no-project-wait",
+        "authorization_manifest": "mod_nailong/data/retry-cooldown-waivers/20261029-remaining-low-immediate.json",
+        "authorization_manifest_sha256": "a594555596537d0d675f147db826ce12ce0f3255edbcf50dd618195c3b4621bd",
+        "effective_at_utc": "2026-10-29T11:02:08.988893+00:00",
+        "cooldown_hours": 0
+      },
+      "default_eight_hour_not_before_utc": "2026-10-29T12:09:25.770070+00:00",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-29T11:56:09.054649+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "5f0014633021c6aed2a35d744d371b5df9f1ba4df09627a3e219dab501ce2dac",
+        "prompt_sha256": "b37509acea7c7568e83e4ad9e0e632ea71ab5ffec1521843023bf88c8400e63f",
+        "input_sha256": [
+          "df9f6650950908853d458d19f17f4c935a1c9a620b785fe39fa950c4eaf94717",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": false
+      },
+      "generated_at_utc": "2026-10-29T11:56:42.693609+00:00",
+      "fullsize_sha256": "a1b3176b3d9d88d448cacf81d46aca4506bd589af4d57cb7a25074d1c4f1d7e1",
+      "fullsize_image": "mod_nailong/assets/generated_fullsize/a1b3176b3d9d88d448cacf81d46aca4506bd589af4d57cb7a25074d1c4f1d7e1.png",
+      "output": "mod_nailong/assets/portraits/cd7e0f3375534963ea850cc300a85b68f29fe47c18a46f96161cd582d9104ff2.png",
+      "output_sha256": "b90cb61bbad49282fba2fb2a9ab89de95d31f7e25240c4bb697a9f2ef4ceb64b",
+      "reviewed_at_utc": "2026-10-29T12:07:45.854679+00:00",
+      "review": "approved"
     }
   ]
 }

@@ -28,14 +28,15 @@ def consume(root, expected_machine, runner=None):
     scripts={'reviewed_art_repairs':'tools/prepare_reviewed_art_repairs.py',
              'reviewed_original_replacements':'tools/prepare_reviewed_original_replacements.py',
              'reviewed_fresh_sources':'tools/prepare_reviewed_fresh_sources.py',
-             'reviewed_transport_retry':'tools/prepare_reviewed_transport_retry.py'}
+             'reviewed_transport_retry':'tools/prepare_reviewed_transport_retry.py',
+             'reviewed_terminal_service_retry':'tools/prepare_reviewed_terminal_service_retry.py'}
     script = root / scripts.get(intent.get('kind'),'tools/invalid-preparation-kind')
     claimed = folder / 'claimed' / path.name
     claimed.parent.mkdir(parents=True, exist_ok=True)
     assert not claimed.exists(), 'Never replay a claimed preparation intent'
     path.rename(claimed)
     receipt = {'machine_id': expected_machine, 'intent': intent,
-               'claimed_at_utc': utc_now(), 'scope': 'Local preparation only; no image call or retry claim.'}
+               'claimed_at_utc': utc_now(), 'scope': ('Local preparation with one explicit cumulative allowance claim for a reviewed terminal service recovery; no image call.' if intent.get('kind')=='reviewed_terminal_service_retry' else 'Local preparation only; no image call or retry claim.')}
     try:
         assert intent['machine_id'] == expected_machine
         assert intent['kind'] in scripts

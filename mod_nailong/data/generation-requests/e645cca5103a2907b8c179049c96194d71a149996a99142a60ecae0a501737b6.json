@@ -209,6 +209,77 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 2287e29e-80fe-4259-91f0-46dd8fc4c73f.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-29T04:05:16.909555+00:00"
+    },
+    {
+      "number": 5,
+      "status": "approved",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Image1 is the actual raw-HD mascot edit target. Image2 is the exact original game portrait/card and sole authority for visible features. Image3 is the user mascot identity reference.\nActual observed correction: Retains dark swept hair/brows, source narrow moustache plus separate chin tuft, round spectacles, brown sweater vest/pale shirt/dark tie and original slight open-mouth expression. However a large glossy pink-peach lower human lip and fleshy cupid-bow upper lip remain. Replace lip anatomy with simple thin mascot mouth edges, preserving original slight parting/visible teeth, moustache/chin tuft and compact neck. Green eyes/lens highlights, hair, clothes and full opaque backing otherwise remain sound.\nKeep all unrelated source-visible hairstyle and hair colour, eyebrows and exact fine facial-hair state, glasses, headgear when actually present, clothes/neckwear, badges/buttons/straps, expression, gaze, pose, crop and lighting. Source-visible eyebrows remain distinct independent brows; never erase them to copy the identity reference smooth forehead or merge them into head hair. Smooth golden-yellow compact round mascot head with green-ringed black eyes and exactly ONE small mouth at the actual original mouth position. If a moustache is present, that one mouth is below it: never add a second grey slit, beak, nose or default mascot lip above the moustache. No human skin/nose/ears, broad invented facial-hair band or hat replacing real hair.\nOnly when the original actually has a photograph frame/note, retain that entire tilted frame and overlapping paper, opaque photographic backing and true exterior alpha outside the complete original card. Copy the actual original note markings as required visual shapes: preserve their original number of row/groups, compact footprint, placement and dark contrast. Keep original blank paper blank outside that footprint. Do not erase original marks, replace them with random stains or dots, spread writing over the page or invent extra rows. These existing indistinct marks are required original image content, not a request for newly readable words. A standalone full portrait retains its entire original painted backdrop and must not acquire a new photo frame or note. Preserve genuine original transparency only where it really exists. Dark cloth stays fully opaque. Short broad fitted neck with rounded chin immediately meeting actual garment, preserve its open/closed state and do not add a neck column, separate roll, cream bib or floating collar. The exact original controls mouth opening, smile shape and source-visible tooth edge; do not import the mascot reference closed grey lip over an open source mouth. Keep full raw-HD detail, resolution and original aspect ratio; no newly invented readable text, extra note writing beyond the actual original footprint, watermark, new symbols, people or panels.\nOutput background: the exact original was visually verified to be a COMPLETE rectangular painted portrait, with no fully transparent source pixels. Its small original alpha variation does not establish an exterior figure cutout. Preserve the entire original background colour, texture, lighting and crop to all four canvas edges. Return a fully opaque rectangular image, alpha 255 throughout the originally opaque backdrop and subject, including hair, glasses, dark clothing and corners. Do not copy an incorrect target cutout mask or partial transparency. No transparent backdrop, fog, see-through fabric, haze, halo or invented frame/note. Keep every unrelated source feature unchanged.",
+      "prompt_file": "mod_nailong/assets/prompts/e645cca5103a2907b8c179049c96194d71a149996a99142a60ecae0a501737b6-005.txt",
+      "prompt_sha256": "d59561f5bf4e37e63bdc0a0bbc9b83b56257d930a7253ed688e8f2f7687ffaa0",
+      "inputs": [
+        {
+          "role": "previous generated fullsize edit target",
+          "path": "mod_nailong/assets/generated_fullsize/e1dedfb1b335187005eec62a8974520a451d3f1948bd2b0faebdf28a8fd1150b.png",
+          "sha256": "e1dedfb1b335187005eec62a8974520a451d3f1948bd2b0faebdf28a8fd1150b",
+          "derived_game_image_sha256": "59a0dc6f77ee33653ef93e5ad699bd73641821c961d8b15a469f2f3e998bb573"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "e645cca5103a2907b8c179049c96194d71a149996a99142a60ecae0a501737b6",
+          "converted_png_sha256": "d88025ee012f6197d99781e5bc8263be58e21694847f41df11f1eed28bd67d06"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-29T11:59:01.420283+00:00",
+      "original_alpha_extrema": [
+        243,
+        255
+      ],
+      "transparent_background": false,
+      "alpha_prompt_policy": "source-manually-verified-opaque-canvas-v1",
+      "opaque_canvas_reason": "Actually viewed complete exact original gfx/leaders/Australia/portrait_asia_generic_operative_male_6.dds on SHA-bound fresh HIGH fresh-observed-20261024T233311-b-52b6f489 input pages, including full painted background in all four corners. Converted PNG SHA256 d88025ee012f6197d99781e5bc8263be58e21694847f41df11f1eed28bd67d06, original alpha extrema [243, 255]. This individual original is a complete opaque painted rectangular canvas; retain it with fully opaque subject/clothing. No figure-cutout exterior exists. Not a global alpha threshold or frozen retry change.",
+      "retry_of_attempt": 4,
+      "retry_root_attempt": 4,
+      "cooldown_retry_number": 3,
+      "cooldown_not_before_utc": "2026-10-29T11:02:08.988893+00:00",
+      "cooldown_retry_tool_transparent_background": false,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "cooldown_wait_authorization": {
+        "authorization_id": "20261029-remaining-low-no-project-wait",
+        "authorization_manifest": "mod_nailong/data/retry-cooldown-waivers/20261029-remaining-low-immediate.json",
+        "authorization_manifest_sha256": "a594555596537d0d675f147db826ce12ce0f3255edbcf50dd618195c3b4621bd",
+        "effective_at_utc": "2026-10-29T11:02:08.988893+00:00",
+        "cooldown_hours": 0
+      },
+      "default_eight_hour_not_before_utc": "2026-10-29T12:05:16.909555+00:00",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-29T11:59:09.974426+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "58283f17a181a3cf4f9cbfee5ef0f3a0672940266ffda9d222d0ce4e146e54be",
+        "prompt_sha256": "d59561f5bf4e37e63bdc0a0bbc9b83b56257d930a7253ed688e8f2f7687ffaa0",
+        "input_sha256": [
+          "e1dedfb1b335187005eec62a8974520a451d3f1948bd2b0faebdf28a8fd1150b",
+          "d88025ee012f6197d99781e5bc8263be58e21694847f41df11f1eed28bd67d06",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": false
+      },
+      "generated_at_utc": "2026-10-29T11:59:42.169877+00:00",
+      "fullsize_sha256": "6b663360ba85c82fb81861241772879d04cebf686ad41191189f2814549b35d2",
+      "fullsize_image": "mod_nailong/assets/generated_fullsize/6b663360ba85c82fb81861241772879d04cebf686ad41191189f2814549b35d2.png",
+      "output": "mod_nailong/assets/portraits/e645cca5103a2907b8c179049c96194d71a149996a99142a60ecae0a501737b6.png",
+      "output_sha256": "4562c65c2d493e2676e4ec0a4d449722bfb87a3e61b05d234f5f75aa5976c4bd",
+      "reviewed_at_utc": "2026-10-29T12:16:23.769120+00:00",
+      "review": "approved"
     }
   ]
 }
