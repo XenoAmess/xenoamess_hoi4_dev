@@ -1,0 +1,48 @@
+{
+  "machine_id": "bf-202609141645-5434332d4d",
+  "prepared_at_utc": "2026-10-29T00:31:31.187158+00:00",
+  "spec": {
+    "runId": "resume-20261025-large-logical-queue-v39",
+    "startIndex": 1540,
+    "afterWindow": "resume-20261025-large-logical-queue-v38-window1539",
+    "maxCalls": 32,
+    "maxPreviewBytes": 2097152,
+    "maxRunSeconds": 1800
+  },
+  "frozen_sources": "docs/handoffs/2026-10-29-low-v39-helper-sources.json",
+  "frozen_sources_sha256": "fad316c254f614f85a37189d78435f2b61ac28c94ddfa07493ad5a6e656f51a4",
+  "actual_invocation_source": "(async()=>{\nconst read=async cmd=>{let r=await tools.exec_command({cmd,shell:\"cmd.exe\",login:false,max_output_tokens:24000});let output=r.output||\"\";while(r.session_id){r=await tools.write_stdin({session_id:r.session_id,chars:\"\",yield_time_ms:1000,max_output_tokens:24000});output+=r.output||\"\";}if(r.exit_code!==0)throw Error(JSON.stringify(r));return output;};\nconst spec=JSON.parse(await read(\"type runtime\\\\resume-low-v39-spec-20261029.json\"));\nconst frozen=JSON.parse(await read(\"type docs\\\\handoffs\\\\2026-10-29-low-v39-helper-sources.json\"));\nconst terminalTransportDecision=eval(\"(\"+frozen.sources.transport_policy+\")\");\nlet terminalNetworkFailureStreak=0;\nconst logical=eval(\"(\"+frozen.sources.logical+\")\"),window=eval(\"(\"+frozen.sources.window+\")\"),producer=eval(\"(\"+frozen.sources.producer+\")\");\nconst adapt=(plan,options)=>window(plan,{...options,producer,logicalBoundary:true});\nstore(\"low_v39_actual_state\",{status:\"starting\",started_at_utc:new Date().toISOString(),spec});\ntry{const result=await logical(spec,{producer:adapt});store(\"low_v39_actual_state\",{status:\"finished\",observed_at_utc:new Date().toISOString(),spec,result});text(result);}catch(error){store(\"low_v39_actual_state\",{status:\"stopped_requires_reconciliation\",observed_at_utc:new Date().toISOString(),spec,error:String(error)});throw error;}\n\n})()\n",
+  "actual_invocation_sha256": "4dbe5503702310f78b1b023083a14e1914a85bf9223f5f9d20ac89604d05d85e",
+  "status": "prepared_not_started",
+  "previous_end": {
+    "machine_id": "bf-202609141645-5434332d4d",
+    "observed_at_utc": "2026-10-29T00:26:50.319211+00:00",
+    "run_state": {
+      "machine_id": "bf-202609141645-5434332d4d",
+      "run_id": "resume-20261025-large-logical-queue-v38",
+      "next_index": 1540,
+      "after_window": "resume-20261025-large-logical-queue-v38-window1539",
+      "status": "stopped_at_safe_boundary",
+      "created_at_utc": "2026-10-28T20:39:07.641401+00:00",
+      "completed_windows": 57,
+      "completed_source_requests": 57,
+      "updated_at_utc": "2026-10-29T00:25:05.435577+00:00",
+      "reason": "bounded_transport_or_run_duration",
+      "stopped_at_utc": "2026-10-29T00:25:17.434201+00:00"
+    },
+    "actual_builtin_cell": 2242,
+    "actual_builtin_cell_result": {
+      "run_id": "resume-20261025-large-logical-queue-v38",
+      "windows": 9,
+      "requests": 9,
+      "display_bytes": 76014,
+      "status": "safe_boundary"
+    },
+    "actual_terminal_result_collected": true,
+    "original_failed_cell": 2066,
+    "original_failed_cell_collected": true,
+    "owner_released": true,
+    "scope": "Original48 plus bounded continuation9 total57 actual source calls. Continuation9 all returned PNG. New phase may start separately; no old bound reset, deadline extension or call replay."
+  },
+  "scope": "Actual start is recorded separately only after builtin exec starts. No image requests or quota claims in this preparation."
+}

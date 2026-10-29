@@ -8,6 +8,12 @@ from mod_nailong.tools.generation_requests import prepare
 from tools.production_priority_gate import tier_allowed
 selected=ROOT/sys.argv[1];config=read_json(selected)
 assert config['machine_id']==machine_id() and config['actually_observed'] is True
+special_authorization=None
+if config.get('special_source_authorization'):
+ binding=config['special_source_authorization'];path=(ROOT/binding['path']).resolve()
+ assert path.parent==(ROOT/'mod_nailong/data/production-special-source-directions').resolve()
+ assert file_sha256(path)==binding['sha256']
+ special_authorization=read_json(path);assert special_authorization['machine_id']==machine_id()
 tag=config['tag'];batch=config['batch'];sources=config['sources'];details={str(n):s['description'] for n,s in enumerate(sources,1)}
 assert batch.replace('-','').isalnum() and tag.replace('-','').isalnum()
 for evidence in config['evidence']:
@@ -45,6 +51,9 @@ for n,s in enumerate(sources,1):
  'Use one simple mascot mouth opening with the actual source curve and openness. Do not retain or add separately projecting human upper and lower lips, a cupid bow, fleshy lip rolls or lipstick-like outer rims. Visible teeth, tongue or mouth interior may remain when required by the source expression; those alone are not lip defects.\n'
  'Use a compact round head with curved chin resting immediately at the source neckline through a VERY SHORT BROAD transition. Fit existing garment collar and shoulder lines to the mascot, preserving original open/closed fastening. No long yellow stalk, neck roll, pinched ring, floating collar, clipping or cream neck bib. Preserve actual bare/animal clothing state; do not invent a human garment where absent.\n'
  'Standalone source retains its COMPLETE original painted rectangular backdrop and all original subject/clothing through every edge, fully opaque. Only an original framed card retains that exact tilted frame, wholly opaque backing, cream overlapping note and genuine alpha outside the complete card silhouette. Keep original upper-note multirow markings in their actual position/footprint/contrast as indistinct dark strokes; never erase them into blank parchment, add extra writing or invent readable words/numbers. All original solid surfaces stay fully opaque. Keep full painterly detail and tool output resolution. One asset, no comparison board, new label, text or watermark.')
+ if special_authorization is not None:
+  from tools.special_source_prompt import special_source_prompt
+  prompt=special_source_prompt(s,special_authorization)
  j=prepare(key,prompt,False,opaque_canvas_reason=reason);jobs.append(j);a=read_json(ROOT/j['journal'])['attempts'][-1]
  proof.append({'source_sha256':key,'source':s['source'],'original_png_sha256':s['original_png_sha256'],'actual_source_features':desc,'source_canvas_manual_reason':reason,'cancelled_request_history':s.get('cancelled_request_history'),'prepared_attempt':a['number'],'prompt_sha256':a['prompt_sha256'],'transparent_background':a['transparent_background']})
 from tools.production_priority_gate import append_prepared_windows
