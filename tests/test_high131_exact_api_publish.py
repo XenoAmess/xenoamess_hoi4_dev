@@ -122,6 +122,16 @@ class ExactApiPublishTests(unittest.TestCase):
             publish.Api(forbidden).post_json("git/blobs", {}, expected)
         self.assertEqual(len(calls), 1)
 
+    def test_expected_base_does_not_compare_an_unpublished_target(self):
+        publisher = object.__new__(publish.ExactApiPublisher)
+        publisher.base, publisher.target = BASE, TARGET
+        api = FakeApi()
+        publisher.api = api
+        with patch.object(api, "get_json", side_effect=AssertionError("Unexpected comparison")):
+            self.assertTrue(publisher.require_publication_parent(BASE))
+        with patch.object(api, "get_json", side_effect=publish.ApiError("HTTP 404", status=404)):
+            self.assertFalse(publisher.remote_contains("1" * 40))
+
     def test_unexpected_path_or_deletion_is_rejected_before_upload(self):
         detail = {"commit": TARGET, "parent": BASE, "changes": [{"path": "../secret", "mode": "100644", "type": "blob", "sha": "a" * 40}]}
         with patch.object(publish, "commit_details", return_value=detail), patch.object(publish, "git_text", return_value=TARGET):

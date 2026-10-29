@@ -296,10 +296,17 @@ class ExactApiPublisher:
     def remote_contains(self, remote):
         if remote == self.target:
             return True
-        comparison = self.api.get_json(f"compare/{self.target}...{remote}")
+        try:
+            comparison = self.api.get_json(f"compare/{self.target}...{remote}")
+        except ApiError as error:
+            if error.status == 404:
+                return False
+            raise
         return comparison.get("status") in {"ahead", "identical"}
 
     def require_publication_parent(self, remote):
+        if remote == self.base:
+            return True
         if self.remote_contains(remote):
             return False
         require(remote == self.base, f"Remote master advanced or diverged; rebase before publication: {remote}")
