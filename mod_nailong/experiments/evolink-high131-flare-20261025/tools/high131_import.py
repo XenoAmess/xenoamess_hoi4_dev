@@ -795,28 +795,35 @@ def rebase_import(worktree, original_commit, plan, complete_required=True):
     remote = git(worktree, "rev-parse", "origin/master")
     if remote == original_commit and not rebase_in_progress(worktree):
         return original_commit
-    try:
-        git(worktree, "rebase", "origin/master")
-    except ImportGateError:
-        conflicts = set(git(worktree, "diff", "--name-only", "--diff-filter=U").splitlines())
-        require(conflicts <= {GENERATED, QUEUE}, f"Unrelated import conflict requires manual review: {sorted(conflicts)}")
-        for relative, container in ((GENERATED, "portraits"), (QUEUE, "sources")):
-            if relative not in conflicts:
-                continue
-            remote, planned, base = (json.loads(git(worktree, "show", f":{number}:{relative}")) for number in (2, 3, 1))
-            if container == "portraits":
-                preserved_rows, _ = preserve_new_remote_high(worktree, remote[container], planned[container], base[container], {entry["source_sha256"] for entry in plan["entries"]})
-                planned = dict(planned, portraits=preserved_rows)
-            merged = merge_shared_mapping(remote, planned, base, {entry["source_sha256"] for entry in plan["entries"]}, container)
-            write_json(worktree / relative, merged)
-            git(worktree, "add", "--", relative)
-        require(not git(worktree, "diff", "--name-only", "--diff-filter=U"), "Shared import conflicts remain unresolved")
-        git(worktree, "-c", "core.editor=true", "rebase", "--continue")
+    while True:
+        try:
+            if rebase_in_progress(worktree):
+                conflicts = set(git(worktree, "diff", "--name-only", "--diff-filter=U").splitlines())
+                require(conflicts <= {GENERATED, QUEUE}, f"Unrelated import conflict requires manual review: {sorted(conflicts)}")
+                for relative, container in ((GENERATED, "portraits"), (QUEUE, "sources")):
+                    if relative not in conflicts:
+                        continue
+                    remote, planned, base = (json.loads(git(worktree, "show", f":{number}:{relative}")) for number in (2, 3, 1))
+                    if container == "portraits":
+                        preserved_rows, _ = preserve_new_remote_high(worktree, remote[container], planned[container], base[container], {entry["source_sha256"] for entry in plan["entries"]})
+                        planned = dict(planned, portraits=preserved_rows)
+                    merged = merge_shared_mapping(remote, planned, base, {entry["source_sha256"] for entry in plan["entries"]}, container)
+                    write_json(worktree / relative, merged)
+                    git(worktree, "add", "--", relative)
+                require(not git(worktree, "diff", "--name-only", "--diff-filter=U"), "Shared import conflicts remain unresolved")
+                git(worktree, "-c", "core.editor=true", "rebase", "--continue")
+            else:
+                git(worktree, "rebase", "origin/master")
+        except ImportGateError:
+            require(rebase_in_progress(worktree), "Rebase failed before entering a recoverable conflict state")
+        if not rebase_in_progress(worktree):
+            break
+    generated_rows = read_json(worktree / GENERATED)["portraits"] if complete_required and plan["entries"] else {}
     for entry in plan["entries"] if complete_required else []:
         key = entry["source_sha256"]
         reference = {"review": entry["review"], "review_sha256": entry["review_sha256"], "attempt": entry["attempt"], "task_id": entry["task_id"]}
         restore_original_json_bytes(worktree, ROOT, reference["review"], reference["review_sha256"])
-        require(production_import_completed(worktree, key, reference), f"Rebase lost an imported HIGH source: {key}")
+        require(production_import_completed(worktree, key, reference, generated_rows.get(key)), f"Rebase lost an imported HIGH source: {key}")
     final = git(worktree, "rev-parse", "HEAD")
     original_paths = set(git(worktree, "diff", "--name-only", f"{original_commit}^", original_commit).splitlines())
     for relative in original_paths - {GENERATED, QUEUE}:

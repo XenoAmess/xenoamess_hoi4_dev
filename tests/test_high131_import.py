@@ -475,9 +475,13 @@ class High131ImportTests(unittest.TestCase):
 
         original = "a" * 40
         completed = "b" * 40
+        state = {"active": True}
         def git(worktree, *args):
             if args == ("rebase", "origin/master"):
                 raise importer.ImportGateError("Rebase is already in progress")
+            if args[-2:] == ("rebase", "--continue"):
+                state["active"] = False
+                return ""
             if args == ("rev-parse", "origin/master"):
                 return original
             if args == ("rev-parse", "HEAD"):
@@ -492,8 +496,36 @@ class High131ImportTests(unittest.TestCase):
             if args and args[0] == "diff" and len(args) > 2 and args[1] == "--name-only":
                 return ""
             return ""
-        with patch.object(importer, "rebase_in_progress", return_value=True), patch.object(importer, "git", side_effect=git), patch.object(importer, "write_json"):
+        with patch.object(importer, "rebase_in_progress", side_effect=lambda worktree: state["active"]), patch.object(importer, "git", side_effect=git), patch.object(importer, "write_json"):
             self.assertEqual(importer.rebase_import(self.root, original, {"entries": []}, complete_required=False), completed)
+
+    def test_rebase_resumes_conflict_on_the_next_commit(self):
+        from unittest.mock import patch
+
+        original, completed = "a" * 40, "b" * 40
+        outcomes = iter([importer.ImportGateError("Conflict applying the next commit"), ""])
+        continue_calls = []
+        state = {"active": True}
+        def git(worktree, *args):
+            if args == ("rebase", "origin/master"):
+                raise importer.ImportGateError("Rebase is already in progress")
+            if args[-2:] == ("rebase", "--continue"):
+                continue_calls.append(args)
+                result = next(outcomes)
+                if isinstance(result, Exception):
+                    raise result
+                state["active"] = False
+                return result
+            if args == ("rev-parse", "origin/master"):
+                return original
+            if args == ("rev-parse", "HEAD"):
+                return completed
+            if args and args[0] == "diff":
+                return ""
+            return ""
+        with patch.object(importer, "rebase_in_progress", side_effect=lambda worktree: state["active"]), patch.object(importer, "git", side_effect=git):
+            self.assertEqual(importer.rebase_import(self.root, original, {"entries": []}, complete_required=False), completed)
+        self.assertEqual(len(continue_calls), 2)
 
     def test_original_json_line_endings_and_long_paths(self):
         import subprocess

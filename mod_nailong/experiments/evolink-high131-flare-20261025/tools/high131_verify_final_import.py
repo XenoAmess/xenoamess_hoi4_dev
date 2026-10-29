@@ -54,7 +54,11 @@ def verify(worktree, history_parent, expected_commit=None):
         importer.require(journal["attempts"][-1].get("external_task_id") == entry["task_id"] and journal["attempts"][-1].get("external_review_sha256") == entry["review_sha256"], f"Committed request journal is not bound to the actual approval: {key}")
         originals.append({"source_sha256": key, "index": entry["index"], "path": relative, "sha256": digest, "bytes": len(result.stdout), "preview_path": row["image"], "preview_sha256": row["image_sha256"]})
     source65 = next(row for row in plan["entries"] if row["index"] == 65)
-    importer.require(generated[source65["source_sha256"]]["method"] == "EvoLink gemini-nano-banana-2.1", "Source 65 production method changed")
+    method65 = generated[source65["source_sha256"]]["method"]
+    importer.require(method65 == source65["method"], "Source 65 production method differs from the approved binding")
+    importer.require(method65 in {"EvoLink gemini-nano-banana-2.1", "EvoLink gemini-nano-banana-2.1 + " + importer.ALPHA_METHOD}, "Source 65 generation model changed")
+    if source65["alpha_repair"] is not None:
+        importer.require(generated[source65["source_sha256"]].get("alpha_repair") == source65["alpha_repair"], "Source 65 Alpha derivation proof changed")
     nonperson = committed_json(worktree, commit, f"{importer.EXPERIMENT}/nonperson-scope-decision.json")
     importer.require(all(row["source_sha256"] not in generated for row in nonperson["entries"]), "A non-person generated row was fabricated")
     preserved = []
@@ -86,7 +90,7 @@ def verify(worktree, history_parent, expected_commit=None):
         "original_pngs": originals,
         "other_executor_HIGH_history_preserved": preserved,
         "non_HIGH_portrait_and_retry_rows_match_immediate_remote_parent": True,
-        "standard_python_tests": {"passed": 474, "task": "bash-0whnqejw"},
+        "standard_python_tests": {"passed": 476, "task": "bash-4z2apjb1"},
         "new_image_generation_calls": 0,
         "formal_game_build_or_runtime_acceptance_claimed": False,
         "runtime_acceptance_owner": "Codex",
