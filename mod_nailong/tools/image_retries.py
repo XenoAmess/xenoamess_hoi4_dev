@@ -72,13 +72,17 @@ def refresh_refusal(entry, latest, settings, *, source_key=None):
     entry.update(state=new_state,last_refusal_receipt_utc=observed,not_before_utc=deadline,
                  cooldown_origin_attempt=latest['number'])
 
-def require_editable_service_state(key,record,latest,edit_existing):
+def require_editable_service_state(key,record,latest,edit_existing,*,original_replacement_reason=None):
     """Only a returned exact retry can release a held source for an art edit."""
     path=MOD/'data/generation-failures.json';failures=read_json(path)
     held=[f for f in failures.get('attempts',[]) if f['source_sha256']==key and f.get('status')=='blocked' and not f.get('resolved_by_retry')]
     if not held:return
     queue=read_json(QUEUE);entry=queue.get('sources',{}).get(key,{})
-    proof=(edit_existing and record and latest and 1<=entry.get('retries_used',0)<=retry_limit(policy(),key)
+    art_mode=edit_existing
+    if not edit_existing and isinstance(original_replacement_reason,str) and original_replacement_reason.strip() and record and record.get('review')=='rejected' and latest:
+        from tools.accepted_retry_art import accepted_retry_art_proofs
+        art_mode=key in accepted_retry_art_proofs(ROOT,{key:record},{key:latest})['proofs']
+    proof=(art_mode and record and latest and 1<=entry.get('retries_used',0)<=retry_limit(policy(),key)
            and entry.get('state')=='generated_pending_visual_review'
            and latest.get('retry_of_attempt')
            and latest.get('status') in ('generated_pending_visual_review','generated_rejected_visual_review')

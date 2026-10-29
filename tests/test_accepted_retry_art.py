@@ -1,4 +1,5 @@
 import tempfile,unittest
+from unittest.mock import patch
 from pathlib import Path
 from tools.common import read_json,write_json,file_sha256,machine_id
 from tools.accepted_retry_art import accepted_retry_art_proofs
@@ -44,5 +45,24 @@ class AcceptedRetryArtTests(unittest.TestCase):
  def test_successful_retry_must_preserve_exact_failed_parent_inputs(self):
   body=read_json(self.journal);body['attempts'][0]['inputs']=[];write_json(self.journal,body)
   self.assertIn(self.key,self.proof()['unavailable'])
+
+class OriginalReplacementServiceStateTests(unittest.TestCase):
+ setUp=AcceptedRetryArtTests.setUp
+ def configure(self):
+  from mod_nailong.tools import image_retries
+  self.subject=image_retries
+  for item in [patch.object(image_retries,'ROOT',self.root),patch.object(image_retries,'MOD',self.root/'mod_nailong'),patch.object(image_retries,'QUEUE',self.root/'mod_nailong/data/image-retry-queue.json')]:
+   item.start();self.addCleanup(item.stop)
+  write_json(self.root/'mod_nailong/data/image-retry-policy.json',{'cooldown_hours':8,'max_cooldown_retries_per_source':8})
+  write_json(self.root/'mod_nailong/data/generation-failures.json',{'attempts':[{'source_sha256':self.key,'status':'blocked'}]})
+ def test_explicit_original_art_method_uses_full_success_proof_without_reset(self):
+  self.configure();self.subject.require_editable_service_state(self.key,self.rows[self.key],self.a,False,original_replacement_reason='Current actual raw rejected; reconstruct from exact original')
+  q=read_json(self.subject.QUEUE)['sources'][self.key]
+  self.assertEqual(q['retries_used'],1);self.assertEqual(q['state'],'service_retry_succeeded_art_correction_pending')
+ def test_original_method_reason_alone_never_releases_failed_or_unresolved_request(self):
+  self.configure();ledger=read_json(self.dispatch);ledger['status']='calling';write_json(self.dispatch,ledger)
+  before=self.subject.QUEUE.read_bytes()
+  with self.assertRaises(SystemExit):self.subject.require_editable_service_state(self.key,self.rows[self.key],self.a,False,original_replacement_reason='A reason is not success proof')
+  self.assertEqual(self.subject.QUEUE.read_bytes(),before)
 
 if __name__=='__main__':unittest.main()

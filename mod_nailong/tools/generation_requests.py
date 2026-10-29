@@ -197,7 +197,7 @@ def prepare(key, prompt, edit_existing=False, *, replacement_reason=None, opaque
     extra_inputs=supporting_crop_inputs(record,supporting_crops,edit_existing)
     original_context=supporting_original_input(key,supporting_original_context,record,edit_existing,replacement_reason)
     from mod_nailong.tools.image_retries import require_editable_service_state
-    require_editable_service_state(key,record,journal['attempts'][-1] if journal['attempts'] else None,edit_existing)
+    require_editable_service_state(key,record,journal['attempts'][-1] if journal['attempts'] else None,edit_existing,original_replacement_reason=replacement_reason)
     paths=[];inputs=[]
     if edit_existing:
         if not record:raise SystemExit("No existing image to edit")
