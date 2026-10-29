@@ -138,7 +138,7 @@ class Api:
         except (ApiError, subprocess.TimeoutExpired) as error:
             if not self.allow_curl_fallback or isinstance(error, ApiError) and not error.transient:
                 raise
-            self.runner = self.curl_runner
+            self.runner = self._run_gh if self.runner == self.curl_runner else self.curl_runner
             return self.runner(api_endpoint(endpoint), method, payload, timeout)
 
     @staticmethod
@@ -153,7 +153,7 @@ class Api:
             detail = safe_error(result.stderr.decode("utf-8", errors="replace"))
             status_match = re.search(r"HTTP\s+(\d{3})", detail)
             status = int(status_match.group(1)) if status_match else None
-            transient = any(term in detail.lower() for term in ("tls handshake timeout", "unexpected eof", "connection reset", "connection was reset", "recv failure", "forcibly closed", "connection aborted", "broken pipe", "schannel", "connection timed out", "i/o timeout", "http 408", "http 500", "http 502", "http 503", "http 504"))
+            transient = detail.lower().rstrip().endswith(": eof") or any(term in detail.lower() for term in ("tls handshake timeout", "unexpected eof", "connection reset", "connection was reset", "recv failure", "forcibly closed", "connection aborted", "broken pipe", "schannel", "connection timed out", "i/o timeout", "http 408", "http 500", "http 502", "http 503", "http 504"))
             raise ApiError(detail, transient=transient, status=status)
         try:
             return json.loads(result.stdout)
@@ -348,7 +348,7 @@ class ExactApiPublisher:
             payload = git_bytes("cat-file", "blob", f"{detail['commit']}:{change['path']}")
             digest = hashlib.sha1(b"blob " + str(len(payload)).encode("ascii") + b"\0" + payload).hexdigest()
             require(digest == change["sha"], f"Local blob content changed: {change['path']}")
-            if change["path"].endswith((".json", ".py", ".md", ".txt")):
+            if change["path"].endswith((".json", ".py", ".md", ".txt")) and len(payload) <= 65536:
                 if change["path"].endswith(".json"):
                     json.loads(payload)
                 entry = dict(change)
@@ -422,11 +422,11 @@ class ExactApiPublisher:
                 if not self.require_publication_parent(remote):
                     self.save(status="already_public_pending_original_readback", remote_master_observed=remote)
                     return self.receipt
-                estimated = sum(sum(not change["path"].endswith((".json", ".py", ".md", ".txt")) for change in detail["changes"]) + 3 for detail in self.commits) + 10
+                estimated = sum(sum(not change["path"].endswith((".json", ".py", ".md", ".txt")) or int(git_text("cat-file", "-s", change["sha"])) > 65536 for change in detail["changes"]) + 3 for detail in self.commits) + 10
                 rate = self.api.get_json("rate_limit")["resources"]["core"]
                 require(rate["remaining"] >= estimated, f"Insufficient API allowance for estimated writes and control reads: {estimated}, have {rate['remaining']}")
                 self.save(status="creating_exact_objects", estimated_write_calls_upper_bound=estimated,
-                          rate_limit_accounting="Binary blob creates plus tree/commit/ref writes and control reads; exact text is inlined in trees; retries and existing-object reads are additional")
+                          rate_limit_accounting="PNG and over-64-KiB text blob creates plus tree/commit/ref writes and control reads; small text is inlined in trees; retries and existing-object reads are additional")
                 for detail in self.commits:
                     self.save(current_commit=detail["commit"])
                     self.ensure_commit(detail)

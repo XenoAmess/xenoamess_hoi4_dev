@@ -79,12 +79,15 @@ class ExactApiPublishTests(unittest.TestCase):
         tree_call = [call for call in api.posts if call[0] == "git/trees"][-1]
         self.assertEqual(tree_call[1]["base_tree"], details["base_tree"])
         for entry in tree_call[1]["tree"]:
-            if entry["path"].endswith(".json"):
+            payload = publish.git_bytes("show", TARGET + ":" + entry["path"])
+            if entry["path"].endswith(".json") and len(payload) <= 65536:
                 self.assertNotIn("sha", entry)
-                self.assertEqual(entry["content"], publish.git_bytes("show", TARGET + ":" + entry["path"]).decode("utf-8"))
+                self.assertEqual(entry["content"], payload.decode("utf-8"))
             else:
                 self.assertNotIn("content", entry)
         self.assertEqual(tree_call[2], details["tree"])
+        self.assertIn(("git/blobs", publish.git_text("rev-parse", TARGET + ":mod_nailong/data/generated.json")),
+                      {(call[0], call[2]) for call in api.posts})
 
     def test_sha_mismatch_never_updates_reference(self):
         api = FakeApi(mismatch_tree=True)
@@ -180,6 +183,19 @@ class ExactApiPublishTests(unittest.TestCase):
         with self.assertRaises(publish.ApiError):
             api.request("git/ref/heads/master", "GET", None, 120)
         self.assertEqual(len(calls), 1)
+
+    def test_bare_eof_is_transient_and_curl_failure_can_return_to_gh(self):
+        failed = publish.subprocess.CompletedProcess([], 1, stdout=b"", stderr=b'Get "https://api.github.com/rate_limit": EOF\n')
+        with patch.object(publish.subprocess, "run", return_value=failed):
+            with self.assertRaises(publish.ApiError) as caught:
+                publish.Api._run_gh("rate_limit", "GET", None, 60)
+        self.assertTrue(caught.exception.transient)
+        api = publish.Api(curl_runner=lambda *args: (_ for _ in ()).throw(publish.ApiError("empty reply from server", transient=True)))
+        api.runner = api.curl_runner
+        with patch.object(api, "_run_gh", return_value={"sha": "c" * 40}) as gh:
+            result = api.request("git/blobs/" + "c" * 40, "GET", None, 60)
+        self.assertEqual(result["sha"], "c" * 40)
+        gh.assert_called_once()
 
     def test_github_cli_bytes_are_decoded_before_validation(self):
         with patch.object(publish.subprocess, "check_output", return_value=b"fixturetoken\n"):
