@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261025-large-logical-queue-v39-window1541",
+  "started_at_utc": "2026-10-29T00:35:44.526Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "jobs": "runtime/production-resume-low-transport-20261028-fcd80929dce1-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-29T00:35:45.173Z",
+      "batch": "resume-low-transport-20261028-fcd80929dce1"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:35:45.174Z",
+      "jobs_file": "runtime/production-resume-low-transport-20261028-fcd80929dce1-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:35:45.174Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-low-transport-20261028-fcd80929dce1-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:35:46.067Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-low-transport-20261028-fcd80929dce1-jobs.json",
+      "elapsed_ms": 893,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:35:46.067Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:35:46.067Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-resume-low-transport-20261028-fcd80929dce1-jobs.json --key fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8 --output runtime\\dispatch-export\\resume-low-transport-20261028-fcd80929dce1-fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:35:47.356Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-resume-low-transport-20261028-fcd80929dce1-jobs.json --key fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8 --output runtime\\dispatch-export\\resume-low-transport-20261028-fcd80929dce1-fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8.json",
+      "elapsed_ms": 1289,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:35:47.356Z",
+      "command": "type runtime\\dispatch-export\\resume-low-transport-20261028-fcd80929dce1-fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:35:47.791Z",
+      "command": "type runtime\\dispatch-export\\resume-low-transport-20261028-fcd80929dce1-fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8.json",
+      "elapsed_ms": 435,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:35:47.791Z",
+      "command": "python runtime\\guard-dispatch-family.py fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:35:49.363Z",
+      "command": "python runtime\\guard-dispatch-family.py fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8",
+      "elapsed_ms": 1572,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:35:49.514Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-low-transport-20261028-fcd80929dce1-fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8.json --key fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:36:02.960Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-low-transport-20261028-fcd80929dce1-fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8.json --key fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8",
+      "elapsed_ms": 13446,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:36:02.961Z",
+      "key": "fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:36:22.104Z",
+      "key": "fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8",
+      "elapsed_ms": 19143,
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID ce023ccb-1fa4-4647-97d7-cc5d978be1fa.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:36:24.143Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8 --error-file runtime\\resume-low-transport-20261028-fcd80929dce1-error-fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:36:25.010Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8 --error-file runtime\\resume-low-transport-20261028-fcd80929dce1-error-fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8.txt",
+      "elapsed_ms": 867,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:36:25.010Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8 --message-file runtime\\resume-low-transport-20261028-fcd80929dce1-error-fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:36:28.378Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8 --message-file runtime\\resume-low-transport-20261028-fcd80929dce1-error-fcd80929dce1fe5a8eaa9dc7cbcf4864a966343824061c474813f7a08244e0b8.txt",
+      "elapsed_ms": 3368,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:36:28.378Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "resume-low-transport-20261028-fcd80929dce1",
+      "observed_at_utc": "2026-10-29T00:36:28.378Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-29T00:36:28.378Z",
+      "batch": "resume-low-transport-20261028-fcd80929dce1"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-29T00:36:28.378Z"
+}

@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261025-large-logical-queue-v40-window1554",
+  "started_at_utc": "2026-10-29T01:11:52.714Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "resume-special-low-five-20261029-low5",
+      "jobs": "runtime/production-resume-special-low-five-20261029-low5-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-29T01:11:52.807Z",
+      "batch": "resume-special-low-five-20261029-low5"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:11:52.807Z",
+      "jobs_file": "runtime/production-resume-special-low-five-20261029-low5-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:11:52.807Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-special-low-five-20261029-low5-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:11:53.044Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-special-low-five-20261029-low5-jobs.json",
+      "elapsed_ms": 237,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:11:53.044Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:11:53.044Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-resume-special-low-five-20261029-low5-jobs.json --key dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d --output runtime\\dispatch-export\\resume-special-low-five-20261029-low5-dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:11:53.506Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-resume-special-low-five-20261029-low5-jobs.json --key dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d --output runtime\\dispatch-export\\resume-special-low-five-20261029-low5-dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d.json",
+      "elapsed_ms": 462,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:11:53.506Z",
+      "command": "type runtime\\dispatch-export\\resume-special-low-five-20261029-low5-dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:11:53.589Z",
+      "command": "type runtime\\dispatch-export\\resume-special-low-five-20261029-low5-dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d.json",
+      "elapsed_ms": 83,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:11:53.589Z",
+      "command": "python runtime\\guard-dispatch-family.py dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:11:54.034Z",
+      "command": "python runtime\\guard-dispatch-family.py dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d",
+      "elapsed_ms": 445,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:11:54.127Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-special-low-five-20261029-low5-dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d.json --key dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:11:57.166Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-special-low-five-20261029-low5-dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d.json --key dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d",
+      "elapsed_ms": 3039,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:11:57.166Z",
+      "key": "dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:12:30.216Z",
+      "key": "dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d",
+      "elapsed_ms": 33050,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:12:30.316Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-50433f97-0d15-40f4-beb8-eb4aebc9d315.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:12:30.759Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-50433f97-0d15-40f4-beb8-eb4aebc9d315.png",
+      "elapsed_ms": 443,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:12:31.395Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-50433f97-0d15-40f4-beb8-eb4aebc9d315.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:12:34.537Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key dcb2cd268f59767e3e5259e7b9d242b50d2974a67942395256030ef9986d922d --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-50433f97-0d15-40f4-beb8-eb4aebc9d315.png",
+      "elapsed_ms": 3142,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:12:34.537Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "resume-special-low-five-20261029-low5",
+      "observed_at_utc": "2026-10-29T01:12:34.537Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-29T01:12:34.537Z",
+      "batch": "resume-special-low-five-20261029-low5"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-29T01:12:34.537Z"
+}

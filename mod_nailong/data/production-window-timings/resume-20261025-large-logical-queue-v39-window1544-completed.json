@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261025-large-logical-queue-v39-window1544",
+  "started_at_utc": "2026-10-29T00:42:27.147Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "jobs": "runtime/production-resume-low-transport-20261028-17758d47b36a-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-29T00:42:27.846Z",
+      "batch": "resume-low-transport-20261028-17758d47b36a"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:42:27.847Z",
+      "jobs_file": "runtime/production-resume-low-transport-20261028-17758d47b36a-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:42:27.847Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-low-transport-20261028-17758d47b36a-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:42:29.502Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-low-transport-20261028-17758d47b36a-jobs.json",
+      "elapsed_ms": 1655,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:42:29.502Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:42:29.502Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-resume-low-transport-20261028-17758d47b36a-jobs.json --key 17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16 --output runtime\\dispatch-export\\resume-low-transport-20261028-17758d47b36a-17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:42:30.992Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-resume-low-transport-20261028-17758d47b36a-jobs.json --key 17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16 --output runtime\\dispatch-export\\resume-low-transport-20261028-17758d47b36a-17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16.json",
+      "elapsed_ms": 1490,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:42:30.992Z",
+      "command": "type runtime\\dispatch-export\\resume-low-transport-20261028-17758d47b36a-17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:42:31.334Z",
+      "command": "type runtime\\dispatch-export\\resume-low-transport-20261028-17758d47b36a-17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16.json",
+      "elapsed_ms": 342,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:42:31.334Z",
+      "command": "python runtime\\guard-dispatch-family.py 17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:42:32.773Z",
+      "command": "python runtime\\guard-dispatch-family.py 17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16",
+      "elapsed_ms": 1439,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:42:32.875Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-low-transport-20261028-17758d47b36a-17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16.json --key 17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:42:37.191Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-low-transport-20261028-17758d47b36a-17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16.json --key 17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16",
+      "elapsed_ms": 4316,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:42:37.191Z",
+      "key": "17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:43:19.557Z",
+      "key": "17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16",
+      "elapsed_ms": 42366,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:43:19.668Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-b5d95a23-8d79-477e-bc12-1c8c4006c21d.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:43:21.376Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-b5d95a23-8d79-477e-bc12-1c8c4006c21d.png",
+      "elapsed_ms": 1708,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:43:25.124Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-b5d95a23-8d79-477e-bc12-1c8c4006c21d.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:43:43.380Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key 17758d47b36a9133ff6c92a8eaa187f7c83c65cba57d31cb948f78e11aba6f16 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-b5d95a23-8d79-477e-bc12-1c8c4006c21d.png",
+      "elapsed_ms": 18256,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:43:43.381Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "resume-low-transport-20261028-17758d47b36a",
+      "observed_at_utc": "2026-10-29T00:43:43.381Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-29T00:43:43.381Z",
+      "batch": "resume-low-transport-20261028-17758d47b36a"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-29T00:43:43.381Z"
+}
