@@ -78,7 +78,12 @@ class ExactApiPublishTests(unittest.TestCase):
         self.assertEqual(commit_call["committer"], details["committer"])
         tree_call = [call for call in api.posts if call[0] == "git/trees"][-1]
         self.assertEqual(tree_call[1]["base_tree"], details["base_tree"])
-        self.assertEqual(tree_call[1]["tree"], details["changes"])
+        for entry in tree_call[1]["tree"]:
+            if entry["path"].endswith(".json"):
+                self.assertNotIn("sha", entry)
+                self.assertEqual(entry["content"], publish.git_bytes("show", TARGET + ":" + entry["path"]).decode("utf-8"))
+            else:
+                self.assertNotIn("content", entry)
         self.assertEqual(tree_call[2], details["tree"])
 
     def test_sha_mismatch_never_updates_reference(self):

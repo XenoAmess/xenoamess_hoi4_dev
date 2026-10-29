@@ -325,9 +325,22 @@ class ExactApiPublisher:
         existing = self.api.get_optional(f"git/trees/{expected}", expected)
         if existing is not None:
             return existing
+        entries = []
         for change in detail["changes"]:
-            self.ensure_blob(detail["commit"], change)
-        tree = self.api.post_json("git/trees", {"base_tree": detail["base_tree"], "tree": detail["changes"]}, expected)
+            payload = git_bytes("cat-file", "blob", f"{detail['commit']}:{change['path']}")
+            digest = hashlib.sha1(b"blob " + str(len(payload)).encode("ascii") + b"\0" + payload).hexdigest()
+            require(digest == change["sha"], f"Local blob content changed: {change['path']}")
+            if change["path"].endswith((".json", ".py", ".md", ".txt")):
+                if change["path"].endswith(".json"):
+                    json.loads(payload)
+                entry = dict(change)
+                entry.pop("sha")
+                entry["content"] = payload.decode("utf-8")
+            else:
+                self.ensure_blob(detail["commit"], change)
+                entry = change
+            entries.append(entry)
+        tree = self.api.post_json("git/trees", {"base_tree": detail["base_tree"], "tree": entries}, expected)
         require(tree["sha"] == expected, "Remote tree SHA mismatch")
         self.save(last_tree_sha=expected)
         return tree
@@ -391,11 +404,11 @@ class ExactApiPublisher:
                 if not self.require_publication_parent(remote):
                     self.save(status="already_public_pending_original_readback", remote_master_observed=remote)
                     return self.receipt
-                estimated = sum(len(detail["changes"]) + 3 for detail in self.commits) + 10
+                estimated = sum(sum(not change["path"].endswith((".json", ".py", ".md", ".txt")) for change in detail["changes"]) + 3 for detail in self.commits) + 10
                 rate = self.api.get_json("rate_limit")["resources"]["core"]
                 require(rate["remaining"] >= estimated, f"Insufficient API allowance for estimated writes and control reads: {estimated}, have {rate['remaining']}")
                 self.save(status="creating_exact_objects", estimated_write_calls_upper_bound=estimated,
-                          rate_limit_accounting="One create per changed blob/tree/commit plus control reads; retries and existing-object reads are additional")
+                          rate_limit_accounting="Binary blob creates plus tree/commit/ref writes and control reads; exact text is inlined in trees; retries and existing-object reads are additional")
                 for detail in self.commits:
                     self.save(current_commit=detail["commit"])
                     self.ensure_commit(detail)
