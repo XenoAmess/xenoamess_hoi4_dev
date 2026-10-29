@@ -157,6 +157,7 @@ class ExactApiPublishTests(unittest.TestCase):
         self.assertNotIn("fixture-token", " ".join(arguments))
         self.assertIn(b"fixture-token", kwargs["input"])
         self.assertNotIn("--insecure", arguments)
+        self.assertEqual(arguments[arguments.index("--connect-timeout") + 1], "60")
         self.assertEqual(kwargs["env"]["HTTPS_PROXY"], "http://127.0.0.1:10808")
         self.assertEqual(arguments[-2:], ["--config", "-"])
 
