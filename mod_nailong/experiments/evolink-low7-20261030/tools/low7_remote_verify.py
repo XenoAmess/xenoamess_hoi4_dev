@@ -69,8 +69,10 @@ def main():
             new_downloads.append(digest)
         outputs[digest] = row
     expected_new = {row["output_sha256"] for row in read_json(worktree / "mod_nailong/experiments/evolink-low7-20261030/outputs-index.json")["entries"]}
-    expected_new.add("fca9eca6c6b5bfc340b9b931f88abc0b1af0a23cb870fadd823eb6663d1b6614")
-    require(set(new_downloads) == expected_new, "Actual new downloads do not equal the ten scoped new original files")
+    previous_navy_sha = "fca9eca6c6b5bfc340b9b931f88abc0b1af0a23cb870fadd823eb6663d1b6614"
+    if previous_navy_sha not in base["outputs"]:
+        expected_new.add(previous_navy_sha)
+    require(set(new_downloads) == expected_new, f"Actual new downloads do not equal the {len(expected_new)} scoped new original files")
     receipt = {
         "schema": "low7-fullsize-remote-readback-v1", "machine_id": machine_id(),
         "observed_at_utc": utc_now(), "status": "verified", "commit": commit, "remote_master_observed": remote,
