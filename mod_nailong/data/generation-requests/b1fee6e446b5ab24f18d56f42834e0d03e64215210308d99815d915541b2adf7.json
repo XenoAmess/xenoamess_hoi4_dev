@@ -64,6 +64,56 @@
       "prepared_at_utc": "2026-10-16T11:02:14.377312+00:00",
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 9bc47339-7fda-4326-8158-7b4aac381047.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-16T11:11:15.618082+00:00"
+    },
+    {
+      "number": 3,
+      "status": "failed",
+      "method": "built-in imagegen",
+      "art_direction": "hair-features-v1",
+      "prompt": "Use case: precise-object-edit. Asset type: one HOI4 portrait correction. Image 1 is the generated yellow mascot portrait to edit. Image 2 is the original game portrait for visible source features only. Image 3 is the user mascot reference for yellow anatomy, large green-ringed black eyes and small horizontal mouth. Retain original visible hair, eyebrows, moustache/beard only where actually present in Image 2. No human skin, human nose or human ears. One portrait, original crop and aspect ratio, no new symbols, text, extra objects or comparison layout. Requested correction: Restore the original thin dark round eyeglasses visible in Image 2, worn on the face over the green-ringed eyes. The goggles on top of the flying helmet are separate and must remain. Keep the existing yellow mascot, dark curled hair, clean-shaven face, helmet, scarf, jacket, pose and fully transparent background otherwise unchanged.\nOutput alpha: keep a genuine fully transparent RGBA background outside the portrait silhouette. No painted gray backdrop, halo, studio gradient or rectangular plate. Retain the source's clothing, hair, headgear and portrait crop.",
+      "prompt_file": "mod_nailong/assets/prompts/b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7-003.txt",
+      "prompt_sha256": "a52efb448537cf31b1250455e39a4e3fb96a16b5aab15ea9607d6c1be7f81bfc",
+      "inputs": [
+        {
+          "role": "previous generated edit target",
+          "path": "mod_nailong/assets/legacy-before-hair/b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7-466c2429f0671178.png",
+          "sha256": "466c2429f0671178652388061547b709612fc97f1ef3c1aaae0430115d4119a5"
+        },
+        {
+          "role": "original source portrait",
+          "raw_sha256": "b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7",
+          "converted_png_sha256": "f4742456476dd672732236c6b92f40ddf31ff62a3e4f093507087ce07dafb290"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        }
+      ],
+      "edit_existing": true,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-28T22:59:40.488233+00:00",
+      "retry_of_attempt": 2,
+      "retry_root_attempt": 2,
+      "cooldown_retry_number": 1,
+      "cooldown_not_before_utc": "2026-10-16T19:11:15.729020+00:00",
+      "cooldown_retry_tool_transparent_background": true,
+      "eligibility_confirmed_by": "Codex reviewed allowed request and tool conditions before --confirm-eligible",
+      "actual_request_verification": {
+        "machine_id": "bf-202609141645-5434332d4d",
+        "verified_at_utc": "2026-10-28T22:59:48.527658+00:00",
+        "actual_recorded_before_call": true,
+        "actual_request_snapshot_sha256": "3d2e2c752d57261ed7ddaecae505ffe6b67f5b6fd1924a67e50ef828e03b7102",
+        "prompt_sha256": "a52efb448537cf31b1250455e39a4e3fb96a16b5aab15ea9607d6c1be7f81bfc",
+        "input_sha256": [
+          "466c2429f0671178652388061547b709612fc97f1ef3c1aaae0430115d4119a5",
+          "f4742456476dd672732236c6b92f40ddf31ff62a3e4f093507087ce07dafb290",
+          "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976"
+        ],
+        "transparent_background": true
+      },
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 230ad585-a5fb-48d1-92f0-f11945a88c90.\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
+      "observed_at_utc": "2026-10-28T23:00:26.151390+00:00"
     }
   ]
 }
