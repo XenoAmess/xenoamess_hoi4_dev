@@ -128,10 +128,14 @@ class ExactApiPublishTests(unittest.TestCase):
             publish.subprocess.CompletedProcess([], 0, stdout=b'{"object":{"sha":"' + b"c" * 40 + b'"}}', stderr=b""),
         ]
         with patch.object(publish.subprocess, "run", side_effect=responses) as run, patch.object(publish.time, "sleep"):
-            body = publish.Api().get_json("git/ref/heads/master")
+            body = publish.Api(token="fixturetoken").get_json("git/ref/heads/master")
         self.assertEqual(body["object"]["sha"], "c" * 40)
         self.assertEqual(run.call_count, 2)
         self.assertEqual(run.call_args_list[0].args[0][2], "repos/XenoAmess/xenoamess_hoi4_dev/git/ref/heads/master")
+        with patch.object(publish.subprocess, "run", return_value=publish.subprocess.CompletedProcess([], 52, stdout=b"", stderr=b"curl: (52) Empty reply from server")):
+            with self.assertRaises(publish.ApiError) as caught:
+                publish.Api(token="fixturetoken")._run_curl("git/ref/heads/master", "GET", None, 60)
+        self.assertTrue(caught.exception.transient)
 
     def test_curl_credentials_stay_out_of_arguments_and_tls_stays_enabled(self):
         expected = "c" * 40
@@ -167,6 +171,12 @@ class ExactApiPublishTests(unittest.TestCase):
         with self.assertRaises(publish.ApiError):
             api.request("git/ref/heads/master", "GET", None, 120)
         self.assertEqual(len(calls), 1)
+
+    def test_github_cli_bytes_are_decoded_before_validation(self):
+        with patch.object(publish.subprocess, "check_output", return_value=b"fixturetoken\n"):
+            token = publish.Api().github_token()
+        self.assertEqual(token, "fixturetoken")
+        self.assertIsInstance(token, str)
 
     def test_expected_base_does_not_compare_an_unpublished_target(self):
         publisher = object.__new__(publish.ExactApiPublisher)
