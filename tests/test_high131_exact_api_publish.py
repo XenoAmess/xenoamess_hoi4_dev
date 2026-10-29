@@ -197,6 +197,34 @@ class ExactApiPublishTests(unittest.TestCase):
         with patch.object(api, "get_json", side_effect=publish.ApiError("HTTP 404", status=404)):
             self.assertFalse(publisher.remote_contains("1" * 40))
 
+    def test_existing_blob_is_reused_and_checkpointed(self):
+        change = publish.commit_details(TARGET)["changes"][0]
+        publisher = object.__new__(publish.ExactApiPublisher)
+        api = FakeApi()
+        publisher.api = api
+        publisher.known_blobs = set()
+        publisher.receipt = {}
+        with tempfile.TemporaryDirectory(dir=publish.ROOT / "runtime") as directory:
+            publisher.receipt_path = Path(directory) / "receipt.json"
+            with patch.object(api, "get_optional", return_value={"sha": change["sha"]}):
+                publisher.ensure_blob(TARGET, change)
+        self.assertEqual(api.posts, [])
+        self.assertEqual(publisher.known_blobs, {change["sha"]})
+        self.assertEqual(publisher.receipt["verified_blob_shas"], [change["sha"]])
+
+    def test_resume_uses_only_matching_checkpoint_blobs(self):
+        details = publish.commit_details(TARGET)
+        first, second = (row["sha"] for row in details["changes"][:2])
+        previous = {"schema": "high131-exact-api-publish-v1", "machine_id": publish.machine_id(),
+                    "base_commit": BASE, "target_commit": TARGET, "scope": "import",
+                    "verified_blob_shas": [first, "f" * 40, "invalid"], "last_blob_sha": second}
+        with tempfile.TemporaryDirectory(dir=publish.ROOT / "runtime") as directory:
+            path = Path(directory) / "receipt.json"
+            publish.write_json(path, previous)
+            publisher = publish.ExactApiPublisher(BASE, TARGET, "import", "fixture", api=FakeApi(), receipt_path=path)
+        self.assertEqual(publisher.known_blobs, {first, second})
+        self.assertEqual(publisher.receipt["verified_blob_shas"], sorted(publisher.known_blobs))
+
     def test_unexpected_path_or_deletion_is_rejected_before_upload(self):
         detail = {"commit": TARGET, "parent": BASE, "changes": [{"path": "../secret", "mode": "100644", "type": "blob", "sha": "a" * 40}]}
         with patch.object(publish, "commit_details", return_value=detail), patch.object(publish, "git_text", return_value=TARGET):

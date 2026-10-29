@@ -304,7 +304,19 @@ class ExactApiPublisher:
                         "base_commit": base, "target_commit": target, "status": "pending", "force": False,
                         "ref_updated": False, "completed_commits": [], "new_image_generation_calls": 0,
                         "runtime_acceptance_claimed": False}
-        self.known_blobs = set()
+        previous = read_json(self.receipt_path) if self.receipt_path.is_file() else {}
+        change_shas = {change["sha"] for detail in self.commits for change in detail["changes"]}
+        valid_previous = (previous.get("schema") == "high131-exact-api-publish-v1"
+                          and previous.get("machine_id") == machine_id()
+                          and previous.get("base_commit") == base
+                          and previous.get("target_commit") == target
+                          and previous.get("scope") == scope)
+        self.known_blobs = ({sha for sha in previous.get("verified_blob_shas", [])
+                             if isinstance(sha, str) and re.fullmatch(r"[0-9a-f]{40}", sha) and sha in change_shas}
+                            if valid_previous else set())
+        if valid_previous and previous.get("last_blob_sha") in change_shas:
+            self.known_blobs.add(previous["last_blob_sha"])
+        self.receipt["verified_blob_shas"] = sorted(self.known_blobs)
 
     def save(self, **updates):
         self.receipt.update(updates, observed_at_utc=utc_now())
@@ -316,10 +328,15 @@ class ExactApiPublisher:
         require(digest == change["sha"], f"Local blob content changed: {change['path']}")
         if digest in self.known_blobs:
             return
+        existing = self.api.get_optional(f"git/blobs/{digest}", digest)
+        if existing is not None:
+            self.known_blobs.add(digest)
+            self.save(last_blob_sha=digest, verified_blob_shas=sorted(self.known_blobs))
+            return
         created = self.api.post_json("git/blobs", {"content": base64.b64encode(payload).decode("ascii"), "encoding": "base64"}, digest)
         require(created["sha"] == digest, f"Remote blob SHA mismatch: {change['path']}")
         self.known_blobs.add(digest)
-        self.save(last_blob_sha=digest)
+        self.save(last_blob_sha=digest, verified_blob_shas=sorted(self.known_blobs))
 
     def ensure_tree(self, detail):
         expected = detail["tree"]
