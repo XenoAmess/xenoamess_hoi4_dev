@@ -31,12 +31,22 @@ CHECKPOINT_TEST_PATHS = (
     "tests/test_high131_import.py",
     "tests/test_high131_nano_route.py",
     "tests/test_nonperson_build.py",
+    "tests/test_high131_build.py",
+    "tests/test_hd_masking.py",
+    "tests/test_fullsize_game_textures.py",
+    "tests/test_json_read_sharing.py",
+    "tests/test_atomic_json.py",
     "tests/test_evolink_skill_client.py",
 )
 CHECKPOINT_STAGE_PATHS = (
     "mod_nailong/README.md",
     "mod_nailong/docs/portrait-generation-and-repair-methodology.md",
     "mod_nailong/tools/build_release.py",
+    "mod_nailong/tools/hd_masking.py",
+    "mod_nailong/tools/high131_validation.py",
+    "mod_nailong/tools/build_high131_validation.py",
+    "mod_nailong/tools/high131_build_with_admission.py",
+    "mod_nailong/assets/runtime/",
     "mod_nailong/experiments/evolink-high131-flare-20261025",
     "mod_nailong/data/fullsize-files.json",
     *CHECKPOINT_TEST_PATHS,
@@ -352,6 +362,8 @@ def main():
         "high131_transport_split.py",
         "verify-production-commit.py",
         "high131_import.py",
+        "high131_recover_parent.py",
+        "high131_rebase_recovery.py",
         "high131_checkpoint.py",
     ]
     for name in tools:

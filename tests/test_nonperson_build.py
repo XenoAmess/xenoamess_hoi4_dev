@@ -112,6 +112,12 @@ class NonpersonBuildTests(unittest.TestCase):
         self.assertEqual(read_json(self.mod / "data/generated.json")["portraits"]["low-sentinel"], {"review": "pending"})
         self.assertNotIn(self.keys[0], read_json(self.mod / "data/generated.json")["portraits"])
 
+    def test_subset_manifest_only_claims_selected_exceptions(self):
+        _, manifest = builder.payload(preview=True, validation_keys=self.keys[:2])
+        self.assertEqual(manifest["preserved_original_nonperson_exceptions"], [78, 125])
+        self.assertEqual(len(manifest["bindings"]), 2)
+        self.assertFalse(manifest["art_complete"])
+
     def test_original_exception_preview_is_deterministic(self):
         first = builder.build(self.root / "first", preview=True, validation_keys=self.keys)
         second = builder.build(self.root / "second", preview=True, validation_keys=self.keys)

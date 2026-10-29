@@ -55,7 +55,74 @@ def original_nonperson_bytes(asset):
     return raw
 
 
-def payload(preview=False, packages=None, validation_keys=None, sink=None):
+def validate_heavy_write_admission(receipt, estimate, output):
+    from datetime import datetime, timezone
+    import os
+
+    if receipt is None:
+        raise SystemExit('Fullsize staging exceeds 256 MiB; an explicit scoped heavy-write admission is required')
+    receipt = Path(receipt).resolve()
+    receipt.relative_to((ROOT/'runtime').resolve())
+    body = read_json(receipt)
+    output = Path(output).resolve()
+    output.relative_to((ROOT/'dist').resolve())
+    required_identity = {
+        'schema':'naiwa-high131-heavy-write-admission-v1', 'machine_id':machine_id(),
+        'status':'admitted', 'policy_version':'1.0.0',
+        'scope':'high131-original-rgba-validation-v1', 'output_root':str(output),
+    }
+    if any(body.get(key)!=value for key,value in required_identity.items()):
+        raise SystemExit('Heavy-write admission identity, machine, scope or output mismatch')
+    if body.get('decoded_payload_bytes')!=estimate:
+        raise SystemExit('Heavy-write admission does not match the actual decoded payload')
+    peak = body.get('this_write_peak_estimate_bytes')
+    if not isinstance(peak,int) or isinstance(peak,bool) or peak<2*estimate+64*1024*1024:
+        raise SystemExit('Heavy-write peak must cover staging, ZIP and metadata without assumed compression gains')
+    fields = ['volume_total_bytes','available_bytes','other_unspent_reservations_bytes','system_growth_reserve_bytes','project_usage_upper_bound_bytes','effective_project_quota_bytes','safety_margin_bytes']
+    if any(not isinstance(body.get(key),int) or isinstance(body.get(key),bool) or body[key]<0 for key in fields):
+        raise SystemExit('Heavy-write admission is missing nonnegative capacity inputs')
+    safety = max(2*1024**3,min(20*1024**3,int(body['volume_total_bytes']*0.05)))
+    required = peak+body['other_unspent_reservations_bytes']+body['system_growth_reserve_bytes']+safety
+    quota = min(100*1024**3,int(body['volume_total_bytes']*0.10))
+    if body['safety_margin_bytes']!=safety:
+        raise SystemExit('Heavy-write safety margin exceeds policy 1.0.0')
+    if body['effective_project_quota_bytes']>quota:
+        override = body.get('quota_override',{})
+        try:
+            start = datetime.fromisoformat(body['admitted_at_utc'])
+            review = datetime.fromisoformat(override.get('review_at_utc'))
+        except (TypeError,ValueError) as error:
+            raise SystemExit('Heavy-write quota override has invalid UTC times') from error
+        valid = (isinstance(override.get('owner'),str) and bool(override['owner'])
+                 and isinstance(override.get('reason'),str) and bool(override['reason'])
+                 and override.get('max_project_bytes')==body['effective_project_quota_bytes']
+                 and start.tzinfo is not None and review.tzinfo is not None
+                 and start<=datetime.now(timezone.utc)<review
+                 and review-start<=__import__('datetime').timedelta(days=7))
+        if not valid:
+            raise SystemExit('Heavy-write quota override is missing its owner, reason, bound or seven-day review')
+    if required>body['available_bytes'] or body['project_usage_upper_bound_bytes']+peak>body['effective_project_quota_bytes']:
+        raise SystemExit('Heavy-write admission exceeds free-space or project-quota budget')
+    try:
+        start = datetime.fromisoformat(body['admitted_at_utc'])
+        expiry = datetime.fromisoformat(body['retention_review_by_utc'])
+        now = datetime.now(timezone.utc)
+    except (KeyError,TypeError,ValueError) as error:
+        raise SystemExit('Heavy-write admission has invalid UTC times') from error
+    if start.tzinfo is None or expiry.tzinfo is None or not start<=now<expiry or expiry-start>__import__('datetime').timedelta(days=7):
+        raise SystemExit('Heavy-write admission is stale or exceeds the seven-day review bound')
+    batch = body.get('batch')
+    if not isinstance(batch,str) or not re.fullmatch(r'[A-Za-z0-9-]+',batch):
+        raise SystemExit('Heavy-write admission batch is invalid')
+    lock = (ROOT/body.get('coordination_lock','')).resolve()
+    lock.relative_to((ROOT/'runtime').resolve())
+    owner = read_json(lock)
+    if owner.get('machine_id')!=machine_id() or owner.get('batch')!=batch or owner.get('process_id')!=os.getpid() or body.get('coordination_lock_sha256')!=file_sha256(lock):
+        raise SystemExit('Heavy-write admission is not bound to the live coordination lock')
+    return body
+
+
+def payload(preview=False, packages=None, validation_keys=None, sink=None, heavy_write_admission=None, output=None):
     catalog=read_json(MOD/"data/catalog.json")
     generated=read_json(MOD/"data/generated.json")["portraits"]
     exceptions,exception_receipt=nonperson_scope()
@@ -90,10 +157,10 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None):
         if sink is None:files[name]=data
         else:sink(name,data)
     # Lossless fullsize DDS can be much larger than the old native-size preview.
-    # Keep routine checks within the already observed bounded-write allowance.
+    # Routine builds stay bounded; a large HIGH validation needs a live scoped admission.
     estimate=sum(4*generated[a['source_sha256']]['generated_fullsize_size'][0]*generated[a['source_sha256']]['generated_fullsize_size'][1]+128 for a in selected.values() if a['source_sha256'] in generated and ready(generated[a['source_sha256']]))+sum(len(raw) for raw in originals.values())
     if estimate>256*1024*1024:
-        raise SystemExit('Fullsize staging exceeds the bounded 256 MiB check/export allowance; use an explicit preview validation subset for routine checks. A full export needs shared-policy heavy-write admission before increasing this bound.')
+        validate_heavy_write_admission(heavy_write_admission,estimate,output)
     bindings=[]
     profile_missing=[]
     for asset in sorted(selected.values(),key=lambda a:a['path']):
@@ -130,9 +197,9 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None):
     if "remote_file_id" in descriptor or "replace_path" in descriptor:raise SystemExit("Invalid descriptor")
     if preview:descriptor=descriptor.replace("(Development)","(INCOMPLETE PREVIEW)")
     emit('descriptor.mod',descriptor.encode('utf-8'))
-    return files,{"schema":"naiwa-release-manifest-v2","archive_filename":"gangnailongxin.zip","preview":preview,"art_complete":not missing,"game_version":catalog["game_version"],"catalog_sha256":file_sha256(MOD/"data/catalog.json"),"source_textures":len(catalog["assets"]),"generated_unique_images":len(generated),"selected_profile":sorted(packages) if packages is not None else "all-installed-catalog-packages; highest DLC numeric ID on shared paths","unresolved_baseline_references":len(catalog["unresolved_references"]),"profile_missing_texture_count":len(profile_missing),'texture_resolution_policy':'original fullsize master; no pre-downscale; registered non-person exceptions preserve original file bytes','validation_source_keys':sorted(validation_keys) if validation_keys is not None else None,'validation_scope':'selected development subset only' if validation_keys is not None else 'entire selected profile',"preserved_original_nonperson_exceptions":sorted(row['index'] for row in exceptions.values()),"nonperson_scope_decision":exception_receipt,"bindings":bindings,"files":sorted(file_records,key=lambda r:r['path'])}
+    return files,{"schema":"naiwa-release-manifest-v2","archive_filename":"gangnailongxin.zip","preview":preview,"art_complete":not missing,"game_version":catalog["game_version"],"catalog_sha256":file_sha256(MOD/"data/catalog.json"),"source_textures":len(catalog["assets"]),"generated_unique_images":len(generated),"selected_profile":sorted(packages) if packages is not None else "all-installed-catalog-packages; highest DLC numeric ID on shared paths","unresolved_baseline_references":len(catalog["unresolved_references"]),"profile_missing_texture_count":len(profile_missing),'texture_resolution_policy':'original fullsize master; no pre-downscale; registered non-person exceptions preserve original file bytes','validation_source_keys':sorted(validation_keys) if validation_keys is not None else None,'validation_scope':'selected development subset only' if validation_keys is not None else 'entire selected profile',"preserved_original_nonperson_exceptions":sorted(row['index'] for row in exceptions.values() if row['source_sha256'] in {a['source_sha256'] for a in selected.values()}),"nonperson_scope_decision":exception_receipt,"bindings":bindings,"files":sorted(file_records,key=lambda r:r['path'])}
 
-def build(output,preview=False,packages=None,validation_keys=None):
+def build(output,preview=False,packages=None,validation_keys=None,heavy_write_admission=None):
     if output.exists():raise SystemExit("Output already exists; choose a fresh --output path")
     staging=output/"staging"
     staging.mkdir(parents=True)
@@ -145,7 +212,7 @@ def build(output,preview=False,packages=None,validation_keys=None):
             info.external_attr=0o100644<<16
             info.create_system=3
             handle.writestr(info,data,compress_type=zipfile.ZIP_DEFLATED,compresslevel=9)
-        _,manifest=payload(preview,packages,validation_keys,sink=emit)
+        _,manifest=payload(preview,packages,validation_keys,sink=emit,heavy_write_admission=heavy_write_admission,output=output)
     write_json(output/"manifest.json",manifest)
     verify(output)
     return manifest

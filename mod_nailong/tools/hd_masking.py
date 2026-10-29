@@ -49,14 +49,44 @@ def unique_aliases(records, selected_paths):
     return aliases
 
 
-def augment(output, manifest, aliases, source_proofs, native_include_proofs=None):
-    """Add layout-only carriers; DDS/PNG equality is checked for every sample."""
-    from mod_nailong.tools.build_release import verify
+def partition_bindings(bindings, exception_keys):
+    people={};preserved={}
+    for binding in bindings:
+        path=binding['path'].lower()
+        if binding['source_sha256'] in exception_keys:
+            if not binding.get('preserved_original_nonperson_exception') or binding.get('fullsize_master_sha256') is not None:
+                raise ValueError('Non-person exception must preserve original bytes, not a generated master')
+            preserved[path]=binding
+        else:
+            if binding.get('preserved_original_nonperson_exception') or not binding.get('fullsize_master_sha256'):
+                raise ValueError('Person binding is missing its fullsize master')
+            people[path]=binding
+    return people,preserved
+
+
+def take_inventory_only(bindings, records):
+    result={}
+    for record in records or []:
+        path=record['path'].lower()
+        if path not in bindings or record.get('classification')!='no_current_native_consumer_in_bounded_inventory' or record.get('runtime_display_not_applicable_unless_a_consumer_is_found') is not True:
+            raise ValueError('Unproven inventory-only binding')
+        if bindings[path]['source_sha256']!=record['source_sha256']:
+            raise ValueError('Inventory-only source identity changed')
+        result[path]=bindings[path]
+    return result
+
+
+def augment(output, manifest, aliases, source_proofs, native_include_proofs=None, inventory_only=None):
+    """Add layout-only carriers; DDS/PNG equality is checked for every person sample."""
+    from mod_nailong.tools.build_release import verify,nonperson_scope
     output=Path(output);staging=output/'staging'
-    bindings={r['path'].lower():r for r in manifest['bindings']}
-    if {r['texture'] for r in aliases}!=set(bindings):raise ValueError('Alias sample does not cover exactly the built textures')
+    all_bindings={r['path'].lower():r for r in manifest['bindings']}
+    bindings,preserved=partition_bindings(all_bindings.values(),set(nonperson_scope()[0]))
+    unbound=take_inventory_only(bindings,inventory_only)
+    for path in unbound:bindings.pop(path)
+    if {r['texture'] for r in aliases}!=set(bindings):raise ValueError('Alias sample does not cover exactly the built person textures')
     added={};pixel_proofs=[]
-    for path,binding in bindings.items():
+    for path,binding in {**bindings,**unbound}.items():
         master=ROOT/'mod_nailong/assets/generated_fullsize'/f'{binding["fullsize_master_sha256"]}.png'
         if file_sha256(master)!=binding['fullsize_master_sha256']:raise ValueError('Master bytes changed')
         with Image.open(master) as original,Image.open(staging/binding['path']) as payload:
@@ -65,6 +95,7 @@ def augment(output, manifest, aliases, source_proofs, native_include_proofs=None
             pixel_proofs.append({'source_sha256':binding['source_sha256'],
                                  'master_sha256':binding['fullsize_master_sha256'],
                                  'rgba_pixel_sha256':sha256(payload.tobytes()),'rgba_equal':True})
+        if path not in bindings:continue
         width,height=binding['original_game_size']
         if not (1<=width<=4096 and 1<=height<=4096):raise ValueError('Unexpected layout carrier size')
         rel=f'gfx/interface/naiwa_white_layout_{width}_{height}.dds'
@@ -96,6 +127,8 @@ def augment(output, manifest, aliases, source_proofs, native_include_proofs=None
         'carrier_contains_no_portrait_pixels':True,'gui_or_gameplay_changes':False,
         'aliases':aliases,'native_source_proofs':[p for p in source_proofs if p['id'] in used],
         'native_shader_include_proofs':native_include_proofs or [],
+        'preserved_original_nonperson_paths':[{'path':path,'source_sha256':binding['source_sha256'],'sha256':binding['sha256']} for path,binding in sorted(preserved.items())],
+        'inventory_without_current_consumer':[{'path':path,'source_sha256':binding['source_sha256'],'master_sha256':binding['fullsize_master_sha256'],'classification':'no_current_native_consumer_in_bounded_inventory'} for path,binding in sorted(unbound.items())],
         'fullsize_pixel_proofs':pixel_proofs,
         'live_acceptance':'Not run; every actual consumer, tooltip and hit area requires separate runtime evidence. Static parsing and unchanged bytes do not qualify display.'}
     write_json(output/'manifest.json',manifest)

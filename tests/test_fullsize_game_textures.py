@@ -16,7 +16,7 @@ class FullsizeGameTextures(unittest.TestCase):
   write_json(self.mod/'data/catalog.json',{'assets':[{'id':'sample','path':'gfx/leaders/TST/sample.dds','package':'base','source_sha256':self.key,'size':[3,4]}],'game_version':'test','unresolved_references':[]})
   self.row={'image':'low-resolution-preview.png','image_sha256':'preview-sha','review':'approved','art_direction':'hair-features-v1','collar_fit':{'policy':'collar-fit-v1','status':'approved','image_sha256':'preview-sha'},'generated_fullsize_image':self.master.relative_to(self.root).as_posix(),'generated_fullsize_sha256':file_sha256(self.master),'generated_fullsize_size':[24,32]}
   write_json(self.mod/'data/generated.json',{'portraits':{self.key:self.row}})
-  for item in [patch.object(builder,'ROOT',self.root),patch.object(builder,'MOD',self.mod)]:item.start();self.addCleanup(item.stop)
+  for item in [patch.object(builder,'ROOT',self.root),patch.object(builder,'MOD',self.mod),patch.object(builder,'nonperson_scope',return_value=({},None))]:item.start();self.addCleanup(item.stop)
  def test_export_retains_hd_dimensions_and_every_rgba_pixel(self):
   files,manifest=builder.payload(preview=True)
   with Image.open(io.BytesIO(files['gfx/leaders/TST/sample.dds'])) as actual,Image.open(self.master) as original:

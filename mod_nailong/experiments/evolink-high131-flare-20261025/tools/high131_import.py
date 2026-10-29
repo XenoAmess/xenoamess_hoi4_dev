@@ -33,25 +33,54 @@ def require(condition, message):
         raise ImportGateError(message)
 
 
+def accessible_path(path):
+    path = Path(path).resolve()
+    if sys.platform == "win32" and not str(path).startswith("\\\\?\\"):
+        return Path("\\\\?\\" + str(path))
+    return path
+
+
 def project_path(root, value):
     require(isinstance(value, str) and value and not Path(value).is_absolute(), f"Invalid repository-relative evidence path: {value}")
     root = Path(root).resolve()
     candidate = (root / value).resolve()
     candidate.relative_to(root)
-    if not candidate.exists() and root != ROOT.resolve():
+    if not accessible_path(candidate).exists() and root != ROOT.resolve():
         candidate = (ROOT / value).resolve()
         candidate.relative_to(ROOT.resolve())
     return candidate
 
 
 def evidence_json(root, value):
-    return read_json(project_path(root, value))
+    return read_json(accessible_path(project_path(root, value)))
 
 
 def bound_file(root, value, expected_sha):
     path = project_path(root, value)
-    require(path.is_file() and file_sha256(path) == expected_sha, f"Evidence SHA mismatch: {value}")
+    require(accessible_path(path).is_file() and file_sha256(accessible_path(path)) == expected_sha, f"Evidence SHA mismatch: {value}")
     return path
+
+
+def restore_original_json_bytes(root, support_root, value, expected_sha):
+    if support_root is None or Path(root).resolve() == Path(support_root).resolve():
+        return False
+    root = Path(root).resolve()
+    target = (root / value).resolve()
+    target.relative_to(root)
+    require(Path(value).suffix == ".json" and accessible_path(target).is_file(), f"Tracked JSON receipt is missing: {value}")
+    if file_sha256(accessible_path(target)) == expected_sha:
+        return False
+    source = bound_file(support_root, value, expected_sha)
+    original = accessible_path(source).read_bytes()
+    result = subprocess.run(["git", "show", f"HEAD:{value}"], cwd=root, capture_output=True)
+    require(result.returncode == 0, f"Cannot read committed JSON receipt: {value}: {result.stderr.decode('utf-8', errors='replace')}")
+    require(original.replace(b"\r\n", b"\n") == result.stdout and json.loads(original) == json.loads(result.stdout), f"JSON receipt differs beyond Git LF normalization: {value}")
+    accessible_path(target).write_bytes(original)
+    require(file_sha256(accessible_path(target)) == expected_sha, f"Original JSON receipt restoration failed: {value}")
+    for arguments in (["git", "add", "--renormalize", "--", value], ["git", "diff", "--cached", "--quiet", "--", value], ["git", "status", "--porcelain", "--", value]):
+        result = subprocess.run(arguments, cwd=root, capture_output=True)
+        require(result.returncode == 0 and (arguments[1] != "status" or not result.stdout), f"JSON receipt normalization changed its committed evidence: {value}: {result.stderr.decode('utf-8', errors='replace')}")
+    return True
 
 
 def option_values(arguments, option):
@@ -146,7 +175,7 @@ def actual_inputs(root, support_root, scope, source, execution, request):
 def find_execution(root, approved, base_attempt, task_id, stem):
     key = approved["source_sha256"]
     ordinary = f"{EXPERIMENT}/executions/{stem}.json"
-    if project_path(root, ordinary).is_file():
+    if accessible_path(project_path(root, ordinary)).is_file():
         return ordinary, evidence_json(root, ordinary)
     matches = []
     for path in (project_path(root, f"{EXPERIMENT}/executions")).glob(f"{key}-*.json"):
@@ -229,8 +258,9 @@ def validate_person(root, support_root, scope, progress, approved, generated):
     require(approved["source_assets"] == source["source_assets"], f"Approved-master scope mismatch for {key}")
     require(approved.get("production_imported", False) is imported and approved["production_import_pending"] is (not imported), f"Approved-master import state mismatch for {key}")
     review_path = approved["review"]
+    restore_original_json_bytes(root, support_root, review_path, approved["review_sha256"])
     review = evidence_json(root, review_path)
-    require(file_sha256(project_path(root, review_path)) == approved["review_sha256"], f"Review SHA mismatch for {key}")
+    require(file_sha256(accessible_path(project_path(root, review_path))) == approved["review_sha256"], f"Review SHA mismatch for {key}")
     require(review.get("machine_id") == machine_id() and review.get("production_import_pending") is True, f"Review machine or state mismatch for {key}")
     entries = [row for row in review["entries"] if row.get("source_sha256") == key]
     require(len(entries) == 1, f"Expected one review entry for {key}")
@@ -290,13 +320,15 @@ def validate_person(root, support_root, scope, progress, approved, generated):
     require(proof["output_info"]["size"] == size and proof["output_info"]["mode"] == mode and proof["output_info"]["alpha_extrema"] == (None if mode == "RGB" else alpha), f"Evidence output metadata mismatch for {key}")
     for field in ("generation_output", "output", "task", "prompt", "request", "result"):
         require(project_path(root, proof[field]).parent == project_path(root, f"{EXPERIMENT}/outputs"), f"Evidence path is outside outputs for {key}: {field}")
+        if field in {"task", "request", "result"}:
+            restore_original_json_bytes(root, support_root, proof[field], proof[field + "_sha256"])
         bound_file(root, proof[field], proof[field + "_sha256"])
     parent_path = project_path(root, proof["generation_output"])
     require(parent_path == project_path(root, f"{EXPERIMENT}/outputs/{stem}.png"), f"Generation parent path mismatch for {key}")
     result = evidence_json(root, proof["result"])
     task = evidence_json(root, proof["task"])
     request = evidence_json(root, proof["request"])
-    prompt = project_path(root, proof["prompt"]).read_bytes().decode("utf-8")
+    prompt = accessible_path(project_path(root, proof["prompt"])).read_bytes().decode("utf-8")
     execution_relative, execution = find_execution(root, approved, base_attempt, result["task_id"], stem)
     recovery = validate_execution_recovery(root, execution_relative, execution, approved, base_attempt, result["task_id"], proof, result) if execution is not None else None
     require(result.get("task_id") == task.get("task_id") == proof["task_id"] and result.get("sha256") == proof["generation_output_sha256"], f"Task/result binding mismatch for {key}")
@@ -332,12 +364,14 @@ def validate_person(root, support_root, scope, progress, approved, generated):
         require(decision.get("parent_output", proof["generation_output"]) == proof["generation_output"] and decision.get("parent_output_sha256") == proof["generation_output_sha256"] and decision.get("parent_task_id") == result["task_id"], f"Alpha parent mismatch for {key}")
         raw = None
         if review.get("alpha_repair_receipt") is not None:
+            restore_original_json_bytes(root, support_root, review["alpha_repair_receipt"], review.get("alpha_repair_receipt_sha256"))
             receipt_path = bound_file(root, review["alpha_repair_receipt"], review.get("alpha_repair_receipt_sha256"))
-            receipt = read_json(receipt_path)
+            receipt = read_json(accessible_path(receipt_path))
             if "result" in receipt:
                 for field, expected in (("index", approved["index"]), ("source_key_sha256", key), ("attempt", base_attempt), ("parent_output_sha256", proof["generation_output_sha256"]), ("status", "completed"), ("new_image_generation_calls", 0), ("exit_code", 0), ("output", expected_output), ("output_sha256", approved["generated_fullsize_sha256"])):
                     require(receipt.get(field) == expected, f"Alpha receipt mismatch for {key}: {field}")
                 if receipt.get("parent_review"):
+                    restore_original_json_bytes(root, support_root, receipt["parent_review"], receipt.get("parent_review_sha256"))
                     bound_file(root, receipt["parent_review"], receipt.get("parent_review_sha256"))
                 raw = receipt["result"]
             else:
@@ -485,8 +519,47 @@ def production_import_completed(root, key, review, row=None):
         return False
 
 
+def preserve_new_remote_high(worktree, remote, planned, base, high_keys):
+    from mod_nailong.tools.art_contract import portrait_ready
+
+    planned = json.loads(json.dumps(planned))
+    preserved = []
+    for key in sorted(high_keys):
+        if planned.get(key) is not None or remote.get(key) == base.get(key):
+            continue
+        row = remote.get(key)
+        require(isinstance(row, dict) and portrait_ready(row), f"Remote HIGH row is not actually approved: {key}")
+        require(row.get("machine_id") == machine_id(), f"Remote HIGH row belongs to another machine: {key}")
+        master_relative = row["generated_fullsize_image"]
+        master = bound_file(worktree, master_relative, row["generated_fullsize_sha256"])
+        journal_relative = row["request_journal"]
+        journal_path = bound_file(worktree, journal_relative, file_sha256(project_path(worktree, journal_relative)))
+        journal = evidence_json(worktree, journal_relative)
+        attempt = journal["attempts"][-1]
+        require(attempt.get("status") == "approved" and attempt.get("method", "").startswith("built-in imagegen") and row.get("method", "").startswith("built-in imagegen"), f"Remote HIGH approval method mismatch: {key}")
+        require(attempt.get("fullsize_sha256") == row["generated_fullsize_sha256"] and attempt.get("output_sha256") == row["image_sha256"], f"Remote HIGH output binding mismatch: {key}")
+        require(attempt.get("prompt") == row["prompt"] and attempt.get("machine_id") == machine_id() and attempt.get("inputs"), f"Remote HIGH request provenance is incomplete: {key}")
+        require(journal.get("source_sha256") == key and row.get("source_sha256") == key, f"Remote HIGH source identity mismatch: {key}")
+        planned[key] = row
+        preserved.append({
+            "source_sha256": key, "fullsize_sha256": row["generated_fullsize_sha256"],
+            "fullsize_image": master_relative, "master_bytes": master.stat().st_size,
+            "journal": journal_relative, "journal_sha256": file_sha256(journal_path),
+            "journal_attempt": len(journal["attempts"]), "prompt_sha256": hashlib.sha256(row["prompt"].encode("utf-8")).hexdigest(),
+            "canonical_method": row["method"], "journal_method": attempt["method"],
+            "preservation": "Remote approved HIGH row retained during rebase; subsequent approved HIGH131 import appends a revision rather than deleting this master or its request history",
+        })
+    if preserved:
+        write_json(ROOT / "runtime/high131-remote-high-preservation.json", {
+            "schema": "high131-remote-high-preservation-v1", "machine_id": machine_id(),
+            "observed_at_utc": utc_now(), "new_image_generation_calls": 0,
+            "scope": "New approved HIGH rows introduced by another executor and absent from the partial HIGH131 plan",
+            "entries": preserved,
+        })
+    return planned, preserved
+
+
 def merge_shared_mapping(remote, planned, base, high_keys, container):
-    require(set(high_keys) <= set(planned[container]), "Planned shared mapping lacks HIGH sources")
     require(set(remote) == set(planned) == set(base), "Shared manifest schemas cannot be merged automatically")
     merged = dict(remote)
     rows = {}
@@ -496,9 +569,12 @@ def merge_shared_mapping(remote, planned, base, high_keys, container):
         planned_row = planned[container].get(key)
         base_row = base[container].get(key)
         if key in high_keys:
-            require(planned_row != base_row or remote_row == base_row, f"HIGH row unexpectedly unchanged: {key}")
-            require(remote_row == base_row or remote_row == planned_row, f"Concurrent HIGH row needs explicit reconciliation: {key}")
-            rows[key] = planned_row
+            if planned_row is None:
+                require(remote_row == base_row, f"Missing planned HIGH evidence must not delete a remote row: {key}")
+                rows[key] = remote_row
+            else:
+                require(remote_row == base_row or remote_row == planned_row, f"Concurrent HIGH row needs explicit reconciliation: {key}")
+                rows[key] = planned_row
         else:
             if planned_row != base_row and remote_row != base_row and planned_row != remote_row:
                 raise ImportGateError(f"Unrelated shared row changed on both sides: {key}")
@@ -641,25 +717,55 @@ def git(worktree, *args):
     return result.stdout.strip("\r\n")
 
 
-def stage_and_commit(worktree, plan):
-    key_set = {entry["source_sha256"] for entry in plan["entries"]}
-    paths = [GENERATED, QUEUE, f"{EXPERIMENT}/progress.json", f"{EXPERIMENT}/approved-masters.json"]
-    paths += [f"mod_nailong/assets/portraits/{key}.png" for key in key_set]
-    paths += [f"mod_nailong/data/generation-requests/{key}.json" for key in key_set]
+def import_paths(plan):
+    keys = {entry["source_sha256"] for entry in plan["entries"]}
+    return [GENERATED, QUEUE, f"{EXPERIMENT}/progress.json", f"{EXPERIMENT}/approved-masters.json",
+            *[f"mod_nailong/assets/portraits/{key}.png" for key in keys],
+            *[f"mod_nailong/data/generation-requests/{key}.json" for key in keys]]
+
+
+def refresh_normalized_receipts(worktree, plan=None):
+    allowed = set(import_paths(plan)) if plan is not None else set()
+    allowed_statuses = {" M", "??", "M ", "A ", "MM", "AM"}
+    changed = [line for line in git(worktree, "status", "--porcelain", "-z").split("\0") if line]
+    paths = []
+    for line in changed:
+        relative = line[3:]
+        if line[:2] in allowed_statuses and relative in allowed:
+            continue
+        require(line[:2] == " M" and relative.startswith(EXPERIMENT + "/") and relative.endswith(".json"), f"Unexpected isolated-worktree change: {line}")
+        paths.append(relative)
+    if paths:
+        git(worktree, "diff", "--quiet", "--", *paths)
+        git(worktree, "add", "--renormalize", "--", *paths)
+    require(set(git(worktree, "diff", "--cached", "--name-only").splitlines()) <= allowed, "Unexpected staged files after receipt normalization")
+    remaining = [line for line in git(worktree, "status", "--porcelain", "-z").split("\0") if line]
+    require(all(line[:2] in allowed_statuses and line[3:] in allowed for line in remaining), "Unexpected changes remain after receipt normalization")
+    return paths
+
+
+def stage_and_commit(worktree, plan, message="Import reviewed HIGH131 portraits", partial=False):
+    paths = import_paths(plan)
+    if partial:
+        paths = [relative for relative in paths if accessible_path(Path(worktree) / relative).is_file()]
     changed = set(git(worktree, "status", "--porcelain").splitlines())
-    require(all(line[:2] in {" M", "??"} and line[3:] in paths for line in changed), f"Unexpected files in isolated import: {sorted(changed)[:10]}")
-    git(worktree, "add", "--", *paths)
+    require(all(line[:2] in {" M", "??", "M ", "A ", "MM", "AM"} and line[3:] in paths for line in changed), f"Unexpected files in isolated import: {sorted(changed)[:10]}")
+    git(worktree, "add", "--sparse", "--", *paths)
     git(worktree, "diff", "--cached", "--check")
     staged = set(git(worktree, "diff", "--cached", "--name-only").splitlines())
     require(staged <= set(paths), "Import staged an unrelated file")
-    git(worktree, "commit", "-m", "Import reviewed HIGH131 portraits")
+    git(worktree, "commit", "-m", message)
     return git(worktree, "rev-parse", "HEAD")
 
 
-def rebase_import(worktree, original_commit, plan):
+def rebase_in_progress(worktree):
+    return Path(git(worktree, "rev-parse", "--git-path", "rebase-merge")).exists()
+
+
+def rebase_import(worktree, original_commit, plan, complete_required=True):
     git(worktree, "fetch", "origin")
     remote = git(worktree, "rev-parse", "origin/master")
-    if remote == original_commit:
+    if remote == original_commit and not rebase_in_progress(worktree):
         return original_commit
     try:
         git(worktree, "rebase", "origin/master")
@@ -670,19 +776,39 @@ def rebase_import(worktree, original_commit, plan):
             if relative not in conflicts:
                 continue
             remote, planned, base = (json.loads(git(worktree, "show", f":{number}:{relative}")) for number in (2, 3, 1))
+            if container == "portraits":
+                preserved_rows, _ = preserve_new_remote_high(worktree, remote[container], planned[container], base[container], {entry["source_sha256"] for entry in plan["entries"]})
+                planned = dict(planned, portraits=preserved_rows)
             merged = merge_shared_mapping(remote, planned, base, {entry["source_sha256"] for entry in plan["entries"]}, container)
             write_json(worktree / relative, merged)
             git(worktree, "add", "--", relative)
+        require(not git(worktree, "diff", "--name-only", "--diff-filter=U"), "Shared import conflicts remain unresolved")
         git(worktree, "-c", "core.editor=true", "rebase", "--continue")
-    for entry in plan["entries"]:
+    for entry in plan["entries"] if complete_required else []:
         key = entry["source_sha256"]
         reference = {"review": entry["review"], "review_sha256": entry["review_sha256"], "attempt": entry["attempt"], "task_id": entry["task_id"]}
+        restore_original_json_bytes(worktree, ROOT, reference["review"], reference["review_sha256"])
         require(production_import_completed(worktree, key, reference), f"Rebase lost an imported HIGH source: {key}")
     final = git(worktree, "rev-parse", "HEAD")
     original_paths = set(git(worktree, "diff", "--name-only", f"{original_commit}^", original_commit).splitlines())
     for relative in original_paths - {GENERATED, QUEUE}:
         require(git(worktree, "rev-parse", f"{original_commit}:{relative}") == git(worktree, "rev-parse", f"{final}:{relative}"), f"Rebase changed a HIGH evidence blob: {relative}")
     return final
+
+
+def resolve_import_parent(worktree):
+    head = git(worktree, "rev-parse", "HEAD")
+    recovery_path = ROOT / "runtime/high131-latest-recovery.json"
+    if not recovery_path.is_file():
+        return head, head
+    recovery = read_json(recovery_path)
+    if recovery.get("commit") != head:
+        return head, head
+    require(recovery.get("machine_id") == machine_id(), "Recovery receipt belongs to another machine")
+    require(recovery.get("formal_import_complete") is False and recovery.get("status") == "local_recovery_rebased_push_pending", "Recovery receipt is not a pending partial import")
+    parent = git(worktree, "rev-parse", "HEAD^")
+    require(re.fullmatch(r"[0-9a-f]{40}", parent), "Recovery has no immutable remote parent")
+    return head, parent
 
 
 def main():
@@ -711,9 +837,10 @@ def main():
     require(args.worktree is not None and args.batch and re.fullmatch(r"[A-Za-z0-9-]+", args.batch) and args.readback is not None, "--apply requires --worktree, a valid --batch and --readback")
     worktree = args.worktree.resolve()
     worktree.relative_to((ROOT / "runtime").resolve())
-    require((worktree / ".git").exists() and not git(worktree, "status", "--porcelain"), "Apply requires a clean isolated Git worktree")
-    parent = git(worktree, "rev-parse", "HEAD")
+    require((worktree / ".git").exists(), "Apply requires an isolated Git worktree")
+    import_start_commit, parent = resolve_import_parent(worktree)
     plan = build_plan(worktree, ROOT)
+    refresh_normalized_receipts(worktree, plan)
     parent_proof = validate_parent_readback(worktree, parent, plan, args.readback)
     git(worktree, "fetch", "origin")
     require(git(worktree, "rev-parse", "origin/master") == parent, "Fetch/rebase the isolated parent before applying HIGH131")
@@ -722,7 +849,7 @@ def main():
     commit = rebase_import(worktree, original, plan)
     report = {
         "schema": "high131-production-import-receipt-v1", "machine_id": machine_id(), "batch": args.batch,
-        "parent_commit": parent, "original_import_commit": original, "commit": commit,
+        "import_start_commit": import_start_commit, "parent_commit": parent, "original_import_commit": original, "commit": commit,
         "approved_person_sources": 127, "preserved_nonperson_exceptions": 4,
         "newly_imported_sources": imported, "status": "committed_push_pending",
         "evidence_root": str(worktree), "new_image_generation_calls": 0,

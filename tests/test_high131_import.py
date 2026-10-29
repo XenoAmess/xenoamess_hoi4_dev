@@ -347,6 +347,7 @@ class High131ImportTests(unittest.TestCase):
         git("init", "--bare", str(remote))
         git("remote", "add", "origin", str(remote))
         git("push", "-u", "origin", "master")
+        self.assertEqual(importer.refresh_normalized_receipts(self.root, plan), [])
         high_commit = importer.stage_and_commit(self.root, plan)
         self.assertNotEqual(high_commit, baseline)
         git("checkout", "-b", "other-owner", baseline)
@@ -457,6 +458,117 @@ class High131ImportTests(unittest.TestCase):
         remote["portraits"]["high"]["image"] = "unexpected"
         with self.assertRaisesRegex(importer.ImportGateError, "Concurrent HIGH"):
             importer.merge_shared_mapping(remote, planned, base, {"high"}, "portraits")
+
+    def test_partial_high_merge_preserves_absent_sources(self):
+        base = {"portraits": {"low": {"state": "base"}}}
+        planned = {"portraits": {"low": {"state": "base"}}}
+        remote = {"portraits": {"low": {"state": "other-owner"}}}
+        merged = importer.merge_shared_mapping(remote, planned, base, {"future-high"}, "portraits")
+        self.assertEqual(merged["portraits"]["low"]["state"], "other-owner")
+        self.assertNotIn("future-high", merged["portraits"])
+        remote["portraits"]["future-high"] = {"state": "new-evidence"}
+        with self.assertRaisesRegex(importer.ImportGateError, "Missing planned HIGH evidence"):
+            importer.merge_shared_mapping(remote, planned, base, {"future-high"}, "portraits")
+
+    def test_active_rebase_is_not_returned_as_complete(self):
+        from unittest.mock import patch
+
+        original = "a" * 40
+        completed = "b" * 40
+        def git(worktree, *args):
+            if args == ("rebase", "origin/master"):
+                raise importer.ImportGateError("Rebase is already in progress")
+            if args == ("rev-parse", "origin/master"):
+                return original
+            if args == ("rev-parse", "HEAD"):
+                return completed
+            if args == ("diff", "--name-only", "--diff-filter=U"):
+                return "" if hasattr(git, "merged") else importer.GENERATED
+            if args == ("add", "--", importer.GENERATED):
+                git.merged = True
+                return ""
+            if args and args[0] == "show":
+                return '{"portraits": {}}'
+            if args and args[0] == "diff" and len(args) > 2 and args[1] == "--name-only":
+                return ""
+            return ""
+        with patch.object(importer, "rebase_in_progress", return_value=True), patch.object(importer, "git", side_effect=git), patch.object(importer, "write_json"):
+            self.assertEqual(importer.rebase_import(self.root, original, {"entries": []}, complete_required=False), completed)
+
+    def test_original_json_line_endings_and_long_paths(self):
+        import subprocess
+        from unittest.mock import patch
+
+        relative = "mod_nailong/experiments/receipt.json"
+        raw = b'{\r\n  "task_id": "task-test"\r\n}\r\n'
+        committed = raw.replace(b"\r\n", b"\n")
+        support = self.root.parent / "support"
+        original = support / relative
+        original.parent.mkdir(parents=True)
+        original.write_bytes(raw)
+        expected = file_sha256(original)
+        target = self.root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(committed)
+        calls = []
+        def git(*args, **kwargs):
+            calls.append(args[0])
+            output = committed if args[0][:2] == ["git", "show"] else b""
+            return subprocess.CompletedProcess(args[0], 0, stdout=output, stderr=b"")
+        with patch.object(importer.subprocess, "run", side_effect=git):
+            self.assertTrue(importer.restore_original_json_bytes(self.root, support, relative, expected))
+        self.assertEqual(calls, [["git", "show", f"HEAD:{relative}"], ["git", "add", "--renormalize", "--", relative], ["git", "diff", "--cached", "--quiet", "--", relative], ["git", "status", "--porcelain", "--", relative]])
+        self.assertEqual(target.read_bytes(), raw)
+        self.assertEqual(original.read_bytes(), raw)
+        self.assertFalse(importer.restore_original_json_bytes(self.root, support, relative, expected))
+        target.write_bytes(committed)
+        original.write_bytes(b"{}\r\n")
+        with self.assertRaisesRegex(importer.ImportGateError, "Evidence SHA mismatch"):
+            importer.restore_original_json_bytes(self.root, support, relative, expected)
+        self.assertEqual(target.read_bytes(), committed)
+
+        relative = "mod_nailong/experiments/" + "x" * 180 + "/receipt.json"
+        target = self.root / relative
+        importer.accessible_path(target.parent).mkdir(parents=True)
+        importer.accessible_path(target).write_bytes(b"exact evidence")
+        self.assertEqual(importer.project_path(self.root, relative), target.resolve())
+        self.assertEqual(importer.bound_file(self.root, relative, file_sha256(importer.accessible_path(target))), target.resolve())
+        shutil.rmtree(importer.accessible_path(target.parent))
+
+    def test_partial_recovery_commit_accepts_only_materialized_high_paths(self):
+        import subprocess
+
+        def git(*args):
+            return subprocess.run(["git", *args], cwd=self.root, check=True, capture_output=True, text=True).stdout.strip()
+
+        plan = importer.build_plan(self.root)
+        (self.root / ".gitignore").write_text("runtime/\n", encoding="utf-8")
+        git("init", "-b", "master")
+        git("config", "user.name", "HIGH131 partial test")
+        git("config", "user.email", "high131-partial@example.invalid")
+        git("add", "--", ".gitignore", "mod_nailong")
+        git("commit", "-m", "Partial recovery baseline")
+        self.assertEqual(importer.write_import(dict(plan, entries=plan["entries"][:1]), self.root), [plan["entries"][0]["source_sha256"]])
+        commit = importer.stage_and_commit(self.root, plan, "Checkpoint partial HIGH import", partial=True)
+        changed = set(git("diff", "--name-only", "HEAD^", "HEAD").splitlines())
+        self.assertTrue(changed)
+        self.assertTrue(set(changed) <= set(importer.import_paths(plan)))
+        self.assertEqual(git("show", "-s", "--format=%s", "HEAD"), "Checkpoint partial HIGH import")
+        self.assertEqual(commit, git("rev-parse", "HEAD"))
+
+    def test_partial_recovery_uses_its_verified_remote_parent(self):
+        from unittest.mock import patch
+
+        head, parent = "a" * 40, "b" * 40
+        receipt = {"machine_id": machine_id(), "commit": head, "formal_import_complete": False, "status": "local_recovery_rebased_push_pending"}
+        git = lambda worktree, *args: head if args == ("rev-parse", "HEAD") else parent
+        with patch.object(importer, "git", side_effect=git), patch.object(importer, "read_json", return_value=receipt):
+            self.assertEqual(importer.resolve_import_parent(self.root), (head, parent))
+        with patch.object(importer, "git", side_effect=git), patch.object(importer, "read_json", return_value=dict(receipt, machine_id="another-machine")):
+            with self.assertRaisesRegex(importer.ImportGateError, "another machine"):
+                importer.resolve_import_parent(self.root)
+        with patch.object(importer, "git", return_value=head), patch.object(importer, "read_json", return_value=dict(receipt, commit=parent)):
+            self.assertEqual(importer.resolve_import_parent(self.root), (head, head))
 
 
 if __name__ == "__main__":
