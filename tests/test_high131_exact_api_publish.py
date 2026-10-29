@@ -122,6 +122,17 @@ class ExactApiPublishTests(unittest.TestCase):
             publish.Api(forbidden).post_json("git/blobs", {}, expected)
         self.assertEqual(len(calls), 1)
 
+    def test_forcibly_closed_connection_is_retried_with_repository_path(self):
+        responses = [
+            publish.subprocess.CompletedProcess([], 1, stdout=b"", stderr=b"wsarecv: An existing connection was forcibly closed by the remote host."),
+            publish.subprocess.CompletedProcess([], 0, stdout=b'{"object":{"sha":"' + b"c" * 40 + b'"}}', stderr=b""),
+        ]
+        with patch.object(publish.subprocess, "run", side_effect=responses) as run, patch.object(publish.time, "sleep"):
+            body = publish.Api().get_json("git/ref/heads/master")
+        self.assertEqual(body["object"]["sha"], "c" * 40)
+        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_args_list[0].args[0][2], "repos/XenoAmess/xenoamess_hoi4_dev/git/ref/heads/master")
+
     def test_expected_base_does_not_compare_an_unpublished_target(self):
         publisher = object.__new__(publish.ExactApiPublisher)
         publisher.base, publisher.target = BASE, TARGET

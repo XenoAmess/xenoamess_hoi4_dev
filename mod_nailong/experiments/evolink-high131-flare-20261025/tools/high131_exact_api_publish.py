@@ -143,7 +143,7 @@ class Api:
             detail = safe_error(result.stderr.decode("utf-8", errors="replace"))
             status_match = re.search(r"HTTP\s+(\d{3})", detail)
             status = int(status_match.group(1)) if status_match else None
-            transient = any(term in detail.lower() for term in ("tls handshake timeout", "unexpected eof", "connection reset", "connection was reset", "recv failure", "schannel", "connection timed out", "i/o timeout", "http 408", "http 500", "http 502", "http 503", "http 504"))
+            transient = any(term in detail.lower() for term in ("tls handshake timeout", "unexpected eof", "connection reset", "connection was reset", "recv failure", "forcibly closed", "connection aborted", "broken pipe", "schannel", "connection timed out", "i/o timeout", "http 408", "http 500", "http 502", "http 503", "http 504"))
             raise ApiError(detail, transient=transient, status=status)
         try:
             return json.loads(result.stdout)
