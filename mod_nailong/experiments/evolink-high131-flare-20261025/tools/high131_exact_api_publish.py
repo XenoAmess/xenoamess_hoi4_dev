@@ -200,7 +200,7 @@ class Api:
             detail = safe_error(result.stderr.decode("utf-8", errors="replace") + "\n" + result.stdout[:2000].decode("utf-8", errors="replace"))
             match = re.search(r"\b(401|403|404|408|409|422|429|500|502|503|504)\b", detail)
             status = int(match.group(1)) if match else None
-            transient = any(term in detail.lower() for term in ("tls", "timeout", "timed out", "connection reset", "connection was reset", "recv failure", "forcibly closed", "connection aborted", "broken pipe", "empty reply from server", "schannel", "unexpected eof", "http 408", "http 500", "http 502", "http 503", "http 504"))
+            transient = any(term in detail.lower() for term in ("tls", "timeout", "timed out", "connection reset", "connection was reset", "recv failure", "forcibly closed", "connection aborted", "broken pipe", "empty reply from server", "failed to connect", "could not connect", "schannel", "unexpected eof", "http 408", "http 500", "http 502", "http 503", "http 504"))
             raise ApiError(detail, transient=transient, status=status)
         try:
             return json.loads(result.stdout)
@@ -221,7 +221,7 @@ class Api:
                 if not error.transient or attempt == 2:
                     raise
                 last_error = error
-            time.sleep((2, 5)[attempt])
+            time.sleep((5, 20)[attempt])
         raise last_error
 
     def get_optional(self, endpoint, expected_sha=None):
@@ -252,7 +252,7 @@ class Api:
                 return existing
             if attempt == 2:
                 raise last_error
-            time.sleep((2, 5)[attempt])
+            time.sleep((5, 20)[attempt])
         raise last_error
 
 

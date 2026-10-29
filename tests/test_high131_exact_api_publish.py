@@ -125,12 +125,14 @@ class ExactApiPublishTests(unittest.TestCase):
     def test_forcibly_closed_connection_is_retried_with_repository_path(self):
         responses = [
             publish.subprocess.CompletedProcess([], 1, stdout=b"", stderr=b"wsarecv: An existing connection was forcibly closed by the remote host."),
+            publish.subprocess.CompletedProcess([], 7, stdout=b"", stderr=b"curl: (7) Failed to connect to 127.0.0.1 port 10808: Could not connect to server"),
             publish.subprocess.CompletedProcess([], 0, stdout=b'{"object":{"sha":"' + b"c" * 40 + b'"}}', stderr=b""),
         ]
-        with patch.object(publish.subprocess, "run", side_effect=responses) as run, patch.object(publish.time, "sleep"):
+        with patch.object(publish.subprocess, "run", side_effect=responses) as run, patch.object(publish.time, "sleep") as sleep:
             body = publish.Api(token="fixturetoken").get_json("git/ref/heads/master")
         self.assertEqual(body["object"]["sha"], "c" * 40)
-        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_count, 3)
+        sleep.assert_called_once_with(5)
         self.assertEqual(run.call_args_list[0].args[0][2], "repos/XenoAmess/xenoamess_hoi4_dev/git/ref/heads/master")
         with patch.object(publish.subprocess, "run", return_value=publish.subprocess.CompletedProcess([], 52, stdout=b"", stderr=b"curl: (52) Empty reply from server")):
             with self.assertRaises(publish.ApiError) as caught:
