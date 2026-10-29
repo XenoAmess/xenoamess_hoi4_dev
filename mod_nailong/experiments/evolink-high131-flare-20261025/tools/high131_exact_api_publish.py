@@ -182,6 +182,7 @@ class Api:
         try:
             arguments = ["curl.exe", "--proto", "=https", "--request", method,
                          "--url", f"https://api.github.com/{endpoint}", "--silent", "--show-error", "--fail-with-body",
+                         "--resolve", "api.github.com:443:140.82.113.6",
                          "--http1.1", "--connect-timeout", "60", "--max-time", str(timeout), "--config", "-"]
             if payload is not None:
                 descriptor, name = tempfile.mkstemp(dir=ROOT / "runtime", prefix=".high131-api-", suffix=".json")
