@@ -67,6 +67,26 @@ def main():
         require(descriptor_target.read_bytes() == descriptor_source.read_bytes(), "Descriptor target differs")
     else:
         shutil.copyfile(descriptor_source, descriptor_target)
+    recovery_source = SUPPORT_ROOT / "runtime/high131-latest-recovery.json"
+    if recovery_source.is_file():
+        recovery_target = runtime / recovery_source.name
+        if recovery_target.exists():
+            require(file_sha256(recovery_target) == file_sha256(recovery_source), "Recovery fixture differs")
+        else:
+            os.link(recovery_source, recovery_target)
+    for digest, entry in read_json(worktree / "mod_nailong/data/fullsize-files.json")["outputs"].items():
+        source = SUPPORT_ROOT / entry["path"]
+        target = worktree / entry["path"]
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if target.exists():
+            if not target.samefile(source):
+                require(file_sha256(target) == digest, f"Original target differs: {entry['path']}")
+        else:
+            require(file_sha256(source) == digest, f"Original source differs: {entry['path']}")
+            os.link(source, target)
+    observations_source = SUPPORT_ROOT / "runtime/evolink-high131-flare-20261025/observations"
+    observations_target = runtime / "evolink-high131-flare-20261025/observations"
+    shutil.copytree(observations_source, observations_target, dirs_exist_ok=True)
     handoff = read_json(worktree / "docs/handoffs/2026-10-30-low7-exhausted.json")
     for entry in handoff["entries"]:
         relative = entry["latest_attempt_snapshot"]["prompt_file"]

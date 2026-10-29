@@ -143,7 +143,9 @@ class Low7RepairTests(unittest.TestCase):
     def test_archive_has_only_actual_approved_sources(self):
         archive = prepare.read_json(prepare.EXPERIMENT / "approved-masters.json")
         self.assertEqual(archive["count"], len(archive["entries"]))
-        self.assertEqual(archive["formal_canonical_import_count"], 0)
+        self.assertIn(archive["formal_canonical_import_count"], {0, 7})
+        if archive["formal_canonical_import_count"] == 7:
+            self.assertTrue(self.module.verify_import(prepare.ROOT, archive))
         for entry in archive["entries"]:
             master = prepare.ROOT / entry["generated_fullsize_image"]
             self.assertEqual(prepare.file_sha256(master), entry["generated_fullsize_sha256"])

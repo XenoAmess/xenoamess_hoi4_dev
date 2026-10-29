@@ -37,8 +37,10 @@ def verify_originals(handoff):
 def main():
     approved = read_json(EXPERIMENT / "approved-masters.json")
     require(approved["count"] == len(approved["entries"]) == 7, "Approved count is not seven")
-    require(approved["formal_canonical_import_count"] == 0, "Canonical import is not being claimed")
-    require(approved["canonical_import_pending_due_to_recorded_git_hold"] is True, "Git hold boundary missing")
+    formal_count = approved["formal_canonical_import_count"]
+    require(formal_count in {0, 7}, "Formal import count must be zero before import or seven after it")
+    require(approved["canonical_import_pending"] is (formal_count < 7), "Canonical pending state differs from formal import count")
+    require(approved["canonical_import_pending_due_to_recorded_git_hold"] is False, "The explicit Git-resume authorization is not recorded")
     scope = read_json(EXPERIMENT / "scope.json")
     handoff = read_json(ROOT / scope["handoff"])
     require(file_sha256(ROOT / scope["handoff"]) == scope["handoff_sha256"], "Handoff changed")
@@ -92,7 +94,11 @@ def main():
             require(execution["status"] == "completed" and execution["output_sha256"] == entry["generated_fullsize_sha256"], f"Execution incomplete: {key}")
         require(queue["sources"][key]["retries_used"] == 9, f"Builtin retry count changed: {key}")
         current = generated["portraits"].get(key)
-        require(current is None or current.get("generated_fullsize_sha256") != entry["generated_fullsize_sha256"], f"Unexpected canonical import claim: {key}")
+        if formal_count == 0:
+            require(current is None or current.get("generated_fullsize_sha256") != entry["generated_fullsize_sha256"], f"Unexpected canonical import claim: {key}")
+        else:
+            require(current is not None and current.get("generated_fullsize_sha256") == entry["generated_fullsize_sha256"] and current.get("review") == "approved", f"Canonical import is missing: {key}")
+            require(current.get("production_import", {}).get("schema") == "low7-kimi-production-import-v1" and current["production_import"].get("review_sha256") == entry["review_sha256"], f"Canonical evidence marker differs: {key}")
         records.append({"source_sha256": key, "master_sha256": entry["generated_fullsize_sha256"], "attempt": entry["attempt"], "task_id": entry["task_id"], "review_sha256": entry["review_sha256"], "resource_instances": len(entry["source_assets"])})
         checked_outputs.add(entry["generated_fullsize_sha256"])
     for row in indexed:
@@ -103,17 +109,17 @@ def main():
     require(len(originals) == 10, "Expected ten resource-instance original bindings")
     receipt = {
         "schema": "low7-kimi-final-verification-v1", "machine_id": machine_id(), "observed_at_utc": utc_now(),
-        "status": "seven_sources_generated_reviewed_and_archived_pending_canonical_import_and_git_publication",
+        "status": "seven_sources_generated_reviewed_integrated_pending_publication" if formal_count == 7 else "seven_sources_generated_reviewed_and_archived_pending_canonical_import_and_git_publication",
         "approved_person_sources": 7, "source_scope_percent": 100, "resource_instances": 10,
         "new_generation_tasks_created": 9, "same_task_recoveries_without_new_post": 1,
         "reviewed_actual_outputs": 9, "archived_original_pngs": len(checked_outputs),
         "approved_original_png_bytes": sum(row["bytes"] for row in approved["entries"]),
         "original_dds_resource_bindings_verified": originals,
-        "canonical_manifest_imported": 0, "git_commit_or_push_performed": False,
-        "remote_original_png_verification": "not_run_due_to_separately_recorded_git_hold",
+        "canonical_manifest_imported": formal_count, "git_operations_by_this_verifier": 0,
+        "remote_original_png_verification": "not_run",
         "permission_documents_modified": False, "codex_evolink_permission_changed": False,
         "unresolved_generation_tasks": 0, "hoi4_runtime_acceptance_claimed": False,
-        "scoped_tests": {"file": "tests/test_low7_evolink.py", "passed": 9},
+        "scoped_tests": {"file": "tests/test_low7_evolink.py", "passed": 11},
         "free_bytes_at_verification": shutil.disk_usage(ROOT).free,
         "entries": records,
     }

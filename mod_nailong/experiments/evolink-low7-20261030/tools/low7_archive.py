@@ -126,13 +126,28 @@ def main():
                 "reviewed_at_utc": review["reviewed_at_utc"], "reviewer": review["reviewer"],
                 "evidence": review["review_evidence"], "evidence_sha256": review["review_evidence_sha256"],
                 "edit_existing": decision["attempt"] == "external-02" or key == "1f66d040d3ea98c01ad0d0c91bc6a150d379c89d2a4840f604bad60984cab616",
-                "production_import": "pending_canonical_manifest_and_separately_recorded_git_hold",
+                "production_import": "pending_canonical_manifest",
             })
     approved.sort(key=lambda row: row["index"])
+    from mod_nailong.tools.art_contract import portrait_ready
+    canonical = read_json(ROOT / "mod_nailong/data/generated.json")["portraits"]
+    for entry in approved:
+        current = canonical.get(entry["source_sha256"], {})
+        marker = current.get("production_import", {})
+        imported = (
+            current.get("generated_fullsize_sha256") == entry["generated_fullsize_sha256"]
+            and portrait_ready(current) and marker.get("schema") == "low7-kimi-production-import-v1"
+            and marker.get("review_sha256") == entry["review_sha256"] and marker.get("task_id") == entry["task_id"]
+        )
+        if imported:
+            entry["production_import"] = "formal_canonical_import_complete_pending_publication"
+    formal_count = sum(row["production_import"] == "formal_canonical_import_complete_pending_publication" for row in approved)
     write_json(EXPERIMENT / "approved-masters.json", {
         "schema": "low7-kimi-approved-masters-v1", "machine_id": machine_id(), "observed_at_utc": utc_now(),
-        "count": len(approved), "formal_canonical_import_count": 0,
-        "canonical_import_pending_due_to_recorded_git_hold": True,
+        "count": len(approved), "formal_canonical_import_count": formal_count,
+        "canonical_import_pending": formal_count < len(approved),
+        "canonical_import_pending_due_to_recorded_git_hold": False,
+        "git_resume_authorization": "mod_nailong/experiments/evolink-low7-20261030/delivery-authorization.json",
         "original_pngs_are_ordinary_git_files_not_lfs_or_release_only": True,
         "remote_verification_claimed": False, "runtime_acceptance_claimed": False,
         "entries": approved,
@@ -141,7 +156,7 @@ def main():
         "schema": "low7-actual-output-review-index-v1", "machine_id": machine_id(), "observed_at_utc": utc_now(),
         "entries": indexed, "rejected_and_superseded_outputs_retained": True,
     })
-    print(json.dumps({"approved_sources": len(approved), "reviewed_outputs": len(indexed), "canonical_imported_sources": 0, "git_commit_or_push_performed": False}))
+    print(json.dumps({"approved_sources": len(approved), "reviewed_outputs": len(indexed), "canonical_imported_sources": formal_count, "archive_tool_git_operations": 0}))
 
 
 if __name__ == "__main__":
