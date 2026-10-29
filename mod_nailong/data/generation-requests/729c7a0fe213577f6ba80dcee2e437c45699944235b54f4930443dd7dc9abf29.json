@@ -434,6 +434,66 @@
       },
       "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 9394b220-56b6-4324-813e-9316f5796267. safety_violations=[abuse].\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")\n",
       "observed_at_utc": "2026-10-24T14:46:55.014283+00:00"
+    },
+    {
+      "number": 11,
+      "status": "approved",
+      "method": "EvoLink gpt-image-2.5-flare + source-alpha-resize-bilinear-rgb-unchanged-v1",
+      "art_direction": "hair-features-v1",
+      "prompt": "ACTUAL OBSERVED CORRECTION: The previous returned image was rejected for the following specific visible defects. Correct every one simultaneously without introducing a replacement defect:\nThe source has clearly visible gray-brown eyebrow hair beneath the cap, but external-01 leaves the brow area beneath the visor as bare yellow skin with no painted eyebrows. Restore the source-visible gray-brown brow hair while preserving the visor shadow and avoiding any added facial hair. The source cap crown is fully contained close to the top edge, whereas external-01 cuts the upper crown and its top piping at the image boundary. Restore the complete cap crown and original tight but non-clipped cap silhouette.\n\nThe output must convert the person into the actual yellow 奶龙 mascot identity, never leave an unconverted human face or merely recolor human skin. Use a compact rounded golden-yellow mascot head, green-ringed solid black eyes and no white sclera, one source-appropriate small mouth, no human nose/ears/skin, and a short broad neck. Preserve every unrelated source-visible feature, composition and alpha/exterior contract. Apply the noted frame/note corrections exactly, including the original compact note-mark rows rather than invented extra writing.\n\nEDIT ONLY THE PERSON in image 1. Image 1 is the exact original game portrait/card and the sole authority for visible features, composition, clothing and exterior. Image 2 is only the user mascot identity reference: a fictional yellow 奶龙 with a compact round head, short broad neck, solid black oval eyes with green rings and no white sclera, one small mouth at the actual original mouth position, and no human nose, ears or skin. If a moustache is present, the one mouth remains below it; never add a second gray slit or default mascot lip above the moustache.\n\nSOURCE-VISIBLE FEATURES TO PRESERVE:\nDark olive-brown peaked cap with a plain shiny black visor, gold piping/cord, a small upper gold eagle and a separate lower gold wreath/cockade with a red center; the hairline is covered, while short gray temple hair and sideburns remain visible. Gray-brown eyebrows, no glasses, no moustache or beard, and a clean-shaven smooth chin. Dark coat over a deep red V-front garment, with red collar patches bearing dense gold embroidery, gold shoulder boards and one pale-edged dark neck cross with a small clustered metallic detail above it.\nRetain the actual source hair, eyebrows, facial-hair extent, headgear, eyewear, clothing and decorations only where visibly present. Do not copy a bare scalp or missing eyebrows from the mascot reference over real source hair. Do not invent features from names or biographies.\n\nCOMPOSITION, EXPRESSION AND LIGHT:\nPreserve the right-facing near-profile head-and-upper-chest pose, gaze toward image right, stern closed mouth and upright neck. Keep the cap close to the top, shoulders cropped by the sides and red-front chest clipped at the bottom; retain directional modeling on the profile and the strong shadow beneath the shiny visor.\nFit the existing collar naturally around a rounded chin and very short broad neck transition while preserving its original open/closed state. No long neck column, pinched collar, floating cloth, clipping or cream bib. Preserve exactly one source-appropriate mouth and expression.\n\nBACKGROUND, FRAME AND EXTERIOR:\nThe source is a fully opaque rectangular portrait with no transparent exterior, separate frame or note. Lock its real opaque pale warm gray-beige painted backplate, including the original color, brightness, subtle mottling and soft edge shading behind the cap, profile and clothing. Do not invent transparency, a different backdrop, frame, note, halo or smoke.\n\nOPAQUE RGB WORKING PASS AND EVIDENCE LIMITS:\nThis is the authorized best-RGB pass. Source alpha will be restored separately only after actual visual RGB review, using the recorded source-alpha BILINEAR method without changing RGB. Do not request or paint a checkerboard or green screen. Keep all original opaque backing, cloth and paper solid; no interior holes, haze or see-through fabric. Fine cap and collar embroidery, the exact cluster above the neck cross and small garment-seam details are not reliably readable at 156x210. Do not invent readable writing, extra note rows, symbols, people or comparison panels. Keep full returned detail and the source composition; no watermark.\n\nFINAL PRIORITY: the output must be a yellow mascot, not a human, and must satisfy all of the observed corrections while retaining the original identity features, clothing, composition, backing and transparency. Do not repeat the rejected frame, hardware, note-row or facial conversion defects.",
+      "prompt_file": "mod_nailong/experiments/evolink-high131-flare-20261025/prompts/729c7a0fe213577f6ba80dcee2e437c45699944235b54f4930443dd7dc9abf29-02.txt",
+      "prompt_sha256": "a9d95c156cb9098b3149db011dc237afda6317b4cb537769e6b5feceeb34b30b",
+      "inputs": [
+        {
+          "role": "original source portrait",
+          "path": "runtime/references/729c7a0fe213577f6ba80dcee2e437c45699944235b54f4930443dd7dc9abf29.png",
+          "raw_sha256": "729c7a0fe213577f6ba80dcee2e437c45699944235b54f4930443dd7dc9abf29",
+          "converted_png_sha256": "a40951a8385541db336e36032fae2b766029a4d9d6fb945e5b7e56fb1bef7160",
+          "url": "https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/download/evolink-high131-source-20261025/729c7a0fe213577f6ba80dcee2e437c45699944235b54f4930443dd7dc9abf29.png"
+        },
+        {
+          "role": "user mascot reference",
+          "path": "mod_nailong/assets/reference/naiwa.png",
+          "sha256": "766ae05fcdab3bd41f9f0967e64f387de3adafef0f29626570d5670d9b460976",
+          "url": "https://raw.githubusercontent.com/XenoAmess/xenoamess_hoi4_dev/a539d87d41f2865bf41ba22432dd67cace308ae5/mod_nailong/assets/reference/naiwa.png"
+        }
+      ],
+      "edit_existing": false,
+      "machine_id": "bf-202609141645-5434332d4d",
+      "prepared_at_utc": "2026-10-25T19:07:16.423500+00:00",
+      "generated_at_utc": "2026-10-25T19:11:03.314872+00:00",
+      "fullsize_sha256": "f1c53cf64e886f82451b8d137141373f5ddc2a178b2a2945f77c04126839ee25",
+      "fullsize_image": "mod_nailong/assets/generated_fullsize/f1c53cf64e886f82451b8d137141373f5ddc2a178b2a2945f77c04126839ee25.png",
+      "output": "mod_nailong/assets/portraits/729c7a0fe213577f6ba80dcee2e437c45699944235b54f4930443dd7dc9abf29.png",
+      "output_sha256": "9c8585f9389528c3caac87ec592d30faa050517387e3671b23bf6b3de95429c7",
+      "external_task_id": "task-unified-1792955240-7h0cg7o7",
+      "external_execution": "mod_nailong/experiments/evolink-high131-flare-20261025/executions/729c7a0fe213577f6ba80dcee2e437c45699944235b54f4930443dd7dc9abf29-02.json",
+      "external_execution_sha256": "2e289f573734210c1b3dc398e6356cdd6cd84553c06be0da3c00a8ddf539ad27",
+      "external_request": "mod_nailong/experiments/evolink-high131-flare-20261025/outputs/729c7a0fe213577f6ba80dcee2e437c45699944235b54f4930443dd7dc9abf29-02.request.json",
+      "external_request_sha256": "f1dcf9d26a4e2218f24cb3f2a8230d0652ef28cc73d98cbeaaa2c2af2d8b46b5",
+      "external_result": "mod_nailong/experiments/evolink-high131-flare-20261025/outputs/729c7a0fe213577f6ba80dcee2e437c45699944235b54f4930443dd7dc9abf29-02.result.json",
+      "external_result_sha256": "b947e7a2871341c1e5748775c422707b5e9700a917a6cd5a559b906395a8e778",
+      "external_review": "mod_nailong/experiments/evolink-high131-flare-20261025/review-recovery-102-repair-02-alpha-final-agent.json",
+      "external_review_sha256": "744588f4fa1f27f5613a4422a0b8ec0bbab7bd50dfc35198cdc811b14f4bc031",
+      "external_evidence": "mod_nailong/experiments/evolink-high131-flare-20261025/review-recovery-102-repair-02-alpha-final-agent-evidence.json",
+      "external_evidence_sha256": "b8c6a8bad537a9ec6e72c13f5c32aa9032068734d47421bec8b361007e73513a",
+      "external_reviewer": "Kimi main recovery executor actually viewed the exact source, complete parent raw, complete derived RGBA raw, full white/cyan/source-alpha/return-alpha sheet and unchanged naiwa reference; verified parent/receipt/evidence/generation bindings and independently recomputed RGB identity and BILINEAR source-alpha equality with read-only Python.",
+      "recovery_status": "direct_completed_execution",
+      "alpha_repair": {
+        "method": "source-alpha-resize-bilinear-rgb-unchanged-v1",
+        "parent_fullsize_sha256": "a0f58904f614f75660b258d69bccdbb239439f45defbaed3050c94a3fa4ef581",
+        "source_alpha_png_sha256": "a40951a8385541db336e36032fae2b766029a4d9d6fb945e5b7e56fb1bef7160",
+        "resized_alpha_sha256": "11e122a90e29c4446b6c237e34e49cbf168d719980366098d97c5453f58620c1",
+        "rgb_unchanged": true,
+        "alpha_matches_resized_source": true,
+        "generation_task_id": "task-unified-1792955240-7h0cg7o7",
+        "review_record": "mod_nailong/experiments/evolink-high131-flare-20261025/review-recovery-102-repair-02-alpha-final-agent.json",
+        "receipt": "mod_nailong/experiments/evolink-high131-flare-20261025/review-recovery-102-repair-02-alpha-repair-receipt.json",
+        "receipt_sha256": "9c3efac5653a75faddc6ea74626ba4f20aef7f1f23f75f09fe31d1751178520f",
+        "proof_source": "bound-review-evidence-and-direct-pixel-validation"
+      },
+      "reviewed_at_utc": "2026-10-25T19:28:26.515408+00:00",
+      "review": "approved"
     }
   ]
 }
