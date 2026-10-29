@@ -1,0 +1,139 @@
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from runtime import high131_exact_api_publish as publish
+
+
+BASE = "cb1040af1c6f6af21235246c6dc28cd6687595bb"
+TARGET = "a23980233e210e837e5ddb03f064ad4c09a4f5bd"
+
+
+class FakeApi:
+    def __init__(self, remote=BASE, mismatch_tree=False, comparison="behind"):
+        self.remote = remote
+        self.mismatch_tree = mismatch_tree
+        self.comparison = comparison
+        self.posts = []
+        self.patches = []
+
+    def get_json(self, endpoint, expected_sha=None):
+        if endpoint == "git/ref/heads/master":
+            return {"object": {"sha": self.remote}}
+        if endpoint == "rate_limit":
+            return {"resources": {"core": {"remaining": 5000}}}
+        if endpoint.startswith("compare/"):
+            return {"status": self.comparison}
+        raise AssertionError(endpoint)
+
+    def get_optional(self, endpoint, expected_sha=None):
+        return None
+
+    def post_json(self, endpoint, payload, expected_sha):
+        self.posts.append((endpoint, payload, expected_sha))
+        return {"sha": "0" * 40 if endpoint == "git/trees" and self.mismatch_tree else expected_sha}
+
+    def runner(self, endpoint, method, payload, timeout):
+        if endpoint == "git/refs/heads/master" and method == "PATCH":
+            self.patches.append(payload)
+            self.remote = TARGET
+            return {"ref": "refs/heads/master", "object": {"sha": TARGET}}
+        raise AssertionError((endpoint, method))
+
+
+class NullLock:
+    def __init__(self, batch, target):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+
+class ExactApiPublishTests(unittest.TestCase):
+    def publish(self, api, scope="import"):
+        with tempfile.TemporaryDirectory(dir=publish.ROOT / "runtime") as directory, patch.object(publish, "PublishLock", NullLock):
+            publisher = publish.ExactApiPublisher(BASE, TARGET, scope, "fixture", api=api, receipt_path=Path(directory) / "receipt.json")
+            return publisher.publish()
+
+    def test_exact_objects_and_non_forced_fast_forward(self):
+        api = FakeApi()
+        result = self.publish(api)
+        self.assertEqual(result["status"], "published_pending_original_readback")
+        self.assertTrue(result["ref_updated"])
+        self.assertEqual(result["remote_master_observed"], TARGET)
+        self.assertEqual(api.patches, [{"sha": TARGET, "force": False}])
+        details = publish.commit_details(TARGET)
+        commit_call = [call for call in api.posts if call[0] == "git/commits"][-1][1]
+        self.assertEqual(commit_call["message"], details["message"])
+        self.assertEqual(commit_call["tree"], details["tree"])
+        self.assertEqual(commit_call["parents"], [details["parent"]])
+        self.assertEqual(commit_call["author"], details["author"])
+        self.assertEqual(commit_call["committer"], details["committer"])
+        tree_call = [call for call in api.posts if call[0] == "git/trees"][-1]
+        self.assertEqual(tree_call[1]["base_tree"], details["base_tree"])
+        self.assertEqual(tree_call[1]["tree"], details["changes"])
+        self.assertEqual(tree_call[2], details["tree"])
+
+    def test_sha_mismatch_never_updates_reference(self):
+        api = FakeApi(mismatch_tree=True)
+        with self.assertRaises(publish.ExactPublishError):
+            self.publish(api)
+        self.assertEqual(api.patches, [])
+
+    def test_diverged_remote_and_already_public_do_not_upload_or_overwrite(self):
+        api = FakeApi(remote="1" * 40, comparison="diverged")
+        with self.assertRaises(publish.ExactPublishError):
+            self.publish(api)
+        self.assertEqual(api.posts, [])
+        self.assertEqual(api.patches, [])
+        api = FakeApi(remote=TARGET)
+        result = self.publish(api)
+        self.assertEqual(result["status"], "already_public_pending_original_readback")
+        self.assertFalse(result["ref_updated"])
+        self.assertEqual(api.posts, [])
+        self.assertEqual(api.patches, [])
+
+    def test_transient_creation_failure_recovers_by_content_sha_only(self):
+        expected = "a" * 40
+        calls = []
+        def runner(endpoint, method, payload, timeout):
+            calls.append((endpoint, method))
+            if method == "POST" and sum(item[1] == "POST" for item in calls) == 1:
+                raise publish.ApiError("TLS handshake timeout", transient=True)
+            if method == "GET" and endpoint == "git/blobs/" + expected:
+                return {"sha": expected}
+            raise AssertionError((endpoint, method))
+        with patch.object(publish.time, "sleep"):
+            result = publish.Api(runner).post_json("git/blobs", {"content": "YQ==", "encoding": "base64"}, expected)
+        self.assertEqual(result["sha"], expected)
+        self.assertEqual(calls, [("git/blobs", "POST"), ("git/blobs/" + expected, "GET")])
+        calls = []
+        def forbidden(endpoint, method, payload, timeout):
+            calls.append((endpoint, method))
+            raise publish.ApiError("HTTP 403", transient=False, status=403)
+        with self.assertRaises(publish.ApiError):
+            publish.Api(forbidden).post_json("git/blobs", {}, expected)
+        self.assertEqual(len(calls), 1)
+
+    def test_unexpected_path_or_deletion_is_rejected_before_upload(self):
+        detail = {"commit": TARGET, "parent": BASE, "changes": [{"path": "../secret", "mode": "100644", "type": "blob", "sha": "a" * 40}]}
+        with patch.object(publish, "commit_details", return_value=detail), patch.object(publish, "git_text", return_value=TARGET):
+            with self.assertRaises(publish.ExactPublishError):
+                publish.ExactApiPublisher(BASE, TARGET, "delivery", "fixture")
+        def raw(*args, input_bytes=None):
+            if args[:2] == ("cat-file", "-p"):
+                return b"tree 1234\nparent 5678\nauthor A <a@b> 1 +0000\ncommitter A <a@b> 1 +0000\n\nmessage\n"
+            if args[0] == "diff-tree":
+                return b":100644 100644 " + b"a" * 40 + b" " + b"b" * 40 + b" D\0mod_nailong/data/generated.json\0"
+            return b"1234"
+        with patch.object(publish, "git_bytes", side_effect=raw):
+            with self.assertRaisesRegex(publish.ExactPublishError, "deletion"):
+                publish.commit_details(TARGET)
+
+
+if __name__ == "__main__":
+    unittest.main()
