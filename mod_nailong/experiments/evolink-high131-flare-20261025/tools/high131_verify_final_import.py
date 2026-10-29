@@ -90,7 +90,7 @@ def verify(worktree, history_parent, expected_commit=None):
         "original_pngs": originals,
         "other_executor_HIGH_history_preserved": preserved,
         "non_HIGH_portrait_and_retry_rows_match_immediate_remote_parent": True,
-        "standard_python_tests": {"passed": 477, "task": "bash-60tqzr5r", "elapsed_seconds": 502.668},
+        "standard_python_tests": {"passed": 487, "task": "bash-q1g10imn", "elapsed_seconds": 622.280},
         "new_image_generation_calls": 0,
         "formal_game_build_or_runtime_acceptance_claimed": False,
         "runtime_acceptance_owner": "Codex",
