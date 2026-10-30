@@ -16,6 +16,13 @@ def require(condition, message):
 
 
 def main():
+    common_read_json = master_archive.read_json
+    def read_project_json(path):
+        candidate = Path(path)
+        if sys.platform == "win32" and candidate.is_absolute():
+            candidate = Path("\\\\?\\" + str(candidate))
+        return common_read_json(candidate)
+    master_archive.read_json = read_project_json
     index = read_json(ROOT / "mod_nailong/data/fullsize-files.json")
     expected, _current, _provenance = master_archive.recorded_outputs(ROOT / "mod_nailong")
     expected.update(read_json(ROOT / "mod_nailong/data/fullsize-files.json")["outputs"])

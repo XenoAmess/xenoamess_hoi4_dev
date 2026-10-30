@@ -11,7 +11,7 @@ from runtime import high131_exact_api_publish as exact
 from tools.common import machine_id, read_json, utc_now, write_json
 
 BASE = "398db2a4959364c4303f9d912397b58df5fe907a"
-EXPECTED_TARGET = "8116151950b7eeb86cc2177ffae0ec23063ce49f"
+EXPECTED_TARGET = "4feaeec11dfaf9b784abe01715a312a653cbf235"
 EXPECTED_IMPORT = "c17f5089f15042141c18295d5e6c939eaf997182"
 EXPERIMENT = "mod_nailong/experiments/evolink-low2-20261030"
 

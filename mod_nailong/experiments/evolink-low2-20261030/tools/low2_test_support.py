@@ -28,12 +28,41 @@ def copy_exact(source, target):
         shutil.copyfile(source, target)
 
 
+def restore_missing_tracked_json(worktree):
+    import hashlib
+    import subprocess
+    restored = []
+    listing = subprocess.check_output(["git", "ls-files", "-z", "--", "mod_nailong/experiments"], cwd=worktree)
+    for item in listing.decode("utf-8").split("\0"):
+        relative = Path(item)
+        if relative.suffix != ".json" or relative.is_absolute() or ".." in relative.parts:
+            continue
+        target = worktree / relative
+        if target.is_file():
+            continue
+        resolved = target.resolve()
+        resolved.relative_to(worktree)
+        extended = Path("\\\\?\\" + str(resolved)) if sys.platform == "win32" else resolved
+        expected = subprocess.check_output(["git", "rev-parse", f"HEAD:{relative.as_posix()}"], cwd=worktree, text=True).strip()
+        data = subprocess.check_output(["git", "cat-file", "blob", expected], cwd=worktree)
+        require(hashlib.sha1(b"blob " + str(len(data)).encode("ascii") + b"\0" + data).hexdigest() == expected, f"Restored JSON blob differs: {relative}")
+        if not extended.is_file():
+            require(not extended.exists() and not extended.is_symlink(), f"Unexpected non-file JSON path: {target}")
+            extended.parent.mkdir(parents=True, exist_ok=True)
+            with extended.open("xb") as stream:
+                stream.write(data)
+        require(extended.is_file() and extended.read_bytes() == data, f"Unable to verify restored JSON: {relative}")
+        restored.append(relative.as_posix())
+    return restored
+
+
 def main():
     parser = argparse.ArgumentParser(description="Materialize local LOW2 test support without committing dependencies or invoking image generation.")
     parser.add_argument("--worktree", type=Path, required=True)
     args = parser.parse_args()
     worktree = args.worktree.resolve()
     support.main()
+    restored_json = restore_missing_tracked_json(worktree)
     source_root = support.SUPPORT_ROOT
     receipt = source_root / "mod_nailong/data/extra-retry-rounds/20261030-remaining-low-nine-one-immediate-round-completed.json"
     original = read_json(receipt)
@@ -69,6 +98,7 @@ def main():
     output = {
         "schema": "low2-local-test-support-v1", "machine_id": machine_id(), "observed_at_utc": utc_now(),
         "worktree": str(worktree), "original_failure_evidence": evidence_relative.as_posix(),
+        "restored_missing_tracked_json": restored_json,
         "original_failure_evidence_sha256": file_sha256(worktree / evidence_relative),
         "skill_test_client_copied_without_credentials": skill_relative.as_posix(),
         "source_index_copied_for_local_dds_validation": True,
