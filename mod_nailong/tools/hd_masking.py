@@ -5,7 +5,7 @@ import io
 from pathlib import Path
 import zipfile
 from PIL import Image
-from tools.common import ROOT, file_sha256, sha256, write_json
+from tools.common import ROOT, file_sha256, read_json, sha256, write_json
 from mod_nailong.tools.catalog import tokens, virtual_texture_path
 
 
@@ -76,29 +76,72 @@ def take_inventory_only(bindings, records):
     return result
 
 
+def verify_layout_bindings(output, manifest=None):
+    """Deployment gate independent of a historical ZIP's byte integrity."""
+    output = Path(output)
+    manifest = manifest or read_json(output/'manifest.json')
+    gfx = output/'staging/interface/zz_naiwa_hd_masking_samples.gfx'
+    fixture = manifest.get('development_fixture')
+    if not gfx.exists():
+        if fixture and fixture.get('aliases'):
+            raise ValueError('HD fixture alias definitions are absent')
+        return {'scope':'no generated multi-portrait masking fixture'}
+    if not fixture or 'aliases' not in fixture:
+        raise ValueError('HD masking definitions have no binding manifest')
+    records = sprite_records(gfx.read_text(encoding='utf-8'))
+    actual = {record['name'].lower(): virtual_texture_path(record.get('existing_mask') or '').lower() for record in records}
+    expected = {alias['name'].lower(): alias['texture'].lower() for alias in fixture['aliases']}
+    if len(actual) != len(records) or actual != expected:
+        raise ValueError('HD sprite names/masks differ from their exact manifest aliases')
+    exception_keys = {row['source_sha256'] for row in fixture.get('preserved_original_nonperson_paths', [])}
+    people, _ = partition_bindings(manifest['bindings'], exception_keys)
+    for record in records:
+        if actual[record['name'].lower()] not in people:raise ValueError('HD alias has no matching person binding')
+        binding = people[actual[record['name'].lower()]]
+        carrier = output/'staging'/record['texture']
+        with Image.open(carrier) as image:
+            if list(image.size) != binding['original_game_size'] or image.convert('RGBA').getextrema() != ((255,255),)*4:
+                raise ValueError('HD layout carrier changed its size or contains portrait pixels: '+record['texture'])
+    return {'scope':'exact native masking alias graph and layout carrier dimensions',
+            'aliases':len(records), 'primary_layout_textures':len({r['texture'] for r in records}), 'runtime_acceptance_implied':False}
+
+
 def augment(output, manifest, aliases, source_proofs, native_include_proofs=None, inventory_only=None):
     """Add layout-only carriers; DDS/PNG equality is checked for every person sample."""
     from mod_nailong.tools.build_release import verify,nonperson_scope
+    if manifest.get('texture_resolution_policy_id')=='native-source-size-v1':
+        raise ValueError('HD masking adapter retired for native-size game payloads by user decision')
     output=Path(output);staging=output/'staging'
     all_bindings={r['path'].lower():r for r in manifest['bindings']}
     bindings,preserved=partition_bindings(all_bindings.values(),set(nonperson_scope()[0]))
     unbound=take_inventory_only(bindings,inventory_only)
     for path in unbound:bindings.pop(path)
     if {r['texture'] for r in aliases}!=set(bindings):raise ValueError('Alias sample does not cover exactly the built person textures')
-    added={};pixel_proofs=[]
+    added={};pixel_proofs=[];carriers={}
     for path,binding in {**bindings,**unbound}.items():
         master=ROOT/'mod_nailong/assets/generated_fullsize'/f'{binding["fullsize_master_sha256"]}.png'
         if file_sha256(master)!=binding['fullsize_master_sha256']:raise ValueError('Master bytes changed')
-        with Image.open(master) as original,Image.open(staging/binding['path']) as payload:
+        from mod_nailong.tools.texture_resolution import read_generated_texture
+        with Image.open(master) as original,read_generated_texture(staging/binding['path']) as payload:
             original=original.convert('RGBA');payload=payload.convert('RGBA')
-            if original.size!=payload.size or original.tobytes()!=payload.tobytes():raise ValueError('HD pixels changed')
+            resized=bool(binding.get('resized'))
+            if resized:
+                cap=manifest.get('validation_max_edge_probe')
+                if not manifest.get('preview') or not manifest.get('validation_source_keys') or binding.get('resolution_policy')!='experimental-max-edge-probe' or cap!=binding.get('validation_max_edge_probe') or type(cap) is not int or cap<1:
+                    raise ValueError('Unregistered historical HD resize')
+                size=tuple(max(1,round(side*min(1,cap/max(original.size)))) for side in original.size)
+                original=original.resize(size,Image.Resampling.LANCZOS)
+            if original.size!=payload.size or original.tobytes()!=payload.tobytes():raise ValueError('DDS pixels differ from the declared fullsize master or explicit probe transform')
             pixel_proofs.append({'source_sha256':binding['source_sha256'],
                                  'master_sha256':binding['fullsize_master_sha256'],
-                                 'rgba_pixel_sha256':sha256(payload.tobytes()),'rgba_equal':True})
+                                 'rgba_pixel_sha256':sha256(payload.tobytes()),'rgba_equal':not resized,'declared_transform_equal':True,'resized':resized})
         if path not in bindings:continue
         width,height=binding['original_game_size']
         if not (1<=width<=4096 and 1<=height<=4096):raise ValueError('Unexpected layout carrier size')
+        # This image carries logical dimensions only. The native alias retains
+        # the distinct portrait path in its secondary texture binding.
         rel=f'gfx/interface/naiwa_white_layout_{width}_{height}.dds'
+        carriers[path]=rel
         if rel not in added:
             stream=io.BytesIO();Image.new('RGBA',(width,height),(255,255,255,255)).save(stream,format='DDS');added[rel]=stream.getvalue()
     added['gfx/FX/naiwa_hd_masking_sampler.shader']=(ROOT/'mod_nailong/assets/runtime/hd_portrait_masking_sampler.shader').read_bytes()
@@ -107,7 +150,7 @@ def augment(output, manifest, aliases, source_proofs, native_include_proofs=None
         binding=bindings[alias['texture']];w,h=binding['original_game_size']
         chunks.append(f''' spriteType = {{
   name = "{alias['name']}"
-  texturefile = "gfx/interface/naiwa_white_layout_{w}_{h}.dds"
+  texturefile = "{carriers[alias['texture']]}"
   masking_texture = "{binding['path']}"
   effectFile = "gfx/FX/naiwa_hd_masking_sampler.lua"
   noOfFrames = 1
@@ -123,8 +166,9 @@ def augment(output, manifest, aliases, source_proofs, native_include_proofs=None
     used={source_id for a in aliases for source_id in a['source_ids']}
     manifest['files'].sort(key=lambda r:r['path'])
     manifest['development_fixture']={'kind':'Unqualified native sprite HD masking sample set',
-        'formal_release_eligible':False,'hd_raster_resized':False,
+        'formal_release_eligible':False,'hd_raster_resized':any(b.get('resized') for b in manifest['bindings']),
         'carrier_contains_no_portrait_pixels':True,'gui_or_gameplay_changes':False,
+        'primary_layout_texture_identity':'shared-size-only-layout-v1',
         'aliases':aliases,'native_source_proofs':[p for p in source_proofs if p['id'] in used],
         'native_shader_include_proofs':native_include_proofs or [],
         'preserved_original_nonperson_paths':[{'path':path,'source_sha256':binding['source_sha256'],'sha256':binding['sha256']} for path,binding in sorted(preserved.items())],
@@ -132,6 +176,7 @@ def augment(output, manifest, aliases, source_proofs, native_include_proofs=None
         'fullsize_pixel_proofs':pixel_proofs,
         'live_acceptance':'Not run; every actual consumer, tooltip and hit area requires separate runtime evidence. Static parsing and unchanged bytes do not qualify display.'}
     write_json(output/'manifest.json',manifest)
+    verify_layout_bindings(output,manifest)
     with zipfile.ZipFile(output/'gangnailongxin.zip','w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
         for row in manifest['files']:
             info=zipfile.ZipInfo(row['path'],date_time=(2020,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=0o100644<<16;info.create_system=3

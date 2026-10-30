@@ -30,12 +30,13 @@ def verify_payload_pixels(root, output, manifest):
         master = Path(root)/'mod_nailong/assets/generated_fullsize'/f"{binding['fullsize_master_sha256']}.png"
         if file_sha256(master)!=binding['fullsize_master_sha256']:
             raise ValueError('Fullsize master changed during build')
-        with Image.open(master) as source, Image.open(payload) as encoded:
-            rgba = source.convert('RGBA')
+        from mod_nailong.tools.texture_resolution import read_generated_texture,game_image,POLICY_ID
+        with Image.open(master) as source, read_generated_texture(payload) as encoded:
+            rgba = game_image(source,binding['original_game_size']) if binding.get('resolution_policy')==POLICY_ID else source.convert('RGBA')
             decoded = encoded.convert('RGBA')
             if rgba.size!=decoded.size or rgba.tobytes()!=decoded.tobytes():
                 raise ValueError(f"Fullsize RGBA differs: {binding['path']}")
-            people.append({'path':binding['path'],'source_sha256':binding['source_sha256'],'master_sha256':binding['fullsize_master_sha256'],'rgba_pixel_sha256':hashlib.sha256(decoded.tobytes()).hexdigest(),'size':list(decoded.size),'resized':False})
+            people.append({'path':binding['path'],'source_sha256':binding['source_sha256'],'master_sha256':binding['fullsize_master_sha256'],'rgba_pixel_sha256':hashlib.sha256(decoded.tobytes()).hexdigest(),'size':list(decoded.size),'resized':source.size!=decoded.size})
     return {'person_textures':len(people),'preserved_original_nonperson_textures':len(preserved),'people':people,'nonperson':preserved,'runtime_display_acceptance':'not-run'}
 
 
@@ -65,9 +66,6 @@ def build_profile(worktree, output, admission, packages=None, binding_audit=None
     if set(manifest['validation_source_keys'])!=set(profile['selected_keys']) or len(manifest['bindings'])!=len(profile['selected_paths']):
         raise ValueError('HIGH manifest does not match its explicit build profile')
     if binding_audit is not None:
-        from mod_nailong.tools.hd_masking import augment
-        from tools.common import game_root
-
         audit = read_json(binding_audit)
         expected_packages = sorted(packages) if packages is not None else None
         if Path(audit['root']).resolve()!=worktree or audit['packages']!=expected_packages or audit['selected_paths']!=profile['selected_paths']:
@@ -76,10 +74,8 @@ def build_profile(worktree, output, admission, packages=None, binding_audit=None
             raise ValueError('Binding audit is stale for this catalog')
         if audit['unresolved']:
             raise ValueError('Unresolved native bindings remain')
-        aliases = audit['aliases']+audit.get('resolved_profile_aliases',[])
-        install = game_root()
-        includes = [{'path':relative,'sha256':file_sha256(install/relative)} for relative in ['gfx/FX/buttonstate.fxh','gfx/FX/buttonstate.shader']]
-        manifest = augment(output,manifest,aliases,audit['native_source_proofs'],includes,audit.get('inventory_without_current_consumer',[]))
+        # Keep the native binding audit as evidence; native-size textures no
+        # longer need generated sprite aliases, carriers or a custom shader.
     proof = verify_payload_pixels(ROOT,output,manifest)
     write_json(output/'rgba-verification.json',{'schema':'naiwa-high131-rgba-verification-v1','machine_id':machine_id(),'observed_at_utc':utc_now(),'source_commit':commit,**proof})
     write_json(output/'build-receipt.json',{

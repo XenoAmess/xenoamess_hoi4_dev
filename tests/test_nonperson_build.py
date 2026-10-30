@@ -14,6 +14,7 @@ from tools.common import ROOT, file_sha256, machine_id, read_json, sha256, write
 
 class NonpersonBuildTests(unittest.TestCase):
     def setUp(self):
+        (ROOT/'runtime').mkdir(exist_ok=True)
         self.temporary = tempfile.TemporaryDirectory(dir=ROOT / "runtime")
         self.root = Path(self.temporary.name) / "case"
         self.mod = self.root / "mod_nailong"
@@ -117,6 +118,12 @@ class NonpersonBuildTests(unittest.TestCase):
         self.assertEqual(manifest["preserved_original_nonperson_exceptions"], [78, 125])
         self.assertEqual(len(manifest["bindings"]), 2)
         self.assertFalse(manifest["art_complete"])
+
+    def test_fresh_checkout_can_verify_original_bytes_without_exported_reference_png(self):
+        scope=read_json(self.experiment/'scope.json')
+        (self.root/scope['entries'][0]['source_png']).unlink()
+        _,manifest=builder.payload(preview=True,validation_keys=self.keys)
+        self.assertEqual(len(manifest['bindings']),4)
 
     def test_original_exception_preview_is_deterministic(self):
         first = builder.build(self.root / "first", preview=True, validation_keys=self.keys)

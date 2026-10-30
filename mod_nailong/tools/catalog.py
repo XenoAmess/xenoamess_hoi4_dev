@@ -13,7 +13,7 @@ import sys
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from tools.common import ROOT, file_sha256, game_root, machine_id, sha256, utc_now, write_json
+from tools.common import ROOT, file_sha256, game_root, machine_id, read_json, sha256, utc_now, write_json
 from PIL import Image, ImageDraw
 
 MOD = ROOT / "mod_nailong"
@@ -22,6 +22,7 @@ NON_PORTRAIT_TEXTURES = {
     "gfx/aces/ace_kia.dds": "Coffin/cross status icon; no person to transform (visually reviewed 2026-10-16)",
     "gfx/aces/ace_none.dds": "Playing-card placeholder icon; no person to transform (visually reviewed 2026-10-16)",
 }
+VISUALLY_VERIFIED_IDEA_PORTRAITS = MOD / "data/verified-idea-portraits.json"
 TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|#[^\n]*|[{}=]|[^\s{}=#"]+')
 
 def virtual_texture_path(value):
@@ -106,6 +107,35 @@ def read_source(row):
     with zipfile.ZipFile(row[2]) as archive:
         return archive.read(row[3])
 
+def verified_idea_paths(rows, textures, registry):
+    """Include exact visually reviewed people, never every similarly sized icon."""
+    if registry.get('schema') != 'naiwa-visually-verified-idea-portraits-v1':
+        raise RuntimeError('Unknown visually verified idea portrait registry schema')
+    registered = set()
+    identities = set()
+    for verified in registry['sources']:
+        texture = virtual_texture_path(verified['path']).lower()
+        package = verified.get('package', 'base')
+        identity = (package, texture)
+        if (identity in identities or not texture.startswith('gfx/interface/ideas/')
+                or verified.get('classification') not in {'person_or_person_silhouette_visually_confirmed', 'animal_character_portrait_visually_confirmed'}):
+            raise RuntimeError(f'Duplicate, unreviewed or out-of-scope visual portrait registry path: {texture}')
+        registered.add(texture)
+        identities.add(identity)
+        matches = [index for index in textures.get(texture, []) if rows[index][0] == package]
+        if len(matches) != 1:
+            raise RuntimeError(f'Visual registry source must resolve to one package texture: {package}/{texture}')
+        raw = read_source(rows[matches[0]])
+        if sha256(raw) != verified['source_sha256']:
+            raise RuntimeError(f'Visually verified person texture changed: {texture}')
+        with Image.open(io.BytesIO(raw)) as image:
+            if list(image.size) != verified['size']:
+                raise RuntimeError(f'Visually verified person texture dimensions changed: {texture}')
+    actual = {(rows[index][0], texture) for texture in registered for index in textures[texture]}
+    if actual != identities:
+        raise RuntimeError(f'Unreviewed same-path package portrait variants: {sorted(actual-identities)}')
+    return registered
+
 def inventory(install):
     rows = list(sources(install))
     textures = defaultdict(list)
@@ -153,6 +183,11 @@ def inventory(install):
             for texture, _ in bindings:
                 if texture in textures:
                     candidates.add(texture)
+    # National spirits and legacy advisor cards can have no character reference
+    # or portrait filename. Their separate visual registry pins original bytes.
+    registry = read_json(VISUALLY_VERIFIED_IDEA_PORTRAITS)
+    candidates.update(verified_idea_paths(rows, textures, registry))
+    visual_records = {(record.get('package', 'base'), record['path'].lower()): record for record in registry['sources']}
     assets = []
     for texture in sorted(candidates):
         if texture in NON_PORTRAIT_TEXTURES:
@@ -168,11 +203,14 @@ def inventory(install):
                 raise RuntimeError(f"Cannot decode portrait {row[:2]}") from exc
             digest = sha256(raw)
             asset = {"id": sha256((row[0]+"/"+row[1]).encode())[:20], "package": row[0], "path": row[1], "source_sha256": digest, "bytes": len(raw), "size": size, "mode": mode, "references": reference_map[texture]}
+            if (row[0], texture) in visual_records:
+                asset['visual_registry_classification'] = visual_records[(row[0], texture)]['classification']
             if row[3]:
                 asset["archive_member"] = row[3]
             assets.append(asset)
     launcher = __import__("json").loads((install / "launcher-settings.json").read_text(encoding="utf-8"))
     catalog = {"schema": "naiwa-portrait-catalog-v1", "generated_notice": "GENERATED FILE: run catalog.py", "observed_at_utc": utc_now(), "machine_id": machine_id(), "game_version": launcher["rawVersion"], "exe_sha256": file_sha256(install/"hoi4.exe"), "scope": "Vanilla plus all locally installed DLC assets; other Workshop mods are outside this catalog", "excluded_non_portrait_assets": NON_PORTRAIT_TEXTURES, "assets": assets, "unresolved_references": unresolved, "counts": {"textures": len(assets), "distinct_source_images": len({a["source_sha256"] for a in assets}), "character_references": len(refs), "unresolved_references": len(unresolved)}}
+    catalog['visually_verified_idea_portrait_registry_sha256'] = file_sha256(VISUALLY_VERIFIED_IDEA_PORTRAITS)
     write_json(MOD / "data/catalog.json", catalog)
     print(catalog["counts"])
     print("PACKAGES", dict(__import__("collections").Counter(a["package"] for a in assets)))

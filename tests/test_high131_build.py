@@ -11,6 +11,7 @@ from tools.common import ROOT, file_sha256, machine_id, utc_now, write_json
 
 class High131BuildAdmissionTests(unittest.TestCase):
     def setUp(self):
+        (ROOT/'runtime').mkdir(exist_ok=True)
         self.temporary = tempfile.TemporaryDirectory(dir=ROOT/'runtime')
         self.root = Path(self.temporary.name)
         self.output = self.root/'dist/high131-validation'
@@ -170,7 +171,8 @@ class High131BuildAdmissionTests(unittest.TestCase):
         (mod/'mod/descriptor.mod').write_text('name="钢奶龙心 (Development)"\n',encoding='utf-8')
         generated = {}
         for key in ('person','unused'):
-            generated[key] = {'generated_fullsize_image':f'mod_nailong/assets/generated_fullsize/{digest}.png','generated_fullsize_sha256':digest,'generated_fullsize_size':[2,3]}
+            generated[key] = {'generated_fullsize_image':f'mod_nailong/assets/generated_fullsize/{digest}.png','generated_fullsize_sha256':digest,'generated_fullsize_size':[2,3],
+                'review':'approved','art_direction':'hair-features-v1','image_sha256':digest,'collar_fit':{'status':'approved','policy':'collar-fit-v1','image_sha256':digest}}
         assets = [
             {'id':'person','path':'gfx/person.dds','source_sha256':'person','size':[2,3],'package':'base'},
             {'id':'unused','path':'gfx/unused.dds','source_sha256':'unused','size':[2,3],'package':'base'},
@@ -182,13 +184,12 @@ class High131BuildAdmissionTests(unittest.TestCase):
         output = self.root/'dist/adapter'
         with patch('mod_nailong.tools.hd_masking.ROOT',self.root), patch.object(builder,'MOD',mod), patch.object(builder,'ready',lambda row:True), patch.object(builder,'nonperson_scope',return_value=({object_key:{'index':131,'source_sha256':object_key}},None)):
             manifest = builder.build(output,preview=True,validation_keys={'person','unused',object_key})
-            manifest = augment(output,manifest,[{'name':'GFX_person','texture':'gfx/person.dds','source_ids':[0]}],[{'id':0,'path':'interface/test.gfx','sha256':'proof'}],inventory_only=[{'path':'gfx/unused.dds','source_sha256':'unused','classification':'no_current_native_consumer_in_bounded_inventory','runtime_display_not_applicable_unless_a_consumer_is_found':True}])
-        fixture = manifest['development_fixture']
-        self.assertEqual([row['path'] for row in fixture['inventory_without_current_consumer']],['gfx/unused.dds'])
-        self.assertEqual([row['path'] for row in fixture['preserved_original_nonperson_paths']],['gfx/object.dds'])
-        self.assertEqual(len(fixture['fullsize_pixel_proofs']),2)
+            with self.assertRaisesRegex(ValueError,'retired'):
+                augment(output,manifest,[{'name':'GFX_person','texture':'gfx/person.dds','source_ids':[0]}],[{'id':0,'path':'interface/test.gfx','sha256':'proof'}])
+        self.assertNotIn('development_fixture',manifest)
+        self.assertEqual({row['path'] for row in manifest['bindings']},{'gfx/person.dds','gfx/unused.dds','gfx/object.dds'})
         self.assertEqual((output/'staging/gfx/object.dds').read_bytes(),object_bytes)
-        self.assertFalse(fixture['formal_release_eligible'])
+        self.assertTrue(manifest['preview'])
         proof = verify_payload_pixels(self.root,output,manifest)
         self.assertEqual(proof['person_textures'],2)
         self.assertEqual(proof['preserved_original_nonperson_textures'],1)

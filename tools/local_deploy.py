@@ -22,6 +22,9 @@ def main():
     args=parser.parse_args()
     build=args.build.resolve()
     verify(build)
+    from mod_nailong.tools.texture_resolution import verify_game_textures
+    manifest=read_json(build/'manifest.json')
+    texture_check=verify_game_textures(build,manifest,reuse_pixel_proof=(build/'native-texture-verification.json').exists())
     profile=documents()/"Paradox Interactive/Hearts of Iron IV"
     target=profile/"mod/naiwa_world.mod"
     target.parent.mkdir(parents=True,exist_ok=True)

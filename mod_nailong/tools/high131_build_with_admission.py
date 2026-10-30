@@ -32,7 +32,7 @@ def verified_profile(worktree, packages):
     scope_keys = {row['source_sha256'] for row in scope['entries']}
     selected = {path:asset for path,asset in selected.items() if asset['source_sha256'] in scope_keys}
     exceptions,_ = build_release.nonperson_scope()
-    estimate = sum(4*generated[asset['source_sha256']]['generated_fullsize_size'][0]*generated[asset['source_sha256']]['generated_fullsize_size'][1]+128 for asset in selected.values() if asset['source_sha256'] in generated and build_release.ready(generated[asset['source_sha256']]))
+    estimate = sum(4*asset['size'][0]*asset['size'][1]+128 for asset in selected.values() if asset['source_sha256'] in generated and build_release.ready(generated[asset['source_sha256']]))
     estimate += sum(len(build_release.original_nonperson_bytes(asset)) for asset in selected.values() if asset['source_sha256'] in exceptions)
     return estimate
 

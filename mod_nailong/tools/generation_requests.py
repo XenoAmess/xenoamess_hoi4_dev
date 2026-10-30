@@ -90,9 +90,10 @@ def alpha_instruction(asset):
     path=asset['path'].replace('\\','/').lower()
     photo_card=path.startswith('gfx/interface/ideas/') and max(asset['size'])<100
     if photo_card:
-        return ("\nOutput alpha: genuine transparent RGBA ONLY OUTSIDE the complete original photograph FRAME AND NOTE silhouette. "
+        return ("\nOutput alpha: genuine transparent RGBA ONLY OUTSIDE the complete original framed portrait silhouette. "
                 "The photographic BACKING INSIDE the frame is a required OPAQUE surface: preserve its original background color and texture behind the character all the way to the inner frame rim. "
-                "Never turn the gaps between frame and character into transparent holes or a window. Keep the actual tilted photo rectangle, frame rim and overlapping note intact. "
+                "Never turn the gaps between frame and character into transparent holes or a window. Keep the actual frame angle and rim. "
+                "Preserve an overlapping paper note, pin or other attachment ONLY when actually visible in this exact source; otherwise do not invent one. "
                 "Do not invent a new backdrop outside the whole card. Retain source clothing, hair, headgear, lighting and crop at full generated resolution."+opaque_body)
     return ("\nOutput alpha: preserve genuine transparent RGBA outside the original asset's outer silhouette. "
             "Retain all original opaque content, including any existing background or dark vignette that is part of this source; do not erase it into alpha holes. "

@@ -38,7 +38,7 @@ def validation_sample_keys(catalog, generated, count, packages=None):
                    if ready(generated.get(a['source_sha256'],{}))})[:count]
 
 def nonperson_scope():
-    from runtime.high131_status import load_nonperson_exceptions
+    from mod_nailong.tools.nonperson_exceptions import load_nonperson_exceptions
     scope=read_json(MOD/'experiments/evolink-high131-flare-20261025/scope.json')
     return load_nonperson_exceptions(scope,root=ROOT)
 
@@ -66,10 +66,11 @@ def validate_heavy_write_admission(receipt, estimate, output):
     body = read_json(receipt)
     output = Path(output).resolve()
     output.relative_to((ROOT/'dist').resolve())
+    native=body.get('schema')=='naiwa-native-size-heavy-write-admission-v1'
     required_identity = {
-        'schema':'naiwa-high131-heavy-write-admission-v1', 'machine_id':machine_id(),
+        'schema':'naiwa-native-size-heavy-write-admission-v1' if native else 'naiwa-high131-heavy-write-admission-v1', 'machine_id':machine_id(),
         'status':'admitted', 'policy_version':'1.0.0',
-        'scope':'high131-original-rgba-validation-v1', 'output_root':str(output),
+        'scope':'native-source-size-v1' if native else 'high131-original-rgba-validation-v1', 'output_root':str(output),
     }
     if any(body.get(key)!=value for key,value in required_identity.items()):
         raise SystemExit('Heavy-write admission identity, machine, scope or output mismatch')
@@ -125,6 +126,7 @@ def validate_heavy_write_admission(receipt, estimate, output):
 def payload(preview=False, packages=None, validation_keys=None, sink=None, heavy_write_admission=None, output=None):
     catalog=read_json(MOD/"data/catalog.json")
     generated=read_json(MOD/"data/generated.json")["portraits"]
+    from mod_nailong.tools.texture_resolution import game_image, POLICY_ID
     exceptions,exception_receipt=nonperson_scope()
     for key in exceptions:
         if key in generated:raise SystemExit(f'Non-person exception must not have a generated row: {key}')
@@ -142,13 +144,12 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None, heavy
         validation_keys=set(validation_keys)
         if not validation_keys or not validation_keys<={a['source_sha256'] for a in selected.values()}:raise SystemExit('Unknown or empty validation source selection')
         selected={path:a for path,a in selected.items() if a['source_sha256'] in validation_keys}
-    # Fullsize encoding is not proof that all native GUI consumers display it
-    # correctly. Actual probes found overflow, so a complete art catalog alone
-    # must not accidentally unlock a broken formal release.
-    qualification_file=MOD/'data/hd-display-qualification.json'
+    # Native dimensions remove the experimental HD adapter. Art coverage and
+    # actual gameplay acceptance remain separate release requirements.
+    qualification_file=MOD/'data/game-display-qualification.json'
     qualification=read_json(qualification_file) if qualification_file.exists() else {'status':'unqualified'}
     if not preview and qualification.get('status')!='qualified_for_release':
-        raise SystemExit('RELEASE BLOCKED: fullsize portrait display compatibility remains unqualified; actual GUI overflow must be resolved and evidenced before release')
+        raise SystemExit('RELEASE BLOCKED: native-size portrait gameplay acceptance remains unqualified')
     originals={a['id']:original_nonperson_bytes(a) for a in selected.values() if a['source_sha256'] in exceptions}
     files={}
     file_records=[]
@@ -156,9 +157,9 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None, heavy
         file_records.append({'path':name,'bytes':len(data),'sha256':sha256(data)})
         if sink is None:files[name]=data
         else:sink(name,data)
-    # Lossless fullsize DDS can be much larger than the old native-size preview.
-    # Routine builds stay bounded; a large HIGH validation needs a live scoped admission.
-    estimate=sum(4*generated[a['source_sha256']]['generated_fullsize_size'][0]*generated[a['source_sha256']]['generated_fullsize_size'][1]+128 for a in selected.values() if a['source_sha256'] in generated and ready(generated[a['source_sha256']]))+sum(len(raw) for raw in originals.values())
+    # Budget actual native-size payloads, while reading one immutable HD
+    # master at a time. Original PNG bytes never enter the game staging.
+    estimate=sum(4*a['size'][0]*a['size'][1]+128 for a in selected.values() if a['source_sha256'] in generated and ready(generated[a['source_sha256']]))+sum(len(raw) for raw in originals.values())
     if estimate>256*1024*1024:
         validate_heavy_write_admission(heavy_write_admission,estimate,output)
     bindings=[]
@@ -181,9 +182,12 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None, heavy
         if file_sha256(source)!=row['generated_fullsize_sha256']:raise SystemExit(f'Fullsize master checksum mismatch: {source}')
         stream=io.BytesIO()
         with Image.open(source) as image:
+            original_size=list(image.size)
+            if original_size!=row['generated_fullsize_size']:raise SystemExit('Fullsize master dimension metadata changed')
+            image=game_image(image,asset['size'])
             published_size=list(image.size)
-            # Uncompressed legacy DDS ARGB8888 is supported by Clausewitz and
-            # preserves arbitrary original dimensions and transparent advisor borders.
+            # Original game dimensions; uncompressed ARGB8888 preserves the
+            # derived RGBA pixels, including transparent advisor borders.
             if path.suffix.lower()==".dds":image.convert("RGBA").save(stream,format="DDS")
             elif path.suffix.lower()==".tga":image.convert("RGBA").save(stream,format="TGA")
             else:image.convert("RGBA").save(stream,format="PNG")
@@ -191,7 +195,7 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None, heavy
         with Image.open(io.BytesIO(data)) as readback:
             if list(readback.size)!=published_size:raise SystemExit("Encoded texture readback failed")
         emit(path.as_posix(),data)
-        bindings.append({"path":path.as_posix(),"package":asset["package"],"source_sha256":key,"sha256":sha256(data),"size":published_size,'original_game_size':asset['size'],'fullsize_master_sha256':row['generated_fullsize_sha256'],'resized':False,'resolution_policy':'original-fullsize-master; compatibility not implied by static encoding'})
+        bindings.append({"path":path.as_posix(),"package":asset["package"],"source_sha256":key,"sha256":sha256(data),"size":published_size,'original_game_size':asset['size'],'fullsize_master_sha256':row['generated_fullsize_sha256'],'fullsize_master_size':original_size,'resized':published_size!=original_size,'resolution_policy':POLICY_ID})
     if not bindings:raise SystemExit("No reviewed portraits in selected profile")
     descriptor=(MOD/"mod/descriptor.mod").read_text(encoding="utf-8")
     if "remote_file_id" in descriptor or "replace_path" in descriptor:raise SystemExit("Invalid descriptor")
@@ -213,8 +217,14 @@ def build(output,preview=False,packages=None,validation_keys=None,heavy_write_ad
             info.create_system=3
             handle.writestr(info,data,compress_type=zipfile.ZIP_DEFLATED,compresslevel=9)
         _,manifest=payload(preview,packages,validation_keys,sink=emit,heavy_write_admission=heavy_write_admission,output=output)
+        from mod_nailong.tools.texture_resolution import POLICY_ID
+        manifest['texture_resolution_policy_id']=POLICY_ID
+        manifest['texture_resolution_policy']='Each approved original PNG master is retained unchanged; game derivatives match each original source texture dimensions exactly using RGBA LANCZOS; registered non-person exceptions preserve original file bytes'
     write_json(output/"manifest.json",manifest)
     verify(output)
+    from mod_nailong.tools.texture_resolution import verify_game_textures,write_pixel_proof
+    pixel_check=verify_game_textures(output,manifest,catalog=read_json(MOD/'data/catalog.json'),generated=read_json(MOD/'data/generated.json')['portraits'],root=ROOT)
+    write_pixel_proof(output,manifest,pixel_check)
     return manifest
 
 def verify(output):
