@@ -65,7 +65,7 @@ def verify_game_textures(output, manifest, catalog=None, generated=None, root=No
             raise ValueError('Stale or mismatched native pixel verification proof')
     by_path={r['path'].lower():r for r in bindings}
     if len(by_path)!=len(bindings):raise ValueError('Duplicate case-insensitive portrait output path')
-    textures={r['path'].lower() for r in manifest['files'] if Path(r['path']).suffix.lower() in ('.dds','.tga','.png')}
+    textures={r['path'].lower() for r in manifest['files'] if r['path'].lower().startswith('gfx/') and Path(r['path']).suffix.lower() in ('.dds','.tga','.png')}
     if textures!=set(by_path):raise ValueError('Unbound texture or retired HD layout carrier in staging')
     for binding in bindings:
         rel=binding['path'];asset=selected.get(rel.lower())

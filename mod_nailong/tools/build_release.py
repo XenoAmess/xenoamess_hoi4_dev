@@ -20,6 +20,17 @@ def ready(row):
     from mod_nailong.tools.art_contract import portrait_ready
     return portrait_ready(row)
 
+def thumbnail_bytes():
+    """HOI4 Workshop expects a real, square PNG named thumbnail.png."""
+    cover=MOD/'assets/branding/workshop-cover.jpg'
+    if not cover.exists():return None
+    with Image.open(cover) as image:
+        if image.width!=image.height:raise SystemExit('Workshop cover must be square')
+        stream=io.BytesIO();image.convert('RGB').save(stream,format='PNG',optimize=True)
+    raw=stream.getvalue()
+    if len(raw)>=1024*1024:raise SystemExit('Workshop thumbnail PNG must be smaller than 1 MiB')
+    return raw
+
 def profile_assets(catalog, packages=None):
     def rank(asset):
         if asset['package']=='base':return -1
@@ -201,8 +212,8 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None, heavy
     if "remote_file_id" in descriptor or "replace_path" in descriptor:raise SystemExit("Invalid descriptor")
     # Public product naming follows the user's release instruction. The
     # manifest retains exact coverage and validation status independently.
-    cover=MOD/'assets/branding/workshop-cover.jpg'
-    if cover.exists():emit('thumbnail.jpg',cover.read_bytes())
+    thumbnail=thumbnail_bytes()
+    if thumbnail is not None:emit('thumbnail.png',thumbnail)
     emit('descriptor.mod',descriptor.encode('utf-8'))
     return files,{"schema":"naiwa-release-manifest-v2","archive_filename":"gangnailongxin.zip","preview":preview,"art_complete":not missing,"game_version":catalog["game_version"],"catalog_sha256":file_sha256(MOD/"data/catalog.json"),"source_textures":len(catalog["assets"]),"generated_unique_images":len(generated),"selected_profile":sorted(packages) if packages is not None else "all-installed-catalog-packages; highest DLC numeric ID on shared paths","unresolved_baseline_references":len(catalog["unresolved_references"]),"profile_missing_texture_count":len(profile_missing),'texture_resolution_policy_id':POLICY_ID,'texture_resolution_policy':'Each approved original PNG master is retained unchanged; game derivatives match each original source texture dimensions exactly using RGBA LANCZOS; registered non-person exceptions preserve original file bytes','validation_source_keys':sorted(validation_keys) if validation_keys is not None else None,'validation_scope':'selected development subset only' if validation_keys is not None else 'entire selected profile',"preserved_original_nonperson_exceptions":sorted(row['index'] for row in exceptions.values() if row['source_sha256'] in {a['source_sha256'] for a in selected.values()}),"nonperson_scope_decision":exception_receipt,"bindings":bindings,"files":sorted(file_records,key=lambda r:r['path'])}
 
@@ -244,6 +255,7 @@ def repackage_verified(source, output, heavy_write_admission):
         raise SystemExit('Catalog changed; a full rebuild is required')
     manifest=copy.deepcopy(prior)
     records={r['path']:r for r in prior['files']}
+    records.pop('thumbnail.jpg',None)
     selected=profile_assets(catalog);exceptions,_=nonperson_scope()
     # Match the admission's conservative decoded-size estimate, which uses
     # a 128-byte allowance even for the smaller TGA/PNG headers.
@@ -274,15 +286,16 @@ def repackage_verified(source, output, heavy_write_admission):
     verification=dict(proof['verification'],pixel_proof_reused=True,current_master_bytes_rehashed=False)
     descriptor=(MOD/'mod/descriptor.mod').read_bytes()
     if b'remote_file_id' in descriptor or b'replace_path' in descriptor:raise SystemExit('Invalid descriptor')
-    replacements={'descriptor.mod':descriptor,'thumbnail.jpg':(MOD/'assets/branding/workshop-cover.jpg').read_bytes()}
+    replacements={'descriptor.mod':descriptor,'thumbnail.png':thumbnail_bytes()}
+    if replacements['thumbnail.png'] is None:raise SystemExit('Missing Workshop branding')
     staging=output/'staging';staging.mkdir(parents=True)
-    with zipfile.ZipFile(output/'gangnailongxin.zip','w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
+    with zipfile.ZipFile(output/'gangnailongxin.zip','w',zipfile.ZIP_DEFLATED,compresslevel=6) as archive:
         for name in sorted(set(records)|set(replacements)):
             raw=replacements[name] if name in replacements else (source/'staging'/name).read_bytes()
             if name not in replacements and sha256(raw)!=records[name]['sha256']:raise SystemExit('Verified payload changed')
             target=staging/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(raw)
             info=zipfile.ZipInfo(name,date_time=(2026,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=0o644<<16
-            archive.writestr(info,raw,compress_type=zipfile.ZIP_DEFLATED,compresslevel=9)
+            archive.writestr(info,raw,compress_type=zipfile.ZIP_DEFLATED,compresslevel=6)
             records[name]={'path':name,'bytes':len(raw),'sha256':sha256(raw)}
     manifest['files']=sorted(records.values(),key=lambda r:r['path'])
     write_json(output/'manifest.json',manifest);verify(output)

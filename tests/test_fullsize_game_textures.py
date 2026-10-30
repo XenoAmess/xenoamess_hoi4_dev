@@ -66,6 +66,9 @@ class FullsizeGameTextures(unittest.TestCase):
    first=builder.repackage_verified(source,self.root/'first',None)
    builder.repackage_verified(source,self.root/'second',None)
   self.assertEqual(first['bindings'],prior['bindings'])
+  self.assertNotIn('thumbnail.jpg',{r['path'] for r in first['files']})
+  with Image.open(self.root/'first/staging/thumbnail.png') as thumbnail:
+   self.assertEqual(thumbnail.format,'PNG');self.assertEqual(thumbnail.size,(8,8))
   self.assertEqual((self.root/'first/staging/gfx/leaders/TST/sample.dds').read_bytes(),(source/'staging/gfx/leaders/TST/sample.dds').read_bytes())
   self.assertEqual((self.root/'first/staging/descriptor.mod').read_text(),'name="Product"\nversion="0.1.0"\n')
   self.assertEqual(file_sha256(self.root/'first/gangnailongxin.zip'),file_sha256(self.root/'second/gangnailongxin.zip'))

@@ -56,7 +56,7 @@ def main():
         manifest=(builder.repackage_verified(args.reuse_verified_build,output,receipt) if args.reuse_verified_build else builder.build(output,preview=True,heavy_write_admission=receipt))
         body.update(status='build_completed',completed_at_utc=utc_now(),manifest_sha256=file_sha256(output/'manifest.json'))
         write_json(receipt,body)
-        write_json(output/'build-receipt.json',{'machine_id':machine_id(),'observed_at_utc':utc_now(),'source':'Native-size default builder, exact source/master/derived-pixel binding and staging/ZIP verification',
+        write_json(output/'build-receipt.json',{'machine_id':machine_id(),'observed_at_utc':utc_now(),'source':('Byte-identical verified native textures repackaged with current branding; existing pixel proof and current approval bindings checked; no new PNG-to-pixel comparison' if args.reuse_verified_build else 'Native-size default builder, exact source/master/derived-pixel binding and staging/ZIP verification'),
             'preview':True,'formal_release_eligible':False,'live_acceptance':'not-run','exe_sha256':catalog['exe_sha256'],'bindings':len(manifest['bindings']),
             'manifest_sha256':file_sha256(output/'manifest.json'),'zip_sha256':file_sha256(output/'gangnailongxin.zip'),'heavy_write_admission':str(receipt.relative_to(ROOT))})
         print({'status':'built','bindings':len(manifest['bindings']),'bytes':sum(r['bytes'] for r in manifest['files']),'preview':True})

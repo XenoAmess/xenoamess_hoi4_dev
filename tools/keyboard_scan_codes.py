@@ -1,7 +1,7 @@
 """Real Windows SendInput scan codes for DirectX keyboard focus; no game API."""
 import ctypes,time
 
-SCAN={'esc':0x01,'tab':0x0f,'enter':0x1c,'ctrl':0x1d,'shift':0x2a,'alt':0x38,'space':0x39,'f4':0x3e}
+SCAN={'esc':0x01,'tab':0x0f,'enter':0x1c,'ctrl':0x1d,'shift':0x2a,'alt':0x38,'space':0x39,'f4':0x3e,'a':0x1e,'c':0x2e,'v':0x2f}
 
 def send_keys(keys):
     codes=[SCAN[key.lower()] for key in keys] # Validate every key before input.

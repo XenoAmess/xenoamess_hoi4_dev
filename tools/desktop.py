@@ -51,8 +51,16 @@ def focus(hwnd):
     _,windows=desktop_modules()
     if not windows.IsWindow(hwnd):raise SystemExit("Target HWND is gone")
     if windows.GetForegroundWindow()!=hwnd:
-        windows.ShowWindow(hwnd,9)
-        windows.SetForegroundWindow(hwnd)
+        # SW_RESTORE also unmaximizes an already visible window, invalidating
+        # the fresh screenshot's coordinates and the clicked text focus.
+        if windows.IsIconic(hwnd):windows.ShowWindow(hwnd,9)
+        try:windows.SetForegroundWindow(hwnd)
+        except Exception:
+            # Windows can retain its foreground lock after another app's
+            # overlay was clicked. A real Alt key releases that lock.
+            gui,_=desktop_modules();gui.press('alt')
+            write_json(ROOT/'runtime/desktop-focus-fallback.json',{'machine_id':machine_id(),'observed_at_utc':utc_now(),'target_hwnd':hwnd,'action':'real Alt press before retrying OS window focus','business_result':'unverified'})
+            windows.SetForegroundWindow(hwnd)
         deadline=time.monotonic()+1
         while windows.GetForegroundWindow()!=hwnd and time.monotonic()<deadline:time.sleep(0.05)
     if windows.GetForegroundWindow()!=hwnd:raise SystemExit("Target HWND not focused")
@@ -72,11 +80,16 @@ def click(args):
     y=round((args.y-top)*height/view_height)
     if not (0<=x<width and 0<=y<height):raise SystemExit("Mapped click out of bounds")
     move_only=getattr(args,'move_only',False)
-    if move_only:gui.moveTo(x,y,duration=.15)
+    scroll=getattr(args,'scroll',None)
+    if scroll is not None:
+        gui.moveTo(x,y,duration=.15);gui.scroll(scroll)
+    elif move_only:gui.moveTo(x,y,duration=.15)
     else:gui.click(x,y)
     after=list(gui.size())
     receipt={"machine_id":machine_id(),"observed_at_utc":utc_now(),"source_screenshot":str(Path(args.screenshot).resolve()),"source_sha256":file_sha256(Path(args.screenshot)),"image_size":[width,height],"desktop_before":list(current),"preview_content_rect":args.content_rect,"preview_point":[args.x,args.y],"desktop_point":[x,y],"target_hwnd":args.hwnd,"desktop_after":after,'input_type':'mouse move only' if move_only else 'mouse click',"input_ack":True,"business_result":"unverified; take a fresh screenshot/OCR"}
     write_json(Path(args.receipt),receipt)
+    if scroll is not None:
+        receipt.update(input_type='mouse wheel',scroll_ticks=scroll);write_json(Path(args.receipt),receipt)
     if after!=list(current):raise SystemExit("Desktop dimensions changed after input; receipt saved, stop and observe")
     print("Mouse input sent; business result requires fresh screenshot/OCR")
 
@@ -115,7 +128,10 @@ def keys(args):
         finally:win32clipboard.CloseClipboard()
         hotkey("ctrl","a")
         hotkey("ctrl","v")
-        time.sleep(0.15)
+        time.sleep(0.6)
+        if getattr(args,'paste_only',False):
+            write_json(Path(args.receipt),{'machine_id':machine_id(),'observed_at_utc':utc_now(),'target_hwnd':args.hwnd,'langid':'0x0409','input_ack':True,'text':args.text,'business_result':'Paste sent only; text is unverified and requires fresh screenshot/OCR'})
+            print('Paste sent; text requires fresh screenshot/OCR');return
         # Read the focused text field through real keys and the OS clipboard.
         # No accessibility/control API is used to read or set the field.
         hotkey("ctrl","a")
@@ -129,7 +145,7 @@ def keys(args):
         win32clipboard.OpenClipboard()
         try:text_readback=win32clipboard.GetClipboardData(13)
         finally:win32clipboard.CloseClipboard()
-        if text_readback!=args.text:
+        if text_readback.replace('\r\n','\n')!=args.text.replace('\r\n','\n'):
             write_json(Path(args.receipt),{"machine_id":machine_id(),"observed_at_utc":utc_now(),"target_hwnd":args.hwnd,"langid":"0x0409","input_ack":True,"text":args.text,"text_readback":text_readback,"business_result":"text-mismatch; no further action authorized by this receipt"})
             raise SystemExit("Focused text field readback differs from requested text; stop and observe")
     elif args.hotkey:gui.hotkey(*args.hotkey)
@@ -153,10 +169,12 @@ def main():
     mouse.add_argument("--receipt",required=True)
     mouse.add_argument("--max-age",type=int,default=120)
     mouse.add_argument('--move-only',action='store_true',help='Move the real cursor through the same coordinate guard, without clicking')
+    mouse.add_argument('--scroll',type=int,help='Send real mouse wheel ticks at the guarded screenshot position')
     keyboard=sub.add_parser("keys")
     keyboard.add_argument("--hwnd",type=int,required=True)
     keyboard.add_argument("--receipt",required=True)
     keyboard.add_argument('--scan-codes',action='store_true',help='Real SendInput keyboard scan codes for DirectX key/hotkey input; result still needs screenshot readback')
+    keyboard.add_argument('--paste-only',action='store_true',help='Paste then stop before copy-back; text remains unverified pending fresh screenshot/OCR')
     group=keyboard.add_mutually_exclusive_group(required=True)
     group.add_argument("--key")
     group.add_argument("--hotkey",nargs="+")
