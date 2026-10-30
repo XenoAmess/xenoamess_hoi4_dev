@@ -31,8 +31,8 @@ def main():
     for name in ("bounded-builtin-window", "builtin-terminal-transport-flow", "builtin-transport-policy", "rolling-builtin-queue"):
         relative = f"runtime/low2-{name}.log"
         text = (worktree / relative).read_text(encoding="utf-8")
-        passed = re.search(r"^# pass (\d+)\s*$", text, re.MULTILINE)
-        failed = re.search(r"^# fail (\d+)\s*$", text, re.MULTILINE)
+        passed = re.search(r"^(?:#|ℹ) pass (\d+)\s*$", text, re.MULTILINE)
+        failed = re.search(r"^(?:#|ℹ) fail (\d+)\s*$", text, re.MULTILINE)
         require(passed is not None and failed is not None and int(failed.group(1)) == 0, f"JavaScript test log is not a complete success: {relative}")
         require("not ok " not in text, f"JavaScript failure marker: {relative}")
         total += int(passed.group(1))

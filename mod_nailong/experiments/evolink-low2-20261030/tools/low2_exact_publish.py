@@ -11,7 +11,7 @@ from runtime import high131_exact_api_publish as exact
 from tools.common import machine_id, read_json, utc_now, write_json
 
 BASE = "398db2a4959364c4303f9d912397b58df5fe907a"
-EXPECTED_TARGET = "4f1e415988ccf2164fab0d6fad851d616a367387"
+EXPECTED_TARGET = "8116151950b7eeb86cc2177ffae0ec23063ce49f"
 EXPECTED_IMPORT = "c17f5089f15042141c18295d5e6c939eaf997182"
 EXPERIMENT = "mod_nailong/experiments/evolink-low2-20261030"
 
@@ -39,6 +39,9 @@ def scoped_paths(worktree, base, target):
 
 
 def prepare(worktree, base, target):
+    import os
+    for name in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"):
+        os.environ.pop(name, None)
     worktree = Path(worktree).resolve()
     require(worktree.parent == (ROOT / "runtime").resolve(), "Publish only from the isolated runtime worktree")
     require(re.fullmatch(r"[0-9a-f]{40}", base) and re.fullmatch(r"[0-9a-f]{40}", target), "Expected full fixed commits")
@@ -48,10 +51,16 @@ def prepare(worktree, base, target):
     require(exact.git_text("-C", str(worktree), "merge-base", "--is-ancestor", EXPECTED_IMPORT, target) == "", "Import is not contained in target")
     exact.ROOT = worktree
     exact.DELIVERY_PATHS = scoped_paths(worktree, base, target)
+    project_lock = exact.PublishLock
+    class SharedProjectPublishLock(project_lock):
+        def __init__(self, batch, target_commit):
+            super().__init__(batch, target_commit)
+            self.path = ROOT / "runtime/production-publish.lock"
+    exact.PublishLock = SharedProjectPublishLock
     api = exact.Api(runner=exact.Api._run_gh)
     receipt = worktree / "runtime/low2-evolink-20261030/exact-object-publish.json"
     publisher = exact.ExactApiPublisher(base, target, "delivery", "low2-20261030", api=api, receipt_path=receipt)
-    require(len(publisher.commits) == 3, "Expected exactly the import, documentation and validation-evidence commits")
+    require(len(publisher.commits) == 4, "Expected exactly the import, documentation and two validation-evidence commits")
     return publisher
 
 
