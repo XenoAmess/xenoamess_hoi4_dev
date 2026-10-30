@@ -84,36 +84,47 @@ def keys(args):
     gui,windows=desktop_modules()
     focus(args.hwnd)
     user=ctypes.windll.user32
-    user.LoadKeyboardLayoutW.restype=ctypes.c_void_p
-    layout=user.LoadKeyboardLayoutW("00000409",1)
-    user.SendMessageW(args.hwnd,0x0050,0,ctypes.c_void_p(layout))
     import win32process
     thread,_=win32process.GetWindowThreadProcessId(args.hwnd)
     user.GetKeyboardLayout.restype=ctypes.c_void_p
+    # A redundant input-language message can reset a WebView text field's
+    # focus. Preserve the real clicked control when US English is active.
+    if user.GetKeyboardLayout(thread)&0xffff!=0x0409:
+        user.LoadKeyboardLayoutW.restype=ctypes.c_void_p
+        layout=user.LoadKeyboardLayoutW("00000409",1)
+        user.SendMessageW(args.hwnd,0x0050,0,ctypes.c_void_p(layout))
     langid=user.GetKeyboardLayout(thread)&0xffff
     if langid!=0x0409:raise SystemExit(f"Keyboard LANGID is {langid:#06x}, expected 0x0409")
     if windows.GetForegroundWindow()!=args.hwnd:raise SystemExit("Focus changed")
     if args.text_file is not None:args.text=Path(args.text_file).read_text(encoding="utf-8").strip()
     text_readback=None
     scan_events=None
-    if args.scan_codes:
-        if args.text is not None:raise SystemExit('Scan-code mode is for explicit keys/hotkeys only, not clipboard text')
+    if args.scan_codes and args.text is None:
         from tools.keyboard_scan_codes import send_keys
         scan_events=send_keys(args.hotkey or [args.key])
     elif args.text is not None:
         import win32clipboard
+        if args.scan_codes:
+            from tools.keyboard_scan_codes import send_keys
+            def hotkey(*keys):return send_keys(list(keys))
+        else:hotkey=gui.hotkey
         win32clipboard.OpenClipboard()
         try:
             win32clipboard.EmptyClipboard()
             win32clipboard.SetClipboardText(args.text,13)
         finally:win32clipboard.CloseClipboard()
-        gui.hotkey("ctrl","a")
-        gui.hotkey("ctrl","v")
+        hotkey("ctrl","a")
+        hotkey("ctrl","v")
         time.sleep(0.15)
         # Read the focused text field through real keys and the OS clipboard.
         # No accessibility/control API is used to read or set the field.
-        gui.hotkey("ctrl","a")
-        gui.hotkey("ctrl","c")
+        hotkey("ctrl","a")
+        win32clipboard.OpenClipboard()
+        try:
+            win32clipboard.EmptyClipboard()
+            win32clipboard.SetClipboardText('Codex field readback pending',13)
+        finally:win32clipboard.CloseClipboard()
+        hotkey("ctrl","c")
         time.sleep(0.15)
         win32clipboard.OpenClipboard()
         try:text_readback=win32clipboard.GetClipboardData(13)
