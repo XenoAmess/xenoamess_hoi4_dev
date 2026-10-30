@@ -20,7 +20,7 @@ def policy():
         assert file_sha256(path)==grant['authorization_manifest_sha256'],'Extra-round authorization changed'
         frozen=read_json(path)
         assert frozen['authorization_id']==grant['authorization_id']
-        assert frozen['source_count']==len(frozen['sources'])==len(grant['source_keys'])==31
+        assert frozen['source_count']==len(frozen['sources'])==len(grant['source_keys'])>0
         assert frozen['additional_retries_per_selected_source']==1 and frozen['preserve_consumed_counts'] is True
         assert {e['source_sha256'] for e in frozen['sources']}==set(grant['source_keys'])
         assert all(e['retries_used_at_authorization']==8 and e['additional_authorized_cooldown_retries']==1 and e['max_cooldown_retries_after_authorization']==9 for e in frozen['sources'])
@@ -63,7 +63,7 @@ def refresh_refusal(entry, latest, settings, *, source_key=None):
     new_state='cooling_down' if entry['retries_used']<limit else 'retry_limit_reached'
     if old_state=='retry_limit_reached' and new_state=='cooling_down':
         grant=extra_retry_authorization(settings,source_key);assert grant
-        entry.setdefault('policy_migrations',[]).append({'machine_id':machine_id(),'observed_at_utc':utc_now(),'previous_state':old_state,'previous_retries_used':entry['retries_used'],'new_max_cooldown_retries':limit,'authorization_id':grant['authorization_id'],'authorization_manifest_sha256':grant['authorization_manifest_sha256'],'reason':'User explicitly authorized one additional retry for this frozen exhausted HIGH source; preserve all consumed calls and latest8h deadline.'})
+        entry.setdefault('policy_migrations',[]).append({'machine_id':machine_id(),'observed_at_utc':utc_now(),'previous_state':old_state,'previous_retries_used':entry['retries_used'],'new_max_cooldown_retries':limit,'authorization_id':grant['authorization_id'],'authorization_manifest_sha256':grant['authorization_manifest_sha256'],'reason':'User explicitly authorized one additional retry for this frozen exhausted source; preserve all consumed calls and historical default8h deadline.'})
     if old_state in ('retry_failed_no_more_automatic_retries','new_art_request_refused_retry_quota_exhausted'):
         entry.setdefault('policy_migrations',[]).append({'machine_id':machine_id(),'observed_at_utc':utc_now(),
             'previous_state':old_state,'previous_retries_used':entry['retries_used'],

@@ -18,10 +18,10 @@ class SourceScopedRetryRoundTests(unittest.TestCase):
             fixtures.FixedClock.instant+=timedelta(hours=8)
         retries.sync()
 
-    def authorize(self):
-        keys=[self.key]+[f'{i:064x}' for i in range(30)]
+    def authorize(self,count=31):
+        keys=[self.key]+[f'{i:064x}' for i in range(count-1)]
         manifest=self.mod/'data/extra-retry-rounds/fixture.json'
-        write_json(manifest,{'authorization_id':'fixture-one-round','source_count':31,'additional_retries_per_selected_source':1,'preserve_consumed_counts':True,'sources':[{'source_sha256':key,'retries_used_at_authorization':8,'additional_authorized_cooldown_retries':1,'max_cooldown_retries_after_authorization':9} for key in keys]})
+        write_json(manifest,{'authorization_id':'fixture-one-round','source_count':count,'additional_retries_per_selected_source':1,'preserve_consumed_counts':True,'sources':[{'source_sha256':key,'retries_used_at_authorization':8,'additional_authorized_cooldown_retries':1,'max_cooldown_retries_after_authorization':9} for key in keys]})
         settings=read_json(self.mod/'data/image-retry-policy.json')
         settings['source_scoped_extra_retry_rounds']=[{'authorization_id':'fixture-one-round','authorization_manifest':manifest.relative_to(self.root).as_posix(),'authorization_manifest_sha256':file_sha256(manifest),'additional_retries_per_selected_source':1,'retries_used_at_authorization':8,'source_keys':keys}]
         write_json(self.mod/'data/image-retry-policy.json',settings)
@@ -75,6 +75,13 @@ class SourceScopedRetryRoundTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError,'accumulate'):retry_limit(duplicate,self.key)
         manifest.write_bytes(manifest.read_bytes()+b' ')
         with self.assertRaisesRegex(AssertionError,'authorization changed'):retries.policy()
+
+    def test_seven_source_explicit_round_preserves_default_and_consumption(self):
+        self.exhaust();self.authorize(count=7)
+        self.assertEqual(len(retries.policy()['source_scoped_extra_retry_rounds'][0]['source_keys']),7)
+        retries.claim(self.key)
+        self.assertEqual(read_json(retries.QUEUE)['sources'][self.key]['retries_used'],9)
+        self.assertEqual(retry_limit(retries.policy(),'f'*64),8)
 
 
 if __name__=='__main__':unittest.main()

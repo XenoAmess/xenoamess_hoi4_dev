@@ -199,7 +199,10 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None, heavy
     if not bindings:raise SystemExit("No reviewed portraits in selected profile")
     descriptor=(MOD/"mod/descriptor.mod").read_text(encoding="utf-8")
     if "remote_file_id" in descriptor or "replace_path" in descriptor:raise SystemExit("Invalid descriptor")
-    if preview:descriptor=descriptor.replace("(Development)","(INCOMPLETE PREVIEW)")
+    # Public product naming follows the user's release instruction. The
+    # manifest retains exact coverage and validation status independently.
+    cover=MOD/'assets/branding/workshop-cover.jpg'
+    if cover.exists():emit('thumbnail.jpg',cover.read_bytes())
     emit('descriptor.mod',descriptor.encode('utf-8'))
     return files,{"schema":"naiwa-release-manifest-v2","archive_filename":"gangnailongxin.zip","preview":preview,"art_complete":not missing,"game_version":catalog["game_version"],"catalog_sha256":file_sha256(MOD/"data/catalog.json"),"source_textures":len(catalog["assets"]),"generated_unique_images":len(generated),"selected_profile":sorted(packages) if packages is not None else "all-installed-catalog-packages; highest DLC numeric ID on shared paths","unresolved_baseline_references":len(catalog["unresolved_references"]),"profile_missing_texture_count":len(profile_missing),'texture_resolution_policy_id':POLICY_ID,'texture_resolution_policy':'Each approved original PNG master is retained unchanged; game derivatives match each original source texture dimensions exactly using RGBA LANCZOS; registered non-person exceptions preserve original file bytes','validation_source_keys':sorted(validation_keys) if validation_keys is not None else None,'validation_scope':'selected development subset only' if validation_keys is not None else 'entire selected profile',"preserved_original_nonperson_exceptions":sorted(row['index'] for row in exceptions.values() if row['source_sha256'] in {a['source_sha256'] for a in selected.values()}),"nonperson_scope_decision":exception_receipt,"bindings":bindings,"files":sorted(file_records,key=lambda r:r['path'])}
 

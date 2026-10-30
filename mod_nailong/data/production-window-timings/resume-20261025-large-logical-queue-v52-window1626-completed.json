@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261025-large-logical-queue-v52-window1626",
+  "started_at_utc": "2026-10-29T13:35:47.925Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "jobs": "runtime/production-low-v50-terminal-recovery-20261029-2-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-29T13:35:47.952Z",
+      "batch": "low-v50-terminal-recovery-20261029-2"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:35:47.952Z",
+      "jobs_file": "runtime/production-low-v50-terminal-recovery-20261029-2-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:35:47.952Z",
+      "command": "python runtime\\batch-keys.py runtime/production-low-v50-terminal-recovery-20261029-2-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:35:48.208Z",
+      "command": "python runtime\\batch-keys.py runtime/production-low-v50-terminal-recovery-20261029-2-jobs.json",
+      "elapsed_ms": 256,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:35:48.208Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:35:48.208Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-low-v50-terminal-recovery-20261029-2-jobs.json --key ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153 --output runtime\\dispatch-export\\low-v50-terminal-recovery-20261029-2-ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:35:48.727Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-low-v50-terminal-recovery-20261029-2-jobs.json --key ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153 --output runtime\\dispatch-export\\low-v50-terminal-recovery-20261029-2-ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153.json",
+      "elapsed_ms": 519,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:35:48.727Z",
+      "command": "type runtime\\dispatch-export\\low-v50-terminal-recovery-20261029-2-ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:35:48.815Z",
+      "command": "type runtime\\dispatch-export\\low-v50-terminal-recovery-20261029-2-ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153.json",
+      "elapsed_ms": 88,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:35:48.815Z",
+      "command": "python runtime\\guard-dispatch-family.py ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:35:49.269Z",
+      "command": "python runtime\\guard-dispatch-family.py ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153",
+      "elapsed_ms": 454,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:35:49.470Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\low-v50-terminal-recovery-20261029-2-ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153.json --key ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:35:53.137Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\low-v50-terminal-recovery-20261029-2-ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153.json --key ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153",
+      "elapsed_ms": 3667,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:35:53.138Z",
+      "key": "ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:36:16.192Z",
+      "key": "ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153",
+      "elapsed_ms": 23054,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:36:18.281Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-153f5b0e-602b-4cc6-bcfb-f4a7333f21bd.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:36:18.532Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-153f5b0e-602b-4cc6-bcfb-f4a7333f21bd.png",
+      "elapsed_ms": 251,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:36:19.211Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-153f5b0e-602b-4cc6-bcfb-f4a7333f21bd.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:36:22.995Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key ab0aefeb37e3fcf8b48542a78cc0cd88b1136bbf29205b2039179bc61decd153 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-153f5b0e-602b-4cc6-bcfb-f4a7333f21bd.png",
+      "elapsed_ms": 3784,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:36:22.995Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "low-v50-terminal-recovery-20261029-2",
+      "observed_at_utc": "2026-10-29T13:36:22.995Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-29T13:36:22.995Z",
+      "batch": "low-v50-terminal-recovery-20261029-2"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-29T13:36:22.995Z"
+}

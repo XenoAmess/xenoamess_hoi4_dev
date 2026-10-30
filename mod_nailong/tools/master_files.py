@@ -48,8 +48,12 @@ def recorded_master_candidates(root):
             'masters': masters}
 
 
-def sync_git(snapshot=None, root=ROOT, hasher=None):
-    """Adopt only recorded, byte-verified originals; never overwrite a master."""
+def sync_git(snapshot=None, root=ROOT, hasher=None, *, normalize_paths=True):
+    """Adopt only recorded, byte-verified originals; never overwrite a master.
+
+    Scoped delivery adoption may refresh the full index while retaining exact
+    published journals and unrelated live rows with normalize_paths=False.
+    """
     hash_file=hasher or file_sha256
     if snapshot is None:
         snapshot = recorded_master_candidates(root)
@@ -85,6 +89,11 @@ def sync_git(snapshot=None, root=ROOT, hasher=None):
              'count': len(entries), 'original_png_bytes': sum(v['bytes'] for v in entries.values()),
              'outputs': entries}
     write_json(root / 'mod_nailong/data/fullsize-files.json', index)
+    if not normalize_paths:
+        print({'masters': index['count'], 'original_png_bytes': index['original_png_bytes'],
+               'storage': index['storage'], 'remote_verification': 'not implied by local sync',
+               'record_and_journal_path_normalization': False})
+        return index
     generated_path = root / 'mod_nailong/data/generated.json'
     generated = read_json(generated_path)
     generated_changed = False

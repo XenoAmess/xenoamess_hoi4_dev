@@ -45,6 +45,48 @@ class AcceptedRetryArtTests(unittest.TestCase):
  def test_successful_retry_must_preserve_exact_failed_parent_inputs(self):
   body=read_json(self.journal);body['attempts'][0]['inputs']=[];write_json(self.journal,body)
   self.assertIn(self.key,self.proof()['unavailable'])
+ def network_ancestor(self):
+  import copy
+  history=read_json(self.journal);parent=copy.deepcopy(history['attempts'][0]);oldledger=read_json(self.dispatch)
+  parent.update(number=2,status='failed',machine_id=machine_id(),retry_of_attempt=1,error='image generation failed: network error: error sending request',actual_request_verification=copy.deepcopy(self.a['actual_request_verification']))
+  error=self.root/'network-error.txt';error.write_text(parent['error'],encoding='utf-8')
+  failed=copy.deepcopy(oldledger);failed.update(status='tool_error',call_returned_at_utc='2026-10-29T01:00:00+00:00',actual_error_file=str(error),actual_error_sha256=file_sha256(error));failed.pop('returned_image_sha256');write_json(self.dispatch,failed)
+  self.a.update(number=3,retry_of_attempt=2,terminal_service_transport_retry_of_attempt=2,cooldown_retry_number=2)
+  self.returned_dispatch=self.dispatch.with_name(self.key+'-003.json');oldledger['attempt_number']=3;write_json(self.returned_dispatch,oldledger)
+  write_json(self.journal,{'attempts':[history['attempts'][0],parent,self.a]})
+  path=self.root/'mod_nailong/data/image-retry-queue.json';q=read_json(path);q['sources'][self.key]['retries_used']=2;write_json(path,q)
+ def test_proven_returned_network_ancestor_retains_exact_chain_and_counter(self):
+  self.network_ancestor();result=self.proof();proof=result['proofs'][self.key]
+  self.assertEqual(proof['failed_parent_attempt'],2);self.assertEqual(proof['failed_moderation_ancestor_attempt'],1)
+  self.assertEqual(len(proof['proven_returned_network_ancestors']),1);self.assertEqual(proof['retries_used_unchanged'],2)
+ def test_unknown_network_ancestor_cannot_release_art(self):
+  self.network_ancestor();body=read_json(self.dispatch);body['status']='calling';write_json(self.dispatch,body)
+  self.assertIn(self.key,self.proof()['unavailable'])
+ def test_unmarked_network_recovery_cannot_release_art(self):
+  self.network_ancestor();self.a.pop('terminal_service_transport_retry_of_attempt');write_json(self.journal,{'attempts':read_json(self.journal)['attempts'][:-1]+[self.a]})
+  self.assertIn(self.key,self.proof()['unavailable'])
+ def test_changed_network_error_bytes_cannot_release_art(self):
+  self.network_ancestor();(self.root/'network-error.txt').write_bytes(b'changed')
+  self.assertIn(self.key,self.proof()['unavailable'])
+
+class OriginalReplacementServiceStateTests(unittest.TestCase):
+ setUp=AcceptedRetryArtTests.setUp
+ def configure(self):
+  from mod_nailong.tools import image_retries
+  self.subject=image_retries
+  for item in [patch.object(image_retries,'ROOT',self.root),patch.object(image_retries,'MOD',self.root/'mod_nailong'),patch.object(image_retries,'QUEUE',self.root/'mod_nailong/data/image-retry-queue.json')]:
+   item.start();self.addCleanup(item.stop)
+  write_json(self.root/'mod_nailong/data/image-retry-policy.json',{'cooldown_hours':8,'max_cooldown_retries_per_source':8})
+  write_json(self.root/'mod_nailong/data/generation-failures.json',{'attempts':[{'source_sha256':self.key,'status':'blocked'}]})
+ def test_explicit_original_art_method_uses_full_success_proof_without_reset(self):
+  self.configure();self.subject.require_editable_service_state(self.key,self.rows[self.key],self.a,False,original_replacement_reason='Current actual raw rejected; reconstruct from exact original')
+  q=read_json(self.subject.QUEUE)['sources'][self.key]
+  self.assertEqual(q['retries_used'],1);self.assertEqual(q['state'],'service_retry_succeeded_art_correction_pending')
+ def test_original_method_reason_alone_never_releases_failed_or_unresolved_request(self):
+  self.configure();ledger=read_json(self.dispatch);ledger['status']='calling';write_json(self.dispatch,ledger)
+  before=self.subject.QUEUE.read_bytes()
+  with self.assertRaises(SystemExit):self.subject.require_editable_service_state(self.key,self.rows[self.key],self.a,False,original_replacement_reason='A reason is not success proof')
+  self.assertEqual(self.subject.QUEUE.read_bytes(),before)
 
 class OriginalReplacementServiceStateTests(unittest.TestCase):
  setUp=AcceptedRetryArtTests.setUp

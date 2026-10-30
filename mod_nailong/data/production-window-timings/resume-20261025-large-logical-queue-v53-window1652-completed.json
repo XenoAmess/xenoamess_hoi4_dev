@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261025-large-logical-queue-v53-window1652",
+  "started_at_utc": "2026-10-29T15:37:49.408Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "low-v53-final-network-recovery-20261029",
+      "jobs": "runtime/production-low-v53-final-network-recovery-20261029-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-29T15:37:49.916Z",
+      "batch": "low-v53-final-network-recovery-20261029"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:37:49.916Z",
+      "jobs_file": "runtime/production-low-v53-final-network-recovery-20261029-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:37:49.916Z",
+      "command": "python runtime\\batch-keys.py runtime/production-low-v53-final-network-recovery-20261029-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:37:52.013Z",
+      "command": "python runtime\\batch-keys.py runtime/production-low-v53-final-network-recovery-20261029-jobs.json",
+      "elapsed_ms": 2097,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:37:52.014Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:37:52.014Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-low-v53-final-network-recovery-20261029-jobs.json --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc --output runtime\\dispatch-export\\low-v53-final-network-recovery-20261029-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:37:54.630Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-low-v53-final-network-recovery-20261029-jobs.json --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc --output runtime\\dispatch-export\\low-v53-final-network-recovery-20261029-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.json",
+      "elapsed_ms": 2616,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:37:54.631Z",
+      "command": "type runtime\\dispatch-export\\low-v53-final-network-recovery-20261029-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:37:54.927Z",
+      "command": "type runtime\\dispatch-export\\low-v53-final-network-recovery-20261029-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.json",
+      "elapsed_ms": 296,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:37:54.927Z",
+      "command": "python runtime\\guard-dispatch-family.py 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:37:55.527Z",
+      "command": "python runtime\\guard-dispatch-family.py 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc",
+      "elapsed_ms": 600,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:37:55.584Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\low-v53-final-network-recovery-20261029-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.json --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:38:06.958Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\low-v53-final-network-recovery-20261029-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.json --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc",
+      "elapsed_ms": 11374,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:38:06.958Z",
+      "key": "992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:38:44.023Z",
+      "key": "992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc",
+      "elapsed_ms": 37065,
+      "error": "image generation failed: http 400 Bad Request: Some(\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID 12d22a06-19a4-4f23-b372-2e716d46873a. safety_violations=[abuse].\\\",\\n    \\\"type\\\": \\\"image_generation_user_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"moderation_blocked\\\",\\n    \\\"moderation_details\\\": {\\n      \\\"moderation_stage\\\": \\\"output\\\",\\n      \\\"categories\\\": [\\n        \\\"other\\\"\\n      ]\\n    }\\n  }\\n}\")"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:38:44.070Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc --error-file runtime\\low-v53-final-network-recovery-20261029-error-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:38:44.428Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc --error-file runtime\\low-v53-final-network-recovery-20261029-error-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.txt",
+      "elapsed_ms": 358,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:38:44.428Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc --message-file runtime\\low-v53-final-network-recovery-20261029-error-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.txt"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:38:46.132Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py fail --key 992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc --message-file runtime\\low-v53-final-network-recovery-20261029-error-992fd164fd779b10388e3019ff930a9fc3f6b63794df1997709528ffec1a9cdc.txt",
+      "elapsed_ms": 1704,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:38:46.132Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "low-v53-final-network-recovery-20261029",
+      "observed_at_utc": "2026-10-29T15:38:46.132Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-29T15:38:46.132Z",
+      "batch": "low-v53-final-network-recovery-20261029"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-29T15:38:46.132Z"
+}

@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "machine_id": "bf-202609141645-5434332d4d",
+  "window_id": "resume-20261025-large-logical-queue-v45-window1583",
+  "started_at_utc": "2026-10-29T07:54:03.944Z",
+  "planned_requests": 1,
+  "batches": [
+    {
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "jobs": "runtime/production-resume-20261025-large-logical-queue-v45-batch1583-low1-jobs.json"
+    }
+  ],
+  "events": [
+    {
+      "phase": "batch_dispatch_started",
+      "observed_at_utc": "2026-10-29T07:54:04.068Z",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1"
+    },
+    {
+      "phase": "batch_started",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:54:04.068Z",
+      "jobs_file": "runtime/production-resume-20261025-large-logical-queue-v45-batch1583-low1-jobs.json"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:54:04.068Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-20261025-large-logical-queue-v45-batch1583-low1-jobs.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:54:04.348Z",
+      "command": "python runtime\\batch-keys.py runtime/production-resume-20261025-large-logical-queue-v45-batch1583-low1-jobs.json",
+      "elapsed_ms": 280,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:54:04.348Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:54:04.348Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-resume-20261025-large-logical-queue-v45-batch1583-low1-jobs.json --key b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7 --output runtime\\dispatch-export\\resume-20261025-large-logical-queue-v45-batch1583-low1-b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:54:04.926Z",
+      "command": "python -X utf8 runtime\\export-prepared-job-ascii-file-20261025.py --jobs-file runtime/production-resume-20261025-large-logical-queue-v45-batch1583-low1-jobs.json --key b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7 --output runtime\\dispatch-export\\resume-20261025-large-logical-queue-v45-batch1583-low1-b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7.json",
+      "elapsed_ms": 578,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:54:04.927Z",
+      "command": "type runtime\\dispatch-export\\resume-20261025-large-logical-queue-v45-batch1583-low1-b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7.json"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:54:05.033Z",
+      "command": "type runtime\\dispatch-export\\resume-20261025-large-logical-queue-v45-batch1583-low1-b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7.json",
+      "elapsed_ms": 106,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:54:05.033Z",
+      "command": "python runtime\\guard-dispatch-family.py b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:54:05.513Z",
+      "command": "python runtime\\guard-dispatch-family.py b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7",
+      "elapsed_ms": 480,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:54:05.627Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261025-large-logical-queue-v45-batch1583-low1-b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7.json --key b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:54:09.732Z",
+      "command": "python mod_nailong\\tools\\production_queue.py begin --actual-job-file runtime\\dispatch-actual\\resume-20261025-large-logical-queue-v45-batch1583-low1-b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7.json --key b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7",
+      "elapsed_ms": 4105,
+      "exit_code": 0
+    },
+    {
+      "phase": "image_invoked",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:54:09.732Z",
+      "key": "b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7"
+    },
+    {
+      "phase": "image_resolved",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:56:29.404Z",
+      "key": "b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7",
+      "elapsed_ms": 139671,
+      "error": null
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:56:29.507Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-8457198f-36d4-4146-84ff-b63e357e7cc2.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:56:29.821Z",
+      "command": "python mod_nailong\\tools\\production_queue.py returned --key b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-8457198f-36d4-4146-84ff-b63e357e7cc2.png",
+      "elapsed_ms": 315,
+      "exit_code": 0
+    },
+    {
+      "phase": "local_command_started",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:56:31.208Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-8457198f-36d4-4146-84ff-b63e357e7cc2.png"
+    },
+    {
+      "phase": "local_command_finished",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:56:37.809Z",
+      "command": "python mod_nailong\\tools\\generation_requests.py finish --key b1fee6e446b5ab24f18d56f42834e0d03e64215210308d99815d915541b2adf7 --image C:\\Users\\Administrator\\.codex\\generated_images\\01a16de7-7091-73b1-90c5-8d9b169c0213\\exec-8457198f-36d4-4146-84ff-b63e357e7cc2.png",
+      "elapsed_ms": 6601,
+      "exit_code": 0
+    },
+    {
+      "phase": "logical_boundary_already_applied",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:56:37.809Z",
+      "scope": "Sole logical next_item applied reviews/preparation and HIGH supply gates before this single request; imports/errors still finish here"
+    },
+    {
+      "phase": "batch_completed",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1",
+      "observed_at_utc": "2026-10-29T07:56:37.809Z"
+    },
+    {
+      "phase": "batch_imports_completed",
+      "observed_at_utc": "2026-10-29T07:56:37.809Z",
+      "batch": "resume-20261025-large-logical-queue-v45-batch1583-low1"
+    }
+  ],
+  "status": "completed",
+  "completed_at_utc": "2026-10-29T07:56:37.809Z"
+}
