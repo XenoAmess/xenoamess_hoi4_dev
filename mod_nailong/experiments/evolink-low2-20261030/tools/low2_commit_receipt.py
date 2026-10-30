@@ -18,7 +18,7 @@ def main():
     importer.require(importer.git(worktree, "merge-base", "--is-ancestor", original, "HEAD") == "", "Import commit is not contained in HEAD")
     parent = importer.git(worktree, "show", "-s", "--format=%P", original)
     importer.require(parent == "398db2a4959364c4303f9d912397b58df5fe907a", "Unexpected original parent; refusing to create a duplicate import commit")
-    plan = importer.build_plan(worktree, ROOT)
+    plan = importer.build_plan(worktree, ROOT, allow_imported=True)
     importer.verify_import(worktree, plan)
     index = read_json(worktree / importer.FULLSIZE)
     base_index = json.loads(importer.git(worktree, "show", f"{parent}:{importer.FULLSIZE}"))

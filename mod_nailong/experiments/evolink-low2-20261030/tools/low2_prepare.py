@@ -46,7 +46,14 @@ def validated_entries():
     auth = read_json(AUTHORIZATION)
     require(auth.get("authorized_agent") == "Kimi" and auth.get("source_sha256") == KEYS, "LOW2 authorization differs")
     require(auth.get("permission_documents_modified") is False and auth.get("codex_tool_permission_changed") is False, "Permission boundary changed")
-    results = {row["source_sha256"]: row for row in read_json(ROUND)["results"]}
+    evidence = read_json(EXPERIMENT / "original-failure-evidence.json")
+    require(evidence["schema"] == "low2-original-builtin-failure-evidence-v1" and evidence["source_count"] == 2, "Wrong LOW2 original-failure evidence")
+    require(evidence["scope_sha256"] == file_sha256(SCOPE) and evidence["prepared_sha256"] == file_sha256(PREPARED), "Original-failure evidence is not bound to the frozen LOW2 scope")
+    results = {row["source_sha256"]: row for row in evidence["results"]}
+    if ROUND.is_file():
+        require(file_sha256(ROUND) == evidence["source_receipt_sha256"], "Original full-round receipt changed")
+        original = {row["source_sha256"]: row for row in read_json(ROUND)["results"]}
+        require(all(results[key] == original[key] for key in KEYS), "Scoped original-failure extraction differs")
     index = read_json(ROOT / "runtime/source-index.json")
     catalog = read_json(ROOT / "mod_nailong/data/catalog.json")
     generated = read_json(ROOT / "mod_nailong/data/generated.json")

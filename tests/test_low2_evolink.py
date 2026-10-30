@@ -20,7 +20,9 @@ importer = importlib.import_module("mod_nailong.experiments.evolink-low2-2026103
 
 class Low2PreparationTests(unittest.TestCase):
     def test_exact_two_sources_prompt_inputs_and_zero_retries(self):
-        entries = prepare.validated_entries()
+        from unittest.mock import patch
+        with patch.object(prepare, "ROUND", prepare.EXPERIMENT / "absent-unscoped-full-round.json"):
+            entries = prepare.validated_entries()
         self.assertEqual([row["source_sha256"] for row in entries], prepare.KEYS)
         for entry in entries:
             self.assertEqual(entry["builtin_retries_used"], 0)

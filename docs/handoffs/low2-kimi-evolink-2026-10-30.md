@@ -42,3 +42,7 @@ EvoLink 权限只授予 Kimi 的这次限定任务。**没有改变 Codex 的 Ev
 本文是素材位置交接，不预先宣称 Git 推送、固定提交远端读回、完整测试或预览构建已通过；这些独立结果见 `opencode.md` 和 `runtime/low2-evolink-20261030/` 的实际回执。
 
 Kimi 只负责素材生成、逐图审查与正式素材接入，**不负责 HOI4 实机验收**。后续构建／显示适配及纯 OCR＋键鼠实机验收由 Codex 负责。不能将审图页、开发 preview 或文件检查当作实机通过；本交接不声称整个模组已正式发布或全部 LOW／HIGH 已完成。
+
+## 验证材料定位
+
+两源内置失败原始记录精确摘录在 `mod_nailong/experiments/evolink-low2-20261030/original-failure-evidence.json`，绑定既有 `scope.json` 和 `prepared.json` 的 SHA；它不是新的服务调用，也不重置内置重试计数。隔离工作区缺少本地测试依赖时，可运行 `python -X utf8 mod_nailong/experiments/evolink-low2-20261030/tools/low2_test_support.py --worktree <隔离工作区路径>`。该工具只补齐本地脚本、原图索引、原始 prompt 和测试引用，不调用图片生成，不把依赖或其他 LOW 记录纳入提交。

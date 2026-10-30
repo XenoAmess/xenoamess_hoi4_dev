@@ -25,7 +25,7 @@ def download_png(reference):
     import subprocess
     from tools.common import sha256
     errors = []
-    for route, proxy in (("proxy", "http://127.0.0.1:10808"), ("noproxy", "*")):
+    for route, proxy in (("noproxy", "*"), ("proxy", "http://127.0.0.1:10808")):
         result = subprocess.run([
             "curl.exe", f"--{route}", proxy, "--fail", "--silent", "--show-error", "--location", "--proto", "=https",
             "--connect-timeout", "20", "--max-time", "90", "--max-filesize", str(16 * 1024 * 1024), reference["url"],

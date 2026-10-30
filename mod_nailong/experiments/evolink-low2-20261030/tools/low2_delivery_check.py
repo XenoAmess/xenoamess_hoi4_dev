@@ -21,7 +21,7 @@ def require(condition, message):
 
 def download_text(url):
     errors = []
-    for route, proxy in (("proxy", "http://127.0.0.1:10808"), ("noproxy", "*")):
+    for route, proxy in (("noproxy", "*"), ("proxy", "http://127.0.0.1:10808")):
         result = subprocess.run(["curl.exe", f"--{route}", proxy, "--fail", "--silent", "--show-error", "--location", "--proto", "=https", "--connect-timeout", "20", "--max-time", "60", "--max-filesize", "1048576", url], capture_output=True, timeout=75)
         if result.returncode == 0:
             return result.stdout

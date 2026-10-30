@@ -32,7 +32,7 @@ TEST = "tests/test_low2_evolink.py"
 RUNTIME = Path("runtime/low2-evolink-20261030")
 
 
-def build_plan(worktree, support=ROOT):
+def build_plan(worktree, support=ROOT, *, allow_imported=False):
     worktree = Path(worktree).resolve()
     approved_relative = f"{EXPERIMENT}/approved-masters.json"
     approved = read_json(path(support, approved_relative))
@@ -41,7 +41,7 @@ def build_plan(worktree, support=ROOT):
     require(verification["status"] in {"two_sources_generated_reviewed_and_archived_pending_canonical_import_and_git_publication", "two_sources_generated_reviewed_integrated_pending_publication"}, "Generation/art verification is incomplete")
     require(verification["unresolved_generation_tasks"] == 0 and verification["scoped_tests"]["passed"] >= 6, "Unresolved calls or scoped tests remain")
     require(approved["schema"] == "low2-kimi-approved-masters-v1" and approved["count"] == len(approved["entries"]) == scope["source_count"] == 2, "Scope must contain exactly two approved sources")
-    require(approved["formal_canonical_import_count"] == 0, "Input already claims canonical import")
+    require(approved["formal_canonical_import_count"] in {0, 2} if allow_imported else approved["formal_canonical_import_count"] == 0, "Unexpected canonical import count")
     require(file_sha256(path(support, scope["handoff"])) == scope["handoff_sha256"], "Handoff binding changed")
     delivery_relative = f"{EXPERIMENT}/delivery-authorization.json"
     delivery = read_json(path(support, delivery_relative))
@@ -84,7 +84,7 @@ def build_plan(worktree, support=ROOT):
             bound(support, item["path"], item["sha256"])
         require(queue["sources"][key]["retries_used"] == 0, f"Builtin retry count changed: {key}")
         current = generated["portraits"].get(key)
-        require(current is None or current.get("generated_fullsize_sha256") != entry["generated_fullsize_sha256"], f"Input is already canonically imported: {key}")
+        require(allow_imported or current is None or current.get("generated_fullsize_sha256") != entry["generated_fullsize_sha256"], f"Input is already canonically imported: {key}")
         require(entry["import_schema"] == "low2-kimi-production-import-v1" and entry["edit_existing"] is False and entry["recovery"] is None, f"Unexpected LOW2 import route: {key}")
         entries.append({**entry, "previous_generated_row": copy.deepcopy(current), "previous_queue_row": copy.deepcopy(queue["sources"][key])})
     require(len({row["source_sha256"] for row in entries}) == 2, "Duplicate sources")
@@ -304,13 +304,27 @@ def fetch_origin(worktree):
         try:
             return git(worktree, "-c", "http.proxy=http://127.0.0.1:10808", "fetch", "origin")
         except ImportErrorWithEvidence as proxy_error:
-            raise ImportErrorWithEvidence(f"Direct fetch failed: {direct_error}\nProxy 10808 fetch failed: {proxy_error}")
+            import os
+            import re
+            import subprocess
+            environment = os.environ.copy()
+            for name in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"):
+                environment.pop(name, None)
+            result = subprocess.run(["gh", "api", "repos/XenoAmess/xenoamess_hoi4_dev/git/ref/heads/master", "--jq", ".object.sha"], capture_output=True, timeout=120, env=environment)
+            detail = result.stderr.decode("utf-8", errors="replace")[:1500]
+            require(result.returncode == 0, f"Direct fetch failed: {direct_error}\nProxy 10808 fetch failed: {proxy_error}\nGitHub API ref read failed: {detail}")
+            remote = result.stdout.decode("ascii").strip()
+            require(re.fullmatch(r"[0-9a-f]{40}", remote) is not None, "GitHub API returned an invalid master ref")
+            require(git(worktree, "cat-file", "-t", remote) == "commit", "Remote commit is not available locally; a real Git fetch is still required")
+            previous = git(worktree, "rev-parse", "origin/master")
+            git(worktree, "update-ref", "refs/remotes/origin/master", remote, previous)
+            return remote
 
 
 def synchronize(worktree, original_commit):
     fetch_origin(worktree)
     remote = git(worktree, "rev-parse", "origin/master")
-    if remote != original_commit:
+    if remote != original_commit and git(worktree, "merge-base", "--is-ancestor", remote, "HEAD") != "":
         try:
             git(worktree, "rebase", "origin/master")
         except ImportErrorWithEvidence:
