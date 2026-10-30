@@ -297,8 +297,18 @@ def stage_and_commit(worktree, plan):
     return commit
 
 
+def fetch_origin(worktree):
+    try:
+        return git(worktree, "fetch", "origin")
+    except ImportErrorWithEvidence as direct_error:
+        try:
+            return git(worktree, "-c", "http.proxy=http://127.0.0.1:10808", "fetch", "origin")
+        except ImportErrorWithEvidence as proxy_error:
+            raise ImportErrorWithEvidence(f"Direct fetch failed: {direct_error}\nProxy 10808 fetch failed: {proxy_error}")
+
+
 def synchronize(worktree, original_commit):
-    git(worktree, "fetch", "origin")
+    fetch_origin(worktree)
     remote = git(worktree, "rev-parse", "origin/master")
     if remote != original_commit:
         try:

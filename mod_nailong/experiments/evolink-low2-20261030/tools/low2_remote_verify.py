@@ -55,7 +55,7 @@ def main():
     commit = sys.argv[2]
     require(re.fullmatch(r"[0-9a-f]{40}", commit) is not None, "Expected a full fixed commit")
     importer = importlib.import_module("mod_nailong.experiments.evolink-low2-20261030.tools.low2_import")
-    importer.git(worktree, "fetch", "origin")
+    importer.fetch_origin(worktree)
     remote = importer.git(worktree, "rev-parse", "origin/master")
     require(commit == remote or importer.git(worktree, "merge-base", "--is-ancestor", commit, remote) == "", "Fixed commit is not public on origin/master")
     index = read_json(worktree / "mod_nailong/data/fullsize-files.json")

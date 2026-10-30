@@ -35,6 +35,10 @@ EvoLink 权限只授予 Kimi 的这次限定任务。**没有改变 Codex 的 Ev
 
 ## 接入与后续责任
 
-当前记录已完成生成、逐源审图和原始母版保存，正式隔离接入与 Git 远端读回尚待完成。正式接入后应在这两个来源的 `mod_nailong/data/generated.json` 行中查找 `production_import.schema = low2-kimi-production-import-v1`，并核对 `request_journal`、`generation_inputs`、`production_import` 和对应 `mod_nailong/data/generation-requests/<source_sha256>.json` 中的 `external-*` 证据。
+两项素材已完成生成、逐源审图、原始母版保存和正式隔离接入，原始接入提交为 `c17f5089f15042141c18295d5e6c939eaf997182`。完整母版索引为 **7,422 张**，保留上一轮两张拒收母版并加入本次两张新母版。两张 156×210 派生预览已实际查看且 SHA 核验通过，Alpha 均为全 255；游戏构建仍默认使用高清母版。
+
+在这两个来源的 `mod_nailong/data/generated.json` 行中查找 `production_import.schema = low2-kimi-production-import-v1`，并核对 `request_journal`、`generation_inputs`、`production_import` 和对应 `mod_nailong/data/generation-requests/<source_sha256>.json` 中的 `external-*` 证据。原始接入使用经逐路径核验的暂存区和普通单父提交，没有 merge commit 或公开历史改写。
+
+本文是素材位置交接，不预先宣称 Git 推送、固定提交远端读回、完整测试或预览构建已通过；这些独立结果见 `opencode.md` 和 `runtime/low2-evolink-20261030/` 的实际回执。
 
 Kimi 只负责素材生成、逐图审查与正式素材接入，**不负责 HOI4 实机验收**。后续构建／显示适配及纯 OCR＋键鼠实机验收由 Codex 负责。不能将审图页、开发 preview 或文件检查当作实机通过；本交接不声称整个模组已正式发布或全部 LOW／HIGH 已完成。
