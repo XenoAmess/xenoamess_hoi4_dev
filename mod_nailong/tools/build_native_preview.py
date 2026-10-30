@@ -11,6 +11,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--inventory',type=Path,required=True)
+    parser.add_argument('--reuse-verified-build',type=Path,help='Reuse byte-identical, already pixel-verified textures; update only descriptor and cover')
     args=parser.parse_args();output=args.output.resolve();output.relative_to((ROOT/'dist').resolve())
     if output.exists():raise SystemExit('Choose a fresh native preview output')
     inventory=read_json(args.inventory)
@@ -52,7 +53,7 @@ def main():
             'admitted_at_utc':now.isoformat(),'retention_review_by_utc':review.isoformat(),'coordination_lock':str(lock.relative_to(ROOT)),
             'coordination_lock_sha256':file_sha256(lock),'coordination_lock_token':token,'git_operations':0,'publication_performed':False}
         write_json(receipt,body);builder.validate_heavy_write_admission(receipt,estimate,output)
-        manifest=builder.build(output,preview=True,heavy_write_admission=receipt)
+        manifest=(builder.repackage_verified(args.reuse_verified_build,output,receipt) if args.reuse_verified_build else builder.build(output,preview=True,heavy_write_admission=receipt))
         body.update(status='build_completed',completed_at_utc=utc_now(),manifest_sha256=file_sha256(output/'manifest.json'))
         write_json(receipt,body)
         write_json(output/'build-receipt.json',{'machine_id':machine_id(),'observed_at_utc':utc_now(),'source':'Native-size default builder, exact source/master/derived-pixel binding and staging/ZIP verification',

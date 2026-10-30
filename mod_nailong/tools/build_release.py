@@ -230,6 +230,41 @@ def build(output,preview=False,packages=None,validation_keys=None,heavy_write_ad
     write_pixel_proof(output,manifest,pixel_check)
     return manifest
 
+def repackage_verified(source, output, heavy_write_admission):
+    """Repackage identical, already pixel-verified textures with current branding."""
+    import copy
+    source=Path(source);output=Path(output)
+    if output.exists():raise SystemExit('Choose a fresh package output')
+    verify(source)
+    from mod_nailong.tools.texture_resolution import verify_game_textures,write_pixel_proof
+    prior=read_json(source/'manifest.json')
+    catalog=read_json(MOD/'data/catalog.json')
+    verification=verify_game_textures(source,prior,catalog=catalog,generated=read_json(MOD/'data/generated.json')['portraits'],root=ROOT,reuse_pixel_proof=True)
+    if prior['catalog_sha256']!=file_sha256(MOD/'data/catalog.json'):
+        raise SystemExit('Catalog changed; a full rebuild is required')
+    manifest=copy.deepcopy(prior)
+    records={r['path']:r for r in prior['files']}
+    estimate=sum(r['bytes'] for r in prior['files'] if r['path'].startswith('gfx/'))
+    validate_heavy_write_admission(heavy_write_admission,estimate,output)
+    descriptor=(MOD/'mod/descriptor.mod').read_bytes()
+    if b'remote_file_id' in descriptor or b'replace_path' in descriptor:raise SystemExit('Invalid descriptor')
+    replacements={'descriptor.mod':descriptor,'thumbnail.jpg':(MOD/'assets/branding/workshop-cover.jpg').read_bytes()}
+    staging=output/'staging';staging.mkdir(parents=True)
+    with zipfile.ZipFile(output/'gangnailongxin.zip','w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
+        for name in sorted(set(records)|set(replacements)):
+            raw=replacements[name] if name in replacements else (source/'staging'/name).read_bytes()
+            if name not in replacements and sha256(raw)!=records[name]['sha256']:raise SystemExit('Verified payload changed')
+            target=staging/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(raw)
+            info=zipfile.ZipInfo(name,date_time=(2026,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=0o644<<16
+            archive.writestr(info,raw,compress_type=zipfile.ZIP_DEFLATED,compresslevel=9)
+            records[name]={'path':name,'bytes':len(raw),'sha256':sha256(raw)}
+    manifest['files']=sorted(records.values(),key=lambda r:r['path'])
+    write_json(output/'manifest.json',manifest);verify(output)
+    verification.update(repackaged_from_manifest_sha256=file_sha256(source/'manifest.json'),texture_bytes_unchanged=True)
+    write_pixel_proof(output,manifest,verification)
+    return manifest
+
+
 def verify(output):
     manifest=read_json(output/"manifest.json")
     expected={r["path"]:r for r in manifest["files"]}

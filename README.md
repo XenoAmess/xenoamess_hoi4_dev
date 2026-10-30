@@ -22,7 +22,7 @@ xenoamess_hoi4_dev/
 
 首个产品是 [钢奶龙心](mod_nailong/README.md)：逐原头像融合用户提供的奶龙角色，保留衣物、神态和动作。全量生产尚在进行，**不是已完成的全人物替换包**；精确进度由 `portraits.py coverage` 读回。
 
-全量目标为 5,238 张不同原图，其中 4,535 张高优先级先制作；扫描器路径更正找回的 95 张小头像见[路径更正](mod_nailong/docs/catalog-path-normalization.md)，另有 14 张未绑定角色的小头像见[独立卡片补漏](mod_nailong/docs/catalog-unbound-portrait-cards.md)。当前数量与快照时间见[生产进度](mod_nailong/data/progress.json)。用户已采用保留原人物发型、胡子等特征的版本，并追加粗脖子与衣领的协调检查。原 23 张不同原图/26 个资源的 A/B 对照已完成，后续按同一规则持续生产。
+《钢奶龙心》0.1.0 含 5317 个贴图绑定。已知独立来源完成 5239/5485（95.52%，含 4 个非人物例外）；仍有 246 个已知来源和历史未解析引用待处理。游戏贴图逐项对齐原版来源分辨率，完整高清 PNG 原始字节另行归档。当前实机范围见[原尺寸验收](mod_nailong/docs/native-resolution-live-qa-2026-10-30.md)。
 
 领口修正版已在实际选国页面和罗斯福信息卡显示，构建、机器和验收范围见[preview-007 实机回执](mod_nailong/docs/collar-preview-007-runtime.json)；其他新图仍需各自审查，不据局部画面追认全量通过。内置图片工具的 1/4/8 路实测与吞吐边界见[并发记录](mod_nailong/docs/builtin-image-concurrency.md)，目前按用户决定单路连续制作。
 
