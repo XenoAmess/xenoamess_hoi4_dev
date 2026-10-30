@@ -84,10 +84,18 @@ def validated_entries():
         require(hashlib.sha256(raw).hexdigest() == key, f"Installed original DDS differs: {key}")
         catalog_assets = [row for row in catalog["assets"] if row["id"] == asset_id and row["source_sha256"] == key]
         require(len(catalog_assets) == 1 and catalog_assets[0]["path"] == result["source_path"], f"Catalog binding differs: {key}")
-        require(generated["portraits"].get(key) is None, f"Unexpected existing generated row: {key}")
         require(queue["sources"][key]["retries_used"] == 0, f"Builtin retry count changed: {key}")
         journal = read_json(ROOT / f"mod_nailong/data/generation-requests/{key}.json")
-        require(len(journal["attempts"]) == 1 and journal["attempts"][0]["status"] == "failed" and not journal["attempts"][0].get("fullsize_sha256"), f"Existing returned image needs reconciliation: {key}")
+        require(journal["attempts"][0]["status"] == "failed" and not journal["attempts"][0].get("fullsize_sha256"), f"Original builtin history differs: {key}")
+        current = generated["portraits"].get(key)
+        if current is None:
+            require(len(journal["attempts"]) == 1, f"Existing returned image needs reconciliation: {key}")
+        else:
+            approved = next(row for row in read_json(EXPERIMENT / "approved-masters.json")["entries"] if row["source_sha256"] == key)
+            require(current.get("review") == "approved" and current.get("generated_fullsize_sha256") == approved["generated_fullsize_sha256"], f"Existing generated row is not the scoped approved output: {key}")
+            require(current.get("production_import", {}).get("schema") == "low2-kimi-production-import-v1" and current["production_import"].get("task_id") == approved["task_id"], f"Existing import evidence differs: {key}")
+            latest = journal["attempts"][-1]
+            require(latest.get("external_task_id") == approved["task_id"] and latest.get("fullsize_sha256") == approved["generated_fullsize_sha256"], f"Existing journal output differs: {key}")
         inputs = [
             {"role": "original source portrait", "path": f"runtime/references/{key}.png", "sha256": source["converted_png_sha256"], "url": source_url(key), "cache_name": f"{key}-{source['converted_png_sha256']}.png"},
             {"role": "user mascot reference", "path": MASCOT["path"], "sha256": MASCOT["sha256"], "url": MASCOT["url"], "cache_name": f"naiwa-{MASCOT['sha256']}.png"},

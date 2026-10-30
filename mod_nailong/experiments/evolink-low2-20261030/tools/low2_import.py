@@ -107,6 +107,18 @@ def copy_scoped_files(worktree, support, plan):
         for relative in expected:
             target = destination / relative
             if target.exists() and target.read_bytes() != (source_directory / relative).read_bytes():
+                if relative == Path("approved-masters.json"):
+                    before = read_json(source_directory / relative)
+                    after = read_json(target)
+                    require(before["formal_canonical_import_count"] == 0 and after["formal_canonical_import_count"] == after["count"] == 2, "Unexpected approved-master import state")
+                    require(before["canonical_import_pending"] is True and after["canonical_import_pending"] is False, "Canonical pending state differs")
+                    require([{**row, "production_import": None} for row in before["entries"]] == [{**row, "production_import": None} for row in after["entries"]], "Approved-master evidence changed")
+                    continue
+                if relative == Path("outputs-index.json"):
+                    before = read_json(source_directory / relative)
+                    after = read_json(target)
+                    require({**before, "observed_at_utc": None} == {**after, "observed_at_utc": None}, "Reviewed output index changed")
+                    continue
                 require(relative.parts[0] == "tools" and relative.suffix == ".py", f"Scoped evidence changed: {relative}")
                 target.write_bytes((source_directory / relative).read_bytes())
             elif not target.exists():

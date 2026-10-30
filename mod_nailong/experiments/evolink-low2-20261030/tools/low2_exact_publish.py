@@ -11,7 +11,7 @@ from runtime import high131_exact_api_publish as exact
 from tools.common import machine_id, read_json, utc_now, write_json
 
 BASE = "398db2a4959364c4303f9d912397b58df5fe907a"
-EXPECTED_TARGET = "b01725fb7453301d463ccaee8f2838772a93ab2d"
+EXPECTED_TARGET = "4f1e415988ccf2164fab0d6fad851d616a367387"
 EXPECTED_IMPORT = "c17f5089f15042141c18295d5e6c939eaf997182"
 EXPERIMENT = "mod_nailong/experiments/evolink-low2-20261030"
 
@@ -51,7 +51,7 @@ def prepare(worktree, base, target):
     api = exact.Api(runner=exact.Api._run_gh)
     receipt = worktree / "runtime/low2-evolink-20261030/exact-object-publish.json"
     publisher = exact.ExactApiPublisher(base, target, "delivery", "low2-20261030", api=api, receipt_path=receipt)
-    require(len(publisher.commits) == 2, "Expected exactly the import and documentation commits")
+    require(len(publisher.commits) == 3, "Expected exactly the import, documentation and validation-evidence commits")
     return publisher
 
 
