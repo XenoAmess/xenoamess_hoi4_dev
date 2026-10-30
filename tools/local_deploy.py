@@ -40,7 +40,7 @@ def main():
         if "mod/naiwa_world.mod" not in mods:mods.append("mod/naiwa_world.mod")
         write_json(dlc_file,state)
         if "mod/naiwa_world.mod" not in read_json(dlc_file)["enabled_mods"]:raise SystemExit("Local mod enable readback failed")
-    write_json(ROOT/"runtime/deployment.json",{"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":"local_deploy.py file write and actual readback; no launcher/game load claim","build":str(build),"user_profile":str(profile),"outer_descriptor":str(target),"outer_sha256":file_sha256(target),"previous_outer_descriptor":previous,"previous_dlc_load":previous_dlc,"enabled_in_dlc_load":args.enable,"game_load":"not-yet-verified"})
+    write_json(ROOT/"runtime/deployment.json",{"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":"local_deploy.py file write and actual readback; no launcher/game load claim","build":str(build),"user_profile":str(profile),"outer_descriptor":str(target),"outer_sha256":file_sha256(target),"previous_outer_descriptor":previous,"previous_dlc_load":previous_dlc,"enabled_in_dlc_load":args.enable,"game_load":"not-yet-verified","native_texture_verification":texture_check})
     print(f"Registered {target}; game load remains unverified")
 
 if __name__=="__main__":
