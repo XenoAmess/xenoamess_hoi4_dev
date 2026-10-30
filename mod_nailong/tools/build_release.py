@@ -239,13 +239,39 @@ def repackage_verified(source, output, heavy_write_admission):
     from mod_nailong.tools.texture_resolution import verify_game_textures,write_pixel_proof
     prior=read_json(source/'manifest.json')
     catalog=read_json(MOD/'data/catalog.json')
-    verification=verify_game_textures(source,prior,catalog=catalog,generated=read_json(MOD/'data/generated.json')['portraits'],root=ROOT,reuse_pixel_proof=True)
+    generated=read_json(MOD/'data/generated.json')['portraits']
     if prior['catalog_sha256']!=file_sha256(MOD/'data/catalog.json'):
         raise SystemExit('Catalog changed; a full rebuild is required')
     manifest=copy.deepcopy(prior)
     records={r['path']:r for r in prior['files']}
-    estimate=sum(r['bytes'] for r in prior['files'] if r['path'].startswith('gfx/'))
-    validate_heavy_write_admission(heavy_write_admission,estimate,output)
+    selected=profile_assets(catalog);exceptions,_=nonperson_scope()
+    # Match the admission's conservative decoded-size estimate, which uses
+    # a 128-byte allowance even for the smaller TGA/PNG headers.
+    estimate=sum(4*a['size'][0]*a['size'][1]+128 for a in selected.values() if ready(generated.get(a['source_sha256'],{})))
+    estimate+=sum(len(original_nonperson_bytes(a)) for a in selected.values() if a['source_sha256'] in exceptions)
+    if estimate>256*1024*1024:validate_heavy_write_admission(heavy_write_admission,estimate,output)
+    # No pixels are regenerated here. Transfer the existing pixel proof only
+    # after verify() rereads every staged/ZIP byte and all source/approval
+    # bindings still match. Rehashing unused PNG inputs is not required to
+    # copy already verified game textures; this is explicitly not a new
+    # verification of the current master files on disk.
+    proof=read_json(source/'native-texture-verification.json')
+    expected=[{'path':r['path'],'source_sha256':r['source_sha256'],'master_sha256':r.get('fullsize_master_sha256'),'texture_sha256':r['sha256']} for r in prior['bindings']]
+    if proof.get('manifest_sha256')!=file_sha256(source/'manifest.json') or proof.get('bindings')!=expected or proof.get('verification',{}).get('source_identity_and_rgba_verified') is not True:
+        raise ValueError('Stale or mismatched native pixel verification proof')
+    from mod_nailong.tools.texture_resolution import POLICY_ID
+    if proof.get('policy')!=POLICY_ID or prior.get('texture_resolution_policy_id')!=POLICY_ID:
+        raise ValueError('Obsolete texture policy')
+    for binding in prior['bindings']:
+        asset=next((a for a in selected.values() if a['path'].lower()==binding['path'].lower()),None)
+        if asset is None or asset['source_sha256']!=binding['source_sha256'] or asset['package']!=binding['package'] or asset['size']!=binding['size']:
+            raise ValueError('Portrait source/package binding changed: '+binding['path'])
+        digest=binding.get('fullsize_master_sha256')
+        if digest is None:
+            if binding['source_sha256'] not in exceptions or (source/'staging'/binding['path']).read_bytes()!=original_nonperson_bytes(asset):raise ValueError('Unregistered non-person texture')
+        elif not ready(generated.get(binding['source_sha256'],{})) or generated[binding['source_sha256']].get('generated_fullsize_sha256')!=digest:
+            raise ValueError('Portrait no longer points to its own currently approved master: '+binding['path'])
+    verification=dict(proof['verification'],pixel_proof_reused=True,current_master_bytes_rehashed=False)
     descriptor=(MOD/'mod/descriptor.mod').read_bytes()
     if b'remote_file_id' in descriptor or b'replace_path' in descriptor:raise SystemExit('Invalid descriptor')
     replacements={'descriptor.mod':descriptor,'thumbnail.jpg':(MOD/'assets/branding/workshop-cover.jpg').read_bytes()}
