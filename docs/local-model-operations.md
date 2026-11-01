@@ -19,3 +19,5 @@ python -X utf8 tools/local_model_batch.py runtime/local-model-operations/<batch>
 示例中的材料、身份和新输出目录须换为本次实际任务。运行只打印批次回执位置；维护诊断见回执的 `maintenance_log`，返回75时宿主AI继续读取诊断、自主修复并复查。模型传输、实际采用、软件测试和图片资格各自记账。共享配置、调用器和检查器的实际SHA随批次保存；原始材料继续留在本机忽略目录。
 
 共享仓库已有 [Civ6经验迁移](https://github.com/XenoAmess/local-model-operations/blob/main/docs/civ6-experience-2026-11-02.md)及其固定来源档案；本项目沿用其中可复用的输入、证据和纠错经验。项目原生接口、运行权限和历史采用结论按各自原范围保留。
+
+2026-11-02 接入阶段已实际完成 17 次共享 HTTP 调用：16 份完整候选、1 份 length 整弃、0 次 HTTP 重试。规则、历史和提示词分别记录实际采用；两轮适配器代码/测试候选拒绝后由 owner 接管实现，11 项边界测试通过。首批实际客户端峰值为 9，持续 30.866055 秒；不据此推断服务容量或节时。逐项采用、失败与成本未知项已发布到[共享案例](https://github.com/XenoAmess/local-model-operations/blob/a4817d9095f66d7a983f30dbc87187836d86f3d7/docs/hoi4-model-operations-2026-11-02.md)及其脱敏回执。旧 Windows 文档在固定公开 commit 的原始字节已完整读回核 SHA；原始请求、响应与机器账本继续留在本机忽略目录。
