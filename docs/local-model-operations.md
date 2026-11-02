@@ -37,3 +37,5 @@ python -X utf8 tools/local_model_batch.py runtime/local-model-operations/<batch>
 下一组完整返回后，累计 **49 次调用、48 份完整候选、1 份截断整弃、0 次 HTTP 重试**。owner 明确区分闭合金绣立领与开襟西装，删除隐藏花饰的条件提示及非输入大图、其他人物提法，保留小卡实际遮挡边界。本组通用输入已使用原图确切背景色，修正前批灰背景假设；旧实际发送记录保持原样。[共享回执](https://github.com/XenoAmess/local-model-operations/blob/c866428ec00dfd903aabf3a2b9ba5dd197bc5746/docs/evidence/2026-11-02-hoi4-b020-prompt-followup.json)记录逐项部分采用和成本未知项，实际图片另审。
 
 随后四份任务完整返回，累计 **53 次 HTTP 调用、52 份完整候选、1 份截断整弃、0 次 HTTP 重试**。owner 区分白色闭领海军制服与开襟外衣，保留正式翼领/领巾与普通领带的差别；白色原衣物不能当作奶龙肚皮删除。两种 SHA 另验正确，明确开闭领并删掉非输入大图提法后部分采用。[共享回执](https://github.com/XenoAmess/local-model-operations/blob/15534796f6b15ac46ee3cfafe66deaedbc126d25/docs/evidence/2026-11-02-hoi4-b022-prompt-followup.json)保留待调用截止。图片服务后来实际发生的拒绝另记在图片请求账本，不计作本地文本模型的 HTTP 失败或重试。
+
+再后四份任务完整返回，累计 **57 次 HTTP 调用、56 份完整候选、1 份截断整弃、0 次 HTTP 重试**。owner 保留领结、分层白裹领布、短完整胡须、下垂白色上唇胡须与小块浅色下巴毛发的逐源区别，排除同名不同军服版本。删掉第二份夹带的协议说明和第三份借用其他衣服的提法，核对两个 SHA 域并明确开襟外衣和各自领部布料后部分采用。[共享回执](https://github.com/XenoAmess/local-model-operations/blob/467e97e9c66b421921ec215ad6c425177e24f00d/docs/evidence/2026-11-02-hoi4-b023-prompt-followup.json)保留四份未调用文本的真实截止，实际图片资格另审。
