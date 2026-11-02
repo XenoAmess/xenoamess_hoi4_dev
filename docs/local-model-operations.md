@@ -29,3 +29,5 @@ python -X utf8 tools/local_model_batch.py runtime/local-model-operations/<batch>
 随后四份逐源表情/服装任务均完整返回，累计达到 **33 次实际调用、32 份完整候选、1 份截断整弃、0 次 HTTP 重试**。同一路径下两个不同原始 SHA 的版本分别准备，保留各自发型与领带；微张嘴与闭嘴表情逐源指定。owner 删除候选夹带的协议、非输入及其他来源提法，核对两个 SHA 域后部分采用。该阶段的[共享回执](https://github.com/XenoAmess/local-model-operations/blob/cc26764e15fc2ea26238a2adbcae0bd2007c22bf/docs/evidence/2026-11-02-hoi4-b015-prompt-followup.json)只记录四份待调用文本，不授予图片资格。
 
 下一组四份真实任务完整返回后，累计为 **37 次实际调用、36 份完整候选、1 份截断整弃、0 次 HTTP 重试**。owner 逐项核对原始资源与转换 PNG 的两种 SHA，将前两项“开领或闭领”改为原图明确的闭合立领，并补齐各自毛发、表情和领口约束后部分采用。两张同路径、不同 SHA 的来源继续独立准备；[共享回执](https://github.com/XenoAmess/local-model-operations/blob/af50e4c47b23e9eef7d3c20c23bd3d5e260bd182/docs/evidence/2026-11-02-hoi4-b017-prompt-followup.json)保留此待调用截止，不追认图片生成或视觉资格。
+
+再后四份任务同样完整返回，累计 **41 次真实调用、40 份完整候选、1 份截断整弃、0 次 HTTP 重试**。owner 比较小卡原始像素与四张大图，排除朝向或发型、服装不同的候选；部分采用前把含糊开闭领改为原图的开襟西装，把一项过强的无胡须断言恢复为小像素细节的真实不确定性。另一张明确的长灰白胡须、圆框眼镜仍完整保留，不将细节不确定性跨人物套用。[共享回执](https://github.com/XenoAmess/local-model-operations/blob/c3a8756f9667ad93b53bb7f718058b20a15e133f/docs/evidence/2026-11-02-hoi4-b018-prompt-followup.json)只记录待调用文本及实际采用边界。
