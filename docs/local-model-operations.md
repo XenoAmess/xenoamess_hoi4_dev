@@ -75,3 +75,5 @@ python -X utf8 tools/local_model_batch.py runtime/local-model-operations/<batch>
 后续四个全新、尚未完成的来源任务各一次真实本地模型请求均返回 stop/DONE/完整 JSON 候选，没有重投此前 owner 已接管的超时任务。累计 **141 次实际 POST、116 份完整候选、1 份历史截断整次弃用、24 次超时尝试与20次 HTTP 退避重试**。四份部分采用，保留动物角色自然体态、原图红色颈肩布料及无人体服装领口合同，清理候选中的协议尾句并重申真实姿态。此窗口四个生成请求成功只说明该观察窗口可用，不证明服务永久恢复，也不构成实际美术通过。[新任务实际回执](https://github.com/XenoAmess/local-model-operations/blob/c1fd498384af29f7294d5d2c9d2020bd1c62ff70/docs/evidence/2026-11-03-hoi4-b051-prompt-followup.json) 已公开原始字节读回；根仓库保存派发前11份冻结字节，后续图片结果另行验收。
 
 B051 冻结提示词字节保留：熊角色首行末尾的一个空格已实际发送给图片工具，按完整实际 prompt 归档规则原样保存；仅该冻结提示词行的 trailing-whitespace 告警作为精确例外，其余 staged 文件通过 diff 检查，未倒改已调用请求。
+
+后续四个新的真实提示词任务各一次 POST 返回 stop/DONE/完整 JSON，累计 **145 次实际 POST、120 份完整候选、1 份历史截断整次弃用、24 次超时尝试、20 次 HTTP 重试**。四份部分采用，owner重述真实原图方向／头倾、无帽状态及服装，保留第四项确实可见的浅色上唇胡和下巴胡，并与黄色本体圆下巴几何分开；其他图细上唇阴影仍按难辨处理。[实际调用与采用回执](https://github.com/XenoAmess/local-model-operations/blob/862a8f44ad95ee14d899bbf4e277558b9a405221/docs/evidence/2026-11-03-hoi4-b053-prompt-followup.json) 已逐字节公开读回。派发前11份准备字节已冻结保存，后续图片美术资格另审，未以文字 stop 或调用量证明完成。
