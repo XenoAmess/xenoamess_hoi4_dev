@@ -71,3 +71,7 @@ python -X utf8 tools/local_model_batch.py runtime/local-model-operations/<batch>
 四份低明度和不同版本提示词完成后，累计 **113 次真实本地模型 HTTP 请求、112 份完整候选、1 份截断整次弃用、0 次 HTTP 重试**。第一张无大图候选，保留黑色发／覆盖轮廓的真实难辨边界、左右不对称暗光与紫黑背板；其余三项比较八张大图，按实际头发、服装和姿态排除不同版本。第二份候选复述了owner输入中非输入大图的比较措辞，最终删除且不归因为模型发明；第四份确认措辞改为直接图像要求，无依据的通用低明度改为实际原图光线。均部分采用、逐图另审。[固定提交回执](https://github.com/XenoAmess/local-model-operations/blob/fe196cafd795b76b7d859690a82a55aec290dcce/docs/evidence/2026-11-03-hoi4-b047-prompt-followup.json) 已公开原始字节读回；派发前的 11 份冻结字节与随后图像执行独立登记。
 
 后续四个真实任务各经共享调用器6次允许尝试后超时，共 **24 次 POST、20 次 HTTP 退避重试、0 份完整候选**。累计实际模型请求增至 **137 次**，完整候选仍为112，另1份历史截断弃用和24份超时尝试；没有把超时当作模型文本采用。owner按已查看原图接管四份提示词，冻结后继续内置图片生产。稍后同配置地址的TCP、GET health/models可达，不证明生成接口恢复或此前服务状态；不切换旧地址、不重投已接管任务。[实际超时与接管回执](https://github.com/XenoAmess/local-model-operations/blob/34ad909f4fac284caf4b78a709f9225ec7c029a0/docs/evidence/2026-11-03-hoi4-b049-timeout-owner-takeover.json) 已公开原始字节读回，真实24次区间、配置/请求SHA与无候选采用边界保留。根仓库提交派发前11份冻结字节；后续图像调用另记。
+
+后续四个全新、尚未完成的来源任务各一次真实本地模型请求均返回 stop/DONE/完整 JSON 候选，没有重投此前 owner 已接管的超时任务。累计 **141 次实际 POST、116 份完整候选、1 份历史截断整次弃用、24 次超时尝试与20次 HTTP 退避重试**。四份部分采用，保留动物角色自然体态、原图红色颈肩布料及无人体服装领口合同，清理候选中的协议尾句并重申真实姿态。此窗口四个生成请求成功只说明该观察窗口可用，不证明服务永久恢复，也不构成实际美术通过。[新任务实际回执](https://github.com/XenoAmess/local-model-operations/blob/c1fd498384af29f7294d5d2c9d2020bd1c62ff70/docs/evidence/2026-11-03-hoi4-b051-prompt-followup.json) 已公开原始字节读回；根仓库保存派发前11份冻结字节，后续图片结果另行验收。
+
+B051 冻结提示词字节保留：熊角色首行末尾的一个空格已实际发送给图片工具，按完整实际 prompt 归档规则原样保存；仅该冻结提示词行的 trailing-whitespace 告警作为精确例外，其余 staged 文件通过 diff 检查，未倒改已调用请求。
