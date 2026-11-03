@@ -77,3 +77,5 @@ python -X utf8 tools/local_model_batch.py runtime/local-model-operations/<batch>
 B051 冻结提示词字节保留：熊角色首行末尾的一个空格已实际发送给图片工具，按完整实际 prompt 归档规则原样保存；仅该冻结提示词行的 trailing-whitespace 告警作为精确例外，其余 staged 文件通过 diff 检查，未倒改已调用请求。
 
 后续四个新的真实提示词任务各一次 POST 返回 stop/DONE/完整 JSON，累计 **145 次实际 POST、120 份完整候选、1 份历史截断整次弃用、24 次超时尝试、20 次 HTTP 重试**。四份部分采用，owner重述真实原图方向／头倾、无帽状态及服装，保留第四项确实可见的浅色上唇胡和下巴胡，并与黄色本体圆下巴几何分开；其他图细上唇阴影仍按难辨处理。[实际调用与采用回执](https://github.com/XenoAmess/local-model-operations/blob/862a8f44ad95ee14d899bbf4e277558b9a405221/docs/evidence/2026-11-03-hoi4-b053-prompt-followup.json) 已逐字节公开读回。派发前11份准备字节已冻结保存，后续图片美术资格另审，未以文字 stop 或调用量证明完成。
+
+该组四个新任务各一次真实 POST 返回完整 stop/DONE/JSON，准备截点累计 **149 次实际 POST、124 份完整候选、1 份历史截断整次弃用、24 次超时尝试及20次 HTTP 重试**。四份部分采用；第四份遗漏输入已有的绿圈黑眼由owner补回，大图提醒／被囚替代版说明由owner输入后被模型复述，最终图片词删除这些比较，不把owner材料问题全归模型。实际黑发礼服版、深色闭领及真实上唇胡／光滑下巴约束保留。[实际调用与采用回执](https://github.com/XenoAmess/local-model-operations/blob/418fccb9934a0339eb2ba949a6728b8decd44ce4/docs/evidence/2026-11-03-hoi4-b055-prompt-followup.json) 已逐字节公开读回，完整图片验收另记。此前7574份原始PNG在固定提交00d9525bc的远端原字节核验已完成，后续文件不冒充已读回。
