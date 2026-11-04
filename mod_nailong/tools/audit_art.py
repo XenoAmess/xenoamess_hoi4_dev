@@ -20,7 +20,65 @@ def verify_request_inputs(inputs, reference_path, reference_digest, hasher=None)
         if source.get('path'):
             path=ROOT/source['path']
             actual=hasher(path) if hasher else reference_digest if path==reference_path else file_sha256(path)
-            assert actual==source['sha256'],str(path)
+            expected=source.get('sha256') or source.get('converted_png_sha256')
+            assert expected and actual==expected,str(path)
+
+def externally_resolved(failure, row):
+    """Recognize a separately approved external asset without rewriting refusal history."""
+    proof=failure.get('resolved_by_external_task',{})
+    imported=row.get('production_import',{})
+    if proof:
+        return (proof.get('original_refusal_preserved') is True
+                and proof.get('builtin_retry_count_changed') is False
+                and proof.get('task_id') and proof['task_id']==imported.get('task_id')
+                and proof.get('output_sha256')==row.get('image_sha256')
+                and proof.get('fullsize_sha256')==row.get('generated_fullsize_sha256'))
+    journal_path=row.get('request_journal')
+    if not journal_path:return False
+    attempt=read_json(ROOT/journal_path)['attempts'][-1]
+    task=attempt.get('external_task_id') or attempt.get('alpha_repair',{}).get('generation_task_id')
+    return (bool(task) and row.get('method','').startswith('EvoLink ')
+            and imported.get('task_id') in (None,task)
+            and attempt.get('status')=='approved'
+            and attempt.get('fullsize_sha256')==row.get('generated_fullsize_sha256')
+            and attempt.get('output_sha256')==row.get('image_sha256'))
+
+
+def unresolved_service_sources(attempts, records, retry_queue=None):
+    """Recognize actual retry success and SHA-bound later art correction separately."""
+    retry_resolved={a['source_sha256'] for a in attempts if a.get('resolved_by_retry')}
+    if retry_queue is None:
+        queue_path=MOD/'data/image-retry-queue.json'
+        retry_queue=read_json(queue_path) if queue_path.exists() else {'sources':{}}
+    for key,row in records.items():
+        retry=retry_queue.get('sources',{}).get(key,{})
+        accepted=retry.get('accepted_retry_output_sha256')
+        journal_path=row.get('request_journal')
+        if (retry.get('state')!='approved_after_cooldown_retry_and_art_correction'
+                or retry.get('approved_image_sha256')!=row.get('image_sha256')
+                or not accepted or not journal_path
+                or not any(old.get('previous_image_sha256')==accepted for old in row.get('revision_history',[]))):
+            continue
+        journal=read_json(ROOT/journal_path)['attempts']
+        if any(a.get('output_sha256')==accepted and a.get('fullsize_sha256')
+                and a.get('status') in {'approved','generated_pending_visual_review','generated_rejected_visual_review'}
+                and a.get('actual_request_verification',{}).get('actual_recorded_before_call') is True
+                for a in journal):
+            retry_resolved.add(key)
+    return {a['source_sha256'] for a in attempts if a.get('status')=='blocked'
+            and a['source_sha256'] not in retry_resolved
+            and not externally_resolved(a,records.get(a['source_sha256'],{}))}
+
+
+def request_time_boundary(attempt):
+    """Accept actual archived requests without inventing a preparation timestamp."""
+    if attempt.get('prepared_at_utc'):return True
+    if attempt.get('recovered_at_utc') and attempt.get('recording_boundary'):return True
+    return (attempt.get('recovery_status')=='archived_request_only_no_execution_record'
+            and bool(attempt.get('generated_at_utc')) and bool(attempt.get('external_task_id'))
+            and bool(attempt.get('external_request') or attempt.get('actual_request_record'))
+            and bool(attempt.get('external_result') or attempt.get('actual_result_record')))
+
 
 def audit(hasher=None):
     hash_file=hasher or file_sha256
@@ -28,7 +86,7 @@ def audit(hasher=None):
     source_sizes={a['source_sha256']:a['size'] for a in catalog['assets']}
     records=read_json(MOD/'data/generated.json')['portraits']
     failures=read_json(MOD/'data/generation-failures.json')
-    blocked={a['source_sha256'] for a in failures.get('attempts',[]) if a.get('status')=='blocked' and not a.get('resolved_by_retry')}
+    blocked=unresolved_service_sources(failures.get('attempts',[]),records)
     reference_path=MOD/'assets/reference/naiwa.png'
     reference=hash_file(reference_path)
     approved=0
@@ -60,7 +118,7 @@ def audit(hasher=None):
                 assert intended.read_bytes()==a['intended_prompt'].encode('utf-8'),str(intended)
                 assert hash_file(intended)==a['intended_prompt_sha256'],str(intended)
             assert a['inputs'] and a['machine_id'],str(path)
-            assert a['prepared_at_utc'] or (a.get('recovered_at_utc') and a.get('recording_boundary')),str(path)
+            assert request_time_boundary(a),str(path)
             verify_request_inputs(a['inputs'],reference_path,reference,hasher=hasher)
             requests+=1
     experiment=read_json(MOD/'experiments/hair-features-v1/manifest.json')
