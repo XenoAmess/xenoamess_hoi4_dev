@@ -20,11 +20,11 @@ xenoamess_hoi4_dev/
     └── docs/                  # 本产品验收、边界和进度
 ```
 
-首个产品是 [钢奶龙心](mod_nailong/README.md)：逐原头像融合用户提供的奶龙角色，保留衣物、神态和动作。全量生产尚在进行，**不是已完成的全人物替换包**；精确进度由 `portraits.py coverage` 读回。
+首个产品是 [钢奶龙心](mod_nailong/README.md)：逐原头像融合用户提供的奶龙角色，保留衣物、神态和动作。当前源码中已知人物素材 **5481/5481** 已通过审查，另有4个非人物例外保留原图；[最后12张接收记录](mod_nailong/data/high12-owner-intake-20261105.json)保存逐项核对结果。素材完成与游戏实机、公开安装包更新分别记录。
 
-《钢奶龙心》1.0 含 5317 个贴图绑定。已知独立来源完成 5239/5485（95.52%，含 4 个非人物例外）；仍有 246 个已知来源和历史未解析引用待处理。游戏贴图逐项对齐原版来源分辨率，完整高清 PNG 原始字节另行归档。当前实机范围见[原尺寸验收](mod_nailong/docs/native-resolution-live-qa-2026-10-30.md)。
+《钢奶龙心》已发布的1.0安装包含5317个贴图绑定；新增素材尚未随新的创意工坊或 GitHub 安装包更新发布。完整正式构建仍有748条既有未解析引用待处理。游戏贴图逐项对齐原版来源分辨率，完整高清 PNG 原始字节另行归档。当前实机范围见[原尺寸验收](mod_nailong/docs/native-resolution-live-qa-2026-10-30.md)。
 
-领口修正版已在实际选国页面和罗斯福信息卡显示，构建、机器和验收范围见[preview-007 实机回执](mod_nailong/docs/collar-preview-007-runtime.json)；其他新图仍需各自审查，不据局部画面追认全量通过。内置图片工具的 1/4/8 路实测与吞吐边界见[并发记录](mod_nailong/docs/builtin-image-concurrency.md)，目前按用户决定单路连续制作。
+领口修正版已在实际选国页面和罗斯福信息卡显示，构建、机器和验收范围见[preview-007 实机回执](mod_nailong/docs/collar-preview-007-runtime.json)；该历史实机记录只覆盖所示位置，不证明新增素材的游戏内显示。内置图片工具的1/4/8路实测与吞吐边界见[并发记录](mod_nailong/docs/builtin-image-concurrency.md)。
 
 ![领口修正版的局部实机画面](mod_nailong/docs/media/2026-10-17-collar-preview-007.png)
 
