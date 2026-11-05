@@ -227,3 +227,5 @@ B151：候选保留短深侧分后梳/有限灰鬓/真实眉/细微上唇范围/
 ### 2026-11-05：最后12张素材的接收文本审阅
 
 一项完整当前scope/审计源码/tests任务，一次HTTP200/stop/DONE/有效JSON，reported19477+918tokens，无重试、实际峰1持续8.508633秒。候选把图片接收、软件测试和游戏验收混同，凭“本次未实机”制造接收阻塞，并误读5481/5481库存范围及既有全库581/24测试；实质意见拒收，0代码或视觉资格。owner以机械核对完成12来源接收和17原件/普通Git blob/远端完整字节验证，保留既有审图资格，没有重跑旧绿。后到输入字节与远端证明不追认已在模型输入内；成本、未报告缓存和净节省未知。[共享固定记录](https://github.com/XenoAmess/local-model-operations/blob/cb18731a62535423c67acec5eb9c86d8c3f2d5e4/docs/evidence/2026-11-05-hoi4-high12-intake-scope-confusion.json)保存采用判断与阶段边界。
+
+11月5日发布准备实际并行完成两项HTTP文本任务，均200/stop/DONE/有效JSON，无传输重试。更新说明仅部分采用结构和措辞：owner将混合类别的5481/5488比例改为5481个已审人物、4个非人物例外、3个未制作人物，并删去上一版已有的宣传图变更。审查候选误把5579个实际输出绑定理解为含未制作图，又混同资源实例、独立来源和非人物例外；实质意见拒收。后到找到的旧订阅包1.19.4.1实机证据不在当时输入内，记为owner输入范围限制，不能追认为本次新包验收。实际时间、token、采用和未知成本见[共享固定回执](https://github.com/XenoAmess/local-model-operations/blob/d228b946cfea6997f9c319ab7fd51433dc21c96d/docs/evidence/2026-11-05-hoi4-release-category-arithmetic.json)；没有授予模型代码、美术或实机资格。

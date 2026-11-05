@@ -20,7 +20,7 @@ xenoamess_hoi4_dev/
     └── docs/                  # 本产品验收、边界和进度
 ```
 
-首个产品是 [钢奶龙心](mod_nailong/README.md)：逐原头像融合用户提供的奶龙角色，保留衣物、神态和动作。1.19.3库存的5481张人物素材均已通过审查，[最后12张接收记录](mod_nailong/data/high12-owner-intake-20261105.json)保存逐项核对结果。发布前本机更新至1.19.4.1，重新清点新增3个人物来源；当前为 **5481/5484** 人物素材通过，另有4个非人物例外保留原图。素材完成与游戏实机、公开安装包更新分别记录。
+首个产品是 [钢奶龙心](mod_nailong/README.md)：逐原头像融合用户提供的奶龙角色，保留衣物、神态和动作。1.19.3库存的5481张人物素材均已通过审查，[最后12张接收记录](mod_nailong/data/high12-owner-intake-20261105.json)保存逐项核对结果。发布前核对本机已安装的1.19.4.1，重新清点发现此前库存之外的3个人物来源；当前为 **5481/5484** 人物素材通过，另有4个非人物例外保留原图。此清点不证明这3个来源何时加入游戏。素材完成与游戏实机、公开安装包更新分别记录。
 
 《钢奶龙心》已发布的1.0安装包含5317个贴图绑定；新增素材尚未随新的创意工坊或 GitHub 安装包更新发布。完整正式构建仍有748条既有未解析引用待处理。游戏贴图逐项对齐原版来源分辨率，完整高清 PNG 原始字节另行归档。当前实机范围见[原尺寸验收](mod_nailong/docs/native-resolution-live-qa-2026-10-30.md)。
 
@@ -41,3 +41,5 @@ python mod_nailong/tools/build_release.py --preview --output dist/naiwa-preview-
 `set` 是 Windows cmd 的环境变量命令。也可对 `catalog.py scan` 传 `--game-root`。开发构建无需启动 Steam，也不要求 Steam 在线。图像生成使用内置 imagegen skill，不要求 API key；仓库 Python 工具不会偷偷换用付费 API。
 
 永久协作规则见 [AGENTS.md](AGENTS.md)：每次任务默认提交并推送；Steam 仅在下载/上传等必要阶段在线，完成或中止后立即恢复离线。GitHub 推送和图片生成无需改变 Steam 状态。
+
+2026-11-05更新的[离线构建已完成逐文件与母版派生像素验证](mod_nailong/data/publication/1.0-update-20261105/build.json)：5579个贴图绑定，较上一安装包净增262个。新安装包尚未公开上传；按用户要求，HOI4实机抽查与Steam上传等待共享桌面可用后继续。
