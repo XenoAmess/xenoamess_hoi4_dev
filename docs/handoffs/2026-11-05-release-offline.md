@@ -19,3 +19,5 @@
 7. 各可审阅单元按项目规则精确提交并正常推送；本项目 `master`、共享模型仓库 `main`，分别保持唯一Git写者。更新本交接的准备状态及README时区分两个平台各自真实状态。
 
 本轮本地文本模型的两项实际请求与人工纠错已归档到[固定共享案例](https://github.com/XenoAmess/local-model-operations/blob/d228b946cfea6997f9c319ab7fd51433dc21c96d/docs/evidence/2026-11-05-hoi4-release-category-arithmetic.json)。模型文本、历史1.19.3抽查及旧订阅包1.19.4.1记录均不替代本包实机验收。
+
+2026-11-07后到状态：用户再次明确要求发布到Steam及GitHub，已恢复桌面步骤。GitHub已公开，实际身份与当时未完成的读回状态见 `github-published-20261107.json`；Steam本次上传仍在进行。启动器spawn报ENOENT后，经真实Explorer地址栏启动同一SHA的hoi4.exe已进入游戏载入画面；载入不等于实机抽查通过。后续使用 `runtime/release-20261107/payload-ready.json` 指定的独立副本，规范构建原件保持完整。
