@@ -94,6 +94,10 @@ def click(args):
     print("Mouse input sent; business result requires fresh screenshot/OCR")
 
 def keys(args):
+    if args.scan_codes and args.text is None and args.text_file is None:
+        from tools.keyboard_scan_codes import SCAN
+        unsupported=[key for key in (args.hotkey or [args.key]) if key.lower() not in SCAN]
+        if unsupported:raise SystemExit('Unsupported scan-code keys; no window focused and no input sent: '+', '.join(unsupported))
     gui,windows=desktop_modules()
     focus(args.hwnd)
     user=ctypes.windll.user32
