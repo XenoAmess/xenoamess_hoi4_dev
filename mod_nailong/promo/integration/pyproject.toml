@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gangnailongxin-promo-integration"
+version = "0.1.0"
+description = "Project-owned HOI4 capture and film composition for XAR Promo Toolchain"
+requires-python = ">=3.11"
+dependencies = ["xar-promo-toolchain==0.3.0", "Pillow==12.3.0"]
+
+[project.entry-points."xar_promo.adapters"]
+hoi4-ocr-capture = "nailong_promo:adapter"
+
+[project.entry-points."xar_promo.presets"]
+gangnailongxin-75s = "nailong_promo:preset"
+
+[tool.setuptools]
+packages = ["nailong_promo"]

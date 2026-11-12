@@ -8,6 +8,8 @@
 - `authoring-receipt-20261112-r2.json`：当前第二稿的字节绑定、验证与独立留存 run。
 - `authoring-receipt-20261112.json`：初稿历史回执；其原稿与配置见固定提交 `9440e147dffce2150777df99030c47c7caca7886`，原有 `director-v1` run 保留，不重写为第二稿证据。
 - `capture-progress-20261112.json`：首轮实际录屏的范围、字节绑定、工具链留存与尚待补拍项。
+- `style-settings.json` 与 [项目接入包](../integration/README.md)：标题、配色、人物展示与工具链 adapter/preset/composer。
+- `integration-receipt-20261112.json`：素材索引、缺镜头阻断与单个五秒标题组件的有限验证。
 
 ## 工具链与当前阶段
 
@@ -19,7 +21,7 @@
 
 第二稿同步修改 S04、S05、S07、S08 的人物安排和 S05 旁白，使用独立 `director-v2` run 绑定新字节，保持原 75 秒节奏。
 
-配置中的 `hoi4-ocr-capture` 和 `gangnailongxin-75s` 为拟接入的组件 ID。**当前尚无注册的 HOI4 adapter、preset 或 composer**，因此未运行管线 `plan`、`build` 或媒体 `audit`。创作阶段的两份历史回执保持当时状态；后续实际拍摄进展另记。
+项目接入包现已在隔离环境注册 `hoi4-ocr-capture`、`gangnailongxin-75s` 与 `nailong_promo:compose`。两次 CLI `plan` 均因缺少拍摄素材返回预期 RED，且没有创建 workdir；尚无全片成功 plan、build 或媒体 audit。另以核心 `plan_render` 实际渲染并探测了一个五秒标题组件，包含旁白、字幕与临时配乐，不计作完整影片。创作阶段的两份历史回执保持当时状态；后续实际拍摄进展另记。
 
 ## 首轮拍摄进展
 
@@ -35,7 +37,7 @@
 
 1. 核对当前订阅构建、游戏版本、Steam 离线状态与桌面使用时段；按项目存储策略完成录屏峰值、配额、系统与其他任务预留的准入。当天可用空间快照不能替代录屏空间预留。
 2. 按导演稿集中采集选国页与英国界面，生成带源媒体 SHA、PTS、镜头 marks、clean spans 和证据引用的 capture receipt。产品语义保存于 HOI4 sidecar；不借用 CK3 capture 规则。
-3. 实现并注册本项目 adapter、preset 与 `PipelineComposer`，使用工具链已有留存、时间线及音轨 API。改动配置后新建 run，保持旧快照及失败材料。
+3. 按接入包说明补齐本机制作输入，保留真实 source/span 绑定；当前 `production-inputs-draft-v1.json` 明确保留待拍标记。改动配置后新建 run，保持旧快照及失败材料。
 4. 先运行只读 `plan`，再 `build`。用实际配音探测时长替换草拟估计，保留旁白停顿与片尾读字时间。对实际成片做媒体、字节与画面语义核对。
 5. 生成精确绑定成片字节的 probe 与待人工审查包。完整观看后，依据具名审阅者明确决定记录 signoff，再离线 export。视频发布另按用户对投放平台的指示执行。
 
