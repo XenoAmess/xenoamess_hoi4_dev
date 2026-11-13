@@ -1,44 +1,21 @@
-# 钢奶龙心 1.0 宣传片制作
+# 钢奶龙心 1.0 宣传片
 
-[导演稿](director-script.zh-CN.md)为本片第二稿：75 秒、16:9、简体中文字幕与普通话旁白，创意为「世界局势很严肃，参谋部很可爱」。按用户最新偏好，尽量避免中国相关人物成为重点；个人特写、群像主位、备用镜头、封面与片尾优先使用英美法意人物，英国 Baldwin 为主角。本目录保存创作输入，录屏和构建过程材料放在仓库已忽略的 `runtime/` 中。
+75秒审片版已完成拍摄、合成、全片解码检查和工具链证据审计，当前等待具名人工完整观看。画面为1920×1080、30fps，含中文合成旁白、烧录字幕和原创临时配乐；本次未上传视频，也未记录人工signoff或执行发布export。
 
-- `director-script.zh-CN.md`：分镜、旁白、声音、拍摄顺序、简介与宣传口径。
-- `shot-plan.json`：镜号、连续时间、旁白窗口及 `casting_policy` 选角偏好；供后续 HOI4 制作集成消费。它是项目自有 sidecar，不是 XAR 的 capture receipt，也不是已拍素材清单。
-- `promo-project.json`：XAR 原生创作配置，章节状态全部为 `planned`；每章对应一镜。
-- `authoring-receipt-20261112-r2.json`：当前第二稿的字节绑定、验证与独立留存 run。
-- `authoring-receipt-20261112.json`：初稿历史回执；其原稿与配置见固定提交 `9440e147dffce2150777df99030c47c7caca7886`，原有 `director-v1` run 保留，不重写为第二稿证据。
-- `capture-progress-20261112.json`：首轮实际录屏的范围、字节绑定、工具链留存与尚待补拍项。
-- `style-settings.json` 与 [项目接入包](../integration/README.md)：标题、配色、人物展示与工具链 adapter/preset/composer。
-- `integration-receipt-20261112.json`：素材索引、缺镜头阻断与单个五秒标题组件的有限验证。
+本机视频：`runtime/promo-capture-20261112/film-build-004/gangnailongxin-promo-review-v1.mp4`。字幕：`runtime/promo-capture-20261112/audio/prepared-v1/narration.zh-CN.srt`。完整字节绑定、工具版本、失败尝试和验收范围见[拍摄与成片回执](filming-receipt-20261113.json)。这些媒体及过程文件留在已忽略的runtime中，未作为GitHub附件发布。
 
-## 工具链与当前阶段
+[导演稿第二稿](director-script.zh-CN.md)采用「世界局势很严肃，参谋部很可爱」的75秒结构。按用户偏好，人物主位使用英国Baldwin、美国、法国和意大利领袖，以及英国Alan Brooke、Edmund Ironside、John Vereker；未拍摄中国人物特写，标题和片尾以Baldwin为主角。原生1024×768实机画面保持比例，高清角色插入明确标注“角色美术”。
 
-按用户给定的 `../workspace`，从 `C:\workspace\xenoamess_hoi4_dev` 解析出的下载位置为 `C:\workspace\workspace\xar_promo_toolchain`。此次从指定 GitHub 仓库 shallow clone，固定提交为 `6cba48556843bbeabc8f0cfa08ce783255afe0cc`，源码声明与隔离安装的 CLI 均为 **0.3.0**。原有兄弟目录 `C:\workspace\xar_promo_toolchain` 未修改。
+2026-11-12首轮录下6段95.966秒；2026-11-13经用户明确协调桌面后，补拍干净的英国政治界面与三位陆军顾问候选卡，累计8段143.966秒。旧有悬浮提示的政治镜头保留但未用于成片。补拍前后均显示1936年1月1日12:00，本任务未任命顾问或消耗政治点。拍摄后通过菜单退出HOI4，保留《文明 VI》，并用新截图人工读回Steam“离线模式”。
 
-隔离 CLI 位于 `runtime/promo-20261112/venv/Scripts/xar-promo.exe`。已执行该 checkout 要求的 Suno skill 字节校验；本次未生成音乐或调用音乐服务。
+工具链位于用户要求的`../workspace`所解析出的`C:/workspace/workspace/xar_promo_toolchain`，固定提交`6cba48556843bbeabc8f0cfa08ce783255afe0cc`，实际CLI版本0.3.0。原有兄弟checkout未修改。已运行其要求的Suno技能字节检查；旁白使用离线SAPI Huihui，临时配乐由程序合成，未调用音乐或图像生成服务。
 
-本次使用 `init` 建立初始脚手架，使用 `start-run` 将最终配置保存为独立快照，使用 `preserve` 绑定导演稿与分镜字节，并执行完整 `authoring` 校验。另以 `xar_promo.storyboard.plan_storyboard` 生成 75 秒草拟时间线。它验证分镜时序，不测量尚不存在的配音时长。
+隔离CLI为`runtime/promo-20261112/venv/Scripts/xar-promo.exe`；[项目接入包](../integration/README.md)提供adapter、preset和composer。真实制作输入为`production-inputs-v2.json`，本机环境变量`NAILONG_PROMO_INPUTS`指向它。每张美术、每段录屏、配音、配乐和选用时间范围均绑定实际文件字节。
 
-第二稿同步修改 S04、S05、S07、S08 的人物安排和 S05 旁白，使用独立 `director-v2` run 绑定新字节，保持原 75 秒节奏。
+全片经历四个保留的run：首个在片尾淡出参数失败；第二个生成后发现混音真峰值偏高；第三个因owner参数误用了已有workdir，被工具链在渲染前拒绝；第四个全片构建成功。片尾参数改为FFmpeg可接受的`0.5`，两条音轨增益各降低3dB。最终2250帧，容器75.021354秒，48kHz双声道AAC，实测综合响度−22.3LUFS、真峰值−0.6dBFS，完整解码返回0。声音质量仍需人工试听。
 
-项目接入包现已在隔离环境注册 `hoi4-ocr-capture`、`gangnailongxin-75s` 与 `nailong_promo:compose`。两次 CLI `plan` 均因缺少拍摄素材返回预期 RED，且没有创建 workdir；尚无全片成功 plan、build 或媒体 audit。另以核心 `plan_render` 实际渲染并探测了一个五秒标题组件，包含旁白、字幕与临时配乐，不计作完整影片。创作阶段的两份历史回执保持当时状态；后续实际拍摄进展另记。
+原生`film-004`run通过完整authoring验证。媒体审计覆盖精确SHA、字节和16组实际抽帧/OCR的完整性；它不授予美术或人工影片批准。使用公开live probe生成精确字节绑定后，CLI review先只读规划、再生成22帧的待审包，状态保持pending。审片包在`runtime/promo-capture-20261112/pending-review-002/`。原生配置章节仍为创作阶段的planned；实际构建事实由独立run与回执记录。
 
-## 首轮拍摄进展
+本轮工作包持续受512MiB上限约束，未删除任何旧素材或修改高清PNG母版。未知的全项目占用、其他任务预留没有记作0；未把此小型有界工作包当成大规模媒体写入准入。
 
-2026-11-12 已实际录下 6 段、合计 95.966 秒原片：七国选国页、法国／意大利／美国／英国人物信息卡，以及英国地图到政治面板的切换。采集使用 FFmpeg 的桌面像素录屏，原生 1024×768、30 fps；源视频无音轨，技术回执记录了实际解码帧数、时间和焦点监测。首轮未采集中国相关人物特写。
-
-选国页与四国信息卡抽帧可用。英国切换镜头有悬浮提示，地图部分可裁切使用，头像揭示需补拍；三张陆军顾问候选卡尚未拍摄。桌面在后续准备时被切到另一任务的《文明 VI》，录屏器拒绝了焦点不符的下一段；当前停止游戏输入，等待用户协调独占桌面时段。此前的英国与顾问历史截图不冒充本轮录像。
-
-本轮 6 份 generic capture receipt 已由 `xar_promo.capture.load_capture_receipt` 验证实际字节；原片、回执、导演稿、分镜、离线中文旁白与中文字幕共 26 个素材已通过 CLI 保存在独立 `capture-001` run。录屏与过程材料位于本机已忽略的 `runtime/promo-capture-20261112/`，尚未作为视频上传到 GitHub 或其他平台。旁白及临时合成配乐只作后续剪辑输入；尚无完整成片、具名人工 signoff 或视频发布。
-
-本次采用单段时长、文件大小及总新增工作包上限的短片段采集；留存时实际工作包约 135 MB，上限为 512 MiB。未执行大规模录屏／构建的空间准入，也未把未知的全项目占用或其他任务预留写成 0；后续如扩大到重型媒体写入，仍须先满足仓库存储策略。
-
-## 继续拍摄时
-
-1. 核对当前订阅构建、游戏版本、Steam 离线状态与桌面使用时段；按项目存储策略完成录屏峰值、配额、系统与其他任务预留的准入。当天可用空间快照不能替代录屏空间预留。
-2. 按导演稿集中采集选国页与英国界面，生成带源媒体 SHA、PTS、镜头 marks、clean spans 和证据引用的 capture receipt。产品语义保存于 HOI4 sidecar；不借用 CK3 capture 规则。
-3. 按接入包说明补齐本机制作输入，保留真实 source/span 绑定；当前 `production-inputs-draft-v1.json` 明确保留待拍标记。改动配置后新建 run，保持旧快照及失败材料。
-4. 先运行只读 `plan`，再 `build`。用实际配音探测时长替换草拟估计，保留旁白停顿与片尾读字时间。对实际成片做媒体、字节与画面语义核对。
-5. 生成精确绑定成片字节的 probe 与待人工审查包。完整观看后，依据具名审阅者明确决定记录 signoff，再离线 export。视频发布另按用户对投放平台的指示执行。
-
-导演稿引用的既有画面来源为 [2026-11-07 实际订阅版抽查](../../data/publication/1.0-update-20261105/subscription-live-qa-20261107.json)，版本数量来自 [发布完成记录](../../data/publication/1.0-update-20261105/completed-20261107.json)。这些历史参考不计作本片新录屏。
+`authoring-receipt-20261112*.json`、`capture-progress-20261112.json`和`integration-receipt-20261112.json`保存各自当时阶段。旧导演稿及五秒组件不倒改成全片证据。`shot-plan.json`保留导演计划，实际旁白时码见制作输入和SRT；时窗微调均在原章节内，75秒总节奏与旁白原词保留。旧发布数量和验收范围仍只引用[2026-11-07订阅版抽查](../../data/publication/1.0-update-20261105/subscription-live-qa-20261107.json)，不冒充本片的新库存普查。

@@ -2,7 +2,7 @@
 
 此包为本项目注册 `hoi4-ocr-capture` adapter、`gangnailongxin-75s` preset 与 `nailong_promo:compose`，复用 XAR Promo Toolchain 0.3.0 的留存、时间线、音轨、字幕、编码编排与审阅接口。它不控制游戏或 Steam。
 
-当前已验证真实六段素材的索引读取、七类不一致输入的拒绝、八种布局样张，以及缺少拍摄素材时 CLI `plan` 返回 RED 且不创建 workdir。另已用核心 `plan_render` 渲染并探测一个五秒标题组件：1920×1080、30 fps／150 帧、48 kHz 双声道，含真实准备的旁白、字幕与临时配乐。**尚未完成全片的成功 plan、build 或人工审阅**；顾问录像与干净的头像揭示镜头仍待补拍。
+2026-11-13已完成8段真实录屏的接入，以及75秒全片的只读plan、实际build、完整解码、原生证据audit和精确字节绑定的pending review。最终1080p30／2250帧、48kHz双声道；旁白与临时配乐各降低3dB后，真峰值实测−0.6dBFS。片尾fade时长显式使用`0.5`，兼容实测FFmpeg9.0.2。历史六段索引／七类负例、缺镜头RED和五秒组件仍分别保留；完整观看及具名人工signoff尚未记录。详细范围见[拍摄回执](../1.0/filming-receipt-20261113.json)。
 
 在已安装核心工具链的隔离环境中安装本包：
 
@@ -31,3 +31,7 @@ xar-promo build <new-run-manifest> --workdir <new-build-dir> --composer nailong_
 `plan` 为只读；布局、编码、FFmpeg probe 和音轨制作均不得在该阶段执行。正式 build 使用项目视觉 resolver 构图，再由核心 `plan_render` / `plan_concat`、字幕与音轨接口完成合成和保留命令审计。当前时间线通过核心 `plan_storyboard` 读取已准备 WAV 的实际长度作为草拟估计值；没有把它标成未实现的旁白 resolver。
 
 成功 build 只生成审阅候选。完整观看、技术与语义核对、精确字节 probe、具名 signoff 和离线 export 仍按工具链流程执行；未获视频发布指示时不上传。
+
+原生CLI audit以run目录为证据根，不能直接使用按仓库根生成的相对路径。将实际帧/OCR先preserve进该run，再以这些存储字节构造run内的v2采样plan/bundle；run外原始证据及失败日志保留。自动审计只覆盖完整性与证据齐备，不判断人物或声音质量。
+
+核心StoryboardTimeline的序列化字段是chapter_id，而通用review消费id。项目生成独立review sidecar，逐章机械投影id/start_seconds/end_seconds，并写入S05、S07的真实内部剪辑边界；不覆盖原时间线。review先plan-only确认零写入，再用新目录实际抽帧。
