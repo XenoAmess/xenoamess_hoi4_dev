@@ -203,7 +203,7 @@ def compose(config, run, *, config_path, run_path, workdir, adapter_factory, pre
                 graph=f'[1:v]crop={crop[2]}:{crop[3]}:{crop[0]}:{crop[1]},scale={width}:{height},fps=30[game];[0:v][game]overlay={x}:{y}:shortest=1,format=yuv420p[v]'
                 args += ['-filter_complex',graph,'-map','[v]']
             else:
-                fade = f",fade=t=out:st={phase['seconds']-.5}:d=.5" if phase['layout']=='end' else ''
+                fade = f",fade=t=out:st={phase['seconds']-.5}:d=0.5" if phase['layout']=='end' else ''
                 args += ['-vf','format=yuv420p'+fade]
             args += ['-t',str(phase['seconds']),'-an','-c:v','libx264','-preset','veryfast','-crf','18','-pix_fmt','yuv420p',str(part)]
             run_command(CommandSpec.create(args,label='compose project visual',partial_artifacts=(part,)),audit_directory=workdir/'layout-audit'/f'{key}-{number}')
@@ -231,9 +231,9 @@ def compose(config, run, *, config_path, run_path, workdir, adapter_factory, pre
         key=timing.chapter_id;duration=float(timing.duration_seconds);start=float(timing.start_seconds)
         ducks=tuple(DuckWindow(row['start_seconds']-start,row['end_seconds']-start,-8)
                     for row in body['subtitle_cues'] if start<=row['start_seconds']<float(timing.end_seconds))
-        mix=AudioMixSpec((AudioStem(key+'.voice',audio[key],gain_db=3),
+        mix=AudioMixSpec((AudioStem(key+'.voice',audio[key],gain_db=0),
              AudioStem(key+'.bgm',score,trim_start_seconds=start,trim_duration_seconds=duration,
-                       gain_db=-3,duck_windows=ducks)),duration_seconds=duration,normalize=False)
+                       gain_db=-6,duck_windows=ducks)),duration_seconds=duration,normalize=False)
         segments.append(SegmentDraft(key,VisualSource(key,VIDEO,workdir/'visuals'/f'{key}.mp4',
             'hoi4-promo-composite',requires_resolution=True),RenderOptions(1920,1080,30,duration,
             preset='veryfast',crf=19),{'zh-CN':key},prepared_narration=audio[key],audio_mix=mix))
