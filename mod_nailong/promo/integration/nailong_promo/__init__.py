@@ -39,6 +39,19 @@ def preset(*, root, binding):
     return result
 
 
+def peace_preset(*, root, binding):
+    file = CaptureFile.from_mapping(binding, project_root=root, context='peace style')
+    result = json.loads(file.path.read_text(encoding='utf-8'))
+    if result.get('schema') != 'gangnailongxin-promo-style-v1' or result.get('editorial_revision') != 'peace-v2-20261118':
+        raise ValueError('Unsupported peace-film style')
+    duration = result.get('duration_seconds')
+    if (result.get('width'), result.get('height'), result.get('fps')) != (1920,1080,30):
+        raise ValueError('Peace film requires1080p30')
+    if isinstance(duration, bool) or not isinstance(duration, (int,float)) or not math.isfinite(duration) or not 30 <= duration <= 90:
+        raise ValueError('Peace-film duration must be measured and locked within30-90seconds')
+    return result
+
+
 def _read_inputs():
     path = Path(os.environ['NAILONG_PROMO_INPUTS']).expanduser().resolve()
     with path.open('rb') as stream:
@@ -82,18 +95,27 @@ def _card(style, arts, phase, target):
             framed = original.convert('RGBA')
             framed.thumbnail((box[2], box[3]), Image.Resampling.LANCZOS)
             image.paste(framed, (box[0]+(box[2]-framed.width)//2, box[1]), framed)
-    if layout in {'title', 'end'}:
+    copy = style.get('copy', {})
+    if layout == 'statement':
+        draw.multiline_text((180, 310), phase['heading'], font=_font(style, 84),
+                            fill=text, spacing=36)
+        if phase.get('supporting_text'):
+            draw.multiline_text((185, 655), phase['supporting_text'], font=_font(style, 40),
+                                fill=muted, spacing=22)
+    elif layout in {'title', 'end'}:
         portrait('ENG', (150, 178, 560, 754))
         draw.text((165, 940), style['art_label'], font=_font(style, 24), fill=muted)
         draw.text((850, 245), '钢奶龙心', font=_font(style, 112), fill=text)
         draw.text((858, 400), '1.0', font=_font(style, 78), fill=accent)
         if layout == 'title':
-            draw.text((860, 565), '奶龙，登场。', font=_font(style, 62), fill=text)
+            draw.text((860, 565), copy.get('title_tagline','奶龙，登场。'),
+                      font=_font(style, 54 if 'title_tagline' in copy else 62), fill=text)
             draw.text((863, 682), 'HOI4 人物头像模组', font=_font(style, 38), fill=muted)
         else:
             draw.text((860, 560), 'Steam 创意工坊', font=_font(style, 48), fill=text)
             draw.text((860, 642), '搜索「钢奶龙心」', font=_font(style, 54), fill=accent)
-            draw.text((863, 760), '条目 ID：3830400579', font=_font(style, 30), fill=muted)
+            draw.multiline_text((860, 750), copy.get('end_message','条目 ID：3830400579'),
+                                font=_font(style, 34), fill=muted, spacing=16)
     else:
         draw.rectangle((79, 155, 1105, 925), outline=style['panel'], width=2)
         label = '实机画面（裁切）' if phase.get('crop') else '实机画面'
@@ -102,7 +124,8 @@ def _card(style, arts, phase, target):
                     'countries':'熟悉的角色\n奶龙登场', 'detail':'认角色\n也看细节',
                     'advisors':'领袖之外\n还有顾问', 'meeting':'下一次\n开会……',
                     'joke':'请先忍住\n别笑'}
-        draw.multiline_text((1185, 190), headings[layout], font=_font(style, 62), fill=text, spacing=20)
+        draw.multiline_text((1185, 190), phase.get('heading',headings.get(layout,'')),
+                            font=_font(style, 50 if phase.get('heading') else 62), fill=text, spacing=20)
         keys = phase.get('art', [])
         if keys:
             if len(keys) == 1:
@@ -152,13 +175,13 @@ def compose(config, run, *, config_path, run_path, workdir, adapter_factory, pre
         raise ValueError('production casting does not match the director shot plan')
     assets = {key:CaptureFile.from_mapping(value, project_root=root).path for key,value in body['arts'].items()}
     audio = {key:CaptureFile.from_mapping(value, project_root=root).path for key,value in body['narration'].items()}
-    score = CaptureFile.from_mapping(body['score'], project_root=root).path
+    score = CaptureFile.from_mapping(body['score'], project_root=root).path if body.get('score') else None
     durations = {key:_wave_seconds(path) for key,path in audio.items()}
     timeline = plan_storyboard(config, narration_duration_resolver=None,
         draft_estimator=lambda p,ch,cue:durations[ch.chapter_id],
         spacing=TimelineSpacing(cue_gap_seconds=0, chapter_gap_seconds=0), validate_only=True)
     if abs(float(timeline.duration_seconds)-style['duration_seconds']) > 1e-6:
-        raise ValueError('prepared audio timeline differs from75-second editorial target')
+        raise ValueError('prepared audio timeline differs from the locked editorial duration')
     ffmpeg = shutil.which('ffmpeg')
     if not ffmpeg:
         raise ValueError('FFmpeg not found')
@@ -172,7 +195,7 @@ def compose(config, run, *, config_path, run_path, workdir, adapter_factory, pre
         if not recipe or abs(sum(p['seconds'] for p in recipe)-float(chapter.duration_seconds)) > 1e-6:
             raise ValueError('phase durations differ from narration timeline')
         for phase in recipe:
-            if phase.get('missing_capture_role') or (chapter.chapter_id not in {'S03','S08'} and 'clip_id' not in phase):
+            if phase.get('missing_capture_role') or (phase['layout'] not in {'title','end','statement'} and 'clip_id' not in phase):
                 raise ValueError('Missing recorded phase for '+chapter.chapter_id)
             if not isinstance(phase['seconds'], (int,float)) or not math.isfinite(phase['seconds']) or phase['seconds'] <= 0:
                 raise ValueError('invalid phase duration')
@@ -231,12 +254,17 @@ def compose(config, run, *, config_path, run_path, workdir, adapter_factory, pre
         key=timing.chapter_id;duration=float(timing.duration_seconds);start=float(timing.start_seconds)
         ducks=tuple(DuckWindow(row['start_seconds']-start,row['end_seconds']-start,-8)
                     for row in body['subtitle_cues'] if start<=row['start_seconds']<float(timing.end_seconds))
-        mix=AudioMixSpec((AudioStem(key+'.voice',audio[key],gain_db=0),
-             AudioStem(key+'.bgm',score,trim_start_seconds=start,trim_duration_seconds=duration,
-                       gain_db=-6,duck_windows=ducks)),duration_seconds=duration,normalize=False)
+        stems=[AudioStem(key+'.voice',audio[key],gain_db=body.get('voice_gain_db',0))]
+        if score is not None:
+            stems.append(AudioStem(key+'.bgm',score,trim_start_seconds=start,trim_duration_seconds=duration,
+                                   gain_db=-6,duck_windows=ducks))
+        mix=AudioMixSpec(tuple(stems),duration_seconds=duration,normalize=False)
         segments.append(SegmentDraft(key,VisualSource(key,VIDEO,workdir/'visuals'/f'{key}.mp4',
             'hoi4-promo-composite',requires_resolution=True),RenderOptions(1920,1080,30,duration,
             preset='veryfast',crf=19),{'zh-CN':key},prepared_narration=audio[key],audio_mix=mix))
-    return PipelineInvocation(PipelineDraft(config,tuple(segments),Path('gangnailongxin-promo-review-v1.mp4'),
-        'promo-review-v1','video/mp4'),PipelineDependencies(ffmpeg,subtitles,run_command,_probe,
+    filename=body.get('output_filename','gangnailongxin-promo-review-v1.mp4')
+    if not isinstance(filename,str) or Path(filename).name != filename or not filename.endswith('.mp4'):
+        raise ValueError('output_filename must be a single MP4 filename')
+    return PipelineInvocation(PipelineDraft(config,tuple(segments),Path(filename),
+        body.get('output_artifact_id','promo-review-v1'),'video/mp4'),PipelineDependencies(ffmpeg,subtitles,run_command,_probe,
         visual_resolver=resolve),workdir)
