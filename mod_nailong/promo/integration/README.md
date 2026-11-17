@@ -37,3 +37,5 @@ xar-promo build <new-run-manifest> --workdir <new-build-dir> --composer nailong_
 核心StoryboardTimeline的序列化字段是chapter_id，而通用review消费id。项目生成独立review sidecar，逐章机械投影id/start_seconds/end_seconds，并写入S05、S07的真实内部剪辑边界；不覆盖原时间线。review先plan-only确认零写入，再用新目录实际抽帧。
 
 2026-11-18新增`gangnailongxin-peace` preset：1080p30，片长由实测音频后锁定（本版60秒）。phase可提供`heading`并使用独立`statement`文字画面；style.copy提供标题／片尾新文案。`score: null`表示真正只有旁白的一条音频stem，不注入旧配乐；`output_filename`和`output_artifact_id`区分修订代际。旧75秒scored配方仍经只读plan验证通过，新版实际60秒全片构建和解码通过。详见[和平版回执](../1.0/peace-v2/revision-receipt-20261118.json)。
+
+音乐收尾可用`prepared_visuals`逐章绑定既有无字幕1080p合成画面，避免重建卡片；`score_gain_db`／`score_duck_db`默认仍为−6／−8dB，已预处理平滑包络的音乐可均设0以免重复压低。实际用户音乐版经过原生plan/build，之后用核心AudioMixSpec/plan_audio_mix做一条连续AAC，并通过审计命令复制原60秒H264画面；1800包payload及时间戳一致。最终交付另用CLI preserve登记，不覆盖中间构建。

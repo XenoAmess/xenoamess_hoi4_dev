@@ -175,6 +175,8 @@ def compose(config, run, *, config_path, run_path, workdir, adapter_factory, pre
         raise ValueError('production casting does not match the director shot plan')
     assets = {key:CaptureFile.from_mapping(value, project_root=root).path for key,value in body['arts'].items()}
     audio = {key:CaptureFile.from_mapping(value, project_root=root).path for key,value in body['narration'].items()}
+    prepared_visuals = {key:CaptureFile.from_mapping(value, project_root=root).path
+                        for key,value in body.get('prepared_visuals',{}).items()}
     score = CaptureFile.from_mapping(body['score'], project_root=root).path if body.get('score') else None
     durations = {key:_wave_seconds(path) for key,path in audio.items()}
     timeline = plan_storyboard(config, narration_duration_resolver=None,
@@ -252,15 +254,15 @@ def compose(config, run, *, config_path, run_path, workdir, adapter_factory, pre
     segments=[]
     for timing in timeline.chapters:
         key=timing.chapter_id;duration=float(timing.duration_seconds);start=float(timing.start_seconds)
-        ducks=tuple(DuckWindow(row['start_seconds']-start,row['end_seconds']-start,-8)
+        ducks=tuple(DuckWindow(row['start_seconds']-start,row['end_seconds']-start,body.get('score_duck_db',-8))
                     for row in body['subtitle_cues'] if start<=row['start_seconds']<float(timing.end_seconds))
         stems=[AudioStem(key+'.voice',audio[key],gain_db=body.get('voice_gain_db',0))]
         if score is not None:
             stems.append(AudioStem(key+'.bgm',score,trim_start_seconds=start,trim_duration_seconds=duration,
-                                   gain_db=-6,duck_windows=ducks))
+                                   gain_db=body.get('score_gain_db',-6),duck_windows=ducks))
         mix=AudioMixSpec(tuple(stems),duration_seconds=duration,normalize=False)
-        segments.append(SegmentDraft(key,VisualSource(key,VIDEO,workdir/'visuals'/f'{key}.mp4',
-            'hoi4-promo-composite',requires_resolution=True),RenderOptions(1920,1080,30,duration,
+        segments.append(SegmentDraft(key,VisualSource(key,VIDEO,prepared_visuals.get(key,workdir/'visuals'/f'{key}.mp4'),
+            'hoi4-promo-composite',requires_resolution=key not in prepared_visuals),RenderOptions(1920,1080,30,duration,
             preset='veryfast',crf=19),{'zh-CN':key},prepared_narration=audio[key],audio_mix=mix))
     filename=body.get('output_filename','gangnailongxin-promo-review-v1.mp4')
     if not isinstance(filename,str) or Path(filename).name != filename or not filename.endswith('.mp4'):
