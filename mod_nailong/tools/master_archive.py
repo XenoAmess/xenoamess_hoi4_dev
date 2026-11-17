@@ -48,6 +48,18 @@ def recorded_outputs(mod=MOD):
             if attempt.get("fullsize_sha256"):
                 remember(attempt["fullsize_sha256"], {"source_sha256": path.stem, "journal": path.relative_to(mod).as_posix(), "attempt": attempt.get("number"), "prompt_sha256": attempt.get("prompt_sha256")})
 
+    promo_path = mod / "data/promo-image-masters.json"
+    if promo_path.is_file():
+        promo = read_json(promo_path)
+        if promo.get("schema") != "gangnailongxin-promo-image-masters-v1":
+            raise ValueError("Unsupported promotional master registry")
+        for output in promo["outputs"]:
+            digest = output["fullsize_sha256"]
+            if not isinstance(digest, str) or not re.fullmatch("[0-9a-f]{64}", digest):
+                raise ValueError("Invalid promotional original SHA256")
+            remember(digest, {"record": "data/promo-image-masters.json",
+                              "asset_id": output["id"], "kind": "promotional-art"})
+
     def experiment_hashes(value, ref):
         if isinstance(value, dict):
             for name, item in value.items():

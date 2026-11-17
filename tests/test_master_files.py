@@ -122,6 +122,29 @@ class MasterFilesTests(unittest.TestCase):
                     sync_git(root=root)
             self.assertFalse((mod/'data/fullsize-files.json').exists())
 
+    def test_promotional_originals_do_not_change_portrait_coverage_or_journals(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);mod,original,digest,snap=self.fixture(root)
+            sync_git(snap,root)
+            frozen={path:path.read_bytes() for path in [mod/'data/generated.json',mod/'data/generation-requests/source.json']}
+            cover=root/'cover.png';Image.new('RGB',(16,9),(25,80,110)).save(cover)
+            cover_sha=hashlib.sha256(cover.read_bytes()).hexdigest()
+            retained=root/master_path(cover_sha);retained.write_bytes(cover.read_bytes())
+            write_json(mod/'data/promo-image-masters.json',{
+                'schema':'gangnailongxin-promo-image-masters-v1',
+                'outputs':[{'id':'cover-wide','fullsize_sha256':cover_sha}]})
+            expected,current,provenance=master_archive.recorded_outputs(mod)
+            self.assertEqual(expected,{digest,cover_sha})
+            self.assertEqual(current,{'source':digest})
+            self.assertEqual(provenance[cover_sha][0]['kind'],'promotional-art')
+            index=sync_git(root=root,normalize_paths=False)
+            self.assertEqual(set(index['outputs']),{digest,cover_sha})
+            self.assertEqual(index['outputs'][cover_sha]['size'],[16,9])
+            for path,data in frozen.items():self.assertEqual(path.read_bytes(),data)
+            retained.write_bytes(cover.read_bytes()+b'changed trailing bytes')
+            with self.assertRaisesRegex(ValueError,'changed before adoption'):
+                sync_git(root=root,normalize_paths=False)
+
     def test_missing_retained_candidate_keeps_receipt_recovery_and_full_hash(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);mod,original,digest,snap=self.fixture(root)

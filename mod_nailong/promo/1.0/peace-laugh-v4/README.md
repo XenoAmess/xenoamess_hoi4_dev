@@ -9,3 +9,5 @@
 画面检查见[完成回执](finish-receipt-20261118.json)，最终采用的完整实际生成词见[minimax-final-prompt.txt](minimax-final-prompt.txt)，剪辑合同见[edit-recipe-v2.json](edit-recipe-v2.json)。最终1950帧均与原片1800帧及准备后的尾段150帧逐帧核对，完整解码通过。[公开发布与读回记录](publication-20261118.json)。
 
 本版经过XAR原生plan/build、最终混流、绑定媒体探针、完整解码和pending review。人工完整观看批准尚未记录；不伪造signoff。原60秒配乐版、无配乐版及旧75秒视频保留为历史附件。`edit-recipe.json`和`minimax-prompt.txt`保留首轮被拒绝采用的生成记录，最终采用的合同和提示词分别为v2与`minimax-final-prompt.txt`。
+
+视频封面已完成：[4:3与宽版PNG](covers/README.md)。宽版按用户选择保留1672×941，接受近似16:9。
