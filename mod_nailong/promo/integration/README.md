@@ -35,3 +35,5 @@ xar-promo build <new-run-manifest> --workdir <new-build-dir> --composer nailong_
 原生CLI audit以run目录为证据根，不能直接使用按仓库根生成的相对路径。将实际帧/OCR先preserve进该run，再以这些存储字节构造run内的v2采样plan/bundle；run外原始证据及失败日志保留。自动审计只覆盖完整性与证据齐备，不判断人物或声音质量。
 
 核心StoryboardTimeline的序列化字段是chapter_id，而通用review消费id。项目生成独立review sidecar，逐章机械投影id/start_seconds/end_seconds，并写入S05、S07的真实内部剪辑边界；不覆盖原时间线。review先plan-only确认零写入，再用新目录实际抽帧。
+
+2026-11-18新增`gangnailongxin-peace` preset：1080p30，片长由实测音频后锁定（本版60秒）。phase可提供`heading`并使用独立`statement`文字画面；style.copy提供标题／片尾新文案。`score: null`表示真正只有旁白的一条音频stem，不注入旧配乐；`output_filename`和`output_artifact_id`区分修订代际。旧75秒scored配方仍经只读plan验证通过，新版实际60秒全片构建和解码通过。详见[和平版回执](../1.0/peace-v2/revision-receipt-20261118.json)。
