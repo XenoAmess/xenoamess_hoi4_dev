@@ -1,8 +1,10 @@
 # 钢奶龙心 1.0 宣传片
 
-75秒审片版已完成拍摄、合成、全片解码检查和工具链证据审计，当前等待具名人工完整观看。画面为1920×1080、30fps，含中文合成旁白、烧录字幕和原创临时配乐；本次未上传视频，也未记录人工signoff或执行发布export。
+75秒视频已完成拍摄、合成、全片解码检查和工具链证据审计，并于2026-11-17按用户明确要求上传到现有“钢奶龙心 1.0”GitHub Release。画面为1920×1080、30fps，含中文合成旁白、烧录字幕和原创临时配乐。公开下载字节与交付视频的大小、SHA-256均核对一致；具名完整观看、人工signoff和工具链发布export未记录，不因上传倒改历史。
 
-本机视频：`runtime/promo-capture-20261112/film-build-004/gangnailongxin-promo-review-v1.mp4`。字幕：`runtime/promo-capture-20261112/audio/prepared-v1/narration.zh-CN.srt`。完整字节绑定、工具版本、失败尝试和验收范围见[拍摄与成片回执](filming-receipt-20261113.json)。这些媒体及过程文件留在已忽略的runtime中，未作为GitHub附件发布。
+[下载宣传视频](https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/download/nailong-v1.0-20261105/gangnailongxin-1.0-promo-1080p.mp4) · [GitHub Release](https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/tag/nailong-v1.0-20261105) · [发布与公开读回回执](video-publication-20261117.json)
+
+本机视频：`runtime/promo-capture-20261112/film-build-004/gangnailongxin-promo-review-v1.mp4`。字幕：`runtime/promo-capture-20261112/audio/prepared-v1/narration.zh-CN.srt`。完整字节绑定、工具版本、失败尝试和验收范围见[2026-11-13拍摄与成片历史回执](filming-receipt-20261113.json)。此次只新增视频附件，原有Release标题、正文和模组附件均已核对保持不变；字幕和原始过程材料仍留在本机runtime中。
 
 [导演稿第二稿](director-script.zh-CN.md)采用「世界局势很严肃，参谋部很可爱」的75秒结构。按用户偏好，人物主位使用英国Baldwin、美国、法国和意大利领袖，以及英国Alan Brooke、Edmund Ironside、John Vereker；未拍摄中国人物特写，标题和片尾以Baldwin为主角。原生1024×768实机画面保持比例，高清角色插入明确标注“角色美术”。
 
