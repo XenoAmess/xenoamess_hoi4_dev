@@ -39,3 +39,5 @@ xar-promo build <new-run-manifest> --workdir <new-build-dir> --composer nailong_
 2026-11-18新增`gangnailongxin-peace` preset：1080p30，片长由实测音频后锁定（本版60秒）。phase可提供`heading`并使用独立`statement`文字画面；style.copy提供标题／片尾新文案。`score: null`表示真正只有旁白的一条音频stem，不注入旧配乐；`output_filename`和`output_artifact_id`区分修订代际。旧75秒scored配方仍经只读plan验证通过，新版实际60秒全片构建和解码通过。详见[和平版回执](../1.0/peace-v2/revision-receipt-20261118.json)。
 
 音乐收尾可用`prepared_visuals`逐章绑定既有无字幕1080p合成画面，避免重建卡片；`score_gain_db`／`score_duck_db`默认仍为−6／−8dB，已预处理平滑包络的音乐可均设0以免重复压低。实际用户音乐版经过原生plan/build，之后用核心AudioMixSpec/plan_audio_mix做一条连续AAC，并通过审计命令复制原60秒H264画面；1800包payload及时间戳一致。最终交付另用CLI preserve登记，不覆盖中间构建。
+
+65秒追加版使用`nailong_promo.final_assembly:compose`与`gangnailongxin-promo-final-assembly-v1`输入：MAIN60秒、LAUGH5秒，各自绑定视频与48kHz双声道16bit准备音频。既有字幕已在画面中，composer不叠新字幕、不调用TTS、不加入音量处理。原生构建保留为中间件，最终复制原片视频与准备后的尾段，连续编码AAC，逐帧验证1950帧顺序和内容，CLI preserve登记为独立交付件。探针审计写入本次workdir，不向历史素材目录追加文件。音乐最新政策以65秒版合同为准：0dB、无duck、无归一化和新增淡化；旧版混音回执仅为历史。

@@ -1,6 +1,8 @@
 # 钢奶龙心 1.0 宣传片
 
-最新为60秒和平主题、晓晓配音、《A Quiet Start》背景音乐版：[下载最新带音乐视频](https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/download/nailong-v1.0-20261105/gangnailongxin-1.0-peace-xiaoxiao-a-quiet-start-60s-v3.mp4)。1800个视频包与无配乐版完全相同，只替换音轨；发布文件已公开下载并核对SHA-256。[混音记录](peace-v2/music-finish-receipt-20261118.json)。
+最新为65秒版：配乐保持原始音量，第60秒硬切追加局域网MiniMax群像大笑与附件原声。[下载新版](https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/download/nailong-v1.0-20261105/gangnailongxin-1.0-peace-xiaoxiao-unducked-laugh-65s-v4.mp4) · [制作与验证](peace-laugh-v4/README.md)。
+
+上一版为60秒和平主题、晓晓配音、《A Quiet Start》背景音乐版：[下载最新带音乐视频](https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/download/nailong-v1.0-20261105/gangnailongxin-1.0-peace-xiaoxiao-a-quiet-start-60s-v3.mp4)。1800个视频包与无配乐版完全相同，只替换音轨；发布文件已公开下载并核对SHA-256。[混音记录](peace-v2/music-finish-receipt-20261118.json)。
 
 2026-11-18新增[和平主题／晓晓配音的60秒无配乐修订版](peace-v2/README.md)，已按用户要求上传并核对公开下载字节：[下载新版视频](https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/download/nailong-v1.0-20261105/gangnailongxin-1.0-peace-xiaoxiao-60s-voiceonly-v2.mp4)。文案改用创意工坊的和平、反歧视与尊重尊严主题；音乐生成说明在片长锁定后另列。下方75秒视频为此前已发布版本，其历史附件保留。
 

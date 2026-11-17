@@ -1,6 +1,8 @@
 # 钢奶龙心：和平版宣传片
 
-最新带音乐版已使用用户提供的《A Quiet Start》，保持60秒、晓晓配音与原画面。已添加到同一GitHub Release并核对公开下载字节：[下载带音乐版](https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/download/nailong-v1.0-20261105/gangnailongxin-1.0-peace-xiaoxiao-a-quiet-start-60s-v3.mp4) · [混音与验收回执](music-finish-receipt-20261118.json)。以下保留无配乐版的制作说明。
+后续已按用户要求取消音乐压低并追加5秒大笑尾段：[65秒新版](../peace-laugh-v4/README.md)。下文保留60秒阶段的真实制作记录。
+
+上一版带音乐版已使用用户提供的《A Quiet Start》，保持60秒、晓晓配音与原画面。已添加到同一GitHub Release并核对公开下载字节：[下载带音乐版](https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/download/nailong-v1.0-20261105/gangnailongxin-1.0-peace-xiaoxiao-a-quiet-start-60s-v3.mp4) · [混音与验收回执](music-finish-receipt-20261118.json)。以下保留无配乐版的制作说明。
 
 新版已完成，画面时长固定为**60秒**：1920×1080、30fps、1800帧。旁白改用实际生成的Edge TTS **晓晓（zh-CN-XiaoxiaoNeural）**，正常语速。12句语音共44.832秒，保留句间停顿与标语阅读时间；本版没有配乐。
 
