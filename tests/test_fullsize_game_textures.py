@@ -3,7 +3,7 @@ import io,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
 from PIL import Image
-from tools.common import write_json,file_sha256
+from tools.common import write_json,file_sha256,read_json
 from mod_nailong.tools import build_release as builder
 
 class FullsizeGameTextures(unittest.TestCase):
@@ -16,6 +16,10 @@ class FullsizeGameTextures(unittest.TestCase):
   write_json(self.mod/'data/catalog.json',{'assets':[{'id':'sample','path':'gfx/leaders/TST/sample.dds','package':'base','source_sha256':self.key,'size':[3,4]}],'game_version':'test','unresolved_references':[]})
   self.row={'image':'low-resolution-preview.png','image_sha256':'preview-sha','review':'approved','art_direction':'hair-features-v1','collar_fit':{'policy':'collar-fit-v1','status':'approved','image_sha256':'preview-sha'},'generated_fullsize_image':self.master.relative_to(self.root).as_posix(),'generated_fullsize_sha256':file_sha256(self.master),'generated_fullsize_size':[24,32]}
   write_json(self.mod/'data/generated.json',{'portraits':{self.key:self.row}})
+  from mod_nailong.tools import release_scope
+  policy,_=release_scope.load_policy();policy['reviewed_inventory_fingerprint']=release_scope.inventory_fingerprint(read_json(self.mod/'data/catalog.json'))
+  policy_file=self.mod/'data/release-policy-fixture.json';write_json(policy_file,policy)
+  policy_patch=patch.object(release_scope,'POLICY_PATH',policy_file);policy_patch.start();self.addCleanup(policy_patch.stop)
   for item in [patch.object(builder,'ROOT',self.root),patch.object(builder,'MOD',self.mod),patch.object(builder,'nonperson_scope',return_value=({},None))]:item.start();self.addCleanup(item.stop)
  def test_export_uses_native_dimensions_without_changing_master(self):
   before=self.master.read_bytes()

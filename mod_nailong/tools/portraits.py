@@ -25,6 +25,8 @@ def coverage(publish=False):
     reviewed=[a for a in covered if portrait_ready(generated[a["source_sha256"]])]
     result={"machine_id":machine_id(),"observed_at_utc":utc_now(),"catalog_sha256":file_sha256(CATALOG),"textures_total":len(catalog["assets"]),"textures_generated":len(covered),"textures_reviewed":len(reviewed),"unique_total":catalog["counts"]["distinct_source_images"],"unique_generated":len(generated),"unresolved_baseline_references":len(catalog["unresolved_references"]),"status":"art-complete" if len(reviewed)==len(catalog["assets"]) else "incomplete"}
     result['unique_reviewed']=len({a['source_sha256'] for a in reviewed})
+    from mod_nailong.tools.release_scope import art_coverage
+    result['release_exclusions']=art_coverage(catalog,generated)
     priority_path=MOD/'data/production-priority.json'
     if priority_path.exists():
         entries=read_json(priority_path)['sources']

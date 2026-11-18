@@ -22,4 +22,6 @@
 
 生产、重试、纯 OCR/键鼠与素材归档规则见 [AGENTS.md](AGENTS.md)。
 
+2026-11-18 起，中国共产党及其相关势力的图片允许制作和归档，但从后续 mod 安装包中排除，其素材缺口不阻塞发布；范围不扩展到外国共产党势力。构建过滤和 Steam／GitHub 上传前的额外审计见[发布排除规则](docs/release-exclusions.md)。这一规则尚不代表旧公开安装包已经更新。
+
 2026-11-05更新的[离线构建已完成逐文件与母版派生像素验证](data/publication/1.0-update-20261105/build.json)。2026-11-07已完成两平台发布、GitHub完整资产下载核SHA、Steam真实订阅缓存贴图核对，以及实际订阅版的七国选国卡、英国政治界面和新增Alan Brooke/John Vereker顾问小卡抽查。测试已正常退出，Steam保持离线。仅为所示位置的有限实机抽查；本机启动器报null后，经资源管理器启动同SHA游戏程序完成测试。实际证据、descriptor差异和启动边界见[最终回执](data/publication/1.0-update-20261105/completed-20261107.json)。

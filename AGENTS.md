@@ -2,6 +2,9 @@
 
 ## 用户永久工作规则（2026-10-16）
 
+- 2026-11-18 用户新增并明确范围：中国共产党及其相关势力（包括中国红军、新四军等）的对应图片允许生成并按既有规则保存、提交入库，但**禁止进入最终 mod 发布版本**，这些图片未生成或未审图**不作为 mod 发布阻塞项**。该范围不扩大到苏联、蒙古等外国共产党势力。发布前必须额外审计实际 staging、ZIP 与发布来源清单，确认排除项没有进入 payload；仅写规则、按文件夹过滤或构建成功不能代替审计。保留全量素材库存、原始 PNG、请求和审图历史，生产统计与发布适用范围分别记账，不删除素材或把排除项冒充已完成。后续发布必须执行这道审计，并留存可核验回执。
+  实施入口与分类依据见 [`mod_nailong/docs/release-exclusions.md`](mod_nailong/docs/release-exclusions.md)。Steam／GitHub 上传 mod 包前，对最终构建运行 `python -X utf8 mod_nailong/tools/release_exclusion_audit.py --build <最终构建目录> --receipt <新的回执.json>`；失败即停止发布，变更文件或重打包后重审。该要求覆盖排除项的旧全覆盖门禁，其他美术与实机要求仍按现行规则执行。
+
 - 2026-11-05 用户随后明确要求“使用evolink.ai进行重试”，覆盖本执行链此前针对该技能的工具选择禁令；本次不再自动派发内置 HIGH 重试。工具偏好变更不授权将安全拒绝换平台重放以规避拒绝，亦不倒改既有内置调用回执。该指令时已完成三张新审图，尚余12项；本轮 EvoLink 实际调用为0，逐项状态见 `mod_nailong/data/production-progress-snapshots/20261105-high-original-retries.json`。
 
 - 2026-11-05 用户明确答复“恢复允许范围内的原请求重试”，恢复 HIGH 服务拒绝原请求的合规重试，覆盖此前 `skip_service_refused_high_retries` 跳过规则。只恢复准入，不增加累计次数或改变冷却、完整原词、有序输入字节、内置工具及内容/工具许可；返回图片即停止该请求的服务重试。同人物其他来源的未解除保护仍保留。授权原文和当前来源范围见 `mod_nailong/data/extra-retry-rounds/20261105-resume-allowed-high-original-retries.json`。

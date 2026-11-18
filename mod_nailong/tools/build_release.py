@@ -45,8 +45,10 @@ def profile_assets(catalog, packages=None):
 def validation_sample_keys(catalog, generated, count, packages=None):
     # Sample the actual profile after DLC overrides. A reviewed superseded
     # source must not become an unknown sample key or replace unreviewed DLC art.
+    from mod_nailong.tools.release_scope import load_scope,asset_excluded
+    scope=load_scope(catalog)
     return sorted({a['source_sha256'] for a in profile_assets(catalog,packages).values()
-                   if ready(generated.get(a['source_sha256'],{}))})[:count]
+                   if not asset_excluded(a,scope) and ready(generated.get(a['source_sha256'],{}))})[:count]
 
 def nonperson_scope():
     from mod_nailong.tools.nonperson_exceptions import load_nonperson_exceptions
@@ -137,16 +139,20 @@ def validate_heavy_write_admission(receipt, estimate, output):
 def payload(preview=False, packages=None, validation_keys=None, sink=None, heavy_write_admission=None, output=None):
     catalog=read_json(MOD/"data/catalog.json")
     generated=read_json(MOD/"data/generated.json")["portraits"]
+    from mod_nailong.tools.release_scope import load_scope, asset_excluded, excluded_reference, load_policy, manifest_scope
+    release_scope=load_scope(catalog)
+    release_policy,_=load_policy()
     from mod_nailong.tools.texture_resolution import game_image, POLICY_ID
     exceptions,exception_receipt=nonperson_scope()
     for key in exceptions:
         if key in generated:raise SystemExit(f'Non-person exception must not have a generated row: {key}')
-    missing=[a for a in catalog["assets"] if a["source_sha256"] not in exceptions and (a["source_sha256"] not in generated or not ready(generated[a["source_sha256"]]))]
+    archive_missing=[a for a in catalog["assets"] if a["source_sha256"] not in exceptions and (a["source_sha256"] not in generated or not ready(generated[a["source_sha256"]]))]
+    missing=[a for a in archive_missing if not asset_excluded(a,release_scope)]
+    unresolved=[r for r in catalog['unresolved_references'] if not excluded_reference(r,release_policy)]
     if not preview and missing:
         raise SystemExit(f"RELEASE BLOCKED: {len(missing)} of {len(catalog['assets'])} source textures not generated/reviewed; use --preview for an explicitly incomplete development package")
-    if not preview and catalog["unresolved_references"]:
-        raise SystemExit(f"RELEASE BLOCKED: {len(catalog['unresolved_references'])} unresolved baseline character references need analysis")
-    if not generated and not exceptions:raise SystemExit("No generated art available")
+    if not preview and unresolved:
+        raise SystemExit(f"RELEASE BLOCKED: {len(unresolved)} release-eligible unresolved baseline character references need analysis")
     # Product build profile is explicit. Higher numbered DLC wins shared texture paths;
     # preserve every distinct variant as a generation input, never flatten the inventory.
     selected=profile_assets(catalog,packages)
@@ -155,12 +161,16 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None, heavy
         validation_keys=set(validation_keys)
         if not validation_keys or not validation_keys<={a['source_sha256'] for a in selected.values()}:raise SystemExit('Unknown or empty validation source selection')
         selected={path:a for path,a in selected.items() if a['source_sha256'] in validation_keys}
+    validation_excluded_keys=sorted({a['source_sha256'] for a in selected.values() if asset_excluded(a,release_scope)}) if validation_keys is not None else []
+    selected={path:a for path,a in selected.items() if not asset_excluded(a,release_scope)}
     # Native dimensions remove the experimental HD adapter. Art coverage and
     # actual gameplay acceptance remain separate release requirements.
     qualification_file=MOD/'data/game-display-qualification.json'
     qualification=read_json(qualification_file) if qualification_file.exists() else {'status':'unqualified'}
     if not preview and qualification.get('status')!='qualified_for_release':
         raise SystemExit('RELEASE BLOCKED: native-size portrait gameplay acceptance remains unqualified')
+    if not preview and not release_scope['inventory_review_current']:
+        raise SystemExit('RELEASE BLOCKED: release exclusion inventory changed; review affiliations first')
     originals={a['id']:original_nonperson_bytes(a) for a in selected.values() if a['source_sha256'] in exceptions}
     files={}
     file_records=[]
@@ -207,7 +217,7 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None, heavy
             if list(readback.size)!=published_size:raise SystemExit("Encoded texture readback failed")
         emit(path.as_posix(),data)
         bindings.append({"path":path.as_posix(),"package":asset["package"],"source_sha256":key,"sha256":sha256(data),"size":published_size,'original_game_size':asset['size'],'fullsize_master_sha256':row['generated_fullsize_sha256'],'fullsize_master_size':original_size,'resized':published_size!=original_size,'resolution_policy':POLICY_ID})
-    if not bindings:raise SystemExit("No reviewed portraits in selected profile")
+    if not bindings and selected:raise SystemExit("No reviewed release-eligible portraits in selected profile")
     descriptor=(MOD/"mod/descriptor.mod").read_text(encoding="utf-8")
     if "remote_file_id" in descriptor or "replace_path" in descriptor:raise SystemExit("Invalid descriptor")
     # Public product naming follows the user's release instruction. The
@@ -215,7 +225,13 @@ def payload(preview=False, packages=None, validation_keys=None, sink=None, heavy
     thumbnail=thumbnail_bytes()
     if thumbnail is not None:emit('thumbnail.png',thumbnail)
     emit('descriptor.mod',descriptor.encode('utf-8'))
-    return files,{"schema":"naiwa-release-manifest-v2","archive_filename":"gangnailongxin.zip","preview":preview,"art_complete":not missing,"game_version":catalog["game_version"],"catalog_sha256":file_sha256(MOD/"data/catalog.json"),"source_textures":len(catalog["assets"]),"generated_unique_images":len(generated),"selected_profile":sorted(packages) if packages is not None else "all-installed-catalog-packages; highest DLC numeric ID on shared paths","unresolved_baseline_references":len(catalog["unresolved_references"]),"profile_missing_texture_count":len(profile_missing),'texture_resolution_policy_id':POLICY_ID,'texture_resolution_policy':'Each approved original PNG master is retained unchanged; game derivatives match each original source texture dimensions exactly using RGBA LANCZOS; registered non-person exceptions preserve original file bytes','validation_source_keys':sorted(validation_keys) if validation_keys is not None else None,'validation_scope':'selected development subset only' if validation_keys is not None else 'entire selected profile',"preserved_original_nonperson_exceptions":sorted(row['index'] for row in exceptions.values() if row['source_sha256'] in {a['source_sha256'] for a in selected.values()}),"nonperson_scope_decision":exception_receipt,"bindings":bindings,"files":sorted(file_records,key=lambda r:r['path'])}
+    metadata={"schema":"naiwa-release-manifest-v2","archive_filename":"gangnailongxin.zip","preview":preview,"art_complete":not missing,"game_version":catalog["game_version"],"catalog_sha256":file_sha256(MOD/"data/catalog.json"),"source_textures":len(catalog["assets"]),"generated_unique_images":len(generated),"selected_profile":sorted(packages) if packages is not None else "all-installed-catalog-packages; highest DLC numeric ID on shared paths","unresolved_baseline_references":len(catalog["unresolved_references"]),"profile_missing_texture_count":len(profile_missing),'texture_resolution_policy_id':POLICY_ID,'texture_resolution_policy':'Each approved original PNG master is retained unchanged; game derivatives match each original source texture dimensions exactly using RGBA LANCZOS; registered non-person exceptions preserve original file bytes','validation_source_keys':sorted(validation_keys) if validation_keys is not None else None,'validation_scope':'selected development subset only' if validation_keys is not None else 'entire selected profile',"preserved_original_nonperson_exceptions":sorted(row['index'] for row in exceptions.values() if row['source_sha256'] in {a['source_sha256'] for a in selected.values()}),"nonperson_scope_decision":exception_receipt,"bindings":bindings,"files":sorted(file_records,key=lambda r:r['path'])}
+    metadata.update(release_exclusions=manifest_scope(release_scope),archive_art_complete=not archive_missing,
+        archive_missing_texture_count=len(archive_missing),release_missing_texture_count=len(missing),
+        excluded_missing_texture_count=len(archive_missing)-len(missing),release_unresolved_reference_count=len(unresolved),
+        validation_excluded_source_keys=validation_excluded_keys,
+        validation_emitted_source_keys=sorted({b['source_sha256'] for b in bindings}) if validation_keys is not None else None)
+    return files,metadata
 
 def build(output,preview=False,packages=None,validation_keys=None,heavy_write_admission=None):
     if output.exists():raise SystemExit("Output already exists; choose a fresh --output path")
@@ -239,6 +255,8 @@ def build(output,preview=False,packages=None,validation_keys=None,heavy_write_ad
     from mod_nailong.tools.texture_resolution import verify_game_textures,write_pixel_proof
     pixel_check=verify_game_textures(output,manifest,catalog=read_json(MOD/'data/catalog.json'),generated=read_json(MOD/'data/generated.json')['portraits'],root=ROOT)
     write_pixel_proof(output,manifest,pixel_check)
+    from mod_nailong.tools.release_exclusion_audit import write_audit
+    write_audit(output,receipt=output/'release-exclusion-audit.json',root=ROOT,require_review=not preview)
     return manifest
 
 def repackage_verified(source, output, heavy_write_admission):
@@ -247,6 +265,8 @@ def repackage_verified(source, output, heavy_write_admission):
     source=Path(source);output=Path(output)
     if output.exists():raise SystemExit('Choose a fresh package output')
     verify(source)
+    from mod_nailong.tools.release_exclusion_audit import audit,write_audit
+    audit(source,root=ROOT,require_review=True)
     from mod_nailong.tools.texture_resolution import verify_game_textures,write_pixel_proof
     prior=read_json(source/'manifest.json')
     catalog=read_json(MOD/'data/catalog.json')
@@ -301,6 +321,7 @@ def repackage_verified(source, output, heavy_write_admission):
     write_json(output/'manifest.json',manifest);verify(output)
     verification.update(repackaged_from_manifest_sha256=file_sha256(source/'manifest.json'),texture_bytes_unchanged=True)
     write_pixel_proof(output,manifest,verification)
+    write_audit(output,receipt=output/'release-exclusion-audit.json',root=ROOT,require_review=True)
     return manifest
 
 

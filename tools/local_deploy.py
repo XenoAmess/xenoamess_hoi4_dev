@@ -22,6 +22,8 @@ def main():
     args=parser.parse_args()
     build=args.build.resolve()
     verify(build)
+    from mod_nailong.tools.release_exclusion_audit import write_audit
+    exclusion_check=write_audit(build,require_review=True)
     from mod_nailong.tools.texture_resolution import verify_game_textures
     manifest=read_json(build/'manifest.json')
     texture_check=verify_game_textures(build,manifest,reuse_pixel_proof=(build/'native-texture-verification.json').exists())
@@ -40,8 +42,8 @@ def main():
         if "mod/naiwa_world.mod" not in mods:mods.append("mod/naiwa_world.mod")
         write_json(dlc_file,state)
         if "mod/naiwa_world.mod" not in read_json(dlc_file)["enabled_mods"]:raise SystemExit("Local mod enable readback failed")
-    write_json(ROOT/"runtime/deployment.json",{"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":"local_deploy.py file write and actual readback; no launcher/game load claim","build":str(build),"user_profile":str(profile),"outer_descriptor":str(target),"outer_sha256":file_sha256(target),"previous_outer_descriptor":previous,"previous_dlc_load":previous_dlc,"enabled_in_dlc_load":args.enable,"game_load":"not-yet-verified","native_texture_verification":texture_check})
-    print(f"Registered {target}; game load remains unverified")
+    write_json(ROOT/"runtime/deployment.json",{"machine_id":machine_id(),"observed_at_utc":utc_now(),"source":"local_deploy.py file write and actual readback; no launcher/game load claim","build":str(build),"user_profile":str(profile),"outer_descriptor":str(target),"outer_sha256":file_sha256(target),"previous_outer_descriptor":previous,"previous_dlc_load":previous_dlc,"enabled_in_dlc_load":args.enable,"game_load":"not-yet-verified","native_texture_verification":texture_check,"release_exclusion_audit":exclusion_check})
+    print(f"Registered {target}; current release exclusion audit passed; game load remains unverified")
 
 if __name__=="__main__":
     sys.stdout.reconfigure(encoding="utf-8")

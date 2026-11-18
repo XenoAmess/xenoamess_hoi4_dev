@@ -1,5 +1,8 @@
 # 钢奶龙心（子项目规则）
 
+- 2026-11-18 用户明确新增发布排除：中国共产党及其相关势力（中国红军、新四军等）的对应图片可以继续生成、保存原始 PNG 并提交 Git，但禁止进入最终 mod 发布 payload；其缺图、未审图不阻塞 mod 发布。仅限中国共产党及其相关势力，不包括苏联、蒙古等外国共产党势力。发布范围须按可追溯的原版来源/人物/势力归属判定，不能仅凭目录名或把全体中国人物排除。发布阶段增加独立实包审计，核对 staging、ZIP、清单和排除规则，发现漏排即停止发布并留存回执。全量素材库存、生产缺口与审图资格保留真实状态；发布适用范围单独记账。本条覆盖下文正式构建对这些被排除图片的全量完成门禁，不削弱其他适用素材的审图和实机要求。
+  具体流程见 [`docs/release-exclusions.md`](docs/release-exclusions.md)。从仓库根目录运行 `python -X utf8 mod_nailong/tools/release_exclusion_audit.py --build <最终构建目录> --receipt <新的回执.json>`，在 Steam／GitHub 上传最终 mod 包之前保存新的通过回执；变更或重打包后重审。
+
 - 2026-11-05 用户随后指定 evolink.ai 用于重试，覆盖此前本执行链禁用 EvoLink 技能的工具选择限制。本次不再自动派发内置 HIGH 重试；安全拒绝与同人物未解除保护不能通过换平台重放规避。本轮0次 EvoLink 调用，不将工具授权或预检写成已生成。完整状态见 `data/production-progress-snapshots/20261105-high-original-retries.json`。
 
 - 2026-11-05 用户明确恢复允许范围内的 HIGH 原请求重试，覆盖下文旧的 HIGH 拒绝跳过要求。授权见 `data/extra-retry-rounds/20261105-resume-allowed-high-original-retries.json`；不增加次数、不改原词/有序输入/内置工具、不解除同人物未解决保护，仍须冷却已满且请求和工具允许。返回图片即停止该请求的服务重试。
