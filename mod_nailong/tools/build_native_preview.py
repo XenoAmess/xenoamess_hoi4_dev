@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from tools.common import ROOT,read_json,write_json,machine_id,utc_now,file_sha256
 from mod_nailong.tools import build_release as builder
+from mod_nailong.tools.release_scope import load_scope,asset_excluded
 
 
 def main():
@@ -18,7 +19,9 @@ def main():
     if inventory.get('machine_id')!=machine_id() or (datetime.now(timezone.utc)-datetime.fromisoformat(inventory['observed_at_utc'])).total_seconds()>1800:
         raise SystemExit('Fresh local storage inventory required')
     catalog=read_json(ROOT/'mod_nailong/data/catalog.json');generated=read_json(ROOT/'mod_nailong/data/generated.json')['portraits']
-    selected=builder.profile_assets(catalog);exceptions,_=builder.nonperson_scope()
+    scope=load_scope(catalog)
+    selected={path:asset for path,asset in builder.profile_assets(catalog).items() if not asset_excluded(asset,scope)}
+    exceptions,_=builder.nonperson_scope()
     estimate=sum(4*a['size'][0]*a['size'][1]+128 for a in selected.values() if builder.ready(generated.get(a['source_sha256'],{})))
     estimate+=sum(len(builder.original_nonperson_bytes(a)) for a in selected.values() if a['source_sha256'] in exceptions)
     peak=2*estimate+64*1024**2
@@ -49,7 +52,7 @@ def main():
             'system_growth_reserve_bytes':system,'safety_margin_bytes':safety,'project_usage_upper_bound_bytes':usage,
             'project_inventory':str(args.inventory.resolve()),'project_inventory_sha256':file_sha256(args.inventory),
             'usage_bound_method':'Conservative entire local volume used bytes; includes unrelated usage and does not treat incomplete scan as zero',
-            'effective_project_quota_bytes':quota,'quota_override':{'owner':'Codex native-size portrait repair task','reason':'One bounded 349 MiB native payload rebuild required by the user. Whole-volume usage is used as a conservative upper bound instead of claiming an incomplete metadata scan is complete. The exception grants only this peak plus separately counted task allowance.','max_project_bytes':quota,'review_at_utc':review.isoformat(),'automatic_renewal':False},
+            'effective_project_quota_bytes':quota,'quota_override':{'owner':'Codex native-size portrait repair task','reason':f'One native payload rebuild required by the user: {estimate} decoded bytes after current release exclusions and original nonperson preservation. Whole-volume usage is a conservative upper bound, not a claim of complete project scanning. This exception covers only this peak plus separately counted task allowance.','max_project_bytes':quota,'review_at_utc':review.isoformat(),'automatic_renewal':False},
             'admitted_at_utc':now.isoformat(),'retention_review_by_utc':review.isoformat(),'coordination_lock':str(lock.relative_to(ROOT)),
             'coordination_lock_sha256':file_sha256(lock),'coordination_lock_token':token,'git_operations':0,'publication_performed':False}
         write_json(receipt,body);builder.validate_heavy_write_admission(receipt,estimate,output)
