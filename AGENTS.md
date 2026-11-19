@@ -2,6 +2,8 @@
 
 ## 用户永久工作规则（2026-10-16）
 
+- 2026-11-19 用户为 HOI4 1.19.5 任务表第 103 项 `gfx/leaders/PHI/portrait_PHI_back_soon.dds` 明确选择“沿用非人物例外（推荐）”：保留原版文件字节，登记为无人物场景例外，不生成虚构人物，也不计作 AI 头像完成。来源 SHA 为 `2cac4e788c11dac92d6fea2aaafa9fc41db2f8a7856e6c2a02c8d5cdf0598b96`。旧四项批准与观察记录不倒改；新增决定单独保存在 `mod_nailong/data/nonperson-preservation-decisions.json`，构建必须核对来源、观察记录与实际原字节，保留完整库存分母，并分别统计美术通过、原图例外和待处理来源。
+
 - 2026-11-18 用户新增并明确范围：中国共产党及其相关势力（包括中国红军、新四军等）的对应图片允许生成并按既有规则保存、提交入库，但**禁止进入最终 mod 发布版本**，这些图片未生成或未审图**不作为 mod 发布阻塞项**。该范围不扩大到苏联、蒙古等外国共产党势力。发布前必须额外审计实际 staging、ZIP 与发布来源清单，确认排除项没有进入 payload；仅写规则、按文件夹过滤或构建成功不能代替审计。保留全量素材库存、原始 PNG、请求和审图历史，生产统计与发布适用范围分别记账，不删除素材或把排除项冒充已完成。后续发布必须执行这道审计，并留存可核验回执。
   实施入口与分类依据见 [`mod_nailong/docs/release-exclusions.md`](mod_nailong/docs/release-exclusions.md)。Steam／GitHub 上传 mod 包前，对最终构建运行 `python -X utf8 mod_nailong/tools/release_exclusion_audit.py --build <最终构建目录> --receipt <新的回执.json>`；失败即停止发布，变更文件或重打包后重审。该要求覆盖排除项的旧全覆盖门禁，其他美术与实机要求仍按现行规则执行。
 

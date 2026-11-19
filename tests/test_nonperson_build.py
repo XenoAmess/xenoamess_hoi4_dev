@@ -90,6 +90,20 @@ class NonpersonBuildTests(unittest.TestCase):
         self.root_patch.stop()
         self.temporary.cleanup()
 
+    def add_supplemental_original(self):
+        stream=io.BytesIO()
+        Image.new('RGBA',(3,2),(103,75,12,255)).save(stream,format='DDS')
+        raw=stream.getvalue();key=sha256(raw);virtual='gfx/leaders/PHI/portrait_PHI_back_soon.dds'
+        original=self.root/'game'/virtual;original.parent.mkdir(parents=True,exist_ok=True);original.write_bytes(raw)
+        asset={'id':'supplemental-103','package':'base','path':virtual,'size':[3,2],'source_sha256':key}
+        catalog=read_json(self.mod/'data/catalog.json');catalog['assets'].append(asset);write_json(self.mod/'data/catalog.json',catalog)
+        self.source_index[asset['id']]={'path':str(original),'member':None};write_json(self.root/'runtime/source-index.json',self.source_index)
+        observation=self.mod/'data/update-reviews/synthetic-103.json'
+        write_json(observation,{'schema':'nailong-update-nonperson-observation-v1','source_sha256':key,'source_index':103,'source_size':[3,2],'source_png_sha256':'a'*64,'actual_image_calls':0,'art_qualification_claimed':False,'observation':'Synthetic nonperson scene; no visual acceptance of game art is claimed by this test.'})
+        row={'decision_id':'synthetic-103','machine_id':machine_id(),'decision':'preserved_original_nonperson_exception','user_selection':{'selected_option':'沿用非人物例外（推荐）','answer_received_in_current_session':True},'index':103,'index_basis':'hoi4-1.19.5-update-plan-1-based','source_sha256':key,'source_assets':[virtual],'catalog_assets':[{name:asset[name] for name in ('id','package','path','size')}],'source_size':[3,2],'source_png_sha256':'a'*64,'prior_visual_review':observation.relative_to(self.root).as_posix(),'prior_visual_review_sha256':file_sha256(observation),'observed_subject':read_json(observation)['observation'],'no_image_call_created_for_this_decision':True,'generated_output_required':False,'original_assets_retained':True,'canonical_generated_row_must_not_be_fabricated':True}
+        registry=self.mod/'data/nonperson-preservation-decisions.json';write_json(registry,{'schema':'nailong-additional-nonperson-preservation-decisions-v1','decisions':[row]})
+        return key,virtual,raw,registry,observation
+
     def test_original_exception_preview_preserves_every_byte(self):
         output = self.root / "preview"
         manifest = builder.build(output, preview=True, validation_keys=self.keys)
@@ -149,6 +163,48 @@ class NonpersonBuildTests(unittest.TestCase):
     def test_other_missing_sources_still_block_formal_build(self):
         with self.assertRaisesRegex(SystemExit, "RELEASE BLOCKED"):
             builder.payload(preview=False)
+
+    def test_supplemental_original_preserves_bytes_without_ai_row_or_legacy_rewrite(self):
+        legacy=self.experiment/'nonperson-scope-decision.json';before=legacy.read_bytes()
+        key,virtual,raw,_,_=self.add_supplemental_original()
+        out=self.root/'supplemental-build';manifest=builder.build(out,preview=True,validation_keys=[key])
+        self.assertEqual(legacy.read_bytes(),before)
+        self.assertEqual(manifest['preserved_original_nonperson_exceptions'],[103])
+        self.assertEqual(manifest['preserved_original_nonperson_sources'],[{'source_sha256':key,'index':103,'index_basis':'hoi4-1.19.5-update-plan-1-based'}])
+        self.assertEqual(manifest['bindings'][0]['fullsize_master_sha256'],None)
+        self.assertEqual((out/'staging'/virtual).read_bytes(),raw)
+        with zipfile.ZipFile(out/'gangnailongxin.zip') as archive:self.assertEqual(archive.read(virtual),raw)
+        self.assertNotIn(key,read_json(self.mod/'data/generated.json')['portraits'])
+        self.assertFalse(manifest['art_complete'])
+
+    def test_supplemental_decision_requires_recorded_user_selection(self):
+        _,_,_,registry,_=self.add_supplemental_original();body=read_json(registry)
+        body['decisions'][0]['user_selection']['selected_option']='暂不豁免，保持待处理';write_json(registry,body)
+        with self.assertRaises(AssertionError):builder.nonperson_scope()
+
+    def test_supplemental_observation_tampering_is_rejected(self):
+        _,_,_,_,observation=self.add_supplemental_original();body=read_json(observation);body['observation']='Changed';write_json(observation,body)
+        with self.assertRaisesRegex(AssertionError,'observation changed'):builder.nonperson_scope()
+
+    def test_supplemental_catalog_binding_change_is_rejected(self):
+        key,_,_,_,_=self.add_supplemental_original();catalog=read_json(self.mod/'data/catalog.json')
+        next(a for a in catalog['assets'] if a['source_sha256']==key)['path']='gfx/leaders/PHI/different.dds';write_json(self.mod/'data/catalog.json',catalog)
+        with self.assertRaisesRegex(AssertionError,'catalog identity changed'):builder.nonperson_scope()
+
+    def test_supplemental_original_cannot_be_presented_as_generated_art(self):
+        key,_,_,_,_=self.add_supplemental_original();path=self.mod/'data/generated.json';body=read_json(path);body['portraits'][key]={'review':'approved'};write_json(path,body)
+        with self.assertRaisesRegex(SystemExit,'must not have a generated row'):builder.payload(preview=True,validation_keys=[key])
+
+    def test_preserved_source_is_processed_but_not_art_approved(self):
+        from mod_nailong.tools.nonperson_exceptions import annotate_update_plan
+        key,_,_,_,_=self.add_supplemental_original();exceptions,_=builder.nonperson_scope()
+        plan={'sources':[{'source_sha256':source,'new_unique_source':True,'generated':False,'portrait_ready':False,'release_excluded':excluded} for source,excluded in [(key,False),('person',False),('archive-person',True)]]}
+        annotate_update_plan(plan,exceptions)
+        self.assertFalse(plan['sources'][0]['portrait_ready']);self.assertFalse(plan['sources'][0]['generated']);self.assertFalse(plan['sources'][0]['release_art_required'])
+        self.assertEqual(plan['processing_counts']['new_sources_art_approved'],0)
+        self.assertEqual(plan['processing_counts']['new_sources_preserved_nonperson'],1)
+        self.assertEqual(plan['processing_counts']['new_sources_unprocessed'],2)
+        self.assertEqual(plan['processing_counts']['new_release_art_missing'],1)
 
 
 if __name__ == "__main__":
