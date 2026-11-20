@@ -1,5 +1,7 @@
 # 本地模型接入
 
+2026-11-21（北京时间）HOI4自动更新至1.20后，第9项不同文本辅助任务分析新增80条罗马尼亚未解析引用。已实际提供完整当前清点器、ROM角色文本、两份完整GFX及全范围机械扫描上下文；5份输入的完整当前文本均在实际固定三消息请求中机械核对，见[输入核对](../mod_nailong/data/update-plans/20261121-model-input-audit.json)。共享DIRECT调用一次，2026-11-20T19:35:27.463731Z至19:35:27.488766Z，25.220300070941448ms后HTTP404，正文仅称provider API error，未返回完整候选、采用0，usage／缓存未知，无地址回退或业务重放。当前自然日OpenCode1.19.6成功缓存用于调用前置，未把版本检查当成模型服务健康证明。owner扫描368份已安装GFX发现77个新增不同值均无字面子串；只在该范围维持未解析，不推断运行时根因，不虚构80张图片，也不把清点结果算模型采用，见[引擎与引用事实](../mod_nailong/data/update-plans/20261121-engine-and-reference-findings.json)。本轮共享经验将在项目固定提交后按唯一Git写窗口同步；尚未同步时不报告共享发布成功。
+
 2026-11-20桌面恢复期间，向共享调用器提交一项尚未完成的右键工具源码审阅，输入为完整当前`tools/common.py`、`tools/desktop.py`与明确的纯截图／键鼠合同，固定三消息、输出上限1,800tokens。每日检查复用当日OpenCode1.19.6成功缓存；实际一次DIRECT请求在12.312799924984574ms后HTTP404，没有候选或采用，也没有换地址或重发Steam动作。owner完成右键补充，隔离假后端检查与真实菜单观察分别留证；客户端正常退出仍未证明离线，游戏未启动。见[本轮来源、实际调用与阶段边界](../mod_nailong/data/update-plans/20261120-steam-recovery-gate.json)及[已同步共享库的固定记录](https://github.com/XenoAmess/local-model-operations/blob/87da55bb580f8f591c968b195707215aaa855d18/docs/evidence/2026-11-20-hoi4-desktop-rightclick-404.json)。这是本次1.19.5更新流程第8项不同文本任务，不是本项目历史总调用量。
 
 2026-11-02 用户要求实际大量使用本地模型，并把既有经验迁移到共享仓库。父目录的 `local-model-operations/` 是当前规范与调用器来源：[共享 AGENTS](https://github.com/XenoAmess/local-model-operations/blob/main/AGENTS.md)、[使用方法](https://github.com/XenoAmess/local-model-operations/blob/main/docs/usage.md)、[配置](https://github.com/XenoAmess/local-model-operations/blob/main/config/executor.json)。每次执行记录实际共享版本及文件 SHA，地址和协议随该配置读取。
