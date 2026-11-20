@@ -8,6 +8,8 @@
 
 [Steam 创意工坊订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3830400579) · [GitHub 1.0 安装包](https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/tag/nailong-v1.0-20261105)
 
+2026-11-20实机续验尚未启动：Steam只显示加载页，未取得新鲜离线证明；已从可见正式入口正常退出并交还桌面。图片待处理仍为0，实机与公开包更新保持待完成，详见[本轮门禁回执](data/update-plans/20261120-steam-recovery-gate.json)。
+
 法国、英国、美国已进行实际界面抽查，法国推进到 1936 年 1 月 4 日。实测版本为 1.19.3.0，范围、截图和机器证据见[实机验收记录](docs/native-resolution-live-qa-2026-10-30.md)。这不代表所有人物、国家、事件和 DLC 组合均已逐项实机遍历。
 
 ![法国陆军顾问](assets/screenshots/20261030/france-army-advisors.png)

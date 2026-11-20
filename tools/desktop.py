@@ -67,6 +67,11 @@ def focus(hwnd):
     return windows
 
 def click(args):
+    button=getattr(args,'button','left')
+    move_only=getattr(args,'move_only',False)
+    scroll=getattr(args,'scroll',None)
+    if button not in ('left','right'):raise SystemExit('Unsupported mouse button; no focus or input sent')
+    if button!='left' and (move_only or scroll is not None):raise SystemExit('Mouse button applies only to clicks; no focus or input sent')
     gui,windows=desktop_modules()
     windows=focus(args.hwnd)
     with Image.open(args.screenshot) as image:width,height=image.size
@@ -79,14 +84,13 @@ def click(args):
     x=round((args.x-left)*width/view_width)
     y=round((args.y-top)*height/view_height)
     if not (0<=x<width and 0<=y<height):raise SystemExit("Mapped click out of bounds")
-    move_only=getattr(args,'move_only',False)
-    scroll=getattr(args,'scroll',None)
     if scroll is not None:
         gui.moveTo(x,y,duration=.15);gui.scroll(scroll)
     elif move_only:gui.moveTo(x,y,duration=.15)
-    else:gui.click(x,y)
+    else:gui.click(x,y,button=button)
     after=list(gui.size())
     receipt={"machine_id":machine_id(),"observed_at_utc":utc_now(),"source_screenshot":str(Path(args.screenshot).resolve()),"source_sha256":file_sha256(Path(args.screenshot)),"image_size":[width,height],"desktop_before":list(current),"preview_content_rect":args.content_rect,"preview_point":[args.x,args.y],"desktop_point":[x,y],"target_hwnd":args.hwnd,"desktop_after":after,'input_type':'mouse move only' if move_only else 'mouse click',"input_ack":True,"business_result":"unverified; take a fresh screenshot/OCR"}
+    if scroll is None and not move_only:receipt['mouse_button']=button
     write_json(Path(args.receipt),receipt)
     if scroll is not None:
         receipt.update(input_type='mouse wheel',scroll_ticks=scroll);write_json(Path(args.receipt),receipt)
@@ -174,6 +178,7 @@ def main():
     mouse.add_argument("--max-age",type=int,default=120)
     mouse.add_argument('--move-only',action='store_true',help='Move the real cursor through the same coordinate guard, without clicking')
     mouse.add_argument('--scroll',type=int,help='Send real mouse wheel ticks at the guarded screenshot position')
+    mouse.add_argument('--button',choices=('left','right'),default='left',help='Real mouse button for clicks; defaults to left')
     keyboard=sub.add_parser("keys")
     keyboard.add_argument("--hwnd",type=int,required=True)
     keyboard.add_argument("--receipt",required=True)
