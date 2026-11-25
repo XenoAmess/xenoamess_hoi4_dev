@@ -2,7 +2,7 @@
 
 把《钢铁雄心 IV》的人物本体替换为圆滚滚的黄色奶龙，保留每个人原有的服装、发型、胡须、配饰、姿态与取景。
 
-当前公开版本 **1.0**，适配 **HOI4 1.20.x**。GitHub 与原创意工坊均已于2026-11-25更新，包含 **5,815 个贴图绑定**，较上一公开包净增236个。217,413,204字节的 ZIP 与清单已从 GitHub 公开地址完整下载并核对 SHA-256，见[公开附件读回](data/publication/1.0-update-20261125/github-byte-readback.json)。Steam 实际订阅下载的5,817个文件无缺失、无额外文件，全部贴图及封面字节匹配；descriptor 仅有 Steam 追加工坊 ID 和格式化的差异，见[真实下载核对](data/publication/1.0-update-20261125/steam-download-verified.json)。订阅版的新鲜有限实机抽查正在进行，既有本地构建实机范围单列保留。
+当前公开版本 **1.0**，适配 **HOI4 1.20.x**。GitHub 与原创意工坊均已于2026-11-25更新，包含 **5,815 个贴图绑定**，较上一公开包净增236个。217,413,204字节的 ZIP 与清单已从 GitHub 公开地址完整下载并核对 SHA-256，见[公开附件读回](data/publication/1.0-update-20261125/github-byte-readback.json)。Steam 实际订阅下载的5,817个文件无缺失、无额外文件，全部贴图及封面字节匹配；descriptor 仅有 Steam 追加工坊 ID 和格式化的差异，见[真实下载核对](data/publication/1.0-update-20261125/steam-download-verified.json)。实际订阅版已离线抽查七国选国主卡及菲律宾 Manuel Quezon 信息头像，并从正式菜单正常退出；没有进入战局，不代表全人物遍历。见[订阅版有限实机回执](data/publication/1.0-update-20261125/subscribed-live-qa.json)与[本轮最终发布回执](data/publication/1.0-update-20261125/completed.json)。
 
 上一公开包的1.19.3库存5481张人物素材均已完成，[最后12张接收记录](data/high12-owner-intake-20261105.json)保存来源、原始 PNG、请求与审图资格核对。该次发布前重新清点本机已安装的1.19.4.1游戏，发现此前库存之外的3个人物来源；当时为 **5481/5484** 人物素材通过，另有4个非人物例外保留原图。此清点不证明这3个来源何时加入游戏。该次完整正式构建仍有748条既有未解析引用待处理。
 
@@ -27,6 +27,8 @@
 请将游戏与现实区分开来，尊重不同国籍、族群与背景的玩家，反对歧视，珍惜和平。完整中英双语介绍见 [Workshop 文案](docs/workshop-description.bbcode)。
 
 从 GitHub Release 下载 `gangnailongxin.zip`，解压到 HOI4 用户目录的 `mod` 下，并创建外层 `.mod` 文件指向该目录；也可在创意工坊订阅。与替换相同头像的其他模组可能冲突，建议先单独启用。
+
+从旧版工坊升级时，本机实测 Steam 曾保留已从新包移除的旧文件。确认旧订阅目录为空后再让 Steam 重新下载，可避免这些残留继续被加载；本次已完成此项核验。具体观察、适用范围和保留旧文件的方法见[工坊干净重下记录](docs/workshop-clean-download-20261125.md)。
 
 开发工具、完整提示词与审图记录保存在仓库中；只有构建器生成的 staging 内容进入游戏包。内部 manifest 如实保存当前覆盖和验收状态。
 
