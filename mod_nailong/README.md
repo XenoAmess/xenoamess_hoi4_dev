@@ -8,6 +8,8 @@
 
 此前1.19.5新增395个来源的处理仍保留为历史完成结果：394个AI头像通过、1个BACK SOON原图例外，三个更早人物缺口亦已补齐。其5,810贴图工作构建的原尺寸与实包排除审计通过，但仅完成1.19.5主菜单启动及正常退出，不能代替1.20头像实机；见[旧构建回执](data/update-plans/20261119-full-native-build.json)及[旧任务表](docs/hoi4-1.19.5-portrait-plan.md)。当前工作库存尚未替换下方的旧公开安装包。
 
+2026-11-25联网检查：Steam仍提供默认公开版 **1.20.0.0 / Build 26733403**，本轮未出现更高版本下载；官方验证 **58,581个文件全部成功**。随后完整重扫 **6,117资源／5,888独立来源**，与上轮路径、原始SHA和引用逐项相同，**新增0、原图变更0、实际待处理0**；5个非人物原图例外和440条未解析引用继续分别保留。Steam已从新原图人工确认恢复离线，未启动游戏或重发图片，见[本轮检查回执](data/update-plans/20261125-update-check.json)。
+
 [Steam 创意工坊订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3830400579) · [GitHub 1.0 安装包](https://github.com/XenoAmess/xenoamess_hoi4_dev/releases/tag/nailong-v1.0-20261105)
 
 2026-11-20此前续验因Steam加载页未获离线证明而未启动HOI4，已正常退出并交还桌面，见[历史门禁回执](data/update-plans/20261120-steam-recovery-gate.json)。之后客户端由文明VI线程恢复；本轮准备启动时发现新的1.20引擎，因此先重做清点与构建。后续启动仍须本项目自己的新鲜原图／OCR离线证明。
